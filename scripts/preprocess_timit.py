@@ -3,7 +3,7 @@
 import python_speech_features
 import os
 import numpy
-import scipy.io.wavefile as wav
+import scipy.io.wavfile as wav
 import shutil
 import subprocess
 from os.path import join
@@ -30,15 +30,26 @@ def sph2wav(sphere_path, wav_path):
     args = [SOX_PATH, sphere_path, wav_path]
     subprocess.run(args)
 
-def feature_extraction(wav_path):
-    """ Currently grabs log Mel filterbank, deltas and double deltas."""
+def all_feature_extraction():
+    """ Walk over all the wav files in the TIMIT dir and extract features. """
 
-    (rate, sig) = wav.read(wav_path)
-    fbank_feat = logfbank(sig, rate)
-    delta_feat = delta(fbank_feat, 2)
-    delta_delta_feat = delta(delta_feat, 2)
-    all_feats = numpy.concatenate(
-            (fbank_feat, delta_feat, delta_delta_feat), axis=1)
+    def feature_extraction(wav_path):
+        """ Currently grabs log Mel filterbank, deltas and double deltas."""
+        (rate, sig) = wav.read(wav_path)
+        fbank_feat = python_speech_features.logfbank(sig, rate)
+        delta_feat = python_speech_features.delta(fbank_feat, 2)
+        delta_delta_feat = python_speech_features.delta(delta_feat, 2)
+        all_feats = numpy.concatenate(
+                (fbank_feat, delta_feat, delta_delta_feat), axis=1)
+        # Log Mel Filterbank, with delta, and double delta
+        feat_fn = wav_path[:-3] + "lmfb_d_dd.feat"
+        numpy.savetxt(feat_fn, all_feats)
+
+    for root, dirs, fns in os.walk(TGT_DIR):
+        for fn in fns:
+            if fn.endswith(".wav"):
+                print(join(root, fn))
+                feature_extraction(join(root, fn))
 
 def preprocess():
     """ Calls all the preprocessing over the TIMIT data."""
@@ -60,7 +71,7 @@ def preprocess():
                     sphere_path = tgt_path[:-3]+"sph"
                     shutil.copyfile(org_path, sphere_path)
                     sph2wav(sphere_path, tgt_path)
-                    feature_extraction(tgt_path)
 
 if __name__ == "__main__":
-    preprocess()
+    #preprocess()
+    all_feature_extraction()
