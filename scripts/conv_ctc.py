@@ -7,30 +7,6 @@ import tensorflow as tf
 
 random.seed(0)
 
-def len_longest_timit_utterance(path="/home/oadams/mam/data/timit"):
-    """ Finds the number of frames in the longest utterance in TIMIT, so that
-    we can zero-pad the other utterances appropriately."""
-
-    if os.path.exists("max_len.txt"):
-        with open("max_len.txt") as f:
-            return f.readline()
-
-    max_len = 0
-
-    for root, dirnames, filenames in os.walk(path):
-        for fn in filenames:
-            prefix = fn.split(".")[0] # Get the file prefix
-            print(fn)
-            if fn.endswith(".lmfb_d_dd.feat"):
-                path = os.path.join(root,fn)
-                x = numpy.loadtxt(path)
-                if x.shape[0] > max_len:
-                    max_len = x.shape[0]
-    print(max_len)
-    with open("max_len.txt", "w") as f:
-        f.write(max_len)
-
-
 def load_timit(path="/home/oadams/mam/data/timit", rand=True, batch_size=100):
     """ Load the already preprocessed TIMIT data. """
 
@@ -39,7 +15,6 @@ def load_timit(path="/home/oadams/mam/data/timit", rand=True, batch_size=100):
     for root, dirnames, filenames in os.walk(path):
         for fn in filenames:
             prefix = fn.split(".")[0] # Get the file prefix
-            print(fn)
             if fn.endswith(".lmfb_d_dd.feat"):
                 # Then load into x.
                 #with open(os.path.join(root, fn)) as feat_f:
@@ -74,5 +49,4 @@ def load_timit(path="/home/oadams/mam/data/timit", rand=True, batch_size=100):
     print(len(train_paths))
     print(y)
 
-#load_timit()
-len_longest_timit_utterance()
+load_timit()

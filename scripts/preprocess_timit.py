@@ -2,7 +2,7 @@
 
 import python_speech_features
 import os
-import numpy
+import numpy as np
 import scipy.io.wavfile as wav
 import shutil
 import subprocess
@@ -39,17 +39,63 @@ def all_feature_extraction():
         fbank_feat = python_speech_features.logfbank(sig, rate)
         delta_feat = python_speech_features.delta(fbank_feat, 2)
         delta_delta_feat = python_speech_features.delta(delta_feat, 2)
-        all_feats = numpy.concatenate(
+        all_feats = np.concatenate(
                 (fbank_feat, delta_feat, delta_delta_feat), axis=1)
         # Log Mel Filterbank, with delta, and double delta
         feat_fn = wav_path[:-3] + "lmfb_d_dd.feat"
-        numpy.savetxt(feat_fn, all_feats)
+        np.savetxt(feat_fn, all_feats)
 
     for root, dirs, fns in os.walk(TGT_DIR):
         for fn in fns:
             if fn.endswith(".wav"):
                 print(join(root, fn))
                 feature_extraction(join(root, fn))
+
+def all_zero_pad():
+
+    def len_longest_timit_utterance(path=TGT_DIR):
+        """ Finds the number of frames in the longest utterance in TIMIT, so that
+        we can zero-pad the other utterances appropriately."""
+
+        if os.path.exists("max_len.txt"):
+            with open("max_len.txt") as f:
+                return int(f.readline())
+
+        max_len = 0
+
+        for root, dirnames, filenames in os.walk(path):
+            for fn in filenames:
+                prefix = fn.split(".")[0] # Get the file prefix
+                if fn.endswith(".lmfb_d_dd.feat"):
+                    path = join(root,fn)
+                    x = np.loadtxt(path)
+                    if x.shape[0] > max_len:
+                        max_len = x.shape[0]
+        print(max_len)
+        with open("max_len.txt", "w") as f:
+            f.write(str(max_len))
+
+    def zero_pad(a, to_length):
+        """ Zero pads along the 0th dimension to make sure the utterance array
+        x is of length to_length."""
+
+        assert a.shape[0] <= to_length
+        result = np.zeros((to_length,) + a.shape[1:])
+        result[:a.shape[0]] = a
+        return result
+
+    max_len = len_longest_timit_utterance()
+
+    for root, dirs, fns in os.walk(TGT_DIR):
+        print("Preprocessing for speaker %s" % "/".join(root.split("/")[-3:]))
+        for fn in fns:
+            if fn.endswith(".lmfb_d_dd.feat"):
+                path = join(root, fn)
+                x = np.loadtxt(path)
+                x = zero_pad(x, max_len)
+                np.savetxt(join(
+                        root, fn.split(".")[0] + ".lmfb_d_dd.zero_pad.feat"),
+                        x)
 
 def preprocess():
     """ Calls all the preprocessing over the TIMIT data."""
