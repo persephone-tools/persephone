@@ -25,6 +25,7 @@ def all_feature_extraction():
         all_feats = np.array(l)
         # Make time the first dimension for easy length normalization padding later.
         all_feats = np.swapaxes(all_feats, 0, 1)
+        all_feats = np.swapaxes(all_feats, 1, 2)
 
         # Log Mel Filterbank, with delta, and double delta
         feat_fn = wav_path[:-3] + "log_mel_filterbank.npy"
@@ -61,6 +62,8 @@ def all_zero_pad():
 
         with open("max_len.txt", "w") as f:
             f.write(str(max_len))
+
+        return max_len
 
     def zero_pad(a, to_length):
         """ Zero pads along the 0th dimension to make sure the utterance array
