@@ -1,16 +1,27 @@
 import os
 import random
-import sys
 
-import numpy
+import numpy as np
 import tensorflow as tf
 
 #from preprocess_timit import len_longest_timit_utterance
+
+config = tf.ConfigProto()
+config.gpu_options.allow_growth=True
+sess = tf.InteractiveSession(config=config)
 
 random.seed(0)
 
 def load_timit(path="/home/oadams/mam/data/timit/train", rand=True, batch_size=100):
     """ Load the already preprocessed TIMIT data. """
+
+    def create_one_hot(i, num_classes):
+        """ Takes a list or array with numbers representing classes, and
+        creates a corresponding 2-dimensional array of one-hot vectors."""
+
+        one_hot = np.zeros((1,num_classes))
+        one_hot[0,i] = 1
+        return one_hot
 
     train_paths = []
     dr_classes = set()
@@ -30,42 +41,187 @@ def load_timit(path="/home/oadams/mam/data/timit/train", rand=True, batch_size=1
     if rand:
         # Load a random subset of the training set of batch_size 
         path_batch = random.sample(train_paths, batch_size)
-        feats = [numpy.load(path) for path in path_batch]
-        x = numpy.array(feats)
-        batch_y = numpy.array([dr_class_map[path.split("/")[-3]] for path in path_batch])
+        feats = [np.load(path) for path in path_batch]
+        x = np.array(feats)
+        y_labels = np.array([dr_class_map[path.split("/")[-3]] for path in path_batch])
+        # Make into one-hot vectors
+        batch_y = np.concatenate([create_one_hot(label,len(dr_classes)) for label in y_labels])
     else:
         raise Exception("Not implemented.")
 
-    batch_x = numpy.array(feats)
-    print(batch_x.shape)
-    print(batch_y.shape)
+    batch_x = np.array(feats)
     return batch_x, batch_y
 
-def create_graph():
+### Create the graph ### 
 
-    def weight_variable(shape):
-        initial = tf.truncated_normal(shape, stddev=0.1)
-        return tf.Variable(initial)
+def weight_variable(shape):
+    initial = tf.truncated_normal(shape, stddev=0.1)
+    return tf.Variable(initial)
 
-    def bias_variable(shape):
-        initial = tf.constant(0.1, shape=shape)
-        return tf.Variable(initial)
+def bias_variable(shape):
+    initial = tf.constant(0.1, shape=shape)
+    return tf.Variable(initial)
 
-    def conv2d(x, W):
-        # Shift the window by 1 in each direction
-        return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding="SAME")
+def conv2d(x, W):
+    # Shift the window by 1 in each direction
+    return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding="SAME")
 
-    def max_pool_2x2(x):
-        # Use max pooling over each 2x2 window.
-        return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1,2,2,1],
-                              padding="SAME")
+def max_pool_1x3(x):
+    # Use max pooling over each 1x3 windows, as per Zhang et al.
+    return tf.nn.max_pool(x, ksize=[1, 1, 3, 1], strides=[1,1,3,1],
+                          padding="SAME")
 
-    # There are 26 log Mel filterbank features and the 3 channels correspond to
-    # static, delta and double-delta.
-    x = tf.placeholder(tf.float32,
-                        shape=[None, None, 26, 3])
-    # There are 8 dialect classes.
-    y = tf.placeholder(tf.float32, shape=[None, 8])
 
-create_graph()
-batch = load_timit()
+# There are 26 log Mel filterbank features and the 3 channels correspond to
+# static, delta and double-delta.
+x = tf.placeholder(tf.float32,
+                    shape=[None, None, 26, 3])
+# There are 8 dialect classes.
+y = tf.placeholder(tf.float32, shape=[None, 8])
+
+keep_prob = tf.placeholder(tf.float32)
+
+# The 1st, 2nd and 4th dimensions I can arbitrarily pick, but the 3rd dimension
+# is the input number of channels and must correspond to x. This weight becomes
+# the filter argument to tf.nn.conv2d.
+W_conv1 = weight_variable([5, 3, 3, 128])
+b_conv1 = bias_variable([128])
+h_conv1 = tf.nn.relu(conv2d(x, W_conv1) + b_conv1)
+h_conv1_drop = tf.nn.dropout(h_conv1, keep_prob)
+
+h_pool1 = max_pool_1x3(h_conv1_drop)
+h_pool1_drop = tf.nn.dropout(h_pool1, keep_prob)
+
+W_conv2 = weight_variable([5, 3, 128, 128])
+b_conv2 = bias_variable([128])
+h_conv2 = tf.nn.relu(conv2d(h_pool1_drop, W_conv2) + b_conv2)
+h_conv2_drop = tf.nn.dropout(h_conv2, keep_prob)
+
+W_conv3 = weight_variable([5, 3, 128, 128])
+b_conv3 = bias_variable([128])
+h_conv3 = tf.nn.relu(conv2d(h_conv2_drop, W_conv3) + b_conv3)
+h_conv3_drop = tf.nn.dropout(h_conv3, keep_prob)
+
+W_conv4 = weight_variable([5, 3, 128, 128])
+b_conv4 = bias_variable([128])
+h_conv4 = tf.nn.relu(conv2d(h_conv3_drop, W_conv4) + b_conv4)
+h_conv4_drop = tf.nn.dropout(h_conv4, keep_prob)
+
+W_conv5 = weight_variable([5, 3, 128, 256])
+b_conv5 = bias_variable([256])
+h_conv5 = tf.nn.relu(conv2d(h_conv4_drop, W_conv5) + b_conv5)
+h_conv5_drop = tf.nn.dropout(h_conv5, keep_prob)
+
+W_conv6 = weight_variable([5, 3, 256, 256])
+b_conv6 = bias_variable([256])
+h_conv6 = tf.nn.relu(conv2d(h_conv5_drop, W_conv6) + b_conv6)
+h_conv6_drop = tf.nn.dropout(h_conv6, keep_prob)
+
+W_conv7 = weight_variable([5, 3, 256, 256])
+b_conv7 = bias_variable([256])
+h_conv7 = tf.nn.relu(conv2d(h_conv6_drop, W_conv7) + b_conv7)
+h_conv7_drop = tf.nn.dropout(h_conv7, keep_prob)
+
+W_conv8 = weight_variable([5, 3, 256, 256])
+b_conv8 = bias_variable([256])
+h_conv8 = tf.nn.relu(conv2d(h_conv7_drop, W_conv8) + b_conv8)
+h_conv8_drop = tf.nn.dropout(h_conv8, keep_prob)
+
+W_conv9 = weight_variable([5, 3, 256, 256])
+b_conv9 = bias_variable([256])
+h_conv9 = tf.nn.relu(conv2d(h_conv8_drop, W_conv9) + b_conv9)
+h_conv9_drop = tf.nn.dropout(h_conv9, keep_prob)
+
+W_conv10 = weight_variable([5, 3, 256, 256])
+b_conv10 = bias_variable([256])
+h_conv10 = tf.nn.relu(conv2d(h_conv9_drop, W_conv10) + b_conv10)
+
+h_conv10_flat = tf.reshape(h_conv10, [-1, 778*9*256])
+h_conv10_flat_drop = tf.nn.dropout(h_conv10_flat, keep_prob)
+
+W_fc1 = weight_variable([778*9*256, 128])
+b_fc1 = bias_variable([128])
+h_fc1 = tf.nn.relu(tf.matmul(h_conv10_flat_drop, W_fc1) + b_fc1)
+h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
+
+W_fc2 = weight_variable([128, 128])
+b_fc2 = bias_variable([128])
+h_fc2 = tf.nn.relu(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
+h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob)
+
+W_fc3 = weight_variable([128, 128])
+b_fc3 = bias_variable([128])
+h_fc3 = tf.nn.relu(tf.matmul(h_fc2_drop, W_fc3) + b_fc3)
+h_fc3_drop = tf.nn.dropout(h_fc3, keep_prob)
+
+W_fc4 = weight_variable([128, 8])
+b_fc4 = bias_variable([8])
+y_fc = tf.nn.relu(tf.matmul(h_fc3_drop, W_fc4) + b_fc4)
+
+cross_entropy = tf.reduce_mean(
+        tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=y_fc))
+train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
+
+correct_prediction = tf.equal(tf.argmax(y_fc,1), tf.argmax(y,1))
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+tf.initialize_all_variables().run()
+
+total_acc = 0.0
+for i in range(1000):
+    batch = load_timit(batch_size=10)
+    train_accuracy = accuracy.eval(
+            feed_dict={x:batch[0], y: batch[1], keep_prob: 0.7})
+    total_acc += train_accuracy
+    print("Step %d, training accuracy %g, avg acc: %g" % (i, train_accuracy, total_acc/i))
+    train_step.run(
+            feed_dict={x:batch[0], y: batch[1], keep_prob: 0.7})
+
+raw_input("Input:")
+import sys; sys.exit()
+
+"""
+print "Batch bytes:", batch[0].nbytes
+#print W_conv1.nbytes
+#print b_conv1.nbytes
+print "h_conv1 bytes:", h_conv1.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+print "h_pool1 bytes:", h_pool1.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+print "h_conv2 bytes:", h_conv2.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+print "h_conv3 bytes:", h_conv3.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+print "h_conv4 bytes:", h_conv4.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+print "h_conv5 bytes:", h_conv5.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+print "h_conv6 bytes:", h_conv6.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+print "h_conv7 bytes:", h_conv7.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+print "h_conv8 bytes:", h_conv8.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+print "h_conv9 bytes:", h_conv9.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+print "h_conv10 bytes:", h_conv10.eval(
+            feed_dict={x:batch[0], y: batch[1]}).shape
+print "h_conv10_flat bytes:", h_conv10_flat.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+print "h_fc1 bytes:", h_fc1.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+print "h_fc2 bytes:", h_fc2.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+print "h_fc3 bytes:", h_fc3.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+print "h_fc4 bytes:", h_fc4.eval(
+            feed_dict={x:batch[0], y: batch[1]}).nbytes
+"""
+
+#keep_prob = tf.placeholder(tf.float32)
+#h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
+
+#    sess.run(tf.initialize_all_variables())
+#    for i in range(1):
+#        batch = load_timit()
+
