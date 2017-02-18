@@ -12,7 +12,36 @@ sess = tf.InteractiveSession(config=config)
 
 random.seed(0)
 
-def load_timit(path="/home/oadams/mam/data/timit/train", rand=True, batch_size=100):
+def count_parameters():
+    total_parameters = 0
+    for variable in tf.trainable_variables():
+        # shape is an array of tf.Dimension
+        shape = variable.get_shape()
+        print(shape)
+        print(len(shape))
+        variable_parametes = 1
+        for dim in shape:
+            print(dim)
+            variable_parametes *= dim.value
+        print(variable_parametes)
+        total_parameters += variable_parametes
+    print(total_parameters)
+
+def num_phones(path="/home/oadams/mam/data/timit/"):
+    phn_set = set()
+    for root, dirnames, filenames in os.walk(path):
+        for fn in filenames:
+            prefix = fn.split(".")[0] # Get the file prefix
+            if fn.endswith(".phn"):
+                path = os.path.join(root,fn)
+                with open(path) as phn_f:
+                    phns = phn_f.readline().split()
+                for phn in phns:
+                    phn_set.add(phn)
+    return len(phn_set)
+
+def load_timit(path="/home/oadams/mam/data/timit/train", rand=True,
+        batch_size=10, labels="phonemes"):
     """ Load the already preprocessed TIMIT data. """
 
     def create_one_hot(i, num_classes):
@@ -24,7 +53,7 @@ def load_timit(path="/home/oadams/mam/data/timit/train", rand=True, batch_size=1
         return one_hot
 
     train_paths = []
-    dr_classes = set()
+    dialect_classes = set()
 
     for root, dirnames, filenames in os.walk(path):
         for fn in filenames:
@@ -33,19 +62,26 @@ def load_timit(path="/home/oadams/mam/data/timit/train", rand=True, batch_size=1
                 # Add to filename list.
                 path = os.path.join(root,fn)
                 train_paths.append(os.path.join(root,fn))
-                dr_classes.add(path.split("/")[-3])
+                dialect_classes.add(path.split("/")[-3])
 
-    dr_classes = sorted(list(dr_classes))
-    dr_class_map = dict(zip(dr_classes, range(0,len(dr_classes))))
+    dialect_classes = sorted(list(dialect_classes))
+    dr_class_map = dict(zip(dialect_classes, range(0,len(dialect_classes))))
 
     if rand:
         # Load a random subset of the training set of batch_size 
         path_batch = random.sample(train_paths, batch_size)
         feats = [np.load(path) for path in path_batch]
         x = np.array(feats)
-        y_labels = np.array([dr_class_map[path.split("/")[-3]] for path in path_batch])
-        # Make into one-hot vectors
-        batch_y = np.concatenate([create_one_hot(label,len(dr_classes)) for label in y_labels])
+        if labels == "dialects":
+            y_labels = np.array([dr_class_map[path.split("/")[-3]] for path in path_batch])
+            # Make into one-hot vectors
+            batch_y = np.concatenate([create_one_hot(label,len(dialect_classes)) for label in y_labels])
+        elif labels == "phonemes":
+            phn_paths = ["".join(path.split(".")[:-3])+".phn" for path in path_batch]
+            batch_y = []
+            for phn_path in phn_paths:
+                with open(phn_path) as phn_f:
+                    batch_y.append(phn_f.readline().split())
     else:
         raise Exception("Not implemented.")
 
@@ -53,7 +89,6 @@ def load_timit(path="/home/oadams/mam/data/timit/train", rand=True, batch_size=1
     return batch_x, batch_y
 
 ### Create the graph ### 
-
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial)
@@ -149,14 +184,11 @@ b_fc2 = bias_variable([128])
 h_fc2 = tf.nn.relu(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob)
 
-W_fc3 = weight_variable([128, 128])
-b_fc3 = bias_variable([128])
-h_fc3 = tf.nn.relu(tf.matmul(h_fc2_drop, W_fc3) + b_fc3)
-h_fc3_drop = tf.nn.dropout(h_fc3, keep_prob)
+num_labels = num_phones() + 1
 
-W_fc4 = weight_variable([128, 8])
-b_fc4 = bias_variable([8])
-y_fc = tf.nn.relu(tf.matmul(h_fc3_drop, W_fc4) + b_fc4)
+W_fc3 = weight_variable([128, num_labels])
+b_fc3 = bias_variable([num_labels])
+y_fc = tf.matmul(h_fc2_drop, W_fc3) + b_fc3
 
 cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=y_fc))
@@ -176,52 +208,3 @@ for i in range(1000):
     print("Step %d, training accuracy %g, avg acc: %g" % (i, train_accuracy, total_acc/i))
     train_step.run(
             feed_dict={x:batch[0], y: batch[1], keep_prob: 0.7})
-
-raw_input("Input:")
-import sys; sys.exit()
-
-"""
-print "Batch bytes:", batch[0].nbytes
-#print W_conv1.nbytes
-#print b_conv1.nbytes
-print "h_conv1 bytes:", h_conv1.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-print "h_pool1 bytes:", h_pool1.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-print "h_conv2 bytes:", h_conv2.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-print "h_conv3 bytes:", h_conv3.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-print "h_conv4 bytes:", h_conv4.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-print "h_conv5 bytes:", h_conv5.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-print "h_conv6 bytes:", h_conv6.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-print "h_conv7 bytes:", h_conv7.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-print "h_conv8 bytes:", h_conv8.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-print "h_conv9 bytes:", h_conv9.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-print "h_conv10 bytes:", h_conv10.eval(
-            feed_dict={x:batch[0], y: batch[1]}).shape
-print "h_conv10_flat bytes:", h_conv10_flat.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-print "h_fc1 bytes:", h_fc1.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-print "h_fc2 bytes:", h_fc2.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-print "h_fc3 bytes:", h_fc3.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-print "h_fc4 bytes:", h_fc4.eval(
-            feed_dict={x:batch[0], y: batch[1]}).nbytes
-"""
-
-#keep_prob = tf.placeholder(tf.float32)
-#h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
-
-#    sess.run(tf.initialize_all_variables())
-#    for i in range(1):
-#        batch = load_timit()
-
