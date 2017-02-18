@@ -128,5 +128,5 @@ def create_raw_data():
 
 if __name__ == "__main__":
     #create_raw_data()
-    #all_feature_extraction()
+    all_feature_extraction()
     all_zero_pad()
