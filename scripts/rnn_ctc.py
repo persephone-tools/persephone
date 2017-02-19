@@ -19,7 +19,8 @@ def collapsed_timit(batch_size=100):
     return train_feats, train_labels
 
 def create_graph(batch_size=100, utter_len=778, freqfeats=78,
-        num_layers=2, hidden_size=250, keep_prob=1.0, vocab_size=61):
+        num_layers=2, hidden_size=250, keep_prob=1.0, vocab_size=61,
+        learning_rate=1e-4):
 
     def lstm_cell(hidden_size):
         return tf.contrib.rnn.BasicLSTMCell(hidden_size, forget_bias=0.0,
@@ -53,22 +54,33 @@ def create_graph(batch_size=100, utter_len=778, freqfeats=78,
             (cell_output, state) = cell(feats[:, :, time_step], state)
             outputs.append(cell_output)
 
-    print(outputs[0])
     output = tf.reshape(tf.concat(outputs, 1), [-1, hidden_size])
     W = tf.Variable(tf.truncated_normal([hidden_size, vocab_size+1]))
     b = tf.Variable(tf.constant(0.1, shape=[vocab_size+1]))
     logits = tf.matmul(output, W) + b
     logits = tf.reshape(logits, [batch_size, -1, vocab_size+1])
-    # igormq made it time major.
+    # igormq made it time major, because of an optimization in ctc_loss.
     logits = tf.transpose(logits, (1, 0, 2))
     loss = tf.nn.ctc_loss(labels, logits, seq_len)
     cost = tf.reduce_mean(loss)
     optimizer = tf.train.MomentumOptimizer(learning_rate, 0.9).minimize(cost)
-    ler = tf.reduce_mean(tf.edit_distance(
-            tf.cast(decoded[0], tf.int32), targets)
 
-    return output
+    decoded, log_prob = tf.nn.ctc_greedy_decoder(logits, seq_len)
+    ler = tf.reduce_mean(tf.edit_distance(
+            tf.cast(decoded[0], tf.int32), labels))
+
+    # Should engineer it so that I don't have to pick and choose ops and
+    # tensors to return.
+    return ler, feats
 
 if __name__ == "__main__":
-   train_x, train_y = collapsed_timit()
-   g = create_graph()
+    train_x, train_y = collapsed_timit()
+    ler, feats = create_graph()
+    print(ler)
+    print(feats)
+
+    init = tf.global_variables_initializer()
+
+    with tf.Session() as sess:
+        sess.run(init)
+        print(sess.run(feats))
