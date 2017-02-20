@@ -4,6 +4,31 @@ import os
 import numpy as np
 import random
 
+# Hardcoded numbers
+num_timit_phones = 61
+eval_phones = 39
+
+def phone_classes(path="/home/oadams/mam/data/timit/train"):
+    """ Returns a sorted list of phone classes observed in the TIMIT corpus."""
+
+    train_paths = []
+    for root, dirnames, filenames in os.walk(path):
+        for fn in filenames:
+            prefix = fn.split(".")[0] # Get the file prefix
+            if fn.endswith(".log_mel_filterbank.zero_pad.npy"):
+                # Add to filename list.
+                path = os.path.join(root,fn)
+                train_paths.append(os.path.join(root,fn))
+    phn_paths = ["".join(path.split(".")[:-3])+".phn" for path in train_paths]
+    phone_set = set()
+    for phn_path in phn_paths:
+        with open(phn_path) as phn_f:
+            for phone in phn_f.readline().split():
+                phone_set.add(phone)
+
+    assert len(phone_set) == num_timit_phones
+    return sorted(list(phone_set))
+
 def batch_gen(path="/home/oadams/mam/data/timit/train", rand=True,
         batch_size=100, labels="phonemes"):
     """ Load the already preprocessed TIMIT data. """
