@@ -4,8 +4,8 @@ import os
 import numpy as np
 import random
 
-def load_timit(path="/home/oadams/mam/data/timit/train", rand=True,
-        batch_size=20, labels="phonemes"):
+def batch_gen(path="/home/oadams/mam/data/timit/train", rand=True,
+        batch_size=100, labels="phonemes"):
     """ Load the already preprocessed TIMIT data. """
 
     def create_one_hot(i, num_classes):
@@ -31,9 +31,13 @@ def load_timit(path="/home/oadams/mam/data/timit/train", rand=True,
     dialect_classes = sorted(list(dialect_classes))
     dr_class_map = dict(zip(dialect_classes, range(0,len(dialect_classes))))
 
+    path_batches = [train_paths[i:i+batch_size] for i in range(
+            0,len(train_paths),batch_size)]
+
     if rand:
-        # Load a random subset of the training set of batch_size 
-        path_batch = random.sample(train_paths, batch_size)
+        random.shuffle(path_batches)
+
+    for path_batch in path_batches:
         feats = [np.load(path) for path in path_batch]
         x = np.array(feats)
         if labels == "dialects":
@@ -46,8 +50,6 @@ def load_timit(path="/home/oadams/mam/data/timit/train", rand=True,
             for phn_path in phn_paths:
                 with open(phn_path) as phn_f:
                     batch_y.append(phn_f.readline().split())
-    else:
-        raise Exception("Not implemented.")
 
-    batch_x = np.array(feats)
-    return batch_x, batch_y
+        batch_x = np.array(feats)
+        yield batch_x, batch_y
