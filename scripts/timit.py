@@ -4,6 +4,8 @@ import os
 import numpy as np
 import random
 
+random.seed(0)
+
 # Hardcoded numbers
 num_timit_phones = 61
 eval_phones = 39
@@ -62,6 +64,9 @@ def batch_gen(path="/home/oadams/mam/data/timit/train", rand=True,
     if rand:
         random.shuffle(path_batches)
 
+    # A map from phones to ints.
+    phone_map = {phone:index for index, phone in enumerate(phone_classes())}
+
     for path_batch in path_batches:
         feats = [np.load(path) for path in path_batch]
         x = np.array(feats)
@@ -74,7 +79,8 @@ def batch_gen(path="/home/oadams/mam/data/timit/train", rand=True,
             batch_y = []
             for phn_path in phn_paths:
                 with open(phn_path) as phn_f:
-                    batch_y.append(phn_f.readline().split())
+                    phone_indices = [phone_map[phn] for phn in phn_f.readline().split()]
+                    batch_y.append(phone_indices)
 
         batch_x = np.array(feats)
         yield batch_x, batch_y
