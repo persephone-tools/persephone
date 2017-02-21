@@ -7,10 +7,9 @@ import random
 random.seed(0)
 
 # Hardcoded numbers
-num_timit_phones = 61
-eval_phones = 39
+num_phones = 61
 
-def phone_classes(path="/home/oadams/mam/data/timit/train"):
+def phone_classes(path="/home/oadams/code/mam/data/timit/train"):
     """ Returns a sorted list of phone classes observed in the TIMIT corpus."""
 
     train_paths = []
@@ -28,10 +27,40 @@ def phone_classes(path="/home/oadams/mam/data/timit/train"):
             for phone in phn_f.readline().split():
                 phone_set.add(phone)
 
-    assert len(phone_set) == num_timit_phones
+    assert len(phone_set) == num_phones
     return sorted(list(phone_set))
 
-def batch_gen(path="/home/oadams/mam/data/timit/train", rand=True,
+phone_set = phone_classes()
+phone_map = {index: phone for index, phone in enumerate(phone_set)}
+
+def collapse_phones(utterance):
+    """ Converts an utterance with labels of 61 possible phones to 39. This is
+    done as per Kai-fu Lee & Hsiao-Wuen Hon 1989."""
+
+    # Define some groupings of similar phones
+
+    allophone_map = {"ux":"uw",
+                 "axr":"er", "ax-h":"ah", "em":"m", "nx":"n", "hv": "hh", "eng": "ng",
+                 "q":"t", # Glottal stop -> t
+                 "pau":"sil","h#": "sil", "#h": "sil", # Silences
+                 "bcl":"vcl", "dcl":"vcl", "gcl":"vcl", # Voiced closures
+                 "pcl":"cl", "tcl":"cl", "kcl":"cl", "qcl":"cl", # Unvoiced closures
+                } 
+
+    class_map = {"el": "l", "en": "n", "zh": "sh", "ao": "aa", "ix":"ih", "ax":"ah",
+            "sil":"sil", "cl":"sil", "vcl":"sil", "epi":"sil"}
+
+    allo_collapse = [(allophone_map[phn] if phn in allophone_map else phn) for phn in utterance]
+    class_collapse = [(class_map[phn] if phn in class_map else phn) for phn in allo_collapse]
+
+    return class_collapse
+
+def indices_to_phones(indices):
+    """ Converts integer representations of phones to human-readable characters. """
+
+    return " ".join([phone_map[index] for index in indices])
+
+def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
         batch_size=100, labels="phonemes"):
     """ Load the already preprocessed TIMIT data. """
 
