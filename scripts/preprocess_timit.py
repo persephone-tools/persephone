@@ -7,21 +7,27 @@ import scipy.io.wavfile as wav
 import shutil
 import subprocess
 from os.path import join
-
-ORG_DIR = "/lt/data/timit/timit/"
-TGT_DIR = "/home/oadams/mam/data/timit/"
-SOX_PATH = "/home/oadams/tools/sox-14.4.2/src/sox"
+import config
 
 def all_feature_extraction():
     """ Walk over all the wav files in the TIMIT dir and extract features. """
 
+    def extract_energy(rate, sig):
+        """ Extracts the energy of frames. """
+        mfcc = python_speech_features.mfcc(sig, rate, appendEnergy=True)
+        energy_row_vec = mfcc[:,0]
+        energy_col_vec = energy_row_vec[:, np.newaxis]
+        return energy_col_vec
+
     def feature_extraction(wav_path):
         """ Currently grabs log Mel filterbank, deltas and double deltas."""
         (rate, sig) = wav.read(wav_path)
-        fbank_feat = python_speech_features.logfbank(sig, rate)
-        delta_feat = python_speech_features.delta(fbank_feat, 2)
+        fbank_feat = python_speech_features.logfbank(sig, rate, nfilt=40)
+        energy = extract_energy(rate, sig)
+        feat = np.hstack([energy, fbank_feat])
+        delta_feat = python_speech_features.delta(feat, 2)
         delta_delta_feat = python_speech_features.delta(delta_feat, 2)
-        l = [fbank_feat, delta_feat, delta_delta_feat]
+        l = [feat, delta_feat, delta_delta_feat]
         all_feats = np.array(l)
         # Make time the first dimension for easy length normalization padding later.
         all_feats = np.swapaxes(all_feats, 0, 1)
@@ -31,7 +37,7 @@ def all_feature_extraction():
         feat_fn = wav_path[:-3] + "log_mel_filterbank.npy"
         np.save(feat_fn, all_feats)
 
-    for root, dirs, fns in os.walk(TGT_DIR):
+    for root, dirs, fns in os.walk(config.TGT_DIR):
         print("Processing speaker %s" % root)
         for fn in fns:
             if fn.endswith(".wav"):
@@ -41,7 +47,7 @@ def all_zero_pad():
     """ Pads all the utterance features with zeros along the time dimension so
     that each utterance is as long as the longest one, with silence added."""
 
-    def len_longest_timit_utterance(path=TGT_DIR):
+    def len_longest_timit_utterance(path=config.TGT_DIR):
         """ Finds the number of frames in the longest utterance in TIMIT, so that
         we can zero-pad the other utterances appropriately."""
 
@@ -76,7 +82,7 @@ def all_zero_pad():
 
     max_len = len_longest_timit_utterance()
 
-    for root, dirs, fns in os.walk(TGT_DIR):
+    for root, dirs, fns in os.walk(config.TGT_DIR):
         print("Padding utterances for speaker %s" % "/".join(root.split("/")[-3:]))
         for fn in fns:
             if fn.endswith(".log_mel_filterbank.npy"):
@@ -102,14 +108,14 @@ def create_raw_data():
 
     def sph2wav(sphere_path, wav_path):
         """ Calls sox to convert the sphere file to wav."""
-        args = [SOX_PATH, sphere_path, wav_path]
+        args = [config.SOX_PATH, sphere_path, wav_path]
         subprocess.run(args)
 
-    for root, dirs, fns in os.walk(ORG_DIR):
+    for root, dirs, fns in os.walk(config.ORG_DIR):
         for fn in fns:
             org_path = join(root, fn)
-            sub_path = join(root[len(ORG_DIR):], fn)
-            tgt_path = join(TGT_DIR, sub_path)
+            sub_path = join(root[len(config.ORG_DIR):], fn)
+            tgt_path = join(config.TGT_DIR, sub_path)
 
             # Create parent directory
             parent_path = os.path.dirname(tgt_path)
