@@ -22,7 +22,7 @@ def SimpleSparseTensorFrom(x):
   x_val = constant_op.constant(x_val, dtypes.int32)
   x_shape = constant_op.constant(x_shape, dtypes.int64)
 
-  return sparse_tensor.SparseTensor(x_ix, x_val, x_shape)
+  return tf.SparseTensorValue(x_ix, x_val, x_shape)
 
 def target_list_to_sparse_tensor(targetList):
     '''make tensorflow SparseTensor from list of targets, with each element
@@ -39,6 +39,26 @@ def target_list_to_sparse_tensor(targetList):
     shape = [len(targetList), np.asarray(indices).max(0)[1]+1]
     return (np.array(indices), np.array(vals), np.array(shape))
 
+def sparse_tuple_from(sequences, dtype=np.int32):
+    """Create a sparse representention of x.
+    Args:
+        sequences: a list of lists of type dtype where each element is a sequence
+    Returns:
+        A tuple with (indices, values, shape)
+    """
+    indices = []
+    values = []
+
+    for n, seq in enumerate(sequences):
+        indices.extend(zip([n]*len(seq), range(len(seq))))
+        values.extend(seq)
+
+    indices = np.asarray(indices, dtype=np.int64)
+    values = np.asarray(values, dtype=dtype)
+    shape = np.asarray([len(sequences), np.asarray(indices).max(0)[1]+1], dtype=np.int64)
+
+    return indices, values, shape
+
 logits = tf.Variable([[[2.,0.,0.],[0.,2.,0.],[0.,2.,0.],[2.,0.,0.]]], tf.float32)
 logits = tf.Variable([[[0.,0.,0.],[0.,0.,0.],[0.,0.,0.],[0.,0.,0.]]], tf.float32)
 logits = tf.Variable(tf.random_normal([1,4,3], stddev=0.35))
@@ -46,8 +66,24 @@ logits = tf.Variable(tf.random_normal([1,4,3], stddev=0.35))
 logits = tf.transpose(logits, (1,0,2))
 seq_len = [3]
 
-#targets = target_list_to_sparse_tensor([[0,1,0]])
-targets = SimpleSparseTensorFrom([[0,1,0]])
+#train_targets = target_list_to_sparse_tensor([[0,1,0]])
+#print(targets)
+#for t in targets:
+#    print(t)
+#import sys; sys.exit()
+#targetIxs = tf.placeholder(tf.int64)
+#targetVals = tf.placeholder(tf.int32)
+#targetShape = tf.placeholder(tf.int64)
+#targetY = tf.SparseTensor(targetIxs, targetVals, targetShape)
+
+train_targets = sparse_tuple_from([[0,1,0]])
+print(train_targets)
+train_targets = target_list_to_sparse_tensor([[0,1,0]])
+print(train_targets)
+#batchTargetSparse = train_targets
+#batchTargetIxs, batchTargetVals, batchTargetShape = batchTargetSparse
+
+targets = tf.sparse_placeholder(tf.int32)
 
 loss = tf.nn.ctc_loss(targets, logits, seq_len)
 cost = tf.reduce_mean(loss)
@@ -60,10 +96,17 @@ ler = tf.reduce_mean(tf.edit_distance(
 
 with tf.Session() as sess:
     init = tf.global_variables_initializer()
-    sess.run(init)
+    #sess.run(init, feed_dict={targetIxs: batchTargetIxs, targetVals: batchTargetVals,
+    #                       targetShape: batchTargetShape})
+    feed_dict = {targets: train_targets}
+    sess.run(init, feed_dict=feed_dict)
+    #train_targets_val = train_targets.eval(sess)
     for _ in range(1000):
-        out_opt, out_ler, out_logits, out_decoded = sess.run([optimizer, ler, logits, decoded])
-        sess.run(optimizer)
+        out_opt, out_ler, out_logits, out_decoded = sess.run([optimizer, ler, logits, decoded],
+                feed_dict=feed_dict)
+                #feed_dict={targetIxs: batchTargetIxs, targetVals: batchTargetVals,
+                #           targetShape: batchTargetShape})
+        #sess.run(optimizer)
         print(out_logits)
         print(out_ler)
         print(out_decoded)
