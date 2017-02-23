@@ -4,6 +4,8 @@ import os
 import numpy as np
 import random
 
+from nltk.metrics import distance
+
 random.seed(0)
 
 # Hardcoded numbers
@@ -38,7 +40,6 @@ def collapse_phones(utterance):
     done as per Kai-fu Lee & Hsiao-Wuen Hon 1989."""
 
     # Define some groupings of similar phones
-
     allophone_map = {"ux":"uw",
                  "axr":"er", "ax-h":"ah", "em":"m", "nx":"n", "hv": "hh", "eng": "ng",
                  "q":"t", # Glottal stop -> t
@@ -54,14 +55,22 @@ def collapse_phones(utterance):
     class_collapse = [(class_map[phn] if phn in class_map else phn) for phn in allo_collapse]
 
     return class_collapse
+    #return allo_collapse
+
+def per(hypo, ref):
+    """ Calculates the phoneme error rate between decoder output and the gold reference by first collapsing the TIMIT labels into the standard 39 phonemes."""
+
+    hypo = collapse_phonemes(hypo)
+    ref = collapse_phonemes(ref)
+    return distance.edit_distance.eval(hypo, ref)
 
 def indices_to_phones(indices):
     """ Converts integer representations of phones to human-readable characters. """
 
-    return " ".join([phone_map[index] for index in indices])
+    return [phone_map[index] for index in indices]
 
 def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
-        batch_size=100, labels="phonemes"):
+        batch_size=100, labels="phonemes", total_size=4620):
     """ Load the already preprocessed TIMIT data. """
 
     def create_one_hot(i, num_classes):
@@ -86,6 +95,9 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
 
     dialect_classes = sorted(list(dialect_classes))
     dr_class_map = dict(zip(dialect_classes, range(0,len(dialect_classes))))
+
+    # Adjust the effective size of the TIMIT corpus so I can debug models more easily.
+    train_paths = train_paths[:total_size]
 
     path_batches = [train_paths[i:i+batch_size] for i in range(
             0,len(train_paths),batch_size)]
