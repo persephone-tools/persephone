@@ -6,7 +6,7 @@ import logging
 import numpy as np
 import tensorflow as tf
 
-def collapsed_timit(batch, batch_size=100):
+def collapsed_timit(batch):
     """ Converts timit into an array of format (batch_size, freq, time). Except
     where Freq is Freqxnum_deltas, so usually freq*3. Essentially multiple
     channels are collapsed to one"""
@@ -21,6 +21,118 @@ def collapsed_timit(batch, batch_size=100):
     train_feats = np.array(new_train)
     return train_feats, train_labels
 
+def lstm_cell(hidden_size):
+    return tf.contrib.rnn.LSTMCell(
+            hidden_size,
+            use_peepholes=True,
+            state_is_tuple=True)
+
+def multi_cell(num_layers, hidden_size):
+    return tf.contrib.rnn.MultiRNNCell(
+            [lstm_cell(hidden_size) for _ in range(num_layers)],
+            state_is_tuple=True)
+
+class RNNCTC:
+
+    def __init__(self, batch_x, batch_y, batch_seq_lens, num_layers=1, hidden_size=250):
+        self.inputs = batch_x
+        self.targets = batch_y
+        self.seq_lens = batch_seq_lens
+        self.num_layers = num_layers
+        self.hidden_size = hidden_size
+        self._logits = None
+        self._optimize = None
+        self._error = None
+        self._decoded = None
+
+    @property
+    def logits(self):
+        if not self._logits:
+
+            cell = multi_cell(self.num_layers, self.hidden_size)
+
+            initial_state = cell.zero_state(batch_size, tf.float32)
+            state = initial_state
+
+            outputs = []
+            with tf.variable_scope("RNN"):
+                for time_step in range(utter_len):
+                    if time_step > 0: tf.get_variable_scope().reuse_variables()
+                    (cell_output, state) = cell(feats[:, :, time_step], state)
+                    outputs.append(cell_output)
+
+            output = tf.reshape(tf.concat(outputs, 1), [-1, hidden_size])
+            W = tf.Variable(tf.truncated_normal([hidden_size, vocab_size+1]))
+            b = tf.Variable(tf.constant(0.1, shape=[vocab_size+1]))
+            logits = tf.matmul(output, W) + b
+            logits = tf.reshape(logits, [batch_size, -1, vocab_size+1])
+            # igormq made it time major, because of an optimization in ctc_loss.
+            logits = tf.transpose(logits, (1, 0, 2))
+        return logits
+
+    @property
+    def decode(self):
+        if not self._decoded:
+            #decoded, log_prob = tf.nn.ctc_greedy_decoder(logits, seq_len)
+            decoded, log_prob = tf.nn.ctc_beam_search_decoder(
+                    self.logits, self.seq_lens, beam_width=100)
+
+        return decoded, log_prob
+
+    @property
+    def optimize(self):
+        if not self._optimize:
+            loss = tf.nn.ctc_loss(self.targets, self.logits, self.seq_lens,
+                    preprocess_collapse_repeated=True)
+            cost = tf.reduce_mean(loss)
+            # Trying Adam with defaults.
+            optimizer = tf.train.AdadeltaOptimizer()
+        return optimizer.minimize(cost)
+
+    @property
+    def error(self):
+        if not self._error:
+            ler = tf.reduce_mean(tf.edit_distance(
+                    tf.cast(self.decode[0], tf.int32), self.targets))
+        return ler
+
+def main():
+    batch_size = 1 # The size of each batch
+    total_size = 1 # The total number of TIMIT training examples
+
+    # A generator that pumps out batches
+    batch_gen = timit.batch_gen(batch_size=batch_size, labels="phonemes",
+            total_size=total_size, rand=False)
+
+    freqfeats = 123 # This should be detected from data
+    utter_len = 778 # This should be detected from data
+
+    inputs = tf.placeholder(tf.float32, [None, freqfeats, utter_len])
+    targets = tf.placeholder(tf.int32)
+    # The lengths of the target sequences.
+    seq_lens = tf.placeholder(tf.int32, [None])
+
+    model = RNNCTC(inputs, targets, seq_lens)
+
+    sess = tf.Session()
+    sess.run(tf.global_variables_initializer())
+
+    num_epochs = 100
+    for epoch in range(num_epochs):
+        batch_gen = timit.batch_gen(batch_size=batch_size, labels="phonemes",
+                total_size=total_size, rand=False)
+        for batch in batch_gen:
+            batch_x, batch_y = collapsed_timit(batch)
+            batch_seq_lens = np.asarray([len(s) for s in batch_y], dtype=np.int32)
+            batch_y = target_list_to_sparse_tensor(batch_y)
+
+            feed_dict={inputs: batch_x, targets: batch_y, seq_lens: batch_seq_lens}
+            error = sess.run(model.error, feed_dict=feed_dict)
+            print("Training error: %f" % (error))
+            sess.run(model.optimize, feed_dict=feed_dict)
+
+    sess.close()
+
 def create_graph(batch_size=100, utter_len=778, freqfeats=123,
         num_layers=1, hidden_size=250, keep_prob=1.0,
         vocab_size=timit.num_phones,
@@ -34,8 +146,7 @@ def create_graph(batch_size=100, utter_len=778, freqfeats=123,
                 use_peepholes=True,
                 state_is_tuple=True)
 
-    #def dropout_cell(hidden_size, keep_prob):
-    #    return tf.contrib.rnn.DropoutWrapper(lstm_cell(hidden_size),
+    #def dropout_cell(hidden_size, keep_prob): #    return tf.contrib.rnn.DropoutWrapper(lstm_cell(hidden_size),
     #            output_keep_prob=keep_prob)
 
     def multi_cell(num_layers, hidden_size):
@@ -87,8 +198,6 @@ def create_graph(batch_size=100, utter_len=778, freqfeats=123,
     # tensors to return.
     return feats, targets, seq_len, optimizer, ler, decoded, logits, loss, cost
 
-print("LOADED AGAIN")
-
 def train(batch_size=60, total_size=4620, num_epochs=1000):
     tf.reset_default_graph()
     feats, targets, seq_len, optimizer, ler, decoded, logits, loss, cost = create_graph(batch_size=batch_size)
@@ -139,4 +248,5 @@ def train(batch_size=60, total_size=4620, num_epochs=1000):
 
 
 if __name__ == "__main__":
-    train()
+    #train()
+    main()
