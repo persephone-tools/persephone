@@ -14,3 +14,12 @@ def target_list_to_sparse_tensor(targetList):
             vals.append(val)
     shape = [len(targetList), np.asarray(indices).max(0)[1]+1]
     return (np.array(indices), np.array(vals), np.array(shape))
+
+def zero_pad(a, to_length):
+    """ Zero pads along the 0th dimension to make sure the utterance array
+    x is of length to_length."""
+
+    assert a.shape[0] <= to_length
+    result = np.zeros((to_length,) + a.shape[1:])
+    result[:a.shape[0]] = a
+    return result

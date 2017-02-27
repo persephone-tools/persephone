@@ -4,6 +4,8 @@ import os
 import numpy as np
 import random
 
+import utils
+
 from nltk.metrics import distance
 
 random.seed(0)
@@ -18,11 +20,11 @@ def phone_classes(path="/home/oadams/code/mam/data/timit/train"):
     for root, dirnames, filenames in os.walk(path):
         for fn in filenames:
             prefix = fn.split(".")[0] # Get the file prefix
-            if fn.endswith(".log_mel_filterbank.zero_pad.npy"):
+            if fn.endswith(".log_mel_filterbank.npy"):
                 # Add to filename list.
                 path = os.path.join(root,fn)
                 train_paths.append(os.path.join(root,fn))
-    phn_paths = ["".join(path.split(".")[:-3])+".phn" for path in train_paths]
+    phn_paths = [path.split(".")[0] + ".phn" for path in train_paths]
     phone_set = set()
     for phn_path in phn_paths:
         with open(phn_path) as phn_f:
@@ -70,8 +72,9 @@ def indices_to_phones(indices):
     return [phone_map[index] for index in indices]
 
 def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
-        batch_size=100, labels="phonemes", total_size=4620):
-    """ Load the already preprocessed TIMIT data. """
+        batch_size=100, labels="phonemes", total_size=4620, flatten=True):
+    """ Load the already preprocessed TIMIT data.  Flatten=True will make the
+    2-dimensional freq x time a 1 dimensional vector of feats."""
 
     def create_one_hot(i, num_classes):
         """ Takes a list or array with numbers representing classes, and
@@ -81,13 +84,46 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
         one_hot[0,i] = 1
         return one_hot
 
+    def collapse(batch_x):
+        """ Converts timit into an array of format (batch_size, freq, time). Except
+        where Freq is Freqxnum_deltas, so usually freq*3. Essentially multiple
+        channels are collapsed to one"""
+
+        train_feats = batch_x
+        new_train = []
+        for utterance in train_feats:
+            swapped = np.swapaxes(utterance,0,1)
+            concatenated = np.concatenate(swapped,axis=1)
+            reswapped = np.swapaxes(concatenated,0,1)
+            new_train.append(reswapped)
+        train_feats = np.array(new_train)
+        return train_feats
+
+
+    def load_batch_x(path_batch):
+        """ Loads a batch given a list of filenames to numpy arrays in that batch."""
+
+        utterances = [np.load(path) for path in path_batch]
+        # The maximum length of an utterance in the batch
+        max_len = max([utterance.shape[0] for utterance in utterances])
+        shape = (batch_size, max_len) + tuple(utterances[0].shape[1:])
+        batch = np.zeros(shape)
+        print(batch.shape)
+        for i, utt in enumerate(utterances):
+            batch[i] = utils.zero_pad(utt, max_len)
+        print(batch.shape)
+        if flatten:
+            batch = collapse(batch)
+        print(batch.shape)
+        return batch
+
     train_paths = []
     dialect_classes = set()
 
     for root, dirnames, filenames in os.walk(path):
         for fn in filenames:
             prefix = fn.split(".")[0] # Get the file prefix
-            if fn.endswith(".log_mel_filterbank.zero_pad.npy"):
+            if fn.endswith(".log_mel_filterbank.npy"):
                 # Add to filename list.
                 path = os.path.join(root,fn)
                 train_paths.append(os.path.join(root,fn))
@@ -109,19 +145,19 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
     phone_map = {phone:index for index, phone in enumerate(phone_classes())}
 
     for path_batch in path_batches:
-        feats = [np.load(path) for path in path_batch]
-        x = np.array(feats)
+        batch_x = load_batch_x(path_batch)
         if labels == "dialects":
             y_labels = np.array([dr_class_map[path.split("/")[-3]] for path in path_batch])
             # Make into one-hot vectors
             batch_y = np.concatenate([create_one_hot(label,len(dialect_classes)) for label in y_labels])
         elif labels == "phonemes":
-            phn_paths = ["".join(path.split(".")[:-3])+".phn" for path in path_batch]
+            phn_paths = [path.split(".")[0]+".phn" for path in path_batch]
             batch_y = []
             for phn_path in phn_paths:
                 with open(phn_path) as phn_f:
                     phone_indices = [phone_map[phn] for phn in phn_f.readline().split()]
                     batch_y.append(phone_indices)
 
-        batch_x = np.array(feats)
         yield batch_x, batch_y
+
+

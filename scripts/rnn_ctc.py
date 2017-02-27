@@ -6,21 +6,6 @@ import logging
 import numpy as np
 import tensorflow as tf
 
-def collapsed_timit(batch):
-    """ Converts timit into an array of format (batch_size, freq, time). Except
-    where Freq is Freqxnum_deltas, so usually freq*3. Essentially multiple
-    channels are collapsed to one"""
-
-    train_feats, train_labels = batch
-    new_train = []
-    for utterance in train_feats:
-        swapped = np.swapaxes(utterance,0,1)
-        concatenated = np.concatenate(swapped,axis=1)
-        reswapped = np.swapaxes(concatenated,0,1)
-        new_train.append(reswapped)
-    train_feats = np.array(new_train)
-    return train_feats, train_labels
-
 def lstm_cell(hidden_size):
     return tf.contrib.rnn.LSTMCell(
             hidden_size,
@@ -51,23 +36,24 @@ class RNNCTC:
 
             cell = multi_cell(self.num_layers, self.hidden_size)
 
-            initial_state = cell.zero_state(batch_size, tf.float32)
-            state = initial_state
+            #initial_state = cell.zero_state(batch_size, tf.float32)
+            #state = initial_state
 
-            outputs = []
-            with tf.variable_scope("RNN"):
-                for time_step in range(utter_len):
-                    if time_step > 0: tf.get_variable_scope().reuse_variables()
-                    (cell_output, state) = cell(feats[:, :, time_step], state)
-                    outputs.append(cell_output)
+            #outputs = []
+            #with tf.variable_scope("RNN"):
+            #    for time_step in range(utter_len):
+            #        if time_step > 0: tf.get_variable_scope().reuse_variables()
+            #        (cell_output, state) = cell(feats[:, :, time_step], state)
+            #        outputs.append(cell_output)
 
-            output = tf.reshape(tf.concat(outputs, 1), [-1, hidden_size])
-            W = tf.Variable(tf.truncated_normal([hidden_size, vocab_size+1]))
-            b = tf.Variable(tf.constant(0.1, shape=[vocab_size+1]))
-            logits = tf.matmul(output, W) + b
-            logits = tf.reshape(logits, [batch_size, -1, vocab_size+1])
+            #output = tf.reshape(tf.concat(outputs, 1), [-1, hidden_size])
+            #W = tf.Variable(tf.truncated_normal([hidden_size, vocab_size+1]))
+            #b = tf.Variable(tf.constant(0.1, shape=[vocab_size+1]))
+            #logits = tf.matmul(output, W) + b
+            #logits = tf.reshape(logits, [batch_size, -1, vocab_size+1])
             # igormq made it time major, because of an optimization in ctc_loss.
-            logits = tf.transpose(logits, (1, 0, 2))
+            # logits = tf.transpose(logits, (1, 0, 2))
+
         return logits
 
     @property

@@ -8,6 +8,7 @@ import shutil
 import subprocess
 from os.path import join
 import config
+from utils import zero_pad
 
 def all_feature_extraction():
     """ Walk over all the wav files in the TIMIT dir and extract features. """
@@ -135,4 +136,4 @@ def create_raw_data():
 if __name__ == "__main__":
     #create_raw_data()
     all_feature_extraction()
-    all_zero_pad()
+    #all_zero_pad()
