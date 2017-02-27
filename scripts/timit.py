@@ -72,7 +72,7 @@ def indices_to_phones(indices):
     return [phone_map[index] for index in indices]
 
 def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
-        batch_size=100, labels="phonemes", total_size=4620, flatten=True):
+        batch_size=100, labels="phonemes", total_size=4620, flatten=True, time_major=True):
     """ Load the already preprocessed TIMIT data.  Flatten=True will make the
     2-dimensional freq x time a 1 dimensional vector of feats."""
 
@@ -89,14 +89,19 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
         where Freq is Freqxnum_deltas, so usually freq*3. Essentially multiple
         channels are collapsed to one"""
 
+        #import pdb; pdb.set_trace()
+
         train_feats = batch_x
         new_train = []
         for utterance in train_feats:
             swapped = np.swapaxes(utterance,0,1)
             concatenated = np.concatenate(swapped,axis=1)
-            reswapped = np.swapaxes(concatenated,0,1)
-            new_train.append(reswapped)
+            #reswapped = np.swapaxes(concatenated,0,1)
+            #new_train.append(reswapped)
+            new_train.append(concatenated)
         train_feats = np.array(new_train)
+        if time_major:
+            train_feats = np.transpose(train_feats, (1,0,2))
         return train_feats
 
 
@@ -105,17 +110,15 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
 
         utterances = [np.load(path) for path in path_batch]
         # The maximum length of an utterance in the batch
-        max_len = max([utterance.shape[0] for utterance in utterances])
+        utter_lens = [utterance.shape[0] for utterance in utterances]
+        max_len = max(utter_lens)
         shape = (batch_size, max_len) + tuple(utterances[0].shape[1:])
         batch = np.zeros(shape)
-        print(batch.shape)
         for i, utt in enumerate(utterances):
             batch[i] = utils.zero_pad(utt, max_len)
-        print(batch.shape)
         if flatten:
             batch = collapse(batch)
-        print(batch.shape)
-        return batch
+        return batch, np.array(utter_lens)
 
     train_paths = []
     dialect_classes = set()
@@ -145,7 +148,7 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
     phone_map = {phone:index for index, phone in enumerate(phone_classes())}
 
     for path_batch in path_batches:
-        batch_x = load_batch_x(path_batch)
+        batch_x, utter_lens = load_batch_x(path_batch)
         if labels == "dialects":
             y_labels = np.array([dr_class_map[path.split("/")[-3]] for path in path_batch])
             # Make into one-hot vectors
@@ -158,6 +161,6 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
                     phone_indices = [phone_map[phn] for phn in phn_f.readline().split()]
                     batch_y.append(phone_indices)
 
-        yield batch_x, batch_y
+        yield batch_x, utter_lens, batch_y
 
 

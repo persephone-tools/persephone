@@ -19,12 +19,15 @@ def multi_cell(num_layers, hidden_size):
 
 class RNNCTC:
 
-    def __init__(self, batch_x, batch_y, batch_seq_lens, num_layers=1, hidden_size=250):
+    def __init__(self, batch_x, x_lens,
+            batch_y, batch_seq_lens, num_layers=1, hidden_size=250, freq_feats=123):
         self.inputs = batch_x
+        self.input_lens = x_lens
         self.targets = batch_y
         self.seq_lens = batch_seq_lens
         self.num_layers = num_layers
         self.hidden_size = hidden_size
+        self.freq_feats = freq_feats
         self._logits = None
         self._optimize = None
         self._error = None
@@ -35,6 +38,9 @@ class RNNCTC:
         if not self._logits:
 
             cell = multi_cell(self.num_layers, self.hidden_size)
+
+            logits, _ = tf.nn.dynamic_rnn(cell, self.inputs, self.input_lens, dtype=tf.float32, 
+                    time_major=True)
 
             #initial_state = cell.zero_state(batch_size, tf.float32)
             #state = initial_state
@@ -90,15 +96,16 @@ def main():
     batch_gen = timit.batch_gen(batch_size=batch_size, labels="phonemes",
             total_size=total_size, rand=False)
 
-    freqfeats = 123 # This should be detected from data
-    utter_len = 778 # This should be detected from data
+    freq_feats = 123 # This should be detected from data
+    #utter_len = 778 # This should be detected from data
 
-    inputs = tf.placeholder(tf.float32, [None, freqfeats, utter_len])
-    targets = tf.placeholder(tf.int32)
+    inputs = tf.placeholder(tf.float32, [None, None, freq_feats])
+    input_lens = tf.placeholder(tf.float32, [None])
+    targets = tf.sparse_placeholder(tf.int32)
     # The lengths of the target sequences.
     seq_lens = tf.placeholder(tf.int32, [None])
 
-    model = RNNCTC(inputs, targets, seq_lens)
+    model = RNNCTC(inputs, input_lens, targets, seq_lens, freq_feats=freq_feats)
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
@@ -108,14 +115,21 @@ def main():
         batch_gen = timit.batch_gen(batch_size=batch_size, labels="phonemes",
                 total_size=total_size, rand=False)
         for batch in batch_gen:
-            batch_x, batch_y = collapsed_timit(batch)
+            batch_x, x_lens, batch_y = batch
             batch_seq_lens = np.asarray([len(s) for s in batch_y], dtype=np.int32)
             batch_y = target_list_to_sparse_tensor(batch_y)
 
-            feed_dict={inputs: batch_x, targets: batch_y, seq_lens: batch_seq_lens}
-            error = sess.run(model.error, feed_dict=feed_dict)
-            print("Training error: %f" % (error))
-            sess.run(model.optimize, feed_dict=feed_dict)
+            print(batch_x.shape)
+            print(x_lens.shape)
+            print(batch_seq_lens.shape)
+
+            #feed_dict={inputs: batch_x, input_lens: x_lens, targets: batch_y, seq_lens: batch_seq_lens}
+            feed_dict={inputs: batch_x, input_lens: x_lens}
+
+            sess.run(model.logits, feed_dict=feed_dict)
+            #error = sess.run(model.error, feed_dict=feed_dict)
+            #print("Training error: %f" % (error))
+            #sess.run(model.optimize, feed_dict=feed_dict)
 
     sess.close()
 
