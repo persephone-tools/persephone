@@ -163,4 +163,18 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
 
         yield batch_x, utter_lens, batch_y
 
+def error_rate(batch_y, decoded):
+    """ Takes a batch and the output of a decoder given that batch, and returns
+    the PER using appropriate phone collapsing. """
+
+    # Use an intermediate human-readable form for debugging. Perhaps can be
+    # moved into a separate function down the road.
+    y = batch_y[1]
+    phn_y = collapse_phones([phone_map[index] for index in y])
+    phn_pred = collapse_phones([phone_map[index] for index in decoded[0].values])
+    #phn_y = [phone_map[index] for index in y]
+    #phn_pred = [phone_map[index] for index in decoded[0].values]
+    #print(phn_y)
+    #print(phn_pred)
+    print(distance.edit_distance(phn_y, phn_pred)/len(phn_y))
 

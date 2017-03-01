@@ -65,8 +65,8 @@ class RNNCTC:
                 tf.cast(self.decoded[0], tf.int32), self.targets))
 
 def main():
-    batch_size = 100 # The size of each batch
-    total_size = 2000 # The total number of TIMIT training examples
+    batch_size = 50 # The size of each batch
+    total_size = 100 # The total number of TIMIT training examples
 
     # A generator that pumps out batches
     batch_gen = timit.batch_gen(batch_size=batch_size, labels="phonemes",
@@ -106,6 +106,7 @@ def main():
             #print(sess.run(model.logits, feed_dict=feed_dict).shape)
             #import sys; sys.exit()
             _, error, decoded = sess.run([model.optimizer, model.ler, model.decoded], feed_dict=feed_dict)
+            timit.error_rate(batch_y, decoded)
             #sess.run(model.optimizer, feed_dict=feed_dict)
             #print(decoded[0])
             #print(targets)
