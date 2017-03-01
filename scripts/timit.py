@@ -13,14 +13,15 @@ random.seed(0)
 # Hardcoded numbers
 num_phones = 61
 
-def phone_classes(path="/home/oadams/code/mam/data/timit/train"):
+def phone_classes(path="/home/oadams/code/mam/data/timit/train",
+        feat_type="mfcc13_d"):
     """ Returns a sorted list of phone classes observed in the TIMIT corpus."""
 
     train_paths = []
     for root, dirnames, filenames in os.walk(path):
         for fn in filenames:
             prefix = fn.split(".")[0] # Get the file prefix
-            if fn.endswith(".log_mel_filterbank.npy"):
+            if fn.endswith(feat_type + ".npy"):
                 # Add to filename list.
                 path = os.path.join(root,fn)
                 train_paths.append(os.path.join(root,fn))
@@ -36,6 +37,7 @@ def phone_classes(path="/home/oadams/code/mam/data/timit/train"):
 
 phone_set = phone_classes()
 phone_map = {index: phone for index, phone in enumerate(phone_set)}
+phone2index = {phone: index for index, phone in enumerate(phone_set)}
 
 def collapse_phones(utterance):
     """ Converts an utterance with labels of 61 possible phones to 39. This is
@@ -72,7 +74,8 @@ def indices_to_phones(indices):
     return [phone_map[index] for index in indices]
 
 def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
-        batch_size=100, labels="phonemes", total_size=4620, flatten=True, time_major=False):
+        batch_size=100, labels="phonemes", total_size=4620, flatten=True,
+        time_major=False, feat_type="mfcc13_d"):
     """ Load the already preprocessed TIMIT data.  Flatten=True will make the
     2-dimensional freq x time a 1 dimensional vector of feats."""
 
@@ -126,7 +129,7 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
     for root, dirnames, filenames in os.walk(path):
         for fn in filenames:
             prefix = fn.split(".")[0] # Get the file prefix
-            if fn.endswith(".log_mel_filterbank.npy"):
+            if fn.endswith(feat_type + ".npy"):
                 # Add to filename list.
                 path = os.path.join(root,fn)
                 train_paths.append(os.path.join(root,fn))
@@ -144,9 +147,6 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
     if rand:
         random.shuffle(path_batches)
 
-    # A map from phones to ints.
-    phone_map = {phone:index for index, phone in enumerate(phone_classes())}
-
     for path_batch in path_batches:
         batch_x, utter_lens = load_batch_x(path_batch)
         if labels == "dialects":
@@ -158,7 +158,7 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
             batch_y = []
             for phn_path in phn_paths:
                 with open(phn_path) as phn_f:
-                    phone_indices = [phone_map[phn] for phn in phn_f.readline().split()]
+                    phone_indices = [phone2index[phn] for phn in phn_f.readline().split()]
                     batch_y.append(phone_indices)
 
         yield batch_x, utter_lens, batch_y

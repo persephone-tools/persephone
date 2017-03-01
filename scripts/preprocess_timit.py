@@ -20,7 +20,7 @@ def all_feature_extraction():
         energy_col_vec = energy_row_vec[:, np.newaxis]
         return energy_col_vec
 
-    def feature_extraction(wav_path):
+    def logfbank_feature_extraction(wav_path):
         """ Currently grabs log Mel filterbank, deltas and double deltas."""
         (rate, sig) = wav.read(wav_path)
         fbank_feat = python_speech_features.logfbank(sig, rate, nfilt=40)
@@ -36,6 +36,21 @@ def all_feature_extraction():
 
         # Log Mel Filterbank, with delta, and double delta
         feat_fn = wav_path[:-3] + "log_mel_filterbank.npy"
+        np.save(feat_fn, all_feats)
+
+    def feature_extraction(wav_path):
+        """ Grabs MFCC features with energy and derivates. """
+
+        (rate, sig) = wav.read(wav_path)
+        feat = python_speech_features.mfcc(sig, rate, appendEnergy=True)
+        delta_feat = python_speech_features.delta(feat, 2)
+        l = [feat, delta_feat]
+        all_feats = np.array(l)
+        # Make time the first dimension for easy length normalization padding later.
+        all_feats = np.swapaxes(all_feats, 0, 1)
+        all_feats = np.swapaxes(all_feats, 1, 2)
+
+        feat_fn = wav_path[:-3] + "mfcc13_d.npy"
         np.save(feat_fn, all_feats)
 
     for root, dirs, fns in os.walk(config.TGT_DIR):

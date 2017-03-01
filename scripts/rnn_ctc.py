@@ -72,7 +72,7 @@ def main():
     batch_gen = timit.batch_gen(batch_size=batch_size, labels="phonemes",
             total_size=total_size, rand=True)
 
-    freq_feats = 123 # This should be detected from data
+    freq_feats = 26 # This should be detected from data
     #utter_len = 778 # This should be detected from data
 
     inputs = tf.placeholder(tf.float32, [None, None, freq_feats])
@@ -86,7 +86,7 @@ def main():
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
-    num_epochs = 100
+    num_epochs = 1000
     for epoch in range(num_epochs):
         batch_gen = timit.batch_gen(batch_size=batch_size, labels="phonemes",
                 total_size=total_size, rand=False)
@@ -107,8 +107,8 @@ def main():
             #import sys; sys.exit()
             _, error, decoded = sess.run([model.optimizer, model.ler, model.decoded], feed_dict=feed_dict)
             #sess.run(model.optimizer, feed_dict=feed_dict)
-            print(decoded[0])
-            print(targets)
+            #print(decoded[0])
+            #print(targets)
             print("Epoch %d training error: %f" % (epoch, error))
 
     sess.close()
