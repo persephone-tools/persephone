@@ -36,8 +36,13 @@ def phone_classes(path="/home/oadams/code/mam/data/timit/train",
     return sorted(list(phone_set))
 
 phone_set = phone_classes()
-phone_map = {index: phone for index, phone in enumerate(phone_set)}
-phone2index = {phone: index for index, phone in enumerate(phone_set)}
+index2phone_map = {index: phone for index, phone in enumerate(phone_set)}
+phone2index_map = {phone: index for index, phone in enumerate(phone_set)}
+
+def phones2indices(phones):
+    """ Converts a list of phones to a list of indices. Increments the index by
+    1 to avoid issues to do with dynamic padding in Tensorflow. """
+    return [phone2index_map[phone]+1 for phone in phones]
 
 def collapse_phones(utterance):
     """ Converts an utterance with labels of 61 possible phones to 39. This is
@@ -71,7 +76,77 @@ def per(hypo, ref):
 def indices_to_phones(indices):
     """ Converts integer representations of phones to human-readable characters. """
 
-    return [phone_map[index] for index in indices]
+    return [index2phone_map[index] for index in indices]
+
+core_speakers = ["dr1/mdab0", "dr1/mwbt0", "dr1/felc0",
+                 "dr2/mtas1", "dr2/mwew0", "dr2/fpas0",
+                 "dr3/mjmp0", "dr3/mlnt0", "dr3/fpkt0",
+                 "dr4/mlll0", "dr4/mtls0", "dr4/fjlm0",
+                 "dr5/mbpm0", "dr5/mklt0", "dr5/fnlp0",
+                 "dr6/mcmj0", "dr6/mjdh0", "dr6/fmgd0",
+                 "dr7/mgrt0", "dr7/mnjm0", "dr7/fdhc0",
+                 "dr8/mjln0", "dr8/mpam0", "dr8/fmld0"]
+
+def collapse(batch_x, time_major=False):
+    """ Converts timit into an array of format (batch_size, freqxnum_deltas,
+    time). Except where Freq is Freqxnum_deltas, so usually freq*3.
+    Essentially, multiple channels are collapsed to one. """
+
+    new_batch_x = []
+    for utterance in batch_x:
+        swapped = np.swapaxes(utterance,0,1)
+        concatenated = np.concatenate(swapped,axis=1)
+        new_batch_x.append(concatenated)
+    new_batch_x = np.array(new_batch_x)
+    if time_major:
+        new_batch_x = np.transpose(new_batch_x, (1,0,2))
+    return new_batch_x
+
+
+def load_batch_x(path_batch, flatten, time_major=False):
+    """ Loads a batch given a list of filenames to numpy arrays in that batch."""
+
+    utterances = [np.load(path) for path in path_batch]
+    # The maximum length of an utterance in the batch
+    utter_lens = [utterance.shape[0] for utterance in utterances]
+    max_len = max(utter_lens)
+    batch_size = len(path_batch)
+    shape = (batch_size, max_len) + tuple(utterances[0].shape[1:])
+    batch = np.zeros(shape)
+    for i, utt in enumerate(utterances):
+        batch[i] = utils.zero_pad(utt, max_len)
+    if flatten:
+        batch = collapse(batch, time_major=time_major)
+    return batch, np.array(utter_lens)
+
+def test_set(path="/home/oadams/code/mam/data/timit/test",
+        feat_type="mfcc13_d", flatten=True):
+    """ Retrieves the core test set of 24 speakers. """
+
+    def load_batch_y(path_batch):
+        batch_y = []
+        phn_paths = [path.split(".")[0]+".phn" for path in path_batch]
+        for phn_path in phn_paths:
+            with open(phn_path) as phn_f:
+                phone_indices = phones2indices(phn_f.readline().split())
+                batch_y.append(phone_indices)
+        return batch_y
+
+    test_paths = []
+    for speaker in core_speakers:
+        speaker_path = os.path.join(path, speaker)
+        fns = os.listdir(speaker_path)
+        for fn in fns:
+            if fn.endswith(feat_type + ".npy") and not fn.startswith("sa"):
+                test_paths.append(os.path.join(speaker_path, fn))
+    batch_x, utter_lens = load_batch_x(test_paths, flatten=flatten)
+    batch_y = load_batch_y(test_paths)
+
+    return batch_x, utter_lens, batch_y
+
+def valid_set(path="/home/oadams/code/mam/data/timit/test", feat_type="mfcc13_d"):
+    """ Retrieves the 50 speaker validation set. """
+    pass
 
 def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
         batch_size=100, labels="phonemes", total_size=4620, flatten=True,
@@ -86,42 +161,6 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
         one_hot = np.zeros((1,num_classes))
         one_hot[0,i] = 1
         return one_hot
-
-    def collapse(batch_x):
-        """ Converts timit into an array of format (batch_size, freq, time). Except
-        where Freq is Freqxnum_deltas, so usually freq*3. Essentially multiple
-        channels are collapsed to one"""
-
-        #import pdb; pdb.set_trace()
-
-        train_feats = batch_x
-        new_train = []
-        for utterance in train_feats:
-            swapped = np.swapaxes(utterance,0,1)
-            concatenated = np.concatenate(swapped,axis=1)
-            #reswapped = np.swapaxes(concatenated,0,1)
-            #new_train.append(reswapped)
-            new_train.append(concatenated)
-        train_feats = np.array(new_train)
-        if time_major:
-            train_feats = np.transpose(train_feats, (1,0,2))
-        return train_feats
-
-
-    def load_batch_x(path_batch):
-        """ Loads a batch given a list of filenames to numpy arrays in that batch."""
-
-        utterances = [np.load(path) for path in path_batch]
-        # The maximum length of an utterance in the batch
-        utter_lens = [utterance.shape[0] for utterance in utterances]
-        max_len = max(utter_lens)
-        shape = (batch_size, max_len) + tuple(utterances[0].shape[1:])
-        batch = np.zeros(shape)
-        for i, utt in enumerate(utterances):
-            batch[i] = utils.zero_pad(utt, max_len)
-        if flatten:
-            batch = collapse(batch)
-        return batch, np.array(utter_lens)
 
     train_paths = []
     dialect_classes = set()
@@ -148,7 +187,7 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
         random.shuffle(path_batches)
 
     for path_batch in path_batches:
-        batch_x, utter_lens = load_batch_x(path_batch)
+        batch_x, utter_lens = load_batch_x(path_batch, flatten=flatten)
         if labels == "dialects":
             y_labels = np.array([dr_class_map[path.split("/")[-3]] for path in path_batch])
             # Make into one-hot vectors
@@ -158,7 +197,7 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
             batch_y = []
             for phn_path in phn_paths:
                 with open(phn_path) as phn_f:
-                    phone_indices = [phone2index[phn]+1 for phn in phn_f.readline().split()]
+                    phone_indices = phones2indices(phn_f.readline().split())
                     batch_y.append(phone_indices)
 
         yield batch_x, utter_lens, batch_y
@@ -170,8 +209,8 @@ def error_rate(batch_y, decoded):
     # Use an intermediate human-readable form for debugging. Perhaps can be
     # moved into a separate function down the road.
     y = batch_y[1]
-    phn_y = collapse_phones([phone_map[index] for index in y])
-    phn_pred = collapse_phones([phone_map[index] for index in decoded[0].values])
+    phn_y = collapse_phones([index2phone_map[index] for index in y])
+    phn_pred = collapse_phones([index2phone_map[index] for index in decoded[0].values])
     #phn_y = [phone_map[index] for index in y]
     #phn_pred = [phone_map[index] for index in decoded[0].values]
     #print(phn_y)
