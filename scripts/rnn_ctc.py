@@ -4,7 +4,10 @@ from nltk.metrics import distance
 
 import logging
 import numpy as np
+import os
 import tensorflow as tf
+
+EXP_DIR = "../exp"
 
 def lstm_cell(hidden_size):
     return tf.contrib.rnn.LSTMCell(
@@ -20,7 +23,7 @@ def multi_cell(num_layers, hidden_size):
 class RNNCTC:
 
     def __init__(self, batch_x, x_lens, batch_y, batch_seq_lens,
-            num_layers=3, hidden_size=250, vocab_size=timit.num_phones,
+            num_layers=3, hidden_size=250, vocab_size=timit.num_phones+2,
             learning_rate=1e-4, momentum=0.9, beam_width=100):
         self.inputs = batch_x
         self.input_lens = x_lens
@@ -34,17 +37,26 @@ class RNNCTC:
 
         batch_size = tf.shape(self.inputs)[0]
 
-        cell = multi_cell(self.num_layers, self.hidden_size)
+        #cell_fw = multi_cell(self.num_layers, self.hidden_size)
+        #cell_bw = multi_cell(self.num_layers, self.hidden_size)
+        cell_fw = lstm_cell(self.hidden_size)
+        cell_bw = lstm_cell(self.hidden_size)
 
-        self.outputs, _ = tf.nn.dynamic_rnn(cell, self.inputs, self.input_lens, dtype=tf.float32, 
+        (self.out_fw, self.out_bw), _ = tf.nn.bidirectional_dynamic_rnn(
+                cell_fw, cell_bw, self.inputs, self.input_lens, dtype=tf.float32,
                 time_major=False)
 
-        self.outputs = tf.reshape(self.outputs, [-1, self.hidden_size])
+        # Self outputs now becomes [batch_num, time, hidden_size*2]
+        self.outputs_concat = tf.concat((self.out_fw, self.out_bw), 2)
+#        self.outputs_concat = tf.Print(self.outputs_concat,
+#                [tf.shape(self.outputs_concat.shape)])
+        self.outputs = tf.reshape(self.outputs_concat, [-1, self.hidden_size*2])
 
-        W = tf.Variable(tf.truncated_normal([hidden_size, vocab_size+1]))
-        b = tf.Variable(tf.constant(0.1, shape=[vocab_size+1]))
+
+        W = tf.Variable(tf.truncated_normal([hidden_size*2, vocab_size]))
+        b = tf.Variable(tf.constant(0.1, shape=[vocab_size]))
         self.logits = tf.matmul(self.outputs, W) + b
-        self.logits = tf.reshape(self.logits, [batch_size, -1, vocab_size+1])
+        self.logits = tf.reshape(self.logits, [batch_size, -1, vocab_size])
         # igormq made it time major, because of an optimization in ctc_loss.
         self.logits = tf.transpose(self.logits, (1, 0, 2))
 
@@ -60,7 +72,7 @@ class RNNCTC:
         self.ler = tf.reduce_mean(tf.edit_distance(
                 tf.cast(self.decoded[0], tf.int32), self.targets))
 
-def main(batch_size=100, total_size=4600, num_epochs=200):
+def train(batch_size, total_size, num_epochs, save=True):
     """ Run an experiment. 
 
         batch_size: The number of utterances in each batch.
@@ -76,12 +88,15 @@ def main(batch_size=100, total_size=4600, num_epochs=200):
     freq_feats = next(batch_gen)[0].shape[-1]
 
     inputs = tf.placeholder(tf.float32, [None, None, freq_feats])
-    input_lens = tf.placeholder(tf.float32, [None])
+    input_lens = tf.placeholder(tf.int32, [None])
     targets = tf.sparse_placeholder(tf.int32)
     # The lengths of the target sequences.
     seq_lens = tf.placeholder(tf.int32, [None])
 
     model = RNNCTC(inputs, input_lens, targets, seq_lens)
+
+    if save:
+        saver = tf.train.Saver()
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
@@ -109,7 +124,13 @@ def main(batch_size=100, total_size=4600, num_epochs=200):
         print("Epoch %d training error: %f" % (
                 epoch, (err_total / (batch_i + 1))))
 
+    # Give the model an appropriate number and save it in the EXP_DIR
+    if save:
+        n = sorted(os.listdir(EXP_DIR))[-1][0]
+        path = os.path.join(EXP_DIR, n + ".model.ckpt")
+        save_path = saver.save(sess, path)
+
     sess.close()
 
 if __name__ == "__main__":
-    main()
+    train(batch_size=8, total_size=128, num_epochs=100, save=True)

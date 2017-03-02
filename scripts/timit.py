@@ -158,7 +158,7 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
             batch_y = []
             for phn_path in phn_paths:
                 with open(phn_path) as phn_f:
-                    phone_indices = [phone2index[phn] for phn in phn_f.readline().split()]
+                    phone_indices = [phone2index[phn]+1 for phn in phn_f.readline().split()]
                     batch_y.append(phone_indices)
 
         yield batch_x, utter_lens, batch_y
