@@ -168,7 +168,7 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
     for root, dirnames, filenames in os.walk(path):
         for fn in filenames:
             prefix = fn.split(".")[0] # Get the file prefix
-            if fn.endswith(feat_type + ".npy"):
+            if fn.endswith(feat_type + ".npy") and not fn.startswith("sa"):
                 # Add to filename list.
                 path = os.path.join(root,fn)
                 train_paths.append(os.path.join(root,fn))
