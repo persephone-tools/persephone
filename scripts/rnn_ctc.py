@@ -24,7 +24,7 @@ class RNNCTC:
 
     def __init__(self, batch_x, x_lens, batch_y, batch_seq_lens,
             num_layers=3, hidden_size=250, vocab_size=timit.num_phones+2,
-            learning_rate=1e-4, momentum=0.9, beam_width=100):
+            learning_rate=1e-3, momentum=0.9, beam_width=100):
         self.inputs = batch_x
         self.input_lens = x_lens
         self.targets = batch_y
@@ -68,11 +68,12 @@ class RNNCTC:
         self.cost = tf.reduce_mean(self.loss)
         #self.optimizer = tf.train.AdadeltaOptimizer().minimize(self.cost)
         self.optimizer = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.cost)
+        #self.optimizer = tf.train.AdamOptimizer().minimize(self.cost)
 
         self.ler = tf.reduce_mean(tf.edit_distance(
                 tf.cast(self.decoded[0], tf.int32), self.targets))
 
-def train(batch_size, total_size, num_epochs, save=True):
+def train(batch_size, total_size, num_epochs, save=True, restore_model_path=None):
     """ Run an experiment. 
 
         batch_size: The number of utterances in each batch.
@@ -99,9 +100,13 @@ def train(batch_size, total_size, num_epochs, save=True):
         saver = tf.train.Saver()
 
     sess = tf.Session()
-    sess.run(tf.global_variables_initializer())
 
-    for epoch in range(num_epochs):
+    if restore_model_path:
+        saver.restore(sess, restore_model_path)
+    else:
+        sess.run(tf.global_variables_initializer())
+
+    for epoch in range(1,num_epochs+1):
         batch_gen = timit.batch_gen(batch_size=batch_size, labels="phonemes",
                 total_size=total_size, rand=True)
 
@@ -122,15 +127,16 @@ def train(batch_size, total_size, num_epochs, save=True):
             err_total += error
 
         print("Epoch %d training error: %f" % (
-                epoch, (err_total / (batch_i + 1))))
+                epoch, (err_total / (batch_i + 1))), flush=True)
 
-    # Give the model an appropriate number and save it in the EXP_DIR
-    if save:
-        n = sorted(os.listdir(EXP_DIR))[-1][0]
-        path = os.path.join(EXP_DIR, n + ".model.ckpt")
-        save_path = saver.save(sess, path)
+        # Give the model an appropriate number and save it in the EXP_DIR
+        if epoch % 100 == 0 and save:
+            n = max([int(fn.split(".")[0]) for fn in os.listdir(EXP_DIR) if fn.split(".")[0].isdigit()])
+            path = os.path.join(EXP_DIR, "%d.model.epoch%d.ckpt" % (n, epoch))
+            save_path = saver.save(sess, path)
 
     sess.close()
 
 if __name__ == "__main__":
-    train(batch_size=8, total_size=128, num_epochs=100, save=True)
+    train(batch_size=32, total_size=3696, num_epochs=300, save=True)
+            #restore_model_path=os.path.join(EXP_DIR,"20.model.epoch100.ckpt"))

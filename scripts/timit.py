@@ -149,7 +149,7 @@ def valid_set(path="/home/oadams/code/mam/data/timit/test", feat_type="mfcc13_d"
     pass
 
 def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
-        batch_size=100, labels="phonemes", total_size=4620, flatten=True,
+        batch_size=16, labels="phonemes", total_size=3696, flatten=True,
         time_major=False, feat_type="mfcc13_d"):
     """ Load the already preprocessed TIMIT data.  Flatten=True will make the
     2-dimensional freq x time a 1 dimensional vector of feats."""
