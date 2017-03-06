@@ -119,18 +119,19 @@ def load_batch_x(path_batch, flatten, time_major=False):
         batch = collapse(batch, time_major=time_major)
     return batch, np.array(utter_lens)
 
+def load_batch_y(path_batch):
+    batch_y = []
+    phn_paths = [path.split(".")[0]+".phn" for path in path_batch]
+    for phn_path in phn_paths:
+        with open(phn_path) as phn_f:
+            phone_indices = phones2indices(phn_f.readline().split())
+            batch_y.append(phone_indices)
+    return batch_y
+
+
 def test_set(path="/home/oadams/code/mam/data/timit/test",
         feat_type="mfcc13_d", flatten=True):
     """ Retrieves the core test set of 24 speakers. """
-
-    def load_batch_y(path_batch):
-        batch_y = []
-        phn_paths = [path.split(".")[0]+".phn" for path in path_batch]
-        for phn_path in phn_paths:
-            with open(phn_path) as phn_f:
-                phone_indices = phones2indices(phn_f.readline().split())
-                batch_y.append(phone_indices)
-        return batch_y
 
     test_paths = []
     for speaker in core_speakers:
@@ -144,9 +145,36 @@ def test_set(path="/home/oadams/code/mam/data/timit/test",
 
     return batch_x, utter_lens, batch_y
 
-def valid_set(path="/home/oadams/code/mam/data/timit/test", feat_type="mfcc13_d"):
+def valid_set(path="/home/oadams/code/mam/data/timit/test",
+    feat_type="mfcc13_d", flatten=True, seed=0):
     """ Retrieves the 50 speaker validation set. """
-    pass
+
+    random.seed(seed)
+
+    chosen_paths = []
+    for dialect in ["dr1", "dr2", "dr3", "dr4", "dr5", "dr6", "dr7", "dr8"]:
+        dr_path = os.path.join(path, dialect)
+        all_test_speakers = [os.path.join(dr_path, speaker) for speaker in os.listdir(dr_path)]
+        valid_speakers = [path for path in all_test_speakers if not
+            path.split("test/")[-1] in core_speakers]
+        male_valid_speakers = [path for path in valid_speakers if path.split("/")[-1].startswith("m")]
+        female_valid_speakers = [path for path in valid_speakers if path.split("/")[-1].startswith("f")]
+
+        # Randomly select two male speakers.
+        chosen_paths.extend(random.sample(male_valid_speakers, 2))
+        # Randomly select one female speakers.
+        chosen_paths.extend(random.sample(female_valid_speakers, 1))
+
+    valid_paths = []
+    for speaker_path in chosen_paths:
+        fns = os.listdir(speaker_path)
+        for fn in fns:
+            if fn.endswith(feat_type + ".npy") and not fn.startswith("sa"):
+                valid_paths.append(os.path.join(speaker_path, fn))
+    batch_x, utter_lens = load_batch_x(valid_paths, flatten=flatten)
+    batch_y = load_batch_y(valid_paths)
+
+    return batch_x, utter_lens, batch_y
 
 def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
         batch_size=16, labels="phonemes", total_size=3696, flatten=True,
