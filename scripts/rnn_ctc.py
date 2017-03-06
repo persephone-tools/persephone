@@ -53,8 +53,9 @@ class RNNCTC:
         self.outputs = tf.reshape(self.outputs_concat, [-1, self.hidden_size*2])
 
 
-        W = tf.Variable(tf.truncated_normal([hidden_size*2, vocab_size]))
-        b = tf.Variable(tf.constant(0.1, shape=[vocab_size]))
+        W = tf.Variable(tf.truncated_normal([hidden_size*2, vocab_size],
+                stddev=np.sqrt(2.0 / (2*hidden_size))))
+        b = tf.Variable(tf.zeros([vocab_size]))
         self.logits = tf.matmul(self.outputs, W) + b
         self.logits = tf.reshape(self.logits, [batch_size, -1, vocab_size])
         # igormq made it time major, because of an optimization in ctc_loss.
@@ -67,8 +68,8 @@ class RNNCTC:
                 preprocess_collapse_repeated=True)
         self.cost = tf.reduce_mean(self.loss)
         #self.optimizer = tf.train.AdadeltaOptimizer().minimize(self.cost)
-        self.optimizer = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.cost)
-        #self.optimizer = tf.train.AdamOptimizer().minimize(self.cost)
+        #self.optimizer = tf.train.MomentumOptimizer(learning_rate, momentum).minimize(self.cost)
+        self.optimizer = tf.train.AdamOptimizer().minimize(self.cost)
 
         self.ler = tf.reduce_mean(tf.edit_distance(
                 tf.cast(self.decoded[0], tf.int32), self.targets))
