@@ -44,6 +44,11 @@ def phones2indices(phones):
     1 to avoid issues to do with dynamic padding in Tensorflow. """
     return [phone2index_map[phone]+1 for phone in phones]
 
+def indices2phones(indices):
+    """ Converts integer representations of phones to human-readable characters. """
+
+    return [(index2phone_map[index-1] if index > 0 else "pad") for index in indices]
+
 def collapse_phones(utterance):
     """ Converts an utterance with labels of 61 possible phones to 39. This is
     done as per Kai-fu Lee & Hsiao-Wuen Hon 1989."""
@@ -65,18 +70,6 @@ def collapse_phones(utterance):
 
     return class_collapse
     #return allo_collapse
-
-def per(hypo, ref):
-    """ Calculates the phoneme error rate between decoder output and the gold reference by first collapsing the TIMIT labels into the standard 39 phonemes."""
-
-    hypo = collapse_phonemes(hypo)
-    ref = collapse_phonemes(ref)
-    return distance.edit_distance.eval(hypo, ref)
-
-def indices_to_phones(indices):
-    """ Converts integer representations of phones to human-readable characters. """
-
-    return [index2phone_map[index] for index in indices]
 
 core_speakers = ["dr1/mdab0", "dr1/mwbt0", "dr1/felc0",
                  "dr2/mtas1", "dr2/mwew0", "dr2/fpas0",
@@ -127,7 +120,6 @@ def load_batch_y(path_batch):
             phone_indices = phones2indices(phn_f.readline().split())
             batch_y.append(phone_indices)
     return batch_y
-
 
 def test_set(path="/home/oadams/code/mam/data/timit/test",
         feat_type="mfcc13_d", flatten=True):
@@ -231,17 +223,12 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
         yield batch_x, utter_lens, batch_y
 
 def error_rate(batch_y, decoded):
-    """ Takes a batch and the output of a decoder given that batch, and returns
-    the PER using appropriate phone collapsing. """
+    """ Calculates the phoneme error rate between decoder output and the gold reference by first collapsing the TIMIT labels into the standard 39 phonemes."""
+
 
     # Use an intermediate human-readable form for debugging. Perhaps can be
     # moved into a separate function down the road.
     y = batch_y[1]
-    phn_y = collapse_phones([index2phone_map[index] for index in y])
-    phn_pred = collapse_phones([index2phone_map[index] for index in decoded[0].values])
-    #phn_y = [phone_map[index] for index in y]
-    #phn_pred = [phone_map[index] for index in decoded[0].values]
-    #print(phn_y)
-    #print(phn_pred)
-    print(distance.edit_distance(phn_y, phn_pred)/len(phn_y))
-
+    phn_y = collapse_phones(indices2phones(y))
+    phn_pred = collapse_phones(indices2phones(decoded[0].values))
+    return distance.edit_distance(phn_y, phn_pred)/len(phn_y)

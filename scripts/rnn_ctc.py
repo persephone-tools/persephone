@@ -62,9 +62,9 @@ class RNNCTC:
         self.logits = tf.transpose(self.logits, (1, 0, 2))
 
         self.decoded, self.log_prob = tf.nn.ctc_beam_search_decoder(
-                self.logits, self.seq_lens, beam_width=beam_width)
+                self.logits, self.input_lens, beam_width=beam_width)
 
-        self.loss = tf.nn.ctc_loss(self.targets, self.logits, self.seq_lens,
+        self.loss = tf.nn.ctc_loss(self.targets, self.logits, self.input_lens,
                 preprocess_collapse_repeated=True)
         self.cost = tf.reduce_mean(self.loss)
         #self.optimizer = tf.train.AdadeltaOptimizer().minimize(self.cost)
@@ -88,6 +88,8 @@ def train(batch_size, total_size, num_epochs, save=True, restore_model_path=None
             total_size=total_size)
     # Load the data and observe the number of feats in the numpy arrays.
     freq_feats = next(batch_gen)[0].shape[-1]
+
+    valid_x, valid_x_lens, valid_y = timit.valid_set(seed=0)
 
     inputs = tf.placeholder(tf.float32, [None, None, freq_feats])
     input_lens = tf.placeholder(tf.int32, [None])
@@ -124,11 +126,36 @@ def train(batch_size, total_size, num_epochs, save=True, restore_model_path=None
                     [model.optimizer, model.ler, model.decoded],
                     feed_dict=feed_dict)
             #timit.error_rate(batch_y, decoded)
+            if batch_i == 0:
+                print(decoded[0].values)
+                print(batch_y[1])
 
             err_total += error
 
-        print("Epoch %d training error: %f" % (
+        print("Epoch %d training LER: %f" % (
                 epoch, (err_total / (batch_i + 1))), flush=True)
+
+        # After each epoch, print validation LER and PER.
+        # Because I want PER calculated for each validation utterance
+        # independently and then averaged, we decode each utterance
+        # separately.
+        total_ler = 0
+        total_per = 0
+        for i in range(len(valid_x)):
+            print(i)
+            utter_x = np.array([valid_x[i]])
+            utter_x_len = np.array([valid_x_lens[i]])
+            utter_y = [valid_y[i]]
+            utter_y_len = np.asarray([len(s) for s in utter_y], dtype=np.int32)
+            utter_y = target_list_to_sparse_tensor(utter_y)
+            feed_dict={inputs: utter_x, input_lens: utter_x_len, targets:
+                       utter_y, seq_lens: utter_y_len}
+            ler, decoded = sess.run([model.ler, model.decoded], feed_dict=feed_dict)
+            total_ler += ler
+            total_per += timit.error_rate(utter_y, decoded)
+
+        print("Epoch %d validation LER: %f, PER: %f" % (
+                epoch, total_ler/len(valid_x), total_per/len(valid_x)))
 
         # Give the model an appropriate number and save it in the EXP_DIR
         if epoch % 100 == 0 and save:
@@ -139,5 +166,7 @@ def train(batch_size, total_size, num_epochs, save=True, restore_model_path=None
     sess.close()
 
 if __name__ == "__main__":
-    train(batch_size=32, total_size=3696, num_epochs=300, save=True)
+    train(batch_size=1, total_size=1, num_epochs=300, save=True)
+    #train(batch_size=32, total_size=128, num_epochs=300, save=True)
+    #train(batch_size=32, total_size=3696, num_epochs=300, save=True)
             #restore_model_path=os.path.join(EXP_DIR,"20.model.epoch100.ckpt"))
