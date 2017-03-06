@@ -134,18 +134,16 @@ def train(batch_size, total_size, num_epochs, save=True, restore_model_path=None
 
             err_total += error
 
-        print("Epoch %d training LER: %f" % (
-                epoch, (err_total / (batch_i + 1))), flush=True)
-
         feed_dict={inputs: valid_x, input_lens: valid_x_lens,
                 targets: valid_y, seq_lens: valid_y_lens}
         valid_ler, decoded = sess.run([model.ler, model.decoded], feed_dict=feed_dict)
         #total_per += timit.error_rate(utter_y, decoded)
 
-        print("Epoch %d validation LER: %f" % (epoch, valid_ler))
+        print("Epoch %d. Training LER: %f, validation LER: %f" % (
+                epoch, (err_total / (batch_i + 1)), valid_ler), flush=True)
 
         # Give the model an appropriate number and save it in the EXP_DIR
-        if epoch % 100 == 0 and save:
+        if epoch % 50 == 0 and save:
             n = max([int(fn.split(".")[0]) for fn in os.listdir(EXP_DIR) if fn.split(".")[0].isdigit()])
             path = os.path.join(EXP_DIR, "%d.model.epoch%d.ckpt" % (n, epoch))
             save_path = saver.save(sess, path)
@@ -153,7 +151,6 @@ def train(batch_size, total_size, num_epochs, save=True, restore_model_path=None
     sess.close()
 
 if __name__ == "__main__":
-    #train(batch_size=1, total_size=1, num_epochs=300, save=True)
-    train(batch_size=32, total_size=128, num_epochs=300, save=True)
+    train(batch_size=64, total_size=3648, num_epochs=300, save=True)
     #train(batch_size=32, total_size=3696, num_epochs=300, save=True)
             #restore_model_path=os.path.join(EXP_DIR,"20.model.epoch100.ckpt"))
