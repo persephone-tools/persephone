@@ -17,7 +17,6 @@ class Model:
         self.inputs = batch_x
         self.input_lens = x_lens
         self.targets = batch_y
-        self.num_layers = num_layers
         self.hidden_size = hidden_size
 
         batch_size = tf.shape(self.inputs)[0]

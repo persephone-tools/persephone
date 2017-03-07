@@ -165,6 +165,7 @@ def valid_set(path="/home/oadams/code/mam/data/timit/test",
                 valid_paths.append(os.path.join(speaker_path, fn))
     batch_x, utter_lens = load_batch_x(valid_paths, flatten=flatten)
     batch_y = load_batch_y(valid_paths)
+    batch_y = utils.target_list_to_sparse_tensor(batch_y)
 
     return batch_x, utter_lens, batch_y
 
@@ -207,7 +208,7 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
         random.shuffle(path_batches)
 
     for path_batch in path_batches:
-        batch_x, utter_lens = load_batch_x(path_batch, flatten=flatten)
+        batch_x, batch_x_lens = load_batch_x(path_batch, flatten=flatten)
         if labels == "dialects":
             y_labels = np.array([dr_class_map[path.split("/")[-3]] for path in path_batch])
             # Make into one-hot vectors
@@ -219,8 +220,17 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
                 with open(phn_path) as phn_f:
                     phone_indices = phones2indices(phn_f.readline().split())
                     batch_y.append(phone_indices)
+            batch_y = utils.target_list_to_sparse_tensor(batch_y)
 
-        yield batch_x, utter_lens, batch_y
+        yield batch_x, batch_x_lens, batch_y
+
+def num_feats(feat_type):
+    """ Returns the number of feats for a given feat type. """
+
+    bg = batch_gen(rand=False, feat_type=feat_type)
+    batch = next(bg)
+    return batch[0].shape[-1]
+
 
 def error_rate(batch_y, decoded):
     """ Calculates the phoneme error rate between decoder output and the gold reference by first collapsing the TIMIT labels into the standard 39 phonemes."""
