@@ -1,3 +1,6 @@
+import logging
+import os
+import shutil
 import tensorflow as tf
 
 import rnn_ctc
@@ -18,6 +21,9 @@ def train(batch_size, total_size, num_epochs,
         'mfcc13_d' means MFCCs of 13 dimensions with their first derivatives.
         save_n: Whether to save the model at every n epochs.
     """
+
+    out_file = open(os.path.join(EXP_DIR, str(get_exp_dir_num()), "train.out"),
+                    "w")
 
     # Initialize placeholders for feeding data to model.
     num_feats = timit.num_feats(feat_type)
@@ -59,29 +65,68 @@ def train(batch_size, total_size, num_epochs,
 
             #timit.error_rate(batch_y, decoded)
             if batch_i == 0:
-                print(decoded[0].values)
-                print(batch_y[1])
+                logging.debug("Batch[0] hypothesis: ")
+                logging.debug(decoded[0].values)
+                logging.debug("Batch[0] Reference: ")
+                logging.debug(batch_y[1])
 
             train_ler_total += ler
 
         feed_dict={inputs: valid_x, input_lens: valid_x_lens,
                 targets: valid_y}
-        valid_ler, decoded = sess.run([model.ler, model.decoded], feed_dict=feed_dict)
+        valid_ler, dense_decoded, dense_ref = sess.run(
+                [model.ler, model.dense_decoded, model.dense_ref],
+                feed_dict=feed_dict)
+        valid_per = timit.batch_per(dense_ref, dense_decoded)
         #total_per += timit.error_rate(utter_y, decoded)
 
-        print("Epoch %d. Training LER: %f, validation LER: %f" % (
-                epoch, (train_ler_total / (batch_i + 1)), valid_ler), flush=True)
+        print("Epoch %d. Training LER: %f, validation LER: %f, validation PER: %f" % (
+                epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per),
+                flush=True, file=out_file)
 
         # Give the model an appropriate number and save it in the EXP_DIR
         if save_n and epoch % save_n == 0:
-            n = max([int(fn.split(".")[0]) for fn in os.listdir(EXP_DIR) if fn.split(".")[0].isdigit()])
-            path = os.path.join(EXP_DIR, "%d.model.epoch%d.ckpt" % (n, epoch))
+            # Save the model
+            path = os.path.join(EXP_DIR, str(get_exp_dir_num()),
+                    "model.epoch%d.ckpt" % epoch)
             save_path = saver.save(sess, path)
+
+            # Get the validation PER. We do this less often because it's
+            # compoutationally more expensive. This is because we calculate the
+            # PER for each utterance in the validation set independently.
+            #total_per = 0
+            #for i in range(len(valid_x)):
+            #    utter_x = np.array([valid_x[i]])
+            #    utter_x_len = np.array([valid_x_lens[i]])
+            #    utter_y = [valid_y[i]]
 
     sess.close()
 
+    out_file.close()
+
+def get_exp_dir_num():
+    """ Gets the number of the current experiment directory."""
+    return max([int(fn.split(".")[0]) for fn in os.listdir(EXP_DIR) if fn.split(".")[0].isdigit()])
+
+def prep_exp_dir():
+    """ Prepares an experiment directory by copying the code in this directory
+    to it as is, and setting the logger to write to files in that
+    directory."""
+
+    n = get_exp_dir_num()
+    n = n + 1
+    code_dir = os.path.join(EXP_DIR, str(n), "code")
+    os.makedirs(code_dir)
+    for fn in os.listdir():
+        if fn.endswith(".py"):
+            shutil.copyfile(fn, os.path.join(code_dir, fn))
+
+    logging.basicConfig(filename=os.path.join(EXP_DIR, str(n), "debug.log"),
+                        filemode="w", level=logging.DEBUG)
+
 if __name__ == "__main__":
-    train(batch_size=1, total_size=1, num_epochs=30, feat_type="mfcc13_d", save_n=25)
-    #train(batch_size=64, total_size=3648, num_epochs=300, save=True)
-    #train(batch_size=32, total_size=3696, num_epochs=300, save=True)
-            #restore_model_path=os.path.join(EXP_DIR,"20.model.epoch100.ckpt"))
+
+    # Prepares a new experiment dir for all logging.
+    prep_exp_dir()
+
+    train(batch_size=64, total_size=3648, num_epochs=200, feat_type="mfcc13_d", save_n=25)

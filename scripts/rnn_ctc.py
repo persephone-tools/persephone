@@ -50,3 +50,8 @@ class Model:
 
         self.ler = tf.reduce_mean(tf.edit_distance(
                 tf.cast(self.decoded[0], tf.int32), self.targets))
+
+        # If we want to do manual PER decoding. The decoded[0] beans the best
+        # hypothesis (0th) in an n-best list.
+        self.dense_decoded = tf.sparse_tensor_to_dense(self.decoded[0])
+        self.dense_ref = tf.sparse_tensor_to_dense(self.targets)

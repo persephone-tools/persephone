@@ -12,6 +12,8 @@ random.seed(0)
 
 # Hardcoded numbers
 num_phones = 61
+# The number of training sentences with SA utterances removed.
+total_size=3696
 
 def phone_classes(path="/home/oadams/code/mam/data/timit/train",
         feat_type="mfcc13_d"):
@@ -231,10 +233,10 @@ def num_feats(feat_type):
     batch = next(bg)
     return batch[0].shape[-1]
 
-
-def error_rate(batch_y, decoded):
-    """ Calculates the phoneme error rate between decoder output and the gold reference by first collapsing the TIMIT labels into the standard 39 phonemes."""
-
+def phoneme_error_rate(batch_y, decoded):
+    """ Calculates the phoneme error rate between decoder output and the gold
+    reference by first collapsing the TIMIT labels into the standard 39
+    phonemes."""
 
     # Use an intermediate human-readable form for debugging. Perhaps can be
     # moved into a separate function down the road.
@@ -242,3 +244,14 @@ def error_rate(batch_y, decoded):
     phn_y = collapse_phones(indices2phones(y))
     phn_pred = collapse_phones(indices2phones(decoded[0].values))
     return distance.edit_distance(phn_y, phn_pred)/len(phn_y)
+
+def batch_per(dense_y, dense_decoded):
+    total_per = 0
+    for i in range(len(dense_decoded)):
+        ref = [phn_i for phn_i in dense_y[i] if phn_i != 0]
+        hypo = [phn_i for phn_i in dense_decoded[i] if phn_i != 0]
+        ref = collapse_phones(indices2phones(ref))
+        hypo = collapse_phones(indices2phones(hypo))
+        total_per += distance.edit_distance(ref, hypo)/len(ref)
+    return total_per/len(dense_decoded)
+
