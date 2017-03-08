@@ -9,7 +9,7 @@ from utils import target_list_to_sparse_tensor
 
 EXP_DIR = "../exp"
 
-def train(batch_size, total_size, num_epochs,
+def train(model, batch_size, total_size, num_epochs,
         feat_type="mfcc13_d", save_n=None, restore_model_path=None):
     """ Run an experiment.
 
@@ -25,19 +25,8 @@ def train(batch_size, total_size, num_epochs,
     out_file = open(os.path.join(EXP_DIR, str(get_exp_dir_num()), "train.out"),
                     "w")
 
-    # Initialize placeholders for feeding data to model.
-    num_feats = timit.num_feats(feat_type)
-    inputs = tf.placeholder(tf.float32, [None, None, num_feats])
-    input_lens = tf.placeholder(tf.int32, [None])
-    targets = tf.sparse_placeholder(tf.int32)
-
-    # Initialize the model.
-    model = rnn_ctc.Model(inputs, input_lens, targets,
-                   vocab_size=timit.num_phones+2)
-
     # Load the validation set
     valid_x, valid_x_lens, valid_y = timit.valid_set(seed=0)
-
 
     if save_n:
         saver = tf.train.Saver()
@@ -55,9 +44,11 @@ def train(batch_size, total_size, num_epochs,
 
         train_ler_total = 0
         for batch_i, batch in enumerate(batch_gen):
-            batch_x, x_lens, batch_y = batch
+            batch_x, batch_x_lens, batch_y = batch
 
-            feed_dict={inputs: batch_x, input_lens: x_lens, targets: batch_y}
+            feed_dict={model.batch_x: batch_x,
+                       model.batch_x_lens: batch_x_lens,
+                       model.batch_y: batch_y}
 
             _, ler, decoded = sess.run(
                     [model.optimizer, model.ler, model.decoded],
@@ -72,8 +63,9 @@ def train(batch_size, total_size, num_epochs,
 
             train_ler_total += ler
 
-        feed_dict={inputs: valid_x, input_lens: valid_x_lens,
-                targets: valid_y}
+        feed_dict={model.batch_x: valid_x,
+                   model.batch_x_lens: valid_x_lens,
+                   model.batch_y: valid_y}
         valid_ler, dense_decoded, dense_ref = sess.run(
                 [model.ler, model.dense_decoded, model.dense_ref],
                 feed_dict=feed_dict)
@@ -129,4 +121,12 @@ if __name__ == "__main__":
     # Prepares a new experiment dir for all logging.
     prep_exp_dir()
 
-    train(batch_size=64, total_size=3648, num_epochs=200, feat_type="mfcc13_d", save_n=25)
+    # Vocab size is two more than the number of TIMIT labels. This is because
+    # we one extra for a blank label in CTC, and also another extra so that 0
+    # can be used for dynamic padding in our minibatches.
+    feat_type="mfcc13_d"
+    num_feats = timit.num_feats(feat_type)
+    model = rnn_ctc.Model(vocab_size=timit.num_phones+2, num_layers=3,
+                          num_feats=num_feats)
+    train(model=model, batch_size=64, total_size=3648, num_epochs=200,
+          feat_type="mfcc13_d", save_n=25)
