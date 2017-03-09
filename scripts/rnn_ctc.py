@@ -3,6 +3,7 @@ import tensorflow as tf
 
 import timit
 from utils import target_list_to_sparse_tensor
+import model
 
 def lstm_cell(hidden_size):
     return tf.contrib.rnn.LSTMCell(
@@ -10,7 +11,7 @@ def lstm_cell(hidden_size):
             use_peepholes=True,
             state_is_tuple=True)
 
-class Model:
+class Model(model.Model):
 
     def __init__(self, vocab_size, num_feats, num_layers,
                  hidden_size=250, beam_width=100):
