@@ -57,7 +57,7 @@ def all_feature_extraction():
         print("Processing speaker %s" % root)
         for fn in fns:
             if fn.endswith(".wav"):
-                feature_extraction(join(root, fn))
+                logfbank_feature_extraction(join(root, fn))
 
 def all_zero_pad():
     """ Pads all the utterance features with zeros along the time dimension so

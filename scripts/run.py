@@ -1,3 +1,4 @@
+import inspect
 import logging
 import os
 import shutil
@@ -22,8 +23,13 @@ def train(model, batch_size, total_size, num_epochs,
         save_n: Whether to save the model at every n epochs.
     """
 
-    out_file = open(os.path.join(EXP_DIR, str(get_exp_dir_num()), "train.out"),
-                    "w")
+    #Get information about training for the names of output files.
+    frame = inspect.currentframe()
+    args, _, _, values = inspect.getargvalues(frame)
+    strs = ["%s=%s" % (arg, values[arg]) for arg in args if type(values[arg]) in [str, int, float]]
+    fn = "train~" + "~".join(strs) + ".out"
+
+    out_file = open(os.path.join(EXP_DIR, str(get_exp_dir_num()), fn), "w")
 
     # Load the validation set
     valid_x, valid_x_lens, valid_y = timit.valid_set(seed=0)
@@ -119,14 +125,17 @@ def prep_exp_dir():
 if __name__ == "__main__":
 
     # Prepares a new experiment dir for all logging.
-    prep_exp_dir()
+    #prep_exp_dir()
 
     # Vocab size is two more than the number of TIMIT labels. This is because
     # we one extra for a blank label in CTC, and also another extra so that 0
     # can be used for dynamic padding in our minibatches.
-    feat_type="mfcc13_d"
+    #feat_type="log_mel_filterbank"
+    feat_type="log_mel_filterbank"
     num_feats = timit.num_feats(feat_type)
     model = rnn_ctc.Model(vocab_size=timit.num_phones+2, num_layers=3,
                           num_feats=num_feats)
-    train(model=model, batch_size=64, total_size=3648, num_epochs=200,
-          feat_type="mfcc13_d", save_n=25)
+
+    for i in range(6,13):
+        train(model=model, batch_size=64, total_size=2**i, num_epochs=100,
+              feat_type=feat_type, save_n=25)

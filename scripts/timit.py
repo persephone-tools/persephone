@@ -6,6 +6,8 @@ import random
 
 import utils
 
+import config
+
 from nltk.metrics import distance
 
 random.seed(0)
@@ -15,7 +17,7 @@ num_phones = 61
 # The number of training sentences with SA utterances removed.
 total_size=3696
 
-def phone_classes(path="/home/oadams/code/mam/data/timit/train",
+def phone_classes(path=os.path.join(config.TGT_DIR, "train"),
         feat_type="mfcc13_d"):
     """ Returns a sorted list of phone classes observed in the TIMIT corpus."""
 
@@ -123,7 +125,7 @@ def load_batch_y(path_batch):
             batch_y.append(phone_indices)
     return batch_y
 
-def test_set(path="/home/oadams/code/mam/data/timit/test",
+def test_set(path=os.path.join(config.TGT_DIR, "test"),
         feat_type="mfcc13_d", flatten=True):
     """ Retrieves the core test set of 24 speakers. """
 
@@ -139,7 +141,7 @@ def test_set(path="/home/oadams/code/mam/data/timit/test",
 
     return batch_x, utter_lens, batch_y
 
-def valid_set(path="/home/oadams/code/mam/data/timit/test",
+def valid_set(path=os.path.join(config.TGT_DIR, "test"),
     feat_type="mfcc13_d", flatten=True, seed=0):
     """ Retrieves the 50 speaker validation set. """
 
@@ -171,7 +173,7 @@ def valid_set(path="/home/oadams/code/mam/data/timit/test",
 
     return batch_x, utter_lens, batch_y
 
-def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
+def batch_gen(path=os.path.join(config.TGT_DIR, "train"), rand=True,
         batch_size=16, labels="phonemes", total_size=3696, flatten=True,
         time_major=False, feat_type="mfcc13_d"):
     """ Load the already preprocessed TIMIT data.  Flatten=True will make the
@@ -199,6 +201,7 @@ def batch_gen(path="/home/oadams/code/mam/data/timit/train", rand=True,
 
     dialect_classes = sorted(list(dialect_classes))
     dr_class_map = dict(zip(dialect_classes, range(0,len(dialect_classes))))
+
 
     # Adjust the effective size of the TIMIT corpus so I can debug models more easily.
     train_paths = train_paths[:total_size]
