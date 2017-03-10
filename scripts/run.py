@@ -1,3 +1,5 @@
+""" A driver script that runs experiments. """
+
 import os
 import shutil
 
@@ -14,20 +16,21 @@ def get_exp_dir_num():
 def prep_exp_dir():
     """ Prepares an experiment directory by copying the code in this directory
     to it as is, and setting the logger to write to files in that
-    directory."""
+    directory.
+    """
 
-    n = get_exp_dir_num()
-    n = n + 1
-    code_dir = os.path.join(EXP_DIR, str(n), "code")
+    exp_num = get_exp_dir_num()
+    exp_num = exp_num + 1
+    code_dir = os.path.join(EXP_DIR, str(exp_num), "code")
     os.makedirs(code_dir)
-    for fn in os.listdir():
-        if fn.endswith(".py"):
-            shutil.copyfile(fn, os.path.join(code_dir, fn))
+    for filename in os.listdir():
+        if filename.endswith(".py"):
+            shutil.copyfile(filename, os.path.join(code_dir, filename))
 
-    return os.path.join(EXP_DIR, str(n))
+    return os.path.join(EXP_DIR, str(exp_num))
 
 def run():
-    """ Run an experiment. """
+    """ Run an experiment.  """
 
     feat_type = "mfcc13_d"
     num_feats = timit.num_feats(feat_type)
