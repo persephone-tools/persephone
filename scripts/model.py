@@ -9,6 +9,8 @@ import timit
 class Model:
     """ Generic model for our ASR tasks. """
 
+    self.exp_dir = None
+
     def train(self, batch_size, total_size, num_epochs, feat_type, save_n,
               restore_model_path=None):
         """ Train the model.
