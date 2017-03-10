@@ -82,6 +82,11 @@ class Model(model.Model):
         self.decoded, self.log_prob = tf.nn.ctc_beam_search_decoder(
                 self.logits, self.batch_x_lens, beam_width=beam_width)
 
+        # If we want to do manual PER decoding. The decoded[0] beans the best
+        # hypothesis (0th) in an n-best list.
+        self.dense_decoded = tf.sparse_tensor_to_dense(self.decoded[0])
+        self.dense_ref = tf.sparse_tensor_to_dense(self.batch_y)
+
         self.loss = tf.nn.ctc_loss(self.batch_y, self.logits, self.batch_x_lens,
                 preprocess_collapse_repeated=True)
         self.cost = tf.reduce_mean(self.loss)
@@ -89,10 +94,5 @@ class Model(model.Model):
 
         self.ler = tf.reduce_mean(tf.edit_distance(
                 tf.cast(self.decoded[0], tf.int32), self.batch_y))
-
-        # If we want to do manual PER decoding. The decoded[0] beans the best
-        # hypothesis (0th) in an n-best list.
-        self.dense_decoded = tf.sparse_tensor_to_dense(self.decoded[0])
-        self.dense_ref = tf.sparse_tensor_to_dense(self.batch_y)
 
         self.write_desc()

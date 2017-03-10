@@ -9,7 +9,15 @@ import timit
 class Model:
     """ Generic model for our ASR tasks. """
 
-    self.exp_dir = None
+    # Subclasses should instantiate these variables:
+    exp_dir = None
+    batch_x = None
+    batch_x_lens = None
+    batch_y = None
+    optimizer = None
+    ler = None
+    dense_decoded = None
+    dense_ref = None
 
     def train(self, batch_size, total_size, num_epochs, feat_type, save_n,
               restore_model_path=None):
@@ -63,22 +71,16 @@ class Model:
                            self.batch_x_lens: batch_x_lens,
                            self.batch_y: batch_y}
 
-                _, ler, _decoded = sess.run(
-                        [self.optimizer, self.ler, self.decoded],
+                _, ler, = sess.run(
+                        [self.optimizer, self.ler],
                         feed_dict=feed_dict)
-
-                #timit.error_rate(batch_y, decoded)
-                #if batch_i == 0:
-                #    logging.debug("Batch[0] hypothesis: ")
-                #    logging.debug(decoded[0].values)
-                #    logging.debug("Batch[0] Reference: ")
-                #    logging.debug(batch_y[1])
 
                 train_ler_total += ler
 
             feed_dict = {self.batch_x: valid_x,
                        self.batch_x_lens: valid_x_lens,
                        self.batch_y: valid_y}
+
             valid_ler, dense_decoded, dense_ref = sess.run(
                     [self.ler, self.dense_decoded, self.dense_ref],
                     feed_dict=feed_dict)
