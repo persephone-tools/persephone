@@ -19,7 +19,7 @@ class Model:
     dense_decoded = None
     dense_ref = None
 
-    def train(self, batch_size, total_size, num_epochs, feat_type, save_n,
+    def train(self, corpus_batches, num_epochs, save_n,
               restore_model_path=None):
         """ Train the model.
 
@@ -46,7 +46,7 @@ class Model:
         out_file = open(os.path.join(self.exp_dir, "train.log"), "w")
 
         # Load the validation set
-        valid_x, valid_x_lens, valid_y = timit.valid_set(feat_type, seed=0)
+        valid_x, valid_x_lens, valid_y = corpus_batches.valid_set(seed=0)
 
         if save_n:
             saver = tf.train.Saver()
@@ -59,8 +59,7 @@ class Model:
             sess.run(tf.global_variables_initializer())
 
         for epoch in range(1, num_epochs+1):
-            batch_gen = timit.batch_gen(feat_type, batch_size=batch_size,
-                                        total_size=total_size)
+            batch_gen = corpus_batches.train_batch_gen()
 
             train_ler_total = 0
             batch_i = None
@@ -85,7 +84,6 @@ class Model:
                     [self.ler, self.dense_decoded, self.dense_ref],
                     feed_dict=feed_dict)
             valid_per = timit.batch_per(dense_ref, dense_decoded)
-            #total_per += timit.error_rate(utter_y, decoded)
 
             print("Epoch %d. Training LER: %f, validation LER: %f, validation PER: %f" % (
                     epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per),

@@ -32,12 +32,12 @@ def prep_exp_dir():
 def run():
     """ Run an experiment.  """
 
-    feat_type = "mfcc13_d"
-    num_feats = timit.num_feats(feat_type)
     for i in range(12, 6, -1):
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
-        model = rnn_ctc.Model(exp_dir=exp_dir, vocab_size=timit.num_phones,
-                num_feats=num_feats)
-        model.train(batch_size=64, total_size=2**i, num_epochs=100,
-                feat_type=feat_type, save_n=25)
+
+        corpus_batches = timit.CorpusBatches(feat_type="mfcc13_d",
+                batch_size=64, total_size=2**i)
+
+        model = rnn_ctc.Model(exp_dir, corpus_batches)
+        model.train(corpus_batches, num_epochs=100, save_n=25)

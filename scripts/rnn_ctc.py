@@ -25,12 +25,12 @@ class Model(model.Model):
             for key, val in self.__dict__.items():
                 print("%s=%s" % (key, val), file=desc_f)
 
-    def __init__(self, exp_dir, vocab_size, num_feats, num_layers=3,
+    def __init__(self, exp_dir, corpus_batches, num_layers=3,
                  hidden_size=250, beam_width=100):
 
         # Increase vocab size by 2 since we need an extra for CTC blank labels
         # and another extra for dynamic padding with zeros.
-        vocab_size = vocab_size+2
+        vocab_size = corpus_batches.vocab_size+2
 
         # Reset the graph.
         tf.reset_default_graph()
@@ -42,7 +42,8 @@ class Model(model.Model):
         self.vocab_size = vocab_size
 
         # Initialize placeholders for feeding data to model.
-        self.batch_x = tf.placeholder(tf.float32, [None, None, num_feats])
+        self.batch_x = tf.placeholder(
+                tf.float32, [None, None, corpus_batches.num_feats])
         self.batch_x_lens = tf.placeholder(tf.int32, [None])
         self.batch_y = tf.sparse_placeholder(tf.int32)
 
