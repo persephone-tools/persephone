@@ -41,7 +41,11 @@ class Model:
         args, _, _, values = inspect.getargvalues(frame)
         with open(os.path.join(self.exp_dir, "train_description.txt"), "w") as desc_f:
             for arg in args:
-                print("%s=%s" % (arg, values[arg]), file=desc_f)
+                if type(values[arg]) in [str,int,float] or isinstance(
+                            values[arg], type(None)):
+                    print("%s=%s" % (arg, values[arg]), file=desc_f)
+                else:
+                    print("%s=%s" % (arg, values[arg].__dict__), file=desc_f)
 
         out_file = open(os.path.join(self.exp_dir, "train.log"), "w")
 

@@ -281,11 +281,12 @@ class CorpusBatches:
         self.total_size = total_size
 
     def valid_set(self, seed):
-        return valid_set(self.feat_type, seed)
+        return valid_set(self.feat_type, seed=seed)
 
     def train_batch_gen(self):
         return batch_gen(self.feat_type, batch_size=self.batch_size,
                 total_size=self.total_size)
 
+    @property
     def num_feats(self):
         return num_feats(self.feat_type)
