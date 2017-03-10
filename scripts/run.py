@@ -1,6 +1,5 @@
 import os
 import shutil
-import tensorflow as tf
 
 import config
 import rnn_ctc
@@ -30,9 +29,9 @@ def prep_exp_dir():
 def run():
     """ Run an experiment. """
 
-    feat_type="mfcc13_d"
+    feat_type = "mfcc13_d"
     num_feats = timit.num_feats(feat_type)
-    for i in range(12,6,-1):
+    for i in range(12, 6, -1):
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
         model = rnn_ctc.Model(exp_dir=exp_dir, vocab_size=timit.num_phones,
