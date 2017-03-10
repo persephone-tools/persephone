@@ -202,9 +202,15 @@ def batch_gen(path=os.path.join(config.TGT_DIR, "train"), rand=True,
     dialect_classes = sorted(list(dialect_classes))
     dr_class_map = dict(zip(dialect_classes, range(0,len(dialect_classes))))
 
+    if rand:
+        random.shuffle(train_paths)
 
     # Adjust the effective size of the TIMIT corpus so I can debug models more easily.
-    train_paths = train_paths[:total_size]
+    mod = total_size % batch_size
+    if mod != 0:
+        print("WARNING Total train size %d not divisible by batch_size %d." % (
+                total_size, batch_size))
+    train_paths = train_paths[:total_size-mod]
 
     path_batches = [train_paths[i:i+batch_size] for i in range(
             0,len(train_paths),batch_size)]
