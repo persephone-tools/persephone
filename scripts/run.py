@@ -127,15 +127,9 @@ if __name__ == "__main__":
     # Prepares a new experiment dir for all logging.
     #prep_exp_dir()
 
-    # Vocab size is two more than the number of TIMIT labels. This is because
-    # we one extra for a blank label in CTC, and also another extra so that 0
-    # can be used for dynamic padding in our minibatches.
-    #feat_type="log_mel_filterbank"
     feat_type="log_mel_filterbank"
     num_feats = timit.num_feats(feat_type)
-    model = rnn_ctc.Model(vocab_size=timit.num_phones+2, num_layers=3,
-                          num_feats=num_feats)
-
     for i in range(6,13):
+        model = rnn_ctc.Model(vocab_size=timit.num_phones, num_feats=num_feats)
         train(model=model, batch_size=64, total_size=2**i, num_epochs=100,
               feat_type=feat_type, save_n=25)

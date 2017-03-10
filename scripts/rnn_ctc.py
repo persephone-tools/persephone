@@ -1,8 +1,7 @@
+import os
 import numpy as np
 import tensorflow as tf
 
-import timit
-from utils import target_list_to_sparse_tensor
 import model
 
 def lstm_cell(hidden_size):
@@ -13,13 +12,31 @@ def lstm_cell(hidden_size):
 
 class Model(model.Model):
 
-    def __init__(self, vocab_size, num_feats, num_layers,
+    def write_desc(self):
+        """ Writes a description of the model to the exp_dir. """
+
+        with open(os.path.join(self.exp_dir, "model_description.txt"), "w") as f:
+            for key, val in self.__dict__.items():
+                print("%s=%s" % (key, val), file=f)
+
+    def __init__(self, exp_dir, vocab_size, num_feats, num_layers=3,
                  hidden_size=250, beam_width=100):
 
+        # Increase vocab size by 2 since we need an extra for CTC blank labels
+        # and another extra for dynamic padding with zeros.
+        vocab_size = vocab_size+2
+
+        # Reset the graph.
+        tf.reset_default_graph()
+
+        self.exp_dir = exp_dir
+        self.num_layers=num_layers
         self.hidden_size = hidden_size
+        self.beam_width = beam_width
+        self.vocab_size = vocab_size
+
 
         # Initialize placeholders for feeding data to model.
-        #num_feats = timit.num_feats(feat_type)
         self.batch_x = tf.placeholder(tf.float32, [None, None, num_feats])
         self.batch_x_lens = tf.placeholder(tf.int32, [None])
         self.batch_y = tf.sparse_placeholder(tf.int32)
@@ -70,3 +87,5 @@ class Model(model.Model):
         # hypothesis (0th) in an n-best list.
         self.dense_decoded = tf.sparse_tensor_to_dense(self.decoded[0])
         self.dense_ref = tf.sparse_tensor_to_dense(self.batch_y)
+
+        self.write_desc()

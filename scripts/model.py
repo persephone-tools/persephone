@@ -1,16 +1,16 @@
+import inspect
 import os
 import tensorflow as tf
 
 import timit
 import config
 
-EXP_DIR = config.EXP_DIR
-
 class Model:
     """ Generic model for our ASR tasks. """
 
+
     def train(self, batch_size, total_size, num_epochs, feat_type, save_n,
-              restore_model_path):
+              restore_model_path=None):
         """ Train the model.
 
             batch_size: The number of utterances in each batch.
@@ -25,12 +25,13 @@ class Model:
         """
 
         #Get information about training for the names of output files.
-        #frame = inspect.currentframe()
-        #args, _, _, values = inspect.getargvalues(frame)
-        #strs = ["%s=%s" % (arg, values[arg]) for arg in args if type(values[arg]) in [str, int, float]]
-        #fn = "train~" + "~".join(strs) + ".out"
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        with open(os.path.join(self.exp_dir, "train_description.txt"), "w") as f:
+            for arg in args:
+                print("%s=%s" % (arg, values[arg]), file=f)
 
-        #out_file = open(os.path.join(EXP_DIR, str(get_exp_dir_num()), fn), "w")
+        out_file = open(os.path.join(self.exp_dir, "train.log"), "w")
 
         # Load the validation set
         valid_x, valid_x_lens, valid_y = timit.valid_set(seed=0)
@@ -83,11 +84,10 @@ class Model:
                     epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per),
                     flush=True, file=out_file)
 
-            # Give the model an appropriate number and save it in the EXP_DIR
+            # Give the model an appropriate number and save it.
             if save_n and epoch % save_n == 0:
                 # Save the model
-                path = os.path.join(EXP_DIR, str(get_exp_dir_num()),
-                        "model.epoch%d.ckpt" % epoch)
+                path = os.path.join(self.exp_dir, "model", "model.epoch%d.ckpt" % epoch)
                 save_path = saver.save(sess, path)
 
                 # Get the validation PER. We do this less often because it's
