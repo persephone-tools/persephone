@@ -1,3 +1,5 @@
+""" An acoustic model with a LSTM/CTC architecture. """
+
 import os
 import numpy as np
 import tensorflow as tf
@@ -5,19 +7,23 @@ import tensorflow as tf
 import model
 
 def lstm_cell(hidden_size):
+    """ Wrapper function to create an LSTM cell. """
+
     return tf.contrib.rnn.LSTMCell(
             hidden_size,
             use_peepholes=True,
             state_is_tuple=True)
 
 class Model(model.Model):
+    """ An acoustic model with a LSTM/CTC architecture. """
 
     def write_desc(self):
         """ Writes a description of the model to the exp_dir. """
 
-        with open(os.path.join(self.exp_dir, "model_description.txt"), "w") as f:
+        path = os.path.join(self.exp_dir, "model_description.txt")
+        with open(path, "w") as desc_f:
             for key, val in self.__dict__.items():
-                print("%s=%s" % (key, val), file=f)
+                print("%s=%s" % (key, val), file=desc_f)
 
     def __init__(self, exp_dir, vocab_size, num_feats, num_layers=3,
                  hidden_size=250, beam_width=100):
@@ -30,11 +36,10 @@ class Model(model.Model):
         tf.reset_default_graph()
 
         self.exp_dir = exp_dir
-        self.num_layers=num_layers
+        self.num_layers = num_layers
         self.hidden_size = hidden_size
         self.beam_width = beam_width
         self.vocab_size = vocab_size
-
 
         # Initialize placeholders for feeding data to model.
         self.batch_x = tf.placeholder(tf.float32, [None, None, num_feats])
@@ -64,6 +69,8 @@ class Model(model.Model):
 
         self.outputs = tf.reshape(self.outputs_concat, [-1, self.hidden_size*2])
 
+        # Single-variable names are appropriate for weights an biases.
+        # pylint: disable=invalid-name
         W = tf.Variable(tf.truncated_normal([hidden_size*2, vocab_size],
                 stddev=np.sqrt(2.0 / (2*hidden_size))))
         b = tf.Variable(tf.zeros([vocab_size]))

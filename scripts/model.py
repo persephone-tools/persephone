@@ -1,13 +1,13 @@
+""" Generic model for automatic speech recognition. """
+
 import inspect
 import os
 import tensorflow as tf
 
 import timit
-import config
 
 class Model:
     """ Generic model for our ASR tasks. """
-
 
     def train(self, batch_size, total_size, num_epochs, feat_type, save_n,
               restore_model_path=None):
@@ -26,10 +26,12 @@ class Model:
 
         #Get information about training for the names of output files.
         frame = inspect.currentframe()
+        # pylint: disable=deprecated-method
+        # It was a mistake to deprecate this in Python 3.5
         args, _, _, values = inspect.getargvalues(frame)
-        with open(os.path.join(self.exp_dir, "train_description.txt"), "w") as f:
+        with open(os.path.join(self.exp_dir, "train_description.txt"), "w") as desc_f:
             for arg in args:
-                print("%s=%s" % (arg, values[arg]), file=f)
+                print("%s=%s" % (arg, values[arg]), file=desc_f)
 
         out_file = open(os.path.join(self.exp_dir, "train.log"), "w")
 
@@ -46,19 +48,20 @@ class Model:
         else:
             sess.run(tf.global_variables_initializer())
 
-        for epoch in range(1,num_epochs+1):
-            batch_gen = timit.batch_gen(batch_size=batch_size,
+        for epoch in range(1, num_epochs+1):
+            batch_gen = timit.batch_gen(feat_type, batch_size=batch_size,
                                         total_size=total_size)
 
             train_ler_total = 0
+            batch_i = None
             for batch_i, batch in enumerate(batch_gen):
                 batch_x, batch_x_lens, batch_y = batch
 
-                feed_dict={self.batch_x: batch_x,
+                feed_dict = {self.batch_x: batch_x,
                            self.batch_x_lens: batch_x_lens,
                            self.batch_y: batch_y}
 
-                _, ler, decoded = sess.run(
+                _, ler, _decoded = sess.run(
                         [self.optimizer, self.ler, self.decoded],
                         feed_dict=feed_dict)
 
@@ -71,7 +74,7 @@ class Model:
 
                 train_ler_total += ler
 
-            feed_dict={self.batch_x: valid_x,
+            feed_dict = {self.batch_x: valid_x,
                        self.batch_x_lens: valid_x_lens,
                        self.batch_y: valid_y}
             valid_ler, dense_decoded, dense_ref = sess.run(
@@ -88,7 +91,8 @@ class Model:
             if save_n and epoch % save_n == 0:
                 # Save the model
                 path = os.path.join(self.exp_dir, "model", "model.epoch%d.ckpt" % epoch)
-                save_path = saver.save(sess, path)
+                os.mkdir(os.path.dirname(path))
+                saver.save(sess, path)
 
                 # Get the validation PER. We do this less often because it's
                 # compoutationally more expensive. This is because we calculate the
