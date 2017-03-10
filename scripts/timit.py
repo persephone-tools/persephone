@@ -125,7 +125,7 @@ def load_batch_y(path_batch):
             batch_y.append(phone_indices)
     return batch_y
 
-def test_set(path=os.path.join(config.TGT_DIR, "test"),
+def test_set(feat_type, path=os.path.join(config.TGT_DIR, "test"),
         feat_type="mfcc13_d", flatten=True):
     """ Retrieves the core test set of 24 speakers. """
 
@@ -141,8 +141,8 @@ def test_set(path=os.path.join(config.TGT_DIR, "test"),
 
     return batch_x, utter_lens, batch_y
 
-def valid_set(path=os.path.join(config.TGT_DIR, "test"),
-    feat_type="mfcc13_d", flatten=True, seed=0):
+def valid_set(feat_type, path=os.path.join(config.TGT_DIR, "test"),
+        flatten=True, seed=0):
     """ Retrieves the 50 speaker validation set. """
 
     random.seed(seed)
@@ -173,9 +173,9 @@ def valid_set(path=os.path.join(config.TGT_DIR, "test"),
 
     return batch_x, utter_lens, batch_y
 
-def batch_gen(path=os.path.join(config.TGT_DIR, "train"), rand=True,
+def batch_gen(feat_type, path=os.path.join(config.TGT_DIR, "train"), rand=True,
         batch_size=16, labels="phonemes", total_size=3696, flatten=True,
-        time_major=False, feat_type="mfcc13_d"):
+        time_major=False):
     """ Load the already preprocessed TIMIT data.  Flatten=True will make the
     2-dimensional freq x time a 1 dimensional vector of feats."""
 
@@ -238,7 +238,7 @@ def batch_gen(path=os.path.join(config.TGT_DIR, "train"), rand=True,
 def num_feats(feat_type):
     """ Returns the number of feats for a given feat type. """
 
-    bg = batch_gen(rand=False, feat_type=feat_type)
+    bg = batch_gen(feat_type, rand=False)
     batch = next(bg)
     return batch[0].shape[-1]
 

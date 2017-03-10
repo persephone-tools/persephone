@@ -36,6 +36,6 @@ def run():
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
         model = rnn_ctc.Model(exp_dir=exp_dir, vocab_size=timit.num_phones,
-                              num_feats=num_feats)
+                num_feats=num_feats)
         model.train(batch_size=64, total_size=2**i, num_epochs=100,
-                    feat_type=feat_type, save_n=25)
+                feat_type=feat_type, save_n=25)

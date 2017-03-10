@@ -34,7 +34,7 @@ class Model:
         out_file = open(os.path.join(self.exp_dir, "train.log"), "w")
 
         # Load the validation set
-        valid_x, valid_x_lens, valid_y = timit.valid_set(seed=0)
+        valid_x, valid_x_lens, valid_y = timit.valid_set(feat_type, seed=0)
 
         if save_n:
             saver = tf.train.Saver()
