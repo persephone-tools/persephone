@@ -1,6 +1,7 @@
 """ Generic model for automatic speech recognition. """
 
 import inspect
+import itertools
 import os
 import tensorflow as tf
 
@@ -19,8 +20,7 @@ class Model:
     dense_decoded = None
     dense_ref = None
 
-    def train(self, corpus_batches, num_epochs, save_n,
-              restore_model_path=None):
+    def train(self, corpus_batches, early_stopping_steps=10, restore_model_path=None):
         """ Train the model.
 
             batch_size: The number of utterances in each batch.
@@ -33,6 +33,12 @@ class Model:
             save_n: Whether to save the model at every n epochs.
             restore_model_path: The path to restore a model from.
         """
+
+        # Not technically the upper bound on a LER but we don't want to save if
+        # it's not below this.
+        best_valid_ler = 1.0
+        steps_since_last_record=0
+        best_epoch = -1
 
         #Get information about training for the names of output files.
         frame = inspect.currentframe()
@@ -52,8 +58,7 @@ class Model:
         # Load the validation set
         valid_x, valid_x_lens, valid_y = corpus_batches.valid_set(seed=0)
 
-        if save_n:
-            saver = tf.train.Saver()
+        saver = tf.train.Saver()
 
         sess = tf.Session()
 
@@ -62,7 +67,7 @@ class Model:
         else:
             sess.run(tf.global_variables_initializer())
 
-        for epoch in range(1, num_epochs+1):
+        for epoch in itertools.count():
             batch_gen = corpus_batches.train_batch_gen()
 
             train_ler_total = 0
@@ -89,27 +94,39 @@ class Model:
                     feed_dict=feed_dict)
             valid_per = timit.batch_per(dense_ref, dense_decoded)
 
-            print("Epoch %d. Training LER: %f, validation LER: %f, validation PER: %f" % (
-                    epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per),
-                    flush=True, file=out_file)
+            epoch_str = "Epoch %d. Training LER: %f, validation LER: %f, validation PER: %f" % (
+                    epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per)
+            print(epoch_str, flush=True, file=out_file)
 
-            # Give the model an appropriate number and save it.
-            if save_n and epoch % save_n == 0:
-                # Save the model
-                path = os.path.join(self.exp_dir, "model", "model.epoch%d.ckpt" % epoch)
+            # Implement early stopping.
+            if valid_ler < best_valid_ler:
+                print("New best valid_ler", file=out_file)
+                best_valid_ler = valid_ler
+                best_epoch_str = epoch_str
+                steps_since_last_record = 0
+                best_epoch = epoch
+
+                # Save the model.
+                path = os.path.join(self.exp_dir, "model", "model_best.ckpt")
                 if not os.path.exists(os.path.dirname(path)):
                     os.mkdir(os.path.dirname(path))
                 saver.save(sess, path)
+            else:
+                print("Steps since last best valid_ler: %d" % (
+                        steps_since_last_record), file=out_file)
+                steps_since_last_record += 1
+                if steps_since_last_record == early_stopping_steps:
+                    # Then stop.
+                    print("""Stopping since best validation score hasn't been
+                            beaten in %d epochs.""" % early_stopping_steps,
+                            file=out_file, flush=True)
+                    with open(os.path.join(
+                            self.exp_dir, "best_scores.txt"), "w") as best_f:
+                        print(best_epoch_str, file=best_f, flush=True)
 
-                # Get the validation PER. We do this less often because it's
-                # compoutationally more expensive. This is because we calculate the
-                # PER for each utterance in the validation set independently.
-                #total_per = 0
-                #for i in range(len(valid_x)):
-                #    utter_x = np.array([valid_x[i]])
-                #    utter_x_len = np.array([valid_x_lens[i]])
-                #    utter_y = [valid_y[i]]
+                    sess.close()
+                    out_file.close()
+                    return
 
         sess.close()
-
         out_file.close()
