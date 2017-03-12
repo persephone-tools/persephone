@@ -97,7 +97,8 @@ class Model:
             if save_n and epoch % save_n == 0:
                 # Save the model
                 path = os.path.join(self.exp_dir, "model", "model.epoch%d.ckpt" % epoch)
-                os.mkdir(os.path.dirname(path))
+                if not os.path.exists(os.path.dirname(path)):
+                    os.mkdir(os.path.dirname(path))
                 saver.save(sess, path)
 
                 # Get the validation PER. We do this less often because it's
