@@ -6,7 +6,8 @@ import config
 
 ORG_DIR = config.NA_DIR
 TGT_DIR = "../data/na"
-TXT_NORM_DIR = os.path.join(ORG_DIR, "txt_norm")
+ORG_TXT_NORM_DIR = os.path.join(ORG_DIR, "txt_norm")
+TGT_TXT_NORM_DIR = os.path.join(TGT_DIR, "txt_norm")
 
 TO_REMOVE = {"|", "ǀ", "↑", "«", "»", "¨", "“", "”", "D", "F"}
 TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩"}
@@ -48,23 +49,21 @@ def contains_forbidden_word(line):
             return True
     return False
 
-def trim_wavs(remove_tones=True):
+def trim_wavs(segmentation, remove_tones=True):
     """ Trims available wavs into the sentence or utterance-level."""
 
+    if not os.path.exists(TGT_TXT_NORM_DIR):
+        os.makedirs(TGT_TXT_NORM_DIR)
 
-    utters = []
     syl_inv = set()
-    for fn in os.listdir(TXT_NORM_DIR):
-        with open(os.path.join(TXT_NORM_DIR, fn)) as f:
+    for fn in os.listdir(ORG_TXT_NORM_DIR):
+        with open(os.path.join(ORG_TXT_NORM_DIR, fn)) as f:
+            i = 0
             for line in f:
 
                 # Remove lines with certain words in it.
                 if contains_forbidden_word(line):
                     continue
-
-                for word in WORDS_TO_REMOVE:
-                    if word in line:
-                        print(line)
 
                 # Remove certain symbols from lines.
                 for symbol in TO_REMOVE:
@@ -80,9 +79,19 @@ def trim_wavs(remove_tones=True):
                 assert is_number(sp[1])
 
                 syls = sp[2:]
-
-                utters.append(" ".join(syls))
                 syl_inv = syl_inv.union(syls)
+
+                labels = syls
+
+                assert fn.endswith(".txt")
+                out_fn = fn.strip(".txt")
+                i += 1
+                if segmentation == "syllables":
+                    out_fn = out_fn + "." + str(i) + ".syl"
+                elif segmentation == "phonemes":
+                    out_fn = out_fn + "." + str(i) + ".phn"
+                with open(os.path.join(TGT_TXT_NORM_DIR, out_fn), "w") as out_f:
+                    out_f.write(" ".join(labels))
 
     print(syl_inv)
     print(len(syl_inv))

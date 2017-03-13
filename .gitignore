@@ -1,5 +1,6 @@
 __pycache__
 data/timit
+data/na/txt_norm/
 exp/
 *.swp
 *.pyc
