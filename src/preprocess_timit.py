@@ -1,14 +1,14 @@
 """ Preprocesses the TIMIT data into a format for end-to-end phoneme recognition."""
 
-import python_speech_features
-import os
 import numpy as np
+import os
+from os.path import join
+import python_speech_features
 import scipy.io.wavfile as wav
 import shutil
 import subprocess
-from os.path import join
+
 import config
-from utils import zero_pad
 
 def all_feature_extraction():
     """ Walk over all the wav files in the TIMIT dir and extract features. """
@@ -16,7 +16,7 @@ def all_feature_extraction():
     def extract_energy(rate, sig):
         """ Extracts the energy of frames. """
         mfcc = python_speech_features.mfcc(sig, rate, appendEnergy=True)
-        energy_row_vec = mfcc[:,0]
+        energy_row_vec = mfcc[:, 0]
         energy_col_vec = energy_row_vec[:, np.newaxis]
         return energy_col_vec
 
@@ -28,8 +28,8 @@ def all_feature_extraction():
         feat = np.hstack([energy, fbank_feat])
         delta_feat = python_speech_features.delta(feat, 2)
         delta_delta_feat = python_speech_features.delta(delta_feat, 2)
-        l = [feat, delta_feat, delta_delta_feat]
-        all_feats = np.array(l)
+        all_feats = [feat, delta_feat, delta_delta_feat]
+        all_feats = np.array(all_feats)
         # Make time the first dimension for easy length normalization padding later.
         all_feats = np.swapaxes(all_feats, 0, 1)
         all_feats = np.swapaxes(all_feats, 1, 2)
@@ -55,59 +55,9 @@ def all_feature_extraction():
 
     for root, dirs, fns in os.walk(config.TGT_DIR):
         print("Processing speaker %s" % root)
-        for fn in fns:
-            if fn.endswith(".wav"):
-                logfbank_feature_extraction(join(root, fn))
-
-def all_zero_pad():
-    """ Pads all the utterance features with zeros along the time dimension so
-    that each utterance is as long as the longest one, with silence added."""
-
-    def len_longest_timit_utterance(path=config.TGT_DIR):
-        """ Finds the number of frames in the longest utterance in TIMIT, so that
-        we can zero-pad the other utterances appropriately."""
-
-        if os.path.exists("max_len.txt"):
-            with open("max_len.txt") as f:
-                return int(f.readline())
-
-        max_len = 0
-
-        for root, dirnames, filenames in os.walk(path):
-            for fn in filenames:
-                prefix = fn.split(".")[0] # Get the file prefix
-                if fn.endswith(".log_mel_filterbank.npy"):
-                    path = join(root,fn)
-                    x = np.load(path)
-                    if x.shape[0] > max_len:
-                        max_len = x.shape[0]
-
-        with open("max_len.txt", "w") as f:
-            f.write(str(max_len))
-
-        return max_len
-
-    def zero_pad(a, to_length):
-        """ Zero pads along the 0th dimension to make sure the utterance array
-        x is of length to_length."""
-
-        assert a.shape[0] <= to_length
-        result = np.zeros((to_length,) + a.shape[1:])
-        result[:a.shape[0]] = a
-        return result
-
-    max_len = len_longest_timit_utterance()
-
-    for root, dirs, fns in os.walk(config.TGT_DIR):
-        print("Padding utterances for speaker %s" % "/".join(root.split("/")[-3:]))
-        for fn in fns:
-            if fn.endswith(".log_mel_filterbank.npy"):
-                path = join(root, fn)
-                x = np.load(path)
-                x = zero_pad(x, max_len)
-                np.save(join(
-                        root, fn.split(".")[0] + ".log_mel_filterbank.zero_pad.npy"),
-                        x)
+        for filename in fns:
+            if filename.endswith(".wav"):
+                logfbank_feature_extraction(join(root, filename))
 
 def create_raw_data():
     """ Copies the original TIMIT data to a working directory and does basic
@@ -151,4 +101,3 @@ def create_raw_data():
 if __name__ == "__main__":
     #create_raw_data()
     all_feature_extraction()
-    #all_zero_pad()

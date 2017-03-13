@@ -1,3 +1,11 @@
+# pylint: disable-all
+
+""" Implement the CNN-based acoustic model of Zhang et al. 2017
+    'Towards End-to-End Speech Recognition with Deep Convolutional Neural
+    Networks'.
+"""
+
+
 import os
 import random
 
@@ -5,9 +13,8 @@ import numpy as np
 import tensorflow as tf
 
 #from preprocess_timit import len_longest_timit_utterance
-
 config = tf.ConfigProto()
-config.gpu_options.allow_growth=True
+config.gpu_options.allow_growth = True
 sess = tf.InteractiveSession(config=config)
 
 random.seed(0)
@@ -33,7 +40,7 @@ def num_phones(path="/home/oadams/mam/data/timit/"):
         for fn in filenames:
             prefix = fn.split(".")[0] # Get the file prefix
             if fn.endswith(".phn"):
-                path = os.path.join(root,fn)
+                path = os.path.join(root, fn)
                 with open(path) as phn_f:
                     phns = phn_f.readline().split()
                 for phn in phns:
@@ -48,8 +55,8 @@ def load_timit(path="/home/oadams/mam/data/timit/train", rand=True,
         """ Takes a list or array with numbers representing classes, and
         creates a corresponding 2-dimensional array of one-hot vectors."""
 
-        one_hot = np.zeros((1,num_classes))
-        one_hot[0,i] = 1
+        one_hot = np.zeros((1, num_classes))
+        one_hot[0, i] = 1
         return one_hot
 
     train_paths = []
@@ -60,22 +67,23 @@ def load_timit(path="/home/oadams/mam/data/timit/train", rand=True,
             prefix = fn.split(".")[0] # Get the file prefix
             if fn.endswith(".log_mel_filterbank.zero_pad.npy"):
                 # Add to filename list.
-                path = os.path.join(root,fn)
-                train_paths.append(os.path.join(root,fn))
+                path = os.path.join(root, fn)
+                train_paths.append(os.path.join(root, fn))
                 dialect_classes.add(path.split("/")[-3])
 
     dialect_classes = sorted(list(dialect_classes))
-    dr_class_map = dict(zip(dialect_classes, range(0,len(dialect_classes))))
+    dr_class_map = dict(zip(dialect_classes, range(0, len(dialect_classes))))
 
     if rand:
-        # Load a random subset of the training set of batch_size 
+        # Load a random subset of the training set of batch_size
         path_batch = random.sample(train_paths, batch_size)
         feats = [np.load(path) for path in path_batch]
         x = np.array(feats)
         if labels == "dialects":
             y_labels = np.array([dr_class_map[path.split("/")[-3]] for path in path_batch])
             # Make into one-hot vectors
-            batch_y = np.concatenate([create_one_hot(label,len(dialect_classes)) for label in y_labels])
+            batch_y = np.concatenate([create_one_hot(label, len(dialect_classes))
+                    for label in y_labels])
         elif labels == "phonemes":
             phn_paths = ["".join(path.split(".")[:-3])+".phn" for path in path_batch]
             batch_y = []
@@ -88,7 +96,7 @@ def load_timit(path="/home/oadams/mam/data/timit/train", rand=True,
     batch_x = np.array(feats)
     return batch_x, batch_y
 
-### Create the graph ### 
+# Create the graph
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial)
@@ -103,7 +111,7 @@ def conv2d(x, W):
 
 def max_pool_1x3(x):
     # Use max pooling over each 1x3 windows, as per Zhang et al.
-    return tf.nn.max_pool(x, ksize=[1, 1, 3, 1], strides=[1,1,3,1],
+    return tf.nn.max_pool(x, ksize=[1, 1, 3, 1], strides=[1, 1, 3, 1],
                           padding="SAME")
 
 
@@ -194,7 +202,7 @@ cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=y_fc))
 train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
 
-correct_prediction = tf.equal(tf.argmax(y_fc,1), tf.argmax(y,1))
+correct_prediction = tf.equal(tf.argmax(y_fc, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 tf.initialize_all_variables().run()
