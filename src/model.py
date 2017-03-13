@@ -53,7 +53,7 @@ class Model:
                 else:
                     print("%s=%s" % (arg, values[arg].__dict__), file=desc_f)
 
-        out_file = open(os.path.join(self.exp_dir, "train.log"), "w")
+        out_file = open(os.path.join(self.exp_dir, "train_log.txt"), "w")
 
         # Load the validation set
         valid_x, valid_x_lens, valid_y = corpus_batches.valid_set(seed=0)
