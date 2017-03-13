@@ -5,7 +5,7 @@ import shutil
 
 import config
 import rnn_ctc
-import timit
+import datasets.timit
 
 EXP_DIR = config.EXP_DIR
 
@@ -32,12 +32,12 @@ def prep_exp_dir():
 def run():
     """ Run an experiment.  """
 
-    for i in range(7,13):
+    for i in range(7, 13):
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
 
-        corpus_batches = timit.CorpusBatches(feat_type="log_mel_filterbank",
-                batch_size=64, total_size=2**i)
+        corpus_batches = datasets.timit.CorpusBatches(
+                feat_type="log_mel_filterbank", batch_size=64, total_size=2**i)
 
         model = rnn_ctc.Model(exp_dir, corpus_batches)
         model.train(corpus_batches)

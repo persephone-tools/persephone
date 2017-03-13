@@ -5,7 +5,7 @@ import itertools
 import os
 import tensorflow as tf
 
-import timit
+import datasets.timit
 
 class Model:
     """ Generic model for our ASR tasks. """
