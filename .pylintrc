@@ -1,0 +1,5 @@
+[pre-commit-hook]
+
+command=/home/oadams/venv3/bin/pylint
+disable=bad-continuation,too-few-public-methods,locally-disabled
+limit=8.0
