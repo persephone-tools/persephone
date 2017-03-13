@@ -1,3 +1,5 @@
+""" An interface with the Na data. """
+
 import os
 
 import config
@@ -90,3 +92,9 @@ def trim_wavs(remove_tones=True):
                 i += 1
                 continue
 
+class CorpusBatches:
+
+    def __init__(self, feat_type, batch_size, total_size):
+        self.feat_type = feat_type
+        self.batch_size = batch_size
+        self.total_size = total_size
