@@ -1,6 +1,7 @@
 """ An interface with the Na data. """
 
 import os
+import subprocess
 
 import config
 
@@ -20,6 +21,8 @@ BI_PHNS = {'dʑ', 'ẽ', 'ɖʐ', 'w̃', 'æ̃', 'qʰ', 'i͂', 'tɕ', 'v̩', 'v̩
         'ɻ̩', 'ã', 'ə̃', 'ṽ', 'pʰ', 'tʰ', 'ɤ̃', 'ʈʰ', 'ʈʂ', 'ɑ̃', 'ɻ̃', 'kʰ', 'ĩ',
         'õ', 'dz'}
 TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩"}
+
+NUM_PHONES = len(UNI_PHNS) + len(BI_PHNS) + len(TRI_PHNS)
 
 if not os.path.isdir(TGT_DIR):
     os.makedirs(TGT_DIR)
@@ -64,11 +67,24 @@ def segment_phonemes(syls):
                 raise Exception("Failed to segment syllable: %s" % syl)
     return phonemes
 
+def trim_wav(in_fn, out_fn, start_time, end_time):
+    """ Crops the wav file at in_fn so that the audio between start_time and
+    end_time is output to out_fn.
+    """
+
+    args = [config.SOX_PATH, in_fn, out_fn, "trim", start_time, "=" + end_time]
+    print(args[1:])
+    subprocess.run(args)
+
 def prepare(segmentation, remove_tones=True):
     """ Trims available wavs into the sentence or utterance-level."""
 
     if not os.path.exists(TGT_TXT_NORM_DIR):
         os.makedirs(TGT_TXT_NORM_DIR)
+
+    WAV_DIR = os.path.join(TGT_DIR, "wav")
+    if not os.path.exists(WAV_DIR):
+        os.makedirs(WAV_DIR)
 
     syl_inv = set()
     for fn in os.listdir(ORG_TXT_NORM_DIR):
@@ -98,21 +114,21 @@ def prepare(segmentation, remove_tones=True):
                 syl_inv = syl_inv.union(syls)
 
                 assert fn.endswith(".txt")
-                out_fn = fn.strip(".txt")
+                prefix = fn.strip(".txt")
                 i += 1
                 if segmentation == "syllables":
-                    out_fn = out_fn + "." + str(i) + ".syl"
+                    out_fn = prefix + "." + str(i) + ".syl"
                     labels = syls
                 elif segmentation == "phonemes":
-                    out_fn = out_fn + "." + str(i) + ".phn"
+                    out_fn = prefix + "." + str(i) + ".phn"
                     labels = segment_phonemes(syls)
 
                 with open(os.path.join(TGT_TXT_NORM_DIR, out_fn), "w") as out_f:
                     out_f.write(" ".join(labels))
 
-    print(syl_inv)
-    print(len(syl_inv))
-
+                in_wav_fn = os.path.join(ORG_DIR, "wav", "%s.wav" % prefix)
+                out_wav_fn = os.path.join(WAV_DIR, "%s.%d.wav" % (prefix, i))
+                trim_wav(in_wav_fn, out_wav_fn, start_time, end_time)
 
 class CorpusBatches:
 
