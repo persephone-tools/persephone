@@ -8,3 +8,5 @@ TGT_DIR = "/home/oadams/mam/data/timit/"
 SOX_PATH = "/home/oadams/code/sox-14.4.2/src/sox"
 # The path for experiments
 EXP_DIR = "../exp"
+# The path to the Na directory.
+NA_DIR = "/lt/work/oadams/Na/"
