@@ -41,3 +41,18 @@ def run():
 
         model = rnn_ctc.Model(exp_dir, corpus_batches)
         model.train(corpus_batches)
+
+def timit_test(dir_num):
+    """ Tests the model in dir_num on the TIMIT test set."""
+
+    import tensorflow as tf
+    import importlib
+
+    path = os.path.join(EXP_DIR, str(dir_num))
+    model_path = os.path.join(path, "model", "model_best.ckpt")
+    code_path = os.path.join(path, "code", "rnn_ctc.py")
+    exec(code_path)
+
+    #saver = tf.train.Saver()
+    #with tf.Session() as sess:
+    #    saver.restore(sess, path)
