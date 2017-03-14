@@ -179,42 +179,78 @@ def feat_extract():
 class CorpusBatches:
     """ An interface to batches of Na audio/transcriptions."""
 
-    def __init__(self, feat_type, seg_type):
+    def __init__(self, feat_type, seg_type, batch_size, total_size, rand=True):
         self.feat_type = feat_type
         self.seg_type = seg_type
+        self.rand = rand
         if seg_type == "phonemes":
             self.vocab_size = NUM_PHONES
 
-    def batch_gen(self, batch_size, total_size, rand=True):
         self.batch_size = batch_size
         self.total_size = total_size
-        input_dir = os.path.join(TGT_DIR, "wav")
-        target_dir = os.path.join(TGT_DIR, "txt_norm")
-        prefixes = [fn.strip(".wav") for fn in os.listdir(input_dir) if fn.endswith(".wav")]
+
+        self.input_dir = os.path.join(TGT_DIR, "wav")
+        self.target_dir = os.path.join(TGT_DIR, "txt_norm")
+        prefixes = [fn.strip(".wav") for fn in os.listdir(self.input_dir) if fn.endswith(".wav")]
 
         if rand:
             random.shuffle(prefixes)
 
+        train_prefixes = prefixes[:-200]
+        self.valid_prefixes = prefixes[-200:]
+
+        # Perhaps these should just be errors. Print statements might just be
+        # masking bugs. Or it should be logged clearly somewhere.
         mod = total_size % batch_size
+        if total_size > len(train_prefixes):
+            print("WARNING Total train_size %d greater than len(train_prefixes) %d" % (
+                    total_size, len(train_prefixes)))
         if mod != 0:
             print("WARNING Total train_size %d not divisible by"
                     "batch_size %d. Ignoring remaining %d utterances." % (
                     total_size, batch_size, mod))
-        prefixes = prefixes[:total_size-mod]
 
-        prefix_batches = [prefixes[i:i+batch_size]
-                for i in range(0, len(prefixes), batch_size)]
+        train_prefixes = train_prefixes[:total_size-mod]
+        self.train_prefix_batches = [train_prefixes[i:i+batch_size]
+                for i in range(0, len(train_prefixes), batch_size)]
 
-        for prefix_batch in prefix_batches:
-            input_paths = [os.path.join(input_dir, "%s.%s.npy" % (
+    def valid_set(self):
+
+        input_paths = [os.path.join(self.input_dir, "%s.%s.npy" % (
+                prefix, self.feat_type))
+                for prefix in self.valid_prefixes]
+        if self.seg_type == "phonemes":
+            target_paths = [os.path.join(self.target_dir, prefix+".phn")
+                    for prefix in self.valid_prefixes]
+
+        batch_x, batch_x_lens = utils.load_batch_x(input_paths,
+                                                       flatten=True)
+
+        batch_y = []
+        for target_path in target_paths:
+            with open(target_path) as phn_f:
+                phones = phn_f.readline().split()
+                indices = phones2indices(phones)
+                batch_y.append(indices)
+        batch_y = utils.target_list_to_sparse_tensor(batch_y)
+
+        return batch_x, batch_x_lens, batch_y
+
+    def train_batch_gen(self):
+
+        if self.rand:
+            random.shuffle(self.train_prefix_batches)
+
+        for prefix_batch in self.train_prefix_batches:
+            input_paths = [os.path.join(self.input_dir, "%s.%s.npy" % (
                     prefix, self.feat_type))
                     for prefix in prefix_batch]
             if self.seg_type == "phonemes":
-                target_paths = [os.path.join(target_dir, prefix+".phn")
+                target_paths = [os.path.join(self.target_dir, prefix+".phn")
                         for prefix in prefix_batch]
 
-            batch_x, batch_x_lens = utils.load_data.load_batch_x(input_paths,
-                                                           flatten=True)
+            batch_x, batch_x_lens = utils.load_batch_x(input_paths,
+                                                       flatten=True)
 
             batch_y = []
             for target_path in target_paths:
