@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+import xml.etree.ElementTree as ET
 
 import config
 
@@ -76,7 +77,7 @@ def trim_wav(in_fn, out_fn, start_time, end_time):
     print(args[1:])
     subprocess.run(args)
 
-def prepare(segmentation, remove_tones=True):
+def prepare_wavs_and_transcripts(filenames, segmentation, remove_tones=True):
     """ Trims available wavs into the sentence or utterance-level."""
 
     if not os.path.exists(TGT_TXT_NORM_DIR):
@@ -87,7 +88,7 @@ def prepare(segmentation, remove_tones=True):
         os.makedirs(WAV_DIR)
 
     syl_inv = set()
-    for fn in os.listdir(ORG_TXT_NORM_DIR):
+    for fn in filenames:
         with open(os.path.join(ORG_TXT_NORM_DIR, fn)) as f:
             i = 0
             for line in f:
@@ -129,6 +130,35 @@ def prepare(segmentation, remove_tones=True):
                 in_wav_fn = os.path.join(ORG_DIR, "wav", "%s.wav" % prefix)
                 out_wav_fn = os.path.join(WAV_DIR, "%s.%d.wav" % (prefix, i))
                 trim_wav(in_wav_fn, out_wav_fn, start_time, end_time)
+
+def wordlists_and_texts_fns():
+    """ Determine which transcript and WAV prefixes correspond to wordlists,
+    and which to stories.
+    """
+
+    wordlists = []
+    texts = []
+    XML_DIR = os.path.join(ORG_DIR, "xml")
+    txt_norm_files = os.listdir(ORG_TXT_NORM_DIR)
+    for filename in os.listdir(XML_DIR):
+        tree = ET.parse(os.path.join(XML_DIR, filename))
+        root = tree.getroot()
+        if "TEXT" in root.tag:
+            prefix = filename.strip(".xml").upper()
+            if prefix + "_HEADMIC.txt" in txt_norm_files:
+                texts.append(prefix + "_HEADMIC.txt")
+            elif prefix + ".txt" in txt_norm_files:
+                texts.append(prefix + ".txt")
+            else:
+                print("Couldn't find: %s" % prefix)
+        elif "WORDLIST" in root.tag:
+            wordlists.append(filename.strip(".xml").upper())
+        else:
+            raise Exception("Unexpected type of transcription: %s" % root.tag)
+    return wordlists, texts
+
+def feat_extract():
+    feat_extract.from_dir(os.path.join(TGT_DIR, "wav"), feat_type="log_mel_filterbank")
 
 class CorpusBatches:
 

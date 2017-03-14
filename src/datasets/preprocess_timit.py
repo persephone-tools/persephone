@@ -5,63 +5,20 @@ from os.path import join
 import shutil
 import subprocess
 
-import numpy as np
-import python_speech_features
-import scipy.io.wavfile as wav
-
 import config
+import feat_extract
 
 def all_feature_extraction(feat_type):
     """ Walk over all the wav files in the TIMIT dir and extract features. """
-
-    def extract_energy(rate, sig):
-        """ Extracts the energy of frames. """
-        mfcc = python_speech_features.mfcc(sig, rate, appendEnergy=True)
-        energy_row_vec = mfcc[:, 0]
-        energy_col_vec = energy_row_vec[:, np.newaxis]
-        return energy_col_vec
-
-    def logfbank_feature_extraction(wav_path):
-        """ Currently grabs log Mel filterbank, deltas and double deltas."""
-        (rate, sig) = wav.read(wav_path)
-        fbank_feat = python_speech_features.logfbank(sig, rate, nfilt=40)
-        energy = extract_energy(rate, sig)
-        feat = np.hstack([energy, fbank_feat])
-        delta_feat = python_speech_features.delta(feat, 2)
-        delta_delta_feat = python_speech_features.delta(delta_feat, 2)
-        all_feats = [feat, delta_feat, delta_delta_feat]
-        all_feats = np.array(all_feats)
-        # Make time the first dimension for easy length normalization padding later.
-        all_feats = np.swapaxes(all_feats, 0, 1)
-        all_feats = np.swapaxes(all_feats, 1, 2)
-
-        # Log Mel Filterbank, with delta, and double delta
-        feat_fn = wav_path[:-3] + "log_mel_filterbank.npy"
-        np.save(feat_fn, all_feats)
-
-    def feature_extraction(wav_path):
-        """ Grabs MFCC features with energy and derivates. """
-
-        (rate, sig) = wav.read(wav_path)
-        feat = python_speech_features.mfcc(sig, rate, appendEnergy=True)
-        delta_feat = python_speech_features.delta(feat, 2)
-        all_feats = [feat, delta_feat]
-        all_feats = np.array(all_feats)
-        # Make time the first dimension for easy length normalization padding later.
-        all_feats = np.swapaxes(all_feats, 0, 1)
-        all_feats = np.swapaxes(all_feats, 1, 2)
-
-        feat_fn = wav_path[:-3] + "mfcc13_d.npy"
-        np.save(feat_fn, all_feats)
 
     for root, _, fns in os.walk(config.TGT_DIR):
         print("Processing speaker %s" % root)
         for filename in fns:
             if filename.endswith(".wav"):
                 if feat_type == "log_mel_filterbank":
-                    logfbank_feature_extraction(join(root, filename))
+                    feat_extract.logfbank_feature_extraction(join(root, filename))
                 elif feat_type == "mfcc13_d":
-                    feature_extraction(join(root, filename))
+                    feat_extract.feature_extraction(join(root, filename))
                 else:
                     raise Exception("Invalid feature type selection.")
 
@@ -96,9 +53,9 @@ def create_raw_data():
 
             print("Creating raw data for %s" % tgt_path)
 
-            if fn.endswith("phn"):
+            if filename.endswith("phn"):
                 preprocess_phones(org_path, tgt_path)
-            elif fn.endswith("wav"):
+            elif filename.endswith("wav"):
                 # It's actually in sphere format
                 sphere_path = tgt_path[:-3]+"sph"
                 shutil.copyfile(org_path, sphere_path)
