@@ -1,15 +1,22 @@
 """ An interface with the Na data. """
 
 import os
+import random
 import subprocess
 import xml.etree.ElementTree as ET
 
 import config
+import utils
+
+random.seed(0)
 
 ORG_DIR = config.NA_DIR
 TGT_DIR = "../data/na"
 ORG_TXT_NORM_DIR = os.path.join(ORG_DIR, "txt_norm")
 TGT_TXT_NORM_DIR = os.path.join(TGT_DIR, "txt_norm")
+
+if not os.path.isdir(TGT_DIR):
+    os.makedirs(TGT_DIR)
 
 TO_REMOVE = {"|", "ǀ", "↑", "«", "»", "¨", "“", "”", "D", "F"}
 WORDS_TO_REMOVE = {"CHEVRON", "audible", "qʰʰʰʰʰ", "qʰʰʰʰ", "D"}
@@ -22,11 +29,20 @@ BI_PHNS = {'dʑ', 'ẽ', 'ɖʐ', 'w̃', 'æ̃', 'qʰ', 'i͂', 'tɕ', 'v̩', 'v̩
         'ɻ̩', 'ã', 'ə̃', 'ṽ', 'pʰ', 'tʰ', 'ɤ̃', 'ʈʰ', 'ʈʂ', 'ɑ̃', 'ɻ̃', 'kʰ', 'ĩ',
         'õ', 'dz'}
 TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩"}
+PHONES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS)
+NUM_PHONES = len(PHONES)
+PHONES2INDICES = {phn: index for index, phn in enumerate(PHONES)}
+INDICES2PHONES = {index: phn for index, phn in enumerate(PHONES)}
 
-NUM_PHONES = len(UNI_PHNS) + len(BI_PHNS) + len(TRI_PHNS)
+def phones2indices(phones):
+    """ Converts a list of phones to a list of indices. Increments the index by
+    1 to avoid issues to do with dynamic padding in Tensorflow. """
+    return [PHONES2INDICES[phone]+1 for phone in phones]
 
-if not os.path.isdir(TGT_DIR):
-    os.makedirs(TGT_DIR)
+def indices2phones(indices):
+    """ Converts integer representations of phones to human-readable characters. """
+
+    return [(INDICES2PHONES[index-1] if index > 0 else "pad") for index in indices]
 
 def is_number(s):
     try:
@@ -161,8 +177,51 @@ def feat_extract():
     feat_extract.from_dir(os.path.join(TGT_DIR, "wav"), feat_type="log_mel_filterbank")
 
 class CorpusBatches:
+    """ An interface to batches of Na audio/transcriptions."""
 
-    def __init__(self, feat_type, batch_size, total_size):
+    def __init__(self, feat_type, seg_type):
         self.feat_type = feat_type
+        self.seg_type = seg_type
+        if seg_type == "phonemes":
+            self.vocab_size = NUM_PHONES
+
+    def batch_gen(self, batch_size, total_size, rand=True):
         self.batch_size = batch_size
         self.total_size = total_size
+        input_dir = os.path.join(TGT_DIR, "wav")
+        target_dir = os.path.join(TGT_DIR, "txt_norm")
+        prefixes = [fn.strip(".wav") for fn in os.listdir(input_dir) if fn.endswith(".wav")]
+
+        if rand:
+            random.shuffle(prefixes)
+
+        mod = total_size % batch_size
+        if mod != 0:
+            print("WARNING Total train_size %d not divisible by"
+                    "batch_size %d. Ignoring remaining %d utterances." % (
+                    total_size, batch_size, mod))
+        prefixes = prefixes[:total_size-mod]
+
+        prefix_batches = [prefixes[i:i+batch_size]
+                for i in range(0, len(prefixes), batch_size)]
+
+        for prefix_batch in prefix_batches:
+            input_paths = [os.path.join(input_dir, "%s.%s.npy" % (
+                    prefix, self.feat_type))
+                    for prefix in prefix_batch]
+            if self.seg_type == "phonemes":
+                target_paths = [os.path.join(target_dir, prefix+".phn")
+                        for prefix in prefix_batch]
+
+            batch_x, batch_x_lens = utils.load_data.load_batch_x(input_paths,
+                                                           flatten=True)
+
+            batch_y = []
+            for target_path in target_paths:
+                with open(target_path) as phn_f:
+                    phones = phn_f.readline().split()
+                    indices = phones2indices(phones)
+                    batch_y.append(indices)
+            batch_y = utils.target_list_to_sparse_tensor(batch_y)
+
+            yield batch_x, batch_x_lens, batch_y
