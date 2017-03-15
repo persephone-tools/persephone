@@ -1,14 +1,13 @@
 """ Serves as an interface to the TIMIT data. """
 
 import os
-import numpy as np
 import random
 
-import utils
-
-import config
-
 from nltk.metrics import distance
+import numpy as np
+
+import utils
+import config
 
 random.seed(0)
 
@@ -18,7 +17,7 @@ NUM_PHONES = 61
 TOTAL_SIZE = 3696
 
 def phone_classes(path=os.path.join(config.TGT_DIR, "train"),
-        feat_type="mfcc13_d"):
+                  feat_type="mfcc13_d"):
     """ Returns a sorted list of phone classes observed in the TIMIT corpus."""
 
     train_paths = []
@@ -58,16 +57,16 @@ def collapse_phones(utterance):
     done as per Kai-fu Lee & Hsiao-Wuen Hon 1989."""
 
     # Define some groupings of similar phones
-    allophone_map = {"ux":"uw",
-                 "axr":"er", "ax-h":"ah", "em":"m", "nx":"n", "hv": "hh", "eng": "ng",
-                 "q":"t", # Glottal stop -> t
-                 "pau":"sil", "h#": "sil", "#h": "sil", # Silences
-                 "bcl":"vcl", "dcl":"vcl", "gcl":"vcl", # Voiced closures
-                 "pcl":"cl", "tcl":"cl", "kcl":"cl", "qcl":"cl", # Unvoiced closures
-                }
+    allophone_map = {"ux":"uw", "axr":"er", "ax-h":"ah", "em":"m", "nx":"n",
+                     "hv": "hh", "eng": "ng",
+                     "q":"t", # Glottal stop -> t
+                     "pau":"sil", "h#": "sil", "#h": "sil", # Silences
+                     "bcl":"vcl", "dcl":"vcl", "gcl":"vcl", # Voiced closures
+                     "pcl":"cl", "tcl":"cl", "kcl":"cl", "qcl":"cl", # Unvoiced closures
+                    }
 
-    class_map = {"el": "l", "en": "n", "zh": "sh", "ao": "aa", "ix":"ih", "ax":"ah",
-            "sil":"sil", "cl":"sil", "vcl":"sil", "epi":"sil"}
+    class_map = {"el": "l", "en": "n", "zh": "sh", "ao": "aa", "ix":"ih",
+                 "ax":"ah", "sil":"sil", "cl":"sil", "vcl":"sil", "epi":"sil"}
 
     allo_collapse = [(allophone_map[phn] if phn in allophone_map else phn) for phn in utterance]
     class_collapse = [(class_map[phn] if phn in class_map else phn) for phn in allo_collapse]
@@ -111,7 +110,7 @@ def test_set(feat_type, path=os.path.join(config.TGT_DIR, "test"), flatten=True)
     return batch_x, utter_lens, batch_y
 
 def valid_set(feat_type, path=os.path.join(config.TGT_DIR, "test"),
-        flatten=True, seed=0):
+              flatten=True, seed=0):
     """ Retrieves the 50 speaker validation set. """
 
     random.seed(seed)
@@ -121,11 +120,11 @@ def valid_set(feat_type, path=os.path.join(config.TGT_DIR, "test"),
         dr_path = os.path.join(path, dialect)
         all_test_speakers = [os.path.join(dr_path, speaker) for speaker in os.listdir(dr_path)]
         valid_speakers = [path for path in all_test_speakers if not
-            path.split("test/")[-1] in CORE_SPEAKERS]
-        male_valid_speakers = [path for path in valid_speakers if (
-                path.split("/")[-1].startswith("m"))]
-        female_valid_speakers = [path for path in valid_speakers if (
-                path.split("/")[-1].startswith("f"))]
+                          path.split("test/")[-1] in CORE_SPEAKERS]
+        male_valid_speakers = [path for path in valid_speakers
+                               if path.split("/")[-1].startswith("m")]
+        female_valid_speakers = [path for path in valid_speakers
+                                 if path.split("/")[-1].startswith("f")]
 
         # Randomly select two male speakers.
         chosen_paths.extend(random.sample(male_valid_speakers, 2))
@@ -139,14 +138,12 @@ def valid_set(feat_type, path=os.path.join(config.TGT_DIR, "test"),
             if filename.endswith(feat_type + ".npy") and not filename.startswith("sa"):
                 valid_paths.append(os.path.join(speaker_path, filename))
     batch_x, utter_lens = utils.load_batch_x(valid_paths, flatten=flatten)
-    batch_y = load_batch_y(valid_paths)
-    batch_y = utils.target_list_to_sparse_tensor(batch_y)
+    batch_y = utils.target_list_to_sparse_tensor(load_batch_y(valid_paths))
 
     return batch_x, utter_lens, batch_y
 
 def batch_gen(feat_type, path=os.path.join(config.TGT_DIR, "train"), rand=True,
-        batch_size=16, labels="phonemes", total_size=3696, flatten=True,
-        time_major=False):
+              batch_size=16, labels="phonemes", total_size=3696, flatten=True):
     """ Load the already preprocessed TIMIT data.  Flatten=True will make the
     2-dimensional freq x time a 1 dimensional vector of feats."""
 
@@ -161,9 +158,8 @@ def batch_gen(feat_type, path=os.path.join(config.TGT_DIR, "train"), rand=True,
     train_paths = []
     dialect_classes = set()
 
-    for root, dirnames, filenames in os.walk(path):
+    for root, _, filenames in os.walk(path):
         for filename in filenames:
-            prefix = filename.split(".")[0] # Get the file prefix
             if filename.endswith(feat_type + ".npy") and not filename.startswith("sa"):
                 # Add to filename list.
                 path = os.path.join(root, filename)
@@ -179,12 +175,12 @@ def batch_gen(feat_type, path=os.path.join(config.TGT_DIR, "train"), rand=True,
     # Adjust the effective size of the TIMIT corpus so I can debug models more easily.
     mod = total_size % batch_size
     if mod != 0:
-        print("WARNING Total train size %d not divisible by batch_size %d." % (
-                total_size, batch_size))
+        raise Exception("Total train size %d not divisible by batch_size %d." % (
+            total_size, batch_size))
     train_paths = train_paths[:total_size-mod]
 
-    path_batches = [train_paths[i:i+batch_size] for i in range(
-            0, len(train_paths), batch_size)]
+    path_batches = [train_paths[i:i+batch_size]
+                    for i in range(0, len(train_paths), batch_size)]
 
     if rand:
         random.shuffle(path_batches)
@@ -192,29 +188,27 @@ def batch_gen(feat_type, path=os.path.join(config.TGT_DIR, "train"), rand=True,
     for path_batch in path_batches:
         batch_x, batch_x_lens = utils.load_batch_x(path_batch, flatten=flatten)
         if labels == "dialects":
-            y_labels = np.array(
-                    [dr_class_map[path.split("/")[-3]]
-                    for path in path_batch])
+            y_labels = np.array([dr_class_map[path.split("/")[-3]]
+                                 for path in path_batch])
             # Make into one-hot vectors
             batch_y = np.concatenate(
-                    [create_one_hot(label, len(dialect_classes))
-                    for label in y_labels])
+                [create_one_hot(label, len(dialect_classes))
+                 for label in y_labels])
         elif labels == "phonemes":
             phn_paths = [path.split(".")[0]+".phn" for path in path_batch]
-            batch_y = []
+            batch_y_list = []
             for phn_path in phn_paths:
                 with open(phn_path) as phn_f:
                     phone_indices = phones2indices(phn_f.readline().split())
-                    batch_y.append(phone_indices)
-            batch_y = utils.target_list_to_sparse_tensor(batch_y)
+                    batch_y_list.append(phone_indices)
+            batch_y = utils.target_list_to_sparse_tensor(batch_y_list)
 
         yield batch_x, batch_x_lens, batch_y
 
 def num_feats(feat_type):
     """ Returns the number of feats for a given feat type. """
 
-    bg = batch_gen(feat_type, rand=False)
-    batch = next(bg)
+    batch = next(batch_gen(feat_type, rand=False))
     return batch[0].shape[-1]
 
 def phoneme_error_rate(batch_y, decoded):
@@ -224,10 +218,10 @@ def phoneme_error_rate(batch_y, decoded):
 
     # Use an intermediate human-readable form for debugging. Perhaps can be
     # moved into a separate function down the road.
-    y = batch_y[1]
-    phn_y = collapse_phones(indices2phones(y))
-    phn_pred = collapse_phones(indices2phones(decoded[0].values))
-    return distance.edit_distance(phn_y, phn_pred)/len(phn_y)
+    ref = batch_y[1]
+    phn_ref = collapse_phones(indices2phones(ref))
+    phn_hyp = collapse_phones(indices2phones(decoded[0].values))
+    return distance.edit_distance(phn_ref, phn_hyp)/len(phn_ref)
 
 class CorpusBatches:
     """ Class to interface with batches of data from the corpus."""
@@ -249,9 +243,9 @@ class CorpusBatches:
         """ Generator to yield batches of the training data."""
 
         return batch_gen(self.feat_type, batch_size=self.batch_size,
-                total_size=self.total_size)
+                         total_size=self.total_size)
 
-    def batch_per(dense_y, dense_decoded):
+    def batch_per(self, dense_y, dense_decoded):
         """ Calculates the phoneme error rate of a batch."""
 
         total_per = 0
