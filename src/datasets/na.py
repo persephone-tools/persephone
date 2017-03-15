@@ -176,23 +176,31 @@ def wordlists_and_texts_fns():
 def feat_extract():
     feat_extract.from_dir(os.path.join(TGT_DIR, "wav"), feat_type="log_mel_filterbank")
 
-def utter_lens(prefixes, feat_type):
-    input_dir = os.path.join(TGT_DIR, "wav")
-    input_paths = [os.path.join(input_dir, "%s.%s.npy" % (
-            prefix, feat_type)) for prefix in prefixes]
-
-    lens = []
-    for path in input_paths:
-        batch_x, batch_x_lens = utils.load_batch_x([path],
-                                                       flatten=True)
-        lens.append(batch_x[0].shape[0])
-    lens.sort()
-    print(lens)
-
 class CorpusBatches:
     """ An interface to batches of Na audio/transcriptions."""
 
-    def __init__(self, feat_type, seg_type, batch_size, total_size, rand=True):
+    input_dir = os.path.join(TGT_DIR, "wav")
+    target_dir = os.path.join(TGT_DIR, "txt_norm")
+
+    def sort_and_filter_by_size(self, prefixes, max_samples):
+        """ Sorts the input files by their length and removes those with less
+        than or equal to max_samples length. Returns the filename prefixes of
+        those files.
+        """
+
+        prefix_lens = []
+        for prefix in prefixes:
+            path = os.path.join(self.input_dir, "%s.%s.npy" % (
+                                prefix, self.feat_type))
+            _, batch_x_lens = utils.load_batch_x([path], flatten=True)
+            prefix_lens.append((prefix, batch_x_lens[0]))
+        prefix_lens.sort(key=lambda prefix_len: prefix_len[1])
+        prefixes = [prefix for prefix, length in prefix_lens
+                       if length <= max_samples]
+        return prefixes
+
+    def __init__(self, feat_type, seg_type, batch_size, total_size,
+            max_samples, rand=True):
         self.feat_type = feat_type
         self.seg_type = seg_type
         self.rand = rand
@@ -202,28 +210,22 @@ class CorpusBatches:
         self.batch_size = batch_size
         self.total_size = total_size
 
-        self.input_dir = os.path.join(TGT_DIR, "wav")
-        self.target_dir = os.path.join(TGT_DIR, "txt_norm")
-        prefixes = [fn.strip(".wav") for fn in os.listdir(self.input_dir) if fn.endswith(".wav")]
-
-        utter_lens(prefixes, feat_type)
-
-        if rand:
-            random.shuffle(prefixes)
+        prefixes = [fn.strip(".wav") for fn in os.listdir(self.input_dir)
+                    if fn.endswith(".wav")]
+        prefixes = self.sort_and_filter_by_size(prefixes, max_samples)
+        random.shuffle(prefixes)
 
         train_prefixes = prefixes[:-200]
         self.valid_prefixes = prefixes[-200:]
 
-        # Perhaps these should just be errors. Print statements might just be
-        # masking bugs. Or it should be logged clearly somewhere.
         mod = total_size % batch_size
         if total_size > len(train_prefixes):
-            print("WARNING Total train_size %d greater than len(train_prefixes) %d" % (
+            raise Exception(("Num training examples requested (%d) greater " +
+                    "than amount of training examples found (%d)") % (
                     total_size, len(train_prefixes)))
         if mod != 0:
-            print("WARNING Total train_size %d not divisible by"
-                    "batch_size %d. Ignoring remaining %d utterances." % (
-                    total_size, batch_size, mod))
+            raise Exception(("Number of training examples (%d) not divisible" +
+                    " by batch_size %d.") % (total_size, batch_size))
 
         train_prefixes = train_prefixes[:total_size-mod]
         self.train_prefix_batches = [train_prefixes[i:i+batch_size]

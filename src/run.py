@@ -33,15 +33,16 @@ def prep_exp_dir():
 def run():
     """ Run an experiment.  """
 
-    for i in range(9, 13):
-        # Prepares a new experiment dir for all logging.
-        exp_dir = prep_exp_dir()
+    #for i in range(9, 13):
+    # Prepares a new experiment dir for all logging.
+    exp_dir = prep_exp_dir()
 
-        corpus_batches = datasets.na.CorpusBatches(
-                feat_type="log_mel_filterbank", seg_type="phonemes", batch_size=64, total_size=2**i)
+    corpus_batches = datasets.na.CorpusBatches(
+            feat_type="log_mel_filterbank", seg_type="phonemes", batch_size=64,
+            total_size=1600, max_samples=500)
 
-        model = rnn_ctc.Model(exp_dir, corpus_batches)
-        model.train(corpus_batches)
+    model = rnn_ctc.Model(exp_dir, corpus_batches)
+    model.train(corpus_batches)
 
 def timit_test(dir_num):
     """ Tests the model in dir_num on the TIMIT test set."""
