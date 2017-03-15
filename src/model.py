@@ -5,7 +5,7 @@ import itertools
 import os
 import tensorflow as tf
 
-import datasets.timit
+import utils
 
 class Model:
     """ Generic model for our ASR tasks. """
@@ -92,7 +92,7 @@ class Model:
             valid_ler, dense_decoded, dense_ref = sess.run(
                     [self.ler, self.dense_decoded, self.dense_ref],
                     feed_dict=feed_dict)
-            valid_per = timit.batch_per(dense_ref, dense_decoded)
+            valid_per = corpus_batches.batch_per(dense_ref, dense_decoded)
 
             epoch_str = "Epoch %d. Training LER: %f, validation LER: %f, validation PER: %f" % (
                     epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per)

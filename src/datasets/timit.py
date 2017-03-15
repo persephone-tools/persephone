@@ -229,18 +229,6 @@ def phoneme_error_rate(batch_y, decoded):
     phn_pred = collapse_phones(indices2phones(decoded[0].values))
     return distance.edit_distance(phn_y, phn_pred)/len(phn_y)
 
-def batch_per(dense_y, dense_decoded):
-    """ Calculates the phoneme error rate of a batch."""
-
-    total_per = 0
-    for i in range(len(dense_decoded)):
-        ref = [phn_i for phn_i in dense_y[i] if phn_i != 0]
-        hypo = [phn_i for phn_i in dense_decoded[i] if phn_i != 0]
-        ref = collapse_phones(indices2phones(ref))
-        hypo = collapse_phones(indices2phones(hypo))
-        total_per += distance.edit_distance(ref, hypo)/len(ref)
-    return total_per/len(dense_decoded)
-
 class CorpusBatches:
     """ Class to interface with batches of data from the corpus."""
 
@@ -262,6 +250,18 @@ class CorpusBatches:
 
         return batch_gen(self.feat_type, batch_size=self.batch_size,
                 total_size=self.total_size)
+
+    def batch_per(dense_y, dense_decoded):
+        """ Calculates the phoneme error rate of a batch."""
+
+        total_per = 0
+        for i in range(len(dense_decoded)):
+            ref = [phn_i for phn_i in dense_y[i] if phn_i != 0]
+            hypo = [phn_i for phn_i in dense_decoded[i] if phn_i != 0]
+            ref = collapse_phones(indices2phones(ref))
+            hypo = collapse_phones(indices2phones(hypo))
+            total_per += distance.edit_distance(ref, hypo)/len(ref)
+        return total_per/len(dense_decoded)
 
     @property
     def num_feats(self):

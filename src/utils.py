@@ -2,6 +2,8 @@
 
 import numpy as np
 
+from nltk.metrics import distance
+
 def target_list_to_sparse_tensor(target_list):
     """ Make tensorflow SparseTensor from list of targets, with each element in
     the list being a list or array with the values of the target sequence
@@ -56,3 +58,13 @@ def load_batch_x(path_batch, flatten, time_major=False):
     if flatten:
         batch = collapse(batch, time_major=time_major)
     return batch, np.array(utter_lens)
+
+def batch_per(dense_y, dense_decoded):
+    """ Calculates the phoneme error rate of a batch."""
+
+    total_per = 0
+    for i in range(len(dense_decoded)):
+        ref = [phn_i for phn_i in dense_y[i] if phn_i != 0]
+        hypo = [phn_i for phn_i in dense_decoded[i] if phn_i != 0]
+        total_per += distance.edit_distance(ref, hypo)/len(ref)
+    return total_per/len(dense_decoded)

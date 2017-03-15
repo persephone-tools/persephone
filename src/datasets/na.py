@@ -176,6 +176,19 @@ def wordlists_and_texts_fns():
 def feat_extract():
     feat_extract.from_dir(os.path.join(TGT_DIR, "wav"), feat_type="log_mel_filterbank")
 
+def utter_lens(prefixes, feat_type):
+    input_dir = os.path.join(TGT_DIR, "wav")
+    input_paths = [os.path.join(input_dir, "%s.%s.npy" % (
+            prefix, feat_type)) for prefix in prefixes]
+
+    lens = []
+    for path in input_paths:
+        batch_x, batch_x_lens = utils.load_batch_x([path],
+                                                       flatten=True)
+        lens.append(batch_x[0].shape[0])
+    lens.sort()
+    print(lens)
+
 class CorpusBatches:
     """ An interface to batches of Na audio/transcriptions."""
 
@@ -192,6 +205,8 @@ class CorpusBatches:
         self.input_dir = os.path.join(TGT_DIR, "wav")
         self.target_dir = os.path.join(TGT_DIR, "txt_norm")
         prefixes = [fn.strip(".wav") for fn in os.listdir(self.input_dir) if fn.endswith(".wav")]
+
+        utter_lens(prefixes, feat_type)
 
         if rand:
             random.shuffle(prefixes)
@@ -214,7 +229,7 @@ class CorpusBatches:
         self.train_prefix_batches = [train_prefixes[i:i+batch_size]
                 for i in range(0, len(train_prefixes), batch_size)]
 
-    def valid_set(self):
+    def valid_set(self, seed=None): # Seed currently ignored for Na set.
 
         input_paths = [os.path.join(self.input_dir, "%s.%s.npy" % (
                 prefix, self.feat_type))
@@ -261,3 +276,14 @@ class CorpusBatches:
             batch_y = utils.target_list_to_sparse_tensor(batch_y)
 
             yield batch_x, batch_x_lens, batch_y
+
+    def batch_per(self, dense_y, dense_decoded):
+        return utils.batch_per(dense_y, dense_decoded)
+
+    @property
+    def num_feats(self):
+        """ The number of features per frame in the input audio. """
+        bg = self.train_batch_gen()
+        batch = next(bg)
+        return batch[0].shape[-1]
+
