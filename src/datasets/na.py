@@ -6,6 +6,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 
 import config
+import feat_extract
 import utils
 
 random.seed(0)
@@ -22,12 +23,12 @@ TO_REMOVE = {"|", "ǀ", "↑", "«", "»", "¨", "“", "”", "D", "F"}
 WORDS_TO_REMOVE = {"CHEVRON", "audible", "qʰʰʰʰʰ", "qʰʰʰʰ", "D"}
 TONES = ["˧˥", "˩˥", "˩˧", "˧˩", "˩", "˥", "˧"]
 UNI_PHNS = {'q', 'p', 'ɭ', 'ɳ', 'h', 'ʐ', 'n', 'o', 'ɤ', 'ʝ', 'ɛ', 'g',
-        'i', 'u', 'b', 'ɔ', 'ɯ', 'v', 'ɑ', 'l', 'ɖ', 'ɻ', 'ĩ', 'm',
-        't', 'w', 'õ', 'ẽ', 'd', 'ɣ', 'ɕ', 'c', 'ʁ', 'ʑ', 'ʈ', 'ɲ', 'ɬ', 's',
-        'ŋ', 'ə', 'e', 'æ', 'f', 'j', 'k', 'z', 'ʂ'}
+            'i', 'u', 'b', 'ɔ', 'ɯ', 'v', 'ɑ', 'l', 'ɖ', 'ɻ', 'ĩ', 'm',
+            't', 'w', 'õ', 'ẽ', 'd', 'ɣ', 'ɕ', 'c', 'ʁ', 'ʑ', 'ʈ', 'ɲ', 'ɬ',
+            's', 'ŋ', 'ə', 'e', 'æ', 'f', 'j', 'k', 'z', 'ʂ'}
 BI_PHNS = {'dʑ', 'ẽ', 'ɖʐ', 'w̃', 'æ̃', 'qʰ', 'i͂', 'tɕ', 'v̩', 'o̥', 'ts',
-        'ɻ̩', 'ã', 'ə̃', 'ṽ', 'pʰ', 'tʰ', 'ɤ̃', 'ʈʰ', 'ʈʂ', 'ɑ̃', 'ɻ̃', 'kʰ', 'ĩ',
-        'õ', 'dz'}
+            'ɻ̩', 'ã', 'ə̃', 'ṽ', 'pʰ', 'tʰ', 'ɤ̃', 'ʈʰ', 'ʈʂ', 'ɑ̃', 'ɻ̃', 'kʰ',
+            'ĩ', 'õ', 'dz'}
 TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩"}
 PHONES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS)
 NUM_PHONES = len(PHONES)
@@ -173,7 +174,9 @@ def wordlists_and_texts_fns():
             raise Exception("Unexpected type of transcription: %s" % root.tag)
     return wordlists, texts
 
-def feat_extract():
+def extract_features():
+    """ Extract features from wave files in a given path. """
+
     feat_extract.from_dir(os.path.join(TGT_DIR, "wav"), feat_type="log_mel_filterbank")
 
 class CorpusBatches:
@@ -213,6 +216,7 @@ class CorpusBatches:
         prefixes = [fn.strip(".wav") for fn in os.listdir(self.input_dir)
                     if fn.endswith(".wav")]
         prefixes = self.sort_and_filter_by_size(prefixes, max_samples)
+        random.seed(0)
         random.shuffle(prefixes)
 
         train_prefixes = prefixes[:-200]
