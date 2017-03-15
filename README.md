@@ -5,4 +5,4 @@ models.
 ## Requirements
 * Tensorflow (API v1.0)
 * Python 3 (3.5 used in development).
-* python_speech_features
+* python_speech_features (v0.5 used in development).
