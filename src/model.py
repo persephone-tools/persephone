@@ -20,7 +20,8 @@ class Model:
     dense_decoded = None
     dense_ref = None
 
-    def train(self, corpus_batches, early_stopping_steps=10, restore_model_path=None):
+    def train(self, corpus_batches, early_stopping_steps=10, min_epochs=30,
+              restore_model_path=None):
         """ Train the model.
 
             batch_size: The number of utterances in each batch.
@@ -37,7 +38,7 @@ class Model:
         # Not technically the upper bound on a LER but we don't want to save if
         # it's not below this.
         best_valid_ler = 1.0
-        steps_since_last_record=0
+        steps_since_last_record = 0
         best_epoch = -1
 
         #Get information about training for the names of output files.
@@ -47,8 +48,8 @@ class Model:
         args, _, _, values = inspect.getargvalues(frame)
         with open(os.path.join(self.exp_dir, "train_description.txt"), "w") as desc_f:
             for arg in args:
-                if type(values[arg]) in [str,int,float] or isinstance(
-                            values[arg], type(None)):
+                if type(values[arg]) in [str, int, float] or isinstance(
+                        values[arg], type(None)):
                     print("%s=%s" % (arg, values[arg]), file=desc_f)
                 else:
                     print("%s=%s" % (arg, values[arg].__dict__), file=desc_f)
@@ -76,18 +77,17 @@ class Model:
                 batch_x, batch_x_lens, batch_y = batch
 
                 feed_dict = {self.batch_x: batch_x,
-                           self.batch_x_lens: batch_x_lens,
-                           self.batch_y: batch_y}
+                             self.batch_x_lens: batch_x_lens,
+                             self.batch_y: batch_y}
 
-                _, ler, = sess.run(
-                        [self.optimizer, self.ler],
-                        feed_dict=feed_dict)
+                _, ler, = sess.run([self.optimizer, self.ler],
+                                   feed_dict=feed_dict)
 
                 train_ler_total += ler
 
             feed_dict = {self.batch_x: valid_x,
-                       self.batch_x_lens: valid_x_lens,
-                       self.batch_y: valid_y}
+                         self.batch_x_lens: valid_x_lens,
+                         self.batch_y: valid_y}
 
             valid_ler, dense_decoded, dense_ref = sess.run(
                     [self.ler, self.dense_decoded, self.dense_ref],
@@ -115,18 +115,25 @@ class Model:
                 print("Steps since last best valid_ler: %d" % (
                         steps_since_last_record), file=out_file)
                 steps_since_last_record += 1
-                if steps_since_last_record == early_stopping_steps:
-                    # Then stop.
-                    print("""Stopping since best validation score hasn't been
-                            beaten in %d epochs.""" % early_stopping_steps,
-                            file=out_file, flush=True)
-                    with open(os.path.join(
-                            self.exp_dir, "best_scores.txt"), "w") as best_f:
-                        print(best_epoch_str, file=best_f, flush=True)
+                if steps_since_last_record >= early_stopping_steps:
+                    if epoch >= min_epochs:
+                        # Then we've done the minimum number of epochs and can
+                        # stop training.
+                        print("""Stopping since best validation score hasn't been
+                                beaten in %d epochs and at least %d have been
+                                done""" % early_stopping_steps,
+                                file=out_file, flush=True)
+                        with open(os.path.join(
+                                self.exp_dir, "best_scores.txt"), "w") as best_f:
+                            print(best_epoch_str, file=best_f, flush=True)
+                            sess.close()
+                            out_file.close()
+                            return
+                    else:
+                        # Keep training because we haven't done the minimum
+                        # numper of epochs.
+                        continue
 
-                    sess.close()
-                    out_file.close()
-                    return
 
         sess.close()
         out_file.close()
