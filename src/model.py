@@ -121,7 +121,7 @@ class Model:
                         # stop training.
                         print("""Stopping since best validation score hasn't been
                                 beaten in %d epochs and at least %d have been
-                                done""" % early_stopping_steps,
+                                done""" % (early_stopping_steps, min_epochs),
                                 file=out_file, flush=True)
                         with open(os.path.join(
                                 self.exp_dir, "best_scores.txt"), "w") as best_f:
