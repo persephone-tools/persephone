@@ -1,24 +1,10 @@
 """ An CorpusReader class that interfaces with preprocessed corpora."""
 
-import os
 import random
 
+from nltk.metrics import distance
+
 import utils
-
-def get_prefixes(set_dir):
-    """ Returns a list of prefixes to files in the set (which might be a whole
-    corpus, or a train/valid/test subset. The prefixes include the path leading
-    up to it, but remove only the file extension.
-    """
-
-    prefixes = []
-    for root, _, filenames in os.walk(set_dir):
-        for filename in filenames:
-            if filename.endswith(".npy"):
-                # Then it's an input feature file and its prefix will
-                # correspond to a training example
-                prefixes.append(os.path.join(root, filename))
-    return sorted(prefixes)
 
 def load_batch(prefix_batch):
     """ Loads a batch with the given prefix. The prefix is the full path to the
@@ -45,10 +31,8 @@ class CorpusReader:
     data into a valid structure of
     <corpus-name>/[mam-train|mam-valid<seed>|mam-test].  """
 
-    _train_prefixes = None
-
-    def __init__(self, num_train, batch_size=None, max_samples=None, rand_seed=0):
-        """ corpus_dir: The directory where the preprocessed corpus is found.
+    def __init__(self, corpus, num_train, batch_size=None, max_samples=None, rand_seed=0):
+        """ corpus: The Corpus object that interfaces with a given corpus.
             num_train: The number of training instances from the corpus used.
             batch_size: The size of the batches to yield. If None, then it is
                         num_train / 32.0.
@@ -57,6 +41,8 @@ class CorpusReader:
             rand_seed: The seed for the random number generator. If None, then
                        no randomization is used.
         """
+
+        self.corpus = corpus
 
         if max_samples:
             raise Exception("Not yet implemented.")
@@ -79,53 +65,48 @@ class CorpusReader:
         else:
             self.rand = False
 
-    def get_train_prefixes(self, corpus_dir):
-        """ A getter for train_prefixes. Ensures that the training examples
-        used is consistent between instantiations of train_batch_gen by
-        initializing on the very first call and then not changing
-        thereafter.
-        """
-        if not self._train_prefixes:
-            # Get the training prefixes, randomize their order, and take a subset.
-            train_prefixes = get_prefixes(
-                os.path.join(corpus_dir, "mam-train"))
-            if self.rand:
-                random.shuffle(train_prefixes)
-            self._train_prefixes = train_prefixes[:self.num_train]
+        # Make a copy of the training prefixes, randomize their order, and take
+        # a subset. Doing random slection of a subset of training now ensures
+        # the selection of of training sentences is invariant between calls to
+        # train_bathc_gen()
+        self.train_prefixes = list(corpus.get_train_prefixes())
+        if self.rand:
+            random.shuffle(self.train_prefixes)
+        self.train_prefixes = self.train_prefixes[:self.num_train]
 
-        return self._train_prefixes
-
-    def train_batch_gen(self, corpus_dir):
+    def train_batch_gen(self):
         """ Returns a generator that outputs batches in the training data."""
 
-        # Randomly select some prefixes from all those available.
-        if self.rand:
-            random.shuffle(self.get_train_prefixes(corpus_dir))
-        prefixes = self.get_train_prefixes(corpus_dir)
-
         # Create batches of batch_size and shuffle them.
-        prefix_batches = [prefixes[i:i+self.batch_size]
-                          for i in range(0, len(prefixes), self.batch_size)]
+        prefix_batches = [self.train_prefixes[i:i+self.batch_size]
+                          for i in range(0, len(self.train_prefixes),
+                                         self.batch_size)]
         if self.rand:
             random.shuffle(prefix_batches)
 
         for prefix_batch in prefix_batches:
             yield load_batch(prefix_batch)
 
-    @staticmethod
-    def valid_batch(corpus_dir):
+    def valid_batch(self):
         """ Returns a single batch with all the validation cases."""
 
-        # Always get the validation and test sets deterministically.
-        valid_prefixes = get_prefixes(
-            os.path.join(corpus_dir, "mam-valid"))
+        valid_prefixes = self.corpus.get_valid_prefixes()
         return load_batch(valid_prefixes)
 
-    @staticmethod
-    def test_batch(corpus_dir):
+    def test_batch(self):
         """ Returns a single batch with all the test cases."""
 
-        test_prefixes = get_prefixes(
-            os.path.join(corpus_dir, "mam-test"))
-
+        test_prefixes = self.corpus.get_test_prefixes()
         return load_batch(test_prefixes)
+
+    def batch_per(self, dense_y, dense_decoded):
+        """ Calculates the phoneme error rate of a batch."""
+
+        total_per = 0
+        for i in range(len(dense_decoded)):
+            ref = [phn_i for phn_i in dense_y[i] if phn_i != 0]
+            hyp = [phn_i for phn_i in dense_decoded[i] if phn_i != 0]
+            ref = self.corpus.indices_to_phonemes(ref)
+            hyp = self.corpus.indices_to_phonemes(hyp)
+            total_per += distance.edit_distance(ref, hyp)/len(ref)
+        return total_per/len(dense_decoded)
