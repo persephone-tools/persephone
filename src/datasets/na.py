@@ -202,15 +202,18 @@ class CorpusBatches:
                        if length <= max_samples]
         return prefixes
 
-    def __init__(self, feat_type, seg_type, batch_size, total_size,
-            max_samples, rand=True):
+    def __init__(self, feat_type, seg_type, total_size, batch_size=None,
+                 max_samples=1000, rand=True):
         self.feat_type = feat_type
         self.seg_type = seg_type
         self.rand = rand
         if seg_type == "phonemes":
             self.vocab_size = NUM_PHONES
-
-        self.batch_size = batch_size
+        if batch_size == None:
+            # Scale the batch based on the amount of training data.
+            self.batch_size = total_size/32.0
+        else:
+            self.batch_size = batch_size
         self.total_size = total_size
 
         prefixes = [fn.strip(".wav") for fn in os.listdir(self.input_dir)

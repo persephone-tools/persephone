@@ -31,26 +31,15 @@ def prep_exp_dir():
     return os.path.join(EXP_DIR, str(exp_num))
 
 def run():
-    """ Run an experiment.  """
+    """ Run an experiment. """
 
-    for i in range(7, 10):
+    for i in range(7, 12):
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
 
         corpus_batches = datasets.na.CorpusBatches(
             feat_type="log_mel_filterbank", seg_type="phonemes",
-            batch_size=8, total_size=2**i, max_samples=1000)
-
-        model = rnn_ctc.Model(exp_dir, corpus_batches)
-        model.train(corpus_batches)
-
-    for i in range(9, 12):
-        # Prepares a new experiment dir for all logging.
-        exp_dir = prep_exp_dir()
-
-        corpus_batches = datasets.na.CorpusBatches(
-            feat_type="log_mel_filterbank", seg_type="phonemes",
-            batch_size=64, total_size=2**i, max_samples=1000)
+            total_size=2**i, max_samples=1000)
 
         model = rnn_ctc.Model(exp_dir, corpus_batches)
         model.train(corpus_batches)
