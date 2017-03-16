@@ -8,10 +8,12 @@ import subprocess
 import config
 import feat_extract
 
+TIMIT_TGT_DIR = os.path.join(config.TGT_DIR, "timit")
+
 def all_feature_extraction(feat_type):
     """ Walk over all the wav files in the TIMIT dir and extract features. """
 
-    for root, _, fns in os.walk(config.TGT_DIR):
+    for root, _, fns in os.walk(TIMIT_TGT_DIR):
         print("Processing speaker %s" % root)
         for filename in fns:
             if filename.endswith(".wav"):
@@ -44,7 +46,7 @@ def create_raw_data():
         for filename in fns:
             org_path = join(root, filename)
             sub_path = join(root[len(config.ORG_DIR):], filename)
-            tgt_path = join(config.TGT_DIR, sub_path)
+            tgt_path = join(TIMIT_TGT_DIR, sub_path)
 
             # Create parent directory
             parent_path = os.path.dirname(tgt_path)

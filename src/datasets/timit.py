@@ -6,6 +6,7 @@ import random
 from nltk.metrics import distance
 import numpy as np
 
+import corpus_reader
 import utils
 import config
 
@@ -16,7 +17,9 @@ NUM_PHONES = 61
 # The number of training sentences with SA utterances removed.
 TOTAL_SIZE = 3696
 
-def phone_classes(path=os.path.join(config.TGT_DIR, "train"),
+TIMIT_TGT_DIR = os.path.join(config.TGT_DIR, "timit")
+
+def phone_classes(path=os.path.join(TIMIT_TGT_DIR, "train"),
                   feat_type="mfcc13_d"):
     """ Returns a sorted list of phone classes observed in the TIMIT corpus."""
 
@@ -94,7 +97,7 @@ def load_batch_y(path_batch):
             batch_y.append(phone_indices)
     return batch_y
 
-def test_set(feat_type, path=os.path.join(config.TGT_DIR, "test"), flatten=True):
+def test_set(feat_type, path=os.path.join(TIMIT_TGT_DIR, "test"), flatten=True):
     """ Retrieves the core test set of 24 speakers. """
 
     test_paths = []
@@ -109,40 +112,7 @@ def test_set(feat_type, path=os.path.join(config.TGT_DIR, "test"), flatten=True)
 
     return batch_x, utter_lens, batch_y
 
-def valid_set(feat_type, path=os.path.join(config.TGT_DIR, "test"),
-              flatten=True, seed=0):
-    """ Retrieves the 50 speaker validation set. """
-
-    random.seed(seed)
-
-    chosen_paths = []
-    for dialect in ["dr1", "dr2", "dr3", "dr4", "dr5", "dr6", "dr7", "dr8"]:
-        dr_path = os.path.join(path, dialect)
-        all_test_speakers = [os.path.join(dr_path, speaker) for speaker in os.listdir(dr_path)]
-        valid_speakers = [path for path in all_test_speakers if not
-                          path.split("test/")[-1] in CORE_SPEAKERS]
-        male_valid_speakers = [path for path in valid_speakers
-                               if path.split("/")[-1].startswith("m")]
-        female_valid_speakers = [path for path in valid_speakers
-                                 if path.split("/")[-1].startswith("f")]
-
-        # Randomly select two male speakers.
-        chosen_paths.extend(random.sample(male_valid_speakers, 2))
-        # Randomly select one female speakers.
-        chosen_paths.extend(random.sample(female_valid_speakers, 1))
-
-    valid_paths = []
-    for speaker_path in chosen_paths:
-        fns = os.listdir(speaker_path)
-        for filename in fns:
-            if filename.endswith(feat_type + ".npy") and not filename.startswith("sa"):
-                valid_paths.append(os.path.join(speaker_path, filename))
-    batch_x, utter_lens = utils.load_batch_x(valid_paths, flatten=flatten)
-    batch_y = utils.target_list_to_sparse_tensor(load_batch_y(valid_paths))
-
-    return batch_x, utter_lens, batch_y
-
-def batch_gen(feat_type, path=os.path.join(config.TGT_DIR, "train"), rand=True,
+def batch_gen(feat_type, path=os.path.join(TIMIT_TGT_DIR, "train"), rand=True,
               batch_size=16, labels="phonemes", total_size=3696, flatten=True):
     """ Load the already preprocessed TIMIT data.  Flatten=True will make the
     2-dimensional freq x time a 1 dimensional vector of feats."""
@@ -223,27 +193,64 @@ def phoneme_error_rate(batch_y, decoded):
     phn_hyp = collapse_phones(indices2phones(decoded[0].values))
     return distance.edit_distance(phn_ref, phn_hyp)/len(phn_ref)
 
-class CorpusBatches:
-    """ Class to interface with batches of data from the corpus."""
+def prepare_valid_set(org_dir, tgt_dir, feat_type, target_type):
+    """ Retrieves a 50 speaker validation set. """
+
+    chosen_paths = []
+    for dialect in ["dr1", "dr2", "dr3", "dr4", "dr5", "dr6", "dr7", "dr8"]:
+        dr_path = os.path.join(org_dir, "test", dialect)
+        all_test_speakers = [os.path.join(dr_path, speaker) for speaker in os.listdir(dr_path)]
+        valid_speakers = [path for path in all_test_speakers if not
+                          path.split("test/")[-1] in CORE_SPEAKERS]
+        male_valid_speakers = [path for path in valid_speakers
+                               if path.split("/")[-1].startswith("m")]
+        female_valid_speakers = [path for path in valid_speakers
+                                 if path.split("/")[-1].startswith("f")]
+        # Select the first two male speakers.
+        chosen_paths.extend(male_valid_speakers[:2])
+        # Randomly select one female speakers.
+        chosen_paths.extend(female_valid_speakers[:1])
+
+    for path in chosen_paths:
+        feature_extraction(feat_type, 
+
+    valid_paths = []
+    for speaker_path in chosen_paths:
+        fns = os.listdir(speaker_path)
+        for filename in fns:
+            if filename.endswith(feat_type + ".npy") and not filename.startswith("sa"):
+                valid_paths.append(os.path.join(speaker_path, filename))
+    batch_x, utter_lens = utils.load_batch_x(valid_paths, flatten=True)
+    batch_y = utils.target_list_to_sparse_tensor(load_batch_y(valid_paths))
+
+    return batch_x, utter_lens, batch_y
+
+class Corpus:
+    """ Class to interface with the TIMIT corpus."""
 
     vocab_size = NUM_PHONES
-    total_size = TOTAL_SIZE
 
-    def __init__(self, feat_type, batch_size, total_size):
-        self.feat_type = feat_type
-        self.batch_size = batch_size
-        self.total_size = total_size
+    def __init__(self, feat_type, target_type, reader):
+        if target_type != "phonemes":
+            raise Exception("target_type %s not implemented." % target_type)
+        self.reader = reader
+        timit_dir = os.path.join(config.TGT_DIR, "timit")
+        corpus_path = self.prepare(timit_dir, feat_type, target_type)
 
-    def valid_set(self, seed):
-        """ Returns the validation set as a batch. """
+    def prepare(self, timit_dir, feat_type, target_type):
+        """ Preprocesses the TIMIT data. """
 
-        return valid_set(self.feat_type, seed=seed)
+        tgt_dir = os.path.join(
+            timit_dir, "feat_type=%s-target_type=%s" % (feat_type, target_type))
+        if os.isdir(tgt_dir):
+            # Then this preprocessing has already been done.
+            return tgt_dir
 
-    def train_batch_gen(self):
-        """ Generator to yield batches of the training data."""
+        prepare_train_set(tgt_dir, feat_type, target_type)
+        prepare_valid_set(tgt_dir, feat_type, target_type)
+        prepare_test_set(tgt_dir, feat_type, target_type)
 
-        return batch_gen(self.feat_type, batch_size=self.batch_size,
-                         total_size=self.total_size)
+
 
     def batch_per(self, dense_y, dense_decoded):
         """ Calculates the phoneme error rate of a batch."""

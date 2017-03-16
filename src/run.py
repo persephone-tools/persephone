@@ -7,12 +7,14 @@ import config
 import rnn_ctc
 import datasets.na
 import datasets.timit
+from corpus_reader import CorpusReader
 
 EXP_DIR = config.EXP_DIR
 
 def get_exp_dir_num():
     """ Gets the number of the current experiment directory."""
-    return max([int(fn.split(".")[0]) for fn in os.listdir(EXP_DIR) if fn.split(".")[0].isdigit()])
+    return max([int(fn.split(".")[0])
+                for fn in os.listdir(EXP_DIR) if fn.split(".")[0].isdigit()])
 
 def prep_exp_dir():
     """ Prepares an experiment directory by copying the code in this directory
@@ -24,9 +26,7 @@ def prep_exp_dir():
     exp_num = exp_num + 1
     code_dir = os.path.join(EXP_DIR, str(exp_num), "code")
     os.makedirs(code_dir)
-    for filename in os.listdir():
-        if filename.endswith(".py"):
-            shutil.copyfile(filename, os.path.join(code_dir, filename))
+    shutil.copytree(os.getcwd(), code_dir)
 
     return os.path.join(EXP_DIR, str(exp_num))
 
@@ -37,24 +37,9 @@ def run():
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
 
-        corpus_batches = datasets.na.CorpusBatches(
-            feat_type="log_mel_filterbank", seg_type="phonemes",
-            total_size=2**i, max_samples=1000)
-
-        model = rnn_ctc.Model(exp_dir, corpus_batches)
-        model.train(corpus_batches)
-
-def timit_test(dir_num):
-    """ Tests the model in dir_num on the TIMIT test set."""
-
-    import tensorflow as tf
-    import importlib
-
-    path = os.path.join(EXP_DIR, str(dir_num))
-    model_path = os.path.join(path, "model", "model_best.ckpt")
-    code_path = os.path.join(path, "code", "rnn_ctc.py")
-    exec(code_path)
-
-    #saver = tf.train.Saver()
-    #with tf.Session() as sess:
-    #    saver.restore(sess, path)
+        reader = CorpusReader(num_train=2**i, max_samples=1000)
+        corpus = datasets.timit.Corpus(feat_type="log_mel_filterbank",
+                                       target_type="phonemes",
+                                       reader=reader)
+        model = rnn_ctc.Model(exp_dir, corpus)
+        model.train()
