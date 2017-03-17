@@ -1,5 +1,7 @@
 """ Miscellaneous utility functions. """
 
+import os
+
 import numpy as np
 
 from nltk.metrics import distance
@@ -20,13 +22,13 @@ def target_list_to_sparse_tensor(target_list):
     shape = [len(target_list), np.asarray(indices).max(0)[1]+1]
     return (np.array(indices), np.array(vals), np.array(shape))
 
-def zero_pad(a, to_length):
+def zero_pad(matrix, to_length):
     """ Zero pads along the 0th dimension to make sure the utterance array
     x is of length to_length."""
 
-    assert a.shape[0] <= to_length
-    result = np.zeros((to_length,) + a.shape[1:])
-    result[:a.shape[0]] = a
+    assert matrix.shape[0] <= to_length
+    result = np.zeros((to_length,) + matrix.shape[1:])
+    result[:matrix.shape[0]] = matrix
     return result
 
 def collapse(batch_x, time_major=False):
@@ -68,3 +70,18 @@ def batch_per(dense_y, dense_decoded):
         hypo = [phn_i for phn_i in dense_decoded[i] if phn_i != 0]
         total_per += distance.edit_distance(ref, hypo)/len(ref)
     return total_per/len(dense_decoded)
+
+def get_prefixes(dirname):
+    """ Returns a list of prefixes to files in the directory (which might be a whole
+    corpus, or a train/valid/test subset. The prefixes include the path leading
+    up to it, but only the filename up until the first observed period '.'
+    """
+
+    prefixes = []
+    for root, _, filenames in os.walk(dirname):
+        for filename in filenames:
+            if filename.endswith(".npy"):
+                # Then it's an input feature file and its prefix will
+                # correspond to a training example
+                prefixes.append(os.path.join(root, filename.split(".")[0]))
+    return sorted(prefixes)

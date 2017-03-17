@@ -4,16 +4,15 @@ import os
 import random
 
 from nltk.metrics import distance
-import numpy as np
 
-import corpus_reader
+import corpus
 import utils
 import config
 
 random.seed(0)
 
 # Hardcoded numbers
-NUM_PHONES = 61
+NUM_LABELS = 61
 # The number of training sentences with SA utterances removed.
 TOTAL_SIZE = 3696
 
@@ -37,7 +36,7 @@ def phone_classes(path=os.path.join(TIMIT_TGT_DIR, "train"),
             for phone in phn_f.readline().split():
                 phn_set.add(phone)
 
-    assert len(phn_set) == NUM_PHONES
+    assert len(phn_set) == NUM_LABELS
     return sorted(list(phn_set))
 
 PHONE_SET = phone_classes()
@@ -112,75 +111,6 @@ def test_set(feat_type, path=os.path.join(TIMIT_TGT_DIR, "test"), flatten=True):
 
     return batch_x, utter_lens, batch_y
 
-def batch_gen(feat_type, path=os.path.join(TIMIT_TGT_DIR, "train"), rand=True,
-              batch_size=16, labels="phonemes", total_size=3696, flatten=True):
-    """ Load the already preprocessed TIMIT data.  Flatten=True will make the
-    2-dimensional freq x time a 1 dimensional vector of feats."""
-
-    def create_one_hot(i, num_classes):
-        """ Takes a list or array with numbers representing classes, and
-        creates a corresponding 2-dimensional array of one-hot vectors."""
-
-        one_hot = np.zeros((1, num_classes))
-        one_hot[0, i] = 1
-        return one_hot
-
-    train_paths = []
-    dialect_classes = set()
-
-    for root, _, filenames in os.walk(path):
-        for filename in filenames:
-            if filename.endswith(feat_type + ".npy") and not filename.startswith("sa"):
-                # Add to filename list.
-                path = os.path.join(root, filename)
-                train_paths.append(os.path.join(root, filename))
-                dialect_classes.add(path.split("/")[-3])
-
-    dialect_classes = sorted(list(dialect_classes))
-    dr_class_map = dict(zip(dialect_classes, range(0, len(dialect_classes))))
-
-    if rand:
-        random.shuffle(train_paths)
-
-    # Adjust the effective size of the TIMIT corpus so I can debug models more easily.
-    mod = total_size % batch_size
-    if mod != 0:
-        raise Exception("Total train size %d not divisible by batch_size %d." % (
-            total_size, batch_size))
-    train_paths = train_paths[:total_size-mod]
-
-    path_batches = [train_paths[i:i+batch_size]
-                    for i in range(0, len(train_paths), batch_size)]
-
-    if rand:
-        random.shuffle(path_batches)
-
-    for path_batch in path_batches:
-        batch_x, batch_x_lens = utils.load_batch_x(path_batch, flatten=flatten)
-        if labels == "dialects":
-            y_labels = np.array([dr_class_map[path.split("/")[-3]]
-                                 for path in path_batch])
-            # Make into one-hot vectors
-            batch_y = np.concatenate(
-                [create_one_hot(label, len(dialect_classes))
-                 for label in y_labels])
-        elif labels == "phonemes":
-            phn_paths = [path.split(".")[0]+".phn" for path in path_batch]
-            batch_y_list = []
-            for phn_path in phn_paths:
-                with open(phn_path) as phn_f:
-                    phone_indices = phones2indices(phn_f.readline().split())
-                    batch_y_list.append(phone_indices)
-            batch_y = utils.target_list_to_sparse_tensor(batch_y_list)
-
-        yield batch_x, batch_x_lens, batch_y
-
-def num_feats(feat_type):
-    """ Returns the number of feats for a given feat type. """
-
-    batch = next(batch_gen(feat_type, rand=False))
-    return batch[0].shape[-1]
-
 def phoneme_error_rate(batch_y, decoded):
     """ Calculates the phoneme error rate between decoder output and the gold
     reference by first collapsing the TIMIT labels into the standard 39
@@ -211,9 +141,6 @@ def prepare_valid_set(org_dir, tgt_dir, feat_type, target_type):
         # Randomly select one female speakers.
         chosen_paths.extend(female_valid_speakers[:1])
 
-    for path in chosen_paths:
-        feature_extraction(feat_type, 
-
     valid_paths = []
     for speaker_path in chosen_paths:
         fns = os.listdir(speaker_path)
@@ -225,46 +152,49 @@ def prepare_valid_set(org_dir, tgt_dir, feat_type, target_type):
 
     return batch_x, utter_lens, batch_y
 
-class Corpus:
+class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the TIMIT corpus."""
 
-    vocab_size = NUM_PHONES
+    vocab_size = NUM_LABELS
+    _num_feats = None
 
-    def __init__(self, feat_type, target_type, reader):
+    def __init__(self, feat_type, target_type):
+        super().__init__(feat_type, target_type)
         if target_type != "phonemes":
             raise Exception("target_type %s not implemented." % target_type)
-        self.reader = reader
         timit_dir = os.path.join(config.TGT_DIR, "timit")
-        corpus_path = self.prepare(timit_dir, feat_type, target_type)
 
-    def prepare(self, timit_dir, feat_type, target_type):
+    def prepare(self):
         """ Preprocesses the TIMIT data. """
 
-        tgt_dir = os.path.join(
-            timit_dir, "feat_type=%s-target_type=%s" % (feat_type, target_type))
-        if os.isdir(tgt_dir):
-            # Then this preprocessing has already been done.
-            return tgt_dir
+        raise Exception("""Not implemented. Refactor preprocess_timit.py into
+                        this module""")
 
-        prepare_train_set(tgt_dir, feat_type, target_type)
-        prepare_valid_set(tgt_dir, feat_type, target_type)
-        prepare_test_set(tgt_dir, feat_type, target_type)
+        #tgt_dir = os.path.join(
+        #    timit_dir, "feat_type=%s-target_type=%s" % (self.feat_type, self.target_type))
+        #if os.isdir(tgt_dir):
+        #    # Then this preprocessing has already been done.
+        #    return tgt_dir
 
+        #prepare_train_set(tgt_dir, self.feat_type, self.target_type)
+        #prepare_valid_set(tgt_dir, self.feat_type, self.target_type)
+        #prepare_test_set(tgt_dir, feat_type, target_type)
 
+    @staticmethod
+    def indices_to_phonemes(indices):
+        return collapse_phones(indices2phones(indices))
 
-    def batch_per(self, dense_y, dense_decoded):
-        """ Calculates the phoneme error rate of a batch."""
+    def get_train_prefixes(self):
+        train_path = os.path.join(TIMIT_TGT_DIR, "train")
+        prefixes = utils.get_prefixes(train_path)
+        return [prefix for prefix in prefixes
+                if not os.path.basename(prefix).startswith("sa")]
 
-        total_per = 0
-        for i in range(len(dense_decoded)):
-            ref = [phn_i for phn_i in dense_y[i] if phn_i != 0]
-            hypo = [phn_i for phn_i in dense_decoded[i] if phn_i != 0]
-            ref = collapse_phones(indices2phones(ref))
-            hypo = collapse_phones(indices2phones(hypo))
-            total_per += distance.edit_distance(ref, hypo)/len(ref)
-        return total_per/len(dense_decoded)
+    def get_valid_prefixes(self):
+        train_path = os.path.join(TIMIT_TGT_DIR, "valid")
+        prefixes = utils.get_prefixes(train_path)
+        return [prefix for prefix in prefixes
+                if not os.path.basename(prefix).startswith("sa")]
 
-    @property
-    def num_feats(self):
-        """ The number of features per frame in the input audio. """
-        return num_feats(self.feat_type)
+    def get_test_prefixes(self):
+        raise Exception("Not implemented.")

@@ -2,30 +2,16 @@
     subclass. """
 
 import abc
-import os
 
-def get_prefixes(set_dir):
-    """ Returns a list of prefixes to files in the set (which might be a whole
-    corpus, or a train/valid/test subset. The prefixes include the path leading
-    up to it, but remove only the file extension.
-    """
+import numpy as np
 
-    prefixes = []
-    for root, _, filenames in os.walk(set_dir):
-        for filename in filenames:
-            if filename.endswith(".npy"):
-                # Then it's an input feature file and its prefix will
-                # correspond to a training example
-                prefixes.append(os.path.join(root, filename))
-    return sorted(prefixes)
-
-class Corpus(metaclass=abc.ABCMeta):
+class AbstractCorpus(metaclass=abc.ABCMeta):
     "All interfaces to corpora are subclasses of this class."""
 
     feat_type = None
     target_type = None
     vocab_size = None
-    num_feats = None
+    _num_feats = None
 
     def __init__(self, feat_type, target_type):
         """ feat_type: A string describing the input features. For
@@ -59,3 +45,19 @@ class Corpus(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_test_prefixes(self):
         """ Returns the prefixes of all test instances."""
+
+    @property
+    def num_feats(self):
+        """ The number of features per time step in the corpus. """
+        if not self._num_feats:
+            filename = "%s.%s.npy" % (self.get_train_prefixes()[0],
+                                      self.feat_type)
+            feats = np.load(filename)
+            # pylint: disable=maybe-no-member
+            if len(feats.shape) == 3:
+                # Then there are multiple channels of multiple feats
+                self._num_feats = feats.shape[1] * feats.shape[2]
+            else:
+                raise Exception(
+                    "Feature matrix of shape %s unexpected" % str(feats.shape))
+        return self._num_feats
