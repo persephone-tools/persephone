@@ -123,12 +123,12 @@ def phoneme_error_rate(batch_y, decoded):
     phn_hyp = collapse_phones(indices2phones(decoded[0].values))
     return distance.edit_distance(phn_ref, phn_hyp)/len(phn_ref)
 
-def prepare_valid_set(org_dir, tgt_dir, feat_type, target_type):
+def get_valid_prefixes(feat_type, target_type):
     """ Retrieves a 50 speaker validation set. """
 
     chosen_paths = []
     for dialect in ["dr1", "dr2", "dr3", "dr4", "dr5", "dr6", "dr7", "dr8"]:
-        dr_path = os.path.join(org_dir, "test", dialect)
+        dr_path = os.path.join(TIMIT_TGT_DIR, "test", dialect)
         all_test_speakers = [os.path.join(dr_path, speaker) for speaker in os.listdir(dr_path)]
         valid_speakers = [path for path in all_test_speakers if not
                           path.split("test/")[-1] in CORE_SPEAKERS]
@@ -141,16 +141,15 @@ def prepare_valid_set(org_dir, tgt_dir, feat_type, target_type):
         # Randomly select one female speakers.
         chosen_paths.extend(female_valid_speakers[:1])
 
-    valid_paths = []
+    valid_prefixes = []
     for speaker_path in chosen_paths:
         fns = os.listdir(speaker_path)
         for filename in fns:
             if filename.endswith(feat_type + ".npy") and not filename.startswith("sa"):
-                valid_paths.append(os.path.join(speaker_path, filename))
-    batch_x, utter_lens = utils.load_batch_x(valid_paths, flatten=True)
-    batch_y = utils.target_list_to_sparse_tensor(load_batch_y(valid_paths))
+                valid_prefixes.append(
+                    os.path.join(speaker_path, filename.split()[0]))
 
-    return batch_x, utter_lens, batch_y
+    return valid_prefixes
 
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the TIMIT corpus."""
@@ -191,10 +190,7 @@ class Corpus(corpus.AbstractCorpus):
                 if not os.path.basename(prefix).startswith("sa")]
 
     def get_valid_prefixes(self):
-        train_path = os.path.join(TIMIT_TGT_DIR, "valid")
-        prefixes = utils.get_prefixes(train_path)
-        return [prefix for prefix in prefixes
-                if not os.path.basename(prefix).startswith("sa")]
+        get_valid_prefixes(self.feat_type, self.target_type)
 
     def get_test_prefixes(self):
         raise Exception("Not implemented.")
