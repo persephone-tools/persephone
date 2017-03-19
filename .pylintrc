@@ -2,4 +2,4 @@
 
 command=/home/oadams/venv3/bin/pylint
 disable=locally-disabled
-limit=0.0
+limit=10.0

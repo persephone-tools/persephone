@@ -136,20 +136,22 @@ def get_valid_prefixes(feat_type, target_type):
                                if path.split("/")[-1].startswith("m")]
         female_valid_speakers = [path for path in valid_speakers
                                  if path.split("/")[-1].startswith("f")]
-        # Select the first two male speakers.
+        # Select the first two male speakers and first female speaker
         chosen_paths.extend(male_valid_speakers[:2])
-        # Randomly select one female speakers.
         chosen_paths.extend(female_valid_speakers[:1])
 
-    valid_prefixes = []
+    valid_input_paths = []
+    valid_target_paths = []
     for speaker_path in chosen_paths:
         fns = os.listdir(speaker_path)
         for filename in fns:
             if filename.endswith(feat_type + ".npy") and not filename.startswith("sa"):
-                valid_prefixes.append(
-                    os.path.join(speaker_path, filename.split()[0]))
+                valid_input_paths.append(os.path.join(speaker_path, filename))
+                target_fn = "%s.%s" % (filename.split(".")[0], target_type)
+                assert target_fn in fns
+                valid_target_paths.append(os.path.join(speaker_path, target_fn))
 
-    return valid_prefixes
+    return valid_input_paths, valid_target_paths
 
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the TIMIT corpus."""
@@ -159,9 +161,8 @@ class Corpus(corpus.AbstractCorpus):
 
     def __init__(self, feat_type, target_type):
         super().__init__(feat_type, target_type)
-        if target_type != "phonemes":
+        if target_type != "phn":
             raise Exception("target_type %s not implemented." % target_type)
-        timit_dir = os.path.join(config.TGT_DIR, "timit")
 
     def prepare(self):
         """ Preprocesses the TIMIT data. """
@@ -190,7 +191,7 @@ class Corpus(corpus.AbstractCorpus):
                 if not os.path.basename(prefix).startswith("sa")]
 
     def get_valid_prefixes(self):
-        get_valid_prefixes(self.feat_type, self.target_type)
+        return get_valid_prefixes(self.feat_type, self.target_type)
 
     def get_test_prefixes(self):
         raise Exception("Not implemented.")
