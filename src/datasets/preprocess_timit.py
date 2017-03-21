@@ -42,10 +42,10 @@ def create_raw_data():
         args = [config.SOX_PATH, sphere_path, wav_path]
         subprocess.run(args)
 
-    for root, _, fns in os.walk(config.ORG_DIR):
+    for root, _, fns in os.walk(config.TIMIT_ORG_DIR):
         for filename in fns:
             org_path = join(root, filename)
-            sub_path = join(root[len(config.ORG_DIR):], filename)
+            sub_path = join(root[len(config.TIMIT_ORG_DIR):], filename)
             tgt_path = join(TIMIT_TGT_DIR, sub_path)
 
             # Create parent directory

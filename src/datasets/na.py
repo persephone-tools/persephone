@@ -27,8 +27,8 @@ UNI_PHNS = {'q', 'p', 'ɭ', 'ɳ', 'h', 'ʐ', 'n', 'o', 'ɤ', 'ʝ', 'ɛ', 'g',
             't', 'w', 'õ', 'ẽ', 'd', 'ɣ', 'ɕ', 'c', 'ʁ', 'ʑ', 'ʈ', 'ɲ', 'ɬ',
             's', 'ŋ', 'ə', 'e', 'æ', 'f', 'j', 'k', 'z', 'ʂ'}
 BI_PHNS = {'dʑ', 'ẽ', 'ɖʐ', 'w̃', 'æ̃', 'qʰ', 'i͂', 'tɕ', 'v̩', 'o̥', 'ts',
-            'ɻ̩', 'ã', 'ə̃', 'ṽ', 'pʰ', 'tʰ', 'ɤ̃', 'ʈʰ', 'ʈʂ', 'ɑ̃', 'ɻ̃', 'kʰ',
-            'ĩ', 'õ', 'dz'}
+           'ɻ̩', 'ã', 'ə̃', 'ṽ', 'pʰ', 'tʰ', 'ɤ̃', 'ʈʰ', 'ʈʂ', 'ɑ̃', 'ɻ̃', 'kʰ',
+           'ĩ', 'õ', 'dz'}
 TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩"}
 PHONES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS)
 NUM_PHONES = len(PHONES)
@@ -45,18 +45,20 @@ def indices2phones(indices):
 
     return [(INDICES2PHONES[index-1] if index > 0 else "pad") for index in indices]
 
-def is_number(s):
+def is_number(string):
+    """ Tests if a string is valid float. """
     try:
-        float(s)
+        float(string)
         return True
     except ValueError:
         return False
 
-def remove_multi(a, ys):
+def remove_multi(to_remove, target_list):
     """ Removes instances of a from the list ys."""
-    return list(filter(lambda x: x != a, ys))
+    return list(filter(lambda x: x != to_remove, target_list))
 
 def contains_forbidden_word(line):
+    """ Tests if a line contains a non-Na word to remove."""
     for word in WORDS_TO_REMOVE:
         if word in line:
             return True
@@ -97,56 +99,69 @@ def trim_wav(in_fn, out_fn, start_time, end_time):
 def prepare_wavs_and_transcripts(filenames, segmentation, remove_tones=True):
     """ Trims available wavs into the sentence or utterance-level."""
 
+    def remove_symbols(line):
+        """ Remove certain symbols from the line."""
+        for symbol in TO_REMOVE:
+            line = line.replace(symbol, "")
+        if remove_tones:
+            for tone in TONES:
+                line = line.replace(tone, "")
+        return line
+
     if not os.path.exists(TGT_TXT_NORM_DIR):
         os.makedirs(TGT_TXT_NORM_DIR)
 
-    WAV_DIR = os.path.join(TGT_DIR, "wav")
-    if not os.path.exists(WAV_DIR):
-        os.makedirs(WAV_DIR)
+    wav_dir = os.path.join(TGT_DIR, "wav")
+    if not os.path.exists(wav_dir):
+        os.makedirs(wav_dir)
 
     syl_inv = set()
+
+    def process_utterance(line):
+        """ Given a line in a transcript, processes it and extracts the
+        relevant segment from a WAV file.
+        """
+
+        # Remove lines with certain words in it.
+        if contains_forbidden_word(line):
+            return
+
+        # Remove certain symbols from lines.
+        line = remove_symbols(line)
+
+        times = line.split()[:2]
+        start_time = times[0]
+        end_time = times[1]
+        #Ensure the line has utterance time markers.
+        assert is_number(start_time)
+        assert is_number(end_time)
+
+        syls = line.split()[2:]
+        syl_inv = syl_inv.union(syls)
+
+        assert fn.endswith(".txt")
+        prefix = fn.strip(".txt")
+        i += 1
+        if segmentation == "syllables":
+            out_fn = prefix + "." + str(i) + ".syl"
+            labels = syls
+        elif segmentation == "phonemes":
+            out_fn = prefix + "." + str(i) + ".phn"
+            labels = segment_phonemes(syls)
+
+        with open(os.path.join(TGT_TXT_NORM_DIR, out_fn), "w") as out_f:
+            out_f.write(" ".join(labels))
+
+        in_wav_fn = os.path.join(ORG_DIR, "wav", "%s.wav" % prefix)
+        out_wav_fn = os.path.join(wav_dir, "%s.%d.wav" % (prefix, i))
+        trim_wav(in_wav_fn, out_wav_fn, start_time, end_time)
+
     for fn in filenames:
         with open(os.path.join(ORG_TXT_NORM_DIR, fn)) as f:
             i = 0
             for line in f:
+                process_utterance(line)
 
-                # Remove lines with certain words in it.
-                if contains_forbidden_word(line):
-                    continue
-
-                # Remove certain symbols from lines.
-                for symbol in TO_REMOVE:
-                    line = line.replace(symbol, "")
-                if remove_tones:
-                    for tone in TONES:
-                        line = line.replace(tone, "")
-
-                sp = line.split()
-                start_time = sp[0]
-                end_time = sp[1]
-                #Ensure the line has utterance time markers.
-                assert is_number(start_time)
-                assert is_number(end_time)
-
-                syls = sp[2:]
-                syl_inv = syl_inv.union(syls)
-
-                assert fn.endswith(".txt")
-                prefix = fn.strip(".txt")
-                i += 1
-                if segmentation == "syllables":
-                    out_fn = prefix + "." + str(i) + ".syl"
-                    labels = syls
-                elif segmentation == "phonemes":
-                    out_fn = prefix + "." + str(i) + ".phn"
-                    labels = segment_phonemes(syls)
-
-                with open(os.path.join(TGT_TXT_NORM_DIR, out_fn), "w") as out_f:
-                    out_f.write(" ".join(labels))
-
-                in_wav_fn = os.path.join(ORG_DIR, "wav", "%s.wav" % prefix)
-                out_wav_fn = os.path.join(WAV_DIR, "%s.%d.wav" % (prefix, i))
-                trim_wav(in_wav_fn, out_wav_fn, start_time, end_time)
 
 def wordlists_and_texts_fns():
     """ Determine which transcript and WAV prefixes correspond to wordlists,
@@ -194,12 +209,12 @@ class CorpusBatches:
         prefix_lens = []
         for prefix in prefixes:
             path = os.path.join(self.input_dir, "%s.%s.npy" % (
-                                prefix, self.feat_type))
+                prefix, self.feat_type))
             _, batch_x_lens = utils.load_batch_x([path], flatten=True)
             prefix_lens.append((prefix, batch_x_lens[0]))
         prefix_lens.sort(key=lambda prefix_len: prefix_len[1])
         prefixes = [prefix for prefix, length in prefix_lens
-                       if length <= max_samples]
+                    if length <= max_samples]
         return prefixes
 
     def __init__(self, feat_type, seg_type, total_size, batch_size=None,
@@ -228,27 +243,28 @@ class CorpusBatches:
         mod = total_size % batch_size
         if total_size > len(train_prefixes):
             raise Exception(("Num training examples requested (%d) greater " +
-                    "than amount of training examples found (%d)") % (
-                    total_size, len(train_prefixes)))
+                             "than amount of training examples found (%d)") % (
+                                 total_size, len(train_prefixes)))
         if mod != 0:
             raise Exception(("Number of training examples (%d) not divisible" +
-                    " by batch_size %d.") % (total_size, batch_size))
+                             " by batch_size %d.") % (total_size, batch_size))
 
         train_prefixes = train_prefixes[:total_size-mod]
         self.train_prefix_batches = [train_prefixes[i:i+batch_size]
-                for i in range(0, len(train_prefixes), batch_size)]
+                                     for i in
+                                     range(0, len(train_prefixes), batch_size)]
 
     def valid_set(self, seed=None): # Seed currently ignored for Na set.
 
         input_paths = [os.path.join(self.input_dir, "%s.%s.npy" % (
-                prefix, self.feat_type))
-                for prefix in self.valid_prefixes]
+            prefix, self.feat_type))
+                       for prefix in self.valid_prefixes]
         if self.seg_type == "phonemes":
             target_paths = [os.path.join(self.target_dir, prefix+".phn")
-                    for prefix in self.valid_prefixes]
+                            for prefix in self.valid_prefixes]
 
         batch_x, batch_x_lens = utils.load_batch_x(input_paths,
-                                                       flatten=True)
+                                                   flatten=True)
 
         batch_y = []
         for target_path in target_paths:
@@ -266,12 +282,11 @@ class CorpusBatches:
             random.shuffle(self.train_prefix_batches)
 
         for prefix_batch in self.train_prefix_batches:
-            input_paths = [os.path.join(self.input_dir, "%s.%s.npy" % (
-                    prefix, self.feat_type))
-                    for prefix in prefix_batch]
+            input_paths = [os.path.join(self.input_dir, "%s.%s.npy" % (prefix, self.feat_type))
+                           for prefix in prefix_batch]
             if self.seg_type == "phonemes":
                 target_paths = [os.path.join(self.target_dir, prefix+".phn")
-                        for prefix in prefix_batch]
+                                for prefix in prefix_batch]
 
             batch_x, batch_x_lens = utils.load_batch_x(input_paths,
                                                        flatten=True)
@@ -295,4 +310,3 @@ class CorpusBatches:
         bg = self.train_batch_gen()
         batch = next(bg)
         return batch[0].shape[-1]
-
