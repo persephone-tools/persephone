@@ -6,18 +6,18 @@ from nltk.metrics import distance
 
 import utils
 
-def load_batch(prefix_batch):
+def load_batch(fn_batch):
     """ Loads a batch with the given prefix. The prefix is the full path to the
     training example minus the extension.
     """
 
-    batch_inputs_paths = ["%s.npy" % prefix for prefix in prefix_batch]
-    batch_inputs, batch_inputs_lens = utils.load_batch_x(batch_inputs_paths,
+    feat_fn_batch, target_fn_batch = zip(*fn_batch)
+
+    batch_inputs, batch_inputs_lens = utils.load_batch_x(feat_fn_batch,
                                                          flatten=True)
 
-    batch_targets_paths = ["%s.tgt" % prefix for prefix in prefix_batch]
     batch_targets_list = []
-    for targets_path in batch_targets_paths:
+    for targets_path in target_fn_batch:
         with open(targets_path) as targets_f:
             batch_targets_list.append(targets_f.readline().split())
     batch_targets = utils.target_list_to_sparse_tensor(batch_targets_list)
@@ -71,36 +71,37 @@ class CorpusReader:
         # Make a copy of the training prefixes, randomize their order, and take
         # a subset. Doing random slection of a subset of training now ensures
         # the selection of of training sentences is invariant between calls to
-        # train_bathc_gen()
-        self.train_prefixes = list(corpus.get_train_prefixes())
+        # train_batch_gen()
+        self.train_fns = list(zip(*corpus.get_train_fns()))
         if self.rand:
-            random.shuffle(self.train_prefixes)
-        self.train_prefixes = self.train_prefixes[:self.num_train]
+            random.shuffle(self.train_fns)
+        self.train_fns = self.train_fns[:self.num_train]
 
     def train_batch_gen(self):
         """ Returns a generator that outputs batches in the training data."""
 
         # Create batches of batch_size and shuffle them.
-        prefix_batches = [self.train_prefixes[i:i+self.batch_size]
-                          for i in range(0, len(self.train_prefixes),
+        fn_batches = [self.train_fns[i:i+self.batch_size]
+                          for i in range(0, len(self.train_fns),
                                          self.batch_size)]
         if self.rand:
-            random.shuffle(prefix_batches)
+            random.shuffle(fn_batches)
 
-        for prefix_batch in prefix_batches:
-            yield load_batch(prefix_batch)
+        for fn_batch in fn_batches:
+            print(len(fn_batch))
+            yield load_batch(fn_batch)
 
     def valid_batch(self):
         """ Returns a single batch with all the validation cases."""
 
-        valid_prefixes = self.corpus.get_valid_prefixes()
-        return load_batch(valid_prefixes)
+        valid_fns = list(zip(*self.corpus.get_valid_fns()))
+        return load_batch(valid_fns)
 
     def test_batch(self):
         """ Returns a single batch with all the test cases."""
 
-        test_prefixes = self.corpus.get_test_prefixes()
-        return load_batch(test_prefixes)
+        test_fns = list(zip(*self.corpus.get_test_fns()))
+        return load_batch(test_fns)
 
     def batch_per(self, dense_y, dense_decoded):
         """ Calculates the phoneme error rate of a batch."""
