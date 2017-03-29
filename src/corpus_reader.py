@@ -6,24 +6,6 @@ from nltk.metrics import distance
 
 import utils
 
-def load_batch(fn_batch):
-    """ Loads a batch with the given prefix. The prefix is the full path to the
-    training example minus the extension.
-    """
-
-    feat_fn_batch, target_fn_batch = zip(*fn_batch)
-
-    batch_inputs, batch_inputs_lens = utils.load_batch_x(feat_fn_batch,
-                                                         flatten=True)
-
-    batch_targets_list = []
-    for targets_path in target_fn_batch:
-        with open(targets_path) as targets_f:
-            batch_targets_list.append(targets_f.readline().split())
-    batch_targets = utils.target_list_to_sparse_tensor(batch_targets_list)
-
-    return batch_inputs, batch_inputs_lens, batch_targets
-
 class CorpusReader:
     """ Interfaces to the preprocessed corpora to read in train, valid, and
     test set features and transcriptions. This interface is common to all
@@ -77,6 +59,24 @@ class CorpusReader:
             random.shuffle(self.train_fns)
         self.train_fns = self.train_fns[:self.num_train]
 
+    def load_batch(self, fn_batch):
+        """ Loads a batch with the given prefix. The prefix is the full path to the
+        training example minus the extension.
+        """
+
+        feat_fn_batch, target_fn_batch = zip(*fn_batch)
+
+        batch_inputs, batch_inputs_lens = utils.load_batch_x(feat_fn_batch,
+                                                             flatten=True)
+        batch_targets_list = []
+        for targets_path in target_fn_batch:
+            with open(targets_path) as targets_f:
+                target_indices = self.corpus.phonemes_to_indices(targets_f.readline().split())
+                batch_targets_list.append(target_indices)
+        batch_targets = utils.target_list_to_sparse_tensor(batch_targets_list)
+
+        return batch_inputs, batch_inputs_lens, batch_targets
+
     def train_batch_gen(self):
         """ Returns a generator that outputs batches in the training data."""
 
@@ -84,24 +84,24 @@ class CorpusReader:
         fn_batches = [self.train_fns[i:i+self.batch_size]
                           for i in range(0, len(self.train_fns),
                                          self.batch_size)]
+
         if self.rand:
             random.shuffle(fn_batches)
 
         for fn_batch in fn_batches:
-            print(len(fn_batch))
-            yield load_batch(fn_batch)
+            yield self.load_batch(fn_batch)
 
     def valid_batch(self):
         """ Returns a single batch with all the validation cases."""
 
         valid_fns = list(zip(*self.corpus.get_valid_fns()))
-        return load_batch(valid_fns)
+        return self.load_batch(valid_fns)
 
     def test_batch(self):
         """ Returns a single batch with all the test cases."""
 
         test_fns = list(zip(*self.corpus.get_test_fns()))
-        return load_batch(test_fns)
+        return self.load_batch(test_fns)
 
     def batch_per(self, dense_y, dense_decoded):
         """ Calculates the phoneme error rate of a batch."""

@@ -35,6 +35,10 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
+    def phonemes_to_indices(self, phonemes):
+        """ Converts a sequence of phonemes their corresponding labels. """
+
+    @abc.abstractmethod
     def get_train_fns(self):
         """ Returns a tuple of two elements representing the training set. The
         first element is a list of the filenames of all the input features. The

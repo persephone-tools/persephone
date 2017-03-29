@@ -123,7 +123,7 @@ def phoneme_error_rate(batch_y, decoded):
     phn_hyp = collapse_phones(indices2phones(decoded[0].values))
     return distance.edit_distance(phn_ref, phn_hyp)/len(phn_ref)
 
-def get_valid_prefixes(feat_type, target_type):
+def get_valid_fns(feat_type, target_type):
     """ Retrieves a 50 speaker validation set. """
 
     chosen_paths = []
@@ -184,6 +184,10 @@ class Corpus(corpus.AbstractCorpus):
     def indices_to_phonemes(indices):
         return collapse_phones(indices2phones(indices))
 
+    @staticmethod
+    def phonemes_to_indices(phonemes):
+        return phones2indices(phonemes)
+
     def get_train_fns(self):
         train_path = os.path.join(TIMIT_TGT_DIR, "train")
 
@@ -199,11 +203,12 @@ class Corpus(corpus.AbstractCorpus):
         return feat_fns, target_fns
 
     def get_valid_fns(self):
-        prefixes = get_valid_prefixes(self.feat_type, self.target_type)
-        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
-                    for prefix in prefixes]
-        target_fns = ["%s.%s" % (prefix, self.target_type)
-                      for prefix in prefixes]
+        valid_fns = get_valid_fns(self.feat_type, self.target_type)
+#        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
+#                    for prefix in prefixes]
+#        target_fns = ["%s.%s" % (prefix, self.target_type)
+#                      for prefix in prefixes]
+        feat_fns, target_fns = valid_fns
 
         return feat_fns, target_fns
 
