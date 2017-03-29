@@ -25,7 +25,6 @@ def prep_exp_dir():
     exp_num = get_exp_dir_num()
     exp_num = exp_num + 1
     code_dir = os.path.join(EXP_DIR, str(exp_num), "code")
-    os.makedirs(code_dir)
     shutil.copytree(os.getcwd(), code_dir)
 
     return os.path.join(EXP_DIR, str(exp_num))

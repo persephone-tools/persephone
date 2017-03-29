@@ -186,9 +186,18 @@ class Corpus(corpus.AbstractCorpus):
 
     def get_train_prefixes(self):
         train_path = os.path.join(TIMIT_TGT_DIR, "train")
-        prefixes = utils.get_prefixes(train_path)
-        return [prefix for prefix in prefixes
-                if not os.path.basename(prefix).startswith("sa")]
+
+        prefixes = utils.get_prefixes(
+            train_path, extension=(".%s.npy" % self.feat_type))
+        prefixes = [prefix for prefix in prefixes
+                    if not os.path.basename(prefix).startswith("sa")]
+        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
+                    for prefix in prefixes]
+        target_fns = ["%s.%s" % (prefix, self.target_type)
+                      for prefix in prefixes]
+
+        return feat_fns, target_fns
+
 
     def get_valid_prefixes(self):
         return get_valid_prefixes(self.feat_type, self.target_type)

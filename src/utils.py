@@ -71,7 +71,7 @@ def batch_per(dense_y, dense_decoded):
         total_per += distance.edit_distance(ref, hypo)/len(ref)
     return total_per/len(dense_decoded)
 
-def get_prefixes(dirname):
+def get_prefixes(dirname, extension):
     """ Returns a list of prefixes to files in the directory (which might be a whole
     corpus, or a train/valid/test subset. The prefixes include the path leading
     up to it, but only the filename up until the first observed period '.'
@@ -80,7 +80,7 @@ def get_prefixes(dirname):
     prefixes = []
     for root, _, filenames in os.walk(dirname):
         for filename in filenames:
-            if filename.endswith(".npy"):
+            if filename.endswith(extension):
                 # Then it's an input feature file and its prefix will
                 # correspond to a training example
                 prefixes.append(os.path.join(root, filename.split(".")[0]))
