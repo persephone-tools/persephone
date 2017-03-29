@@ -19,8 +19,9 @@ class Model:
     ler = None
     dense_decoded = None
     dense_ref = None
+    corpus_reader = None
 
-    def train(self, corpus_batches, early_stopping_steps=10, min_epochs=30,
+    def train(self, early_stopping_steps=10, min_epochs=30,
               restore_model_path=None):
         """ Train the model.
 
@@ -57,7 +58,7 @@ class Model:
         out_file = open(os.path.join(self.exp_dir, "train_log.txt"), "w")
 
         # Load the validation set
-        valid_x, valid_x_lens, valid_y = corpus_batches.valid_set(seed=0)
+        valid_x, valid_x_lens, valid_y = self.corpus_reader.valid_batch()
 
         saver = tf.train.Saver()
 
@@ -69,7 +70,7 @@ class Model:
             sess.run(tf.global_variables_initializer())
 
         for epoch in itertools.count():
-            batch_gen = corpus_batches.train_batch_gen()
+            batch_gen = self.corpus_reader.train_batch_gen()
 
             train_ler_total = 0
             batch_i = None
@@ -92,7 +93,7 @@ class Model:
             valid_ler, dense_decoded, dense_ref = sess.run(
                     [self.ler, self.dense_decoded, self.dense_ref],
                     feed_dict=feed_dict)
-            valid_per = corpus_batches.batch_per(dense_ref, dense_decoded)
+            valid_per = self.corpus_reader.batch_per(dense_ref, dense_decoded)
 
             epoch_str = "Epoch %d. Training LER: %f, validation LER: %f, validation PER: %f" % (
                     epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per)

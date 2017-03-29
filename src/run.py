@@ -38,6 +38,6 @@ def run():
 
         corpus = datasets.timit.Corpus(feat_type="log_mel_filterbank",
                                        target_type="phn")
-        corpus_reader = CorpusReader(corpus, num_train=2**i, max_samples=1000)
+        corpus_reader = CorpusReader(corpus, num_train=2**i)
         model = rnn_ctc.Model(exp_dir, corpus_reader)
         model.train()
