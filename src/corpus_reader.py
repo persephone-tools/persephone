@@ -13,6 +13,8 @@ class CorpusReader:
     data into a valid structure of
     <corpus-name>/[mam-train|mam-valid<seed>|mam-test].  """
 
+    rand = True
+
     def __init__(self, corpus, num_train, batch_size=None, max_samples=None, rand_seed=0):
         """ corpus: The Corpus object that interfaces with a given corpus.
             num_train: The number of training instances from the corpus used.
@@ -44,11 +46,7 @@ class CorpusReader:
             # something... If not, crash before anything else happens.
             assert num_train % self.batch_size == 0
 
-        if rand_seed:
-            random.seed(rand_seed)
-            self.rand = True
-        else:
-            self.rand = False
+        random.seed(rand_seed)
 
         # Make a copy of the training prefixes, randomize their order, and take
         # a subset. Doing random slection of a subset of training now ensures
