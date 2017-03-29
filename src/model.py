@@ -5,8 +5,6 @@ import itertools
 import os
 import tensorflow as tf
 
-import utils
-
 class Model:
     """ Generic model for our ASR tasks. """
 
@@ -40,7 +38,6 @@ class Model:
         # it's not below this.
         best_valid_ler = 1.0
         steps_since_last_record = 0
-        best_epoch = -1
 
         #Get information about training for the names of output files.
         frame = inspect.currentframe()
@@ -54,6 +51,8 @@ class Model:
                     print("%s=%s" % (arg, values[arg]), file=desc_f)
                 else:
                     print("%s=%s" % (arg, values[arg].__dict__), file=desc_f)
+            print("num_train=%s" % (self.corpus_reader.num_train), file=desc_f)
+            print("batch_size=%s" % (self.corpus_reader.batch_size), file=desc_f)
 
         out_file = open(os.path.join(self.exp_dir, "train_log.txt"), "w")
 
@@ -91,12 +90,12 @@ class Model:
                          self.batch_y: valid_y}
 
             valid_ler, dense_decoded, dense_ref = sess.run(
-                    [self.ler, self.dense_decoded, self.dense_ref],
-                    feed_dict=feed_dict)
+                [self.ler, self.dense_decoded, self.dense_ref],
+                feed_dict=feed_dict)
             valid_per = self.corpus_reader.batch_per(dense_ref, dense_decoded)
 
             epoch_str = "Epoch %d. Training LER: %f, validation LER: %f, validation PER: %f" % (
-                    epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per)
+                epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per)
             print(epoch_str, flush=True, file=out_file)
 
             # Implement early stopping.
@@ -114,7 +113,7 @@ class Model:
                 saver.save(sess, path)
             else:
                 print("Steps since last best valid_ler: %d" % (
-                        steps_since_last_record), file=out_file)
+                    steps_since_last_record), file=out_file)
                 steps_since_last_record += 1
                 if steps_since_last_record >= early_stopping_steps:
                     if epoch >= min_epochs:
@@ -124,8 +123,7 @@ class Model:
                                 beaten in %d epochs and at least %d have been
                                 done""" % (early_stopping_steps, min_epochs),
                                 file=out_file, flush=True)
-                        with open(os.path.join(
-                                self.exp_dir, "best_scores.txt"), "w") as best_f:
+                        with open(os.path.join(self.exp_dir, "best_scores.txt"), "w") as best_f:
                             print(best_epoch_str, file=best_f, flush=True)
                             sess.close()
                             out_file.close()

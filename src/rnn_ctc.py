@@ -23,7 +23,7 @@ class Model(model.Model):
             for key, val in self.__dict__.items():
                 print("%s=%s" % (key, val), file=desc_f)
 
-    def __init__(self, exp_dir, corpus_reader, num_layers=3,
+    def __init__(self, exp_dir, corpus_reader, num_layers=5,
                  hidden_size=250, beam_width=100):
 
         self.corpus_reader = corpus_reader
