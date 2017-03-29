@@ -184,7 +184,7 @@ class Corpus(corpus.AbstractCorpus):
     def indices_to_phonemes(indices):
         return collapse_phones(indices2phones(indices))
 
-    def get_train_prefixes(self):
+    def get_train_fns(self):
         train_path = os.path.join(TIMIT_TGT_DIR, "train")
 
         prefixes = utils.get_prefixes(

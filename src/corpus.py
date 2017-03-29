@@ -36,15 +36,27 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_train_prefixes(self):
-        """ Returns the prefixes of all training instances."""
+        """ Returns a tuple of two elements representing the training set. The
+        first element is a list of the filenames of all the input features. The
+        second element is a list of the filenames of all the targets. There is
+        a one-to-one correspondence between these two lists.
+        """
 
     @abc.abstractmethod
     def get_valid_prefixes(self):
-        """ Returns the prefixes of all validation instances."""
+        """ Returns a tuple of two elements representing the validation set.
+        The first element is a list of the filenames of all the input features.
+        The second element is a list of the filenames of all the targets. There
+        is a one-to-one correspondence between these two lists.
+        """
 
     @abc.abstractmethod
     def get_test_prefixes(self):
-        """ Returns the prefixes of all test instances."""
+        """ Returns a tuple of two elements representing the test set.
+        The first element is a list of the filenames of all the input features.
+        The second element is a list of the filenames of all the targets. There
+        is a one-to-one correspondence between these two lists.
+        """
 
     @property
     def num_feats(self):
