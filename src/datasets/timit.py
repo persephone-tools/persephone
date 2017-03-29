@@ -198,9 +198,14 @@ class Corpus(corpus.AbstractCorpus):
 
         return feat_fns, target_fns
 
+    def get_valid_fns(self):
+        prefixes = get_valid_prefixes(self.feat_type, self.target_type)
+        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
+                    for prefix in prefixes]
+        target_fns = ["%s.%s" % (prefix, self.target_type)
+                      for prefix in prefixes]
 
-    def get_valid_prefixes(self):
-        return get_valid_prefixes(self.feat_type, self.target_type)
+        return feat_fns, target_fns
 
-    def get_test_prefixes(self):
+    def get_test_fns(self):
         raise Exception("Not implemented.")

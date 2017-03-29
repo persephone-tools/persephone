@@ -35,7 +35,7 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def get_train_prefixes(self):
+    def get_train_fns(self):
         """ Returns a tuple of two elements representing the training set. The
         first element is a list of the filenames of all the input features. The
         second element is a list of the filenames of all the targets. There is
@@ -43,7 +43,7 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def get_valid_prefixes(self):
+    def get_valid_fns(self):
         """ Returns a tuple of two elements representing the validation set.
         The first element is a list of the filenames of all the input features.
         The second element is a list of the filenames of all the targets. There
@@ -51,7 +51,7 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def get_test_prefixes(self):
+    def get_test_fns(self):
         """ Returns a tuple of two elements representing the test set.
         The first element is a list of the filenames of all the input features.
         The second element is a list of the filenames of all the targets. There
@@ -62,8 +62,7 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
     def num_feats(self):
         """ The number of features per time step in the corpus. """
         if not self._num_feats:
-            filename = "%s.%s.npy" % (self.get_train_prefixes()[0],
-                                      self.feat_type)
+            filename = self.get_train_fns()[0][0]
             feats = np.load(filename)
             # pylint: disable=maybe-no-member
             if len(feats.shape) == 3:
