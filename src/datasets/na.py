@@ -6,6 +6,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 
 import config
+import corpus
 import feat_extract
 import utils
 
@@ -310,3 +311,65 @@ class CorpusBatches:
         bg = self.train_batch_gen()
         batch = next(bg)
         return batch[0].shape[-1]
+
+class Corpus(corpus.AbstractCorpus):
+    """ Class to interface with the Na corpus. """
+
+    vocab_size = NUM_PHONES
+    TRAIN_VALID_TEST_RATIOS = [.8,.1,.1]
+
+    def __init__(self, feat_type, target_type):
+        super().__init__(feat_type, target_type)
+        if target_type != "phn":
+            raise Exception("target_type %s not implemented." % target_type)
+
+        input_dir = os.path.join(TGT_DIR, "wav")
+        prefixes = utils.get_prefixes(input_dir, extension=".wav")
+
+        # To ensure we always get the same train/valid/test split, but
+        # to shuffle it nonetheless.
+        random.seed(0)
+        random.shuffle(prefixes)
+
+        # Get indices of the end points of the train/valid/test parts of the
+        # data.
+        train_end = round(len(prefixes)*self.TRAIN_VALID_TEST_RATIOS[0])
+        valid_end = round(len(prefixes)*self.TRAIN_VALID_TEST_RATIOS[0] +
+                          len(prefixes)*self.TRAIN_VALID_TEST_RATIOS[1])
+
+        self.train_prefixes = prefixes[:train_end]
+        self.valid_prefixes = prefixes[train_end:valid_end]
+        self.test_prefixes = prefixes[valid_end:]
+
+    def prepare(self):
+        """ Preprocessing the Na data."""
+        raise Exception("Not implemented.")
+
+    @staticmethod
+    def indices_to_phonemes(indices):
+        return indices2phones(indices)
+
+    @staticmethod
+    def phonemes_to_indices(phonemes):
+        return phones2indices(phonemes)
+
+    def get_train_fns(self):
+        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
+                    for prefix in self.train_prefixes]
+        target_fns = ["%s.%s" % (prefix, self.target_type)
+                    for prefix in self.train_prefixes]
+        return feat_fns, target_fns
+
+    def get_valid_fns(self):
+        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
+                    for prefix in self.valid_prefixes]
+        target_fns = ["%s.%s" % (prefix, self.target_type)
+                    for prefix in self.valid_prefixes]
+        return feat_fns, target_fns
+
+    def get_test_fns(self):
+        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
+                    for prefix in self.test_prefixes]
+        target_fns = ["%s.%s" % (prefix, self.target_type)
+                    for prefix in self.test_prefixes]
+        return feat_fns, target_fns

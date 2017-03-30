@@ -157,7 +157,6 @@ class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the TIMIT corpus."""
 
     vocab_size = NUM_LABELS
-    _num_feats = None
 
     def __init__(self, feat_type, target_type):
         super().__init__(feat_type, target_type)
