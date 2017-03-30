@@ -5,6 +5,8 @@ import abc
 
 import numpy as np
 
+import utils
+
 class AbstractCorpus(metaclass=abc.ABCMeta):
     "All interfaces to corpora are subclasses of this class."""
 
@@ -13,14 +15,38 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
     vocab_size = None
     _num_feats = None
 
-    def __init__(self, feat_type, target_type):
+    def __init__(self, feat_type, target_type, max_samples=None):
         """ feat_type: A string describing the input features. For
                        example, 'log_mel_filterbank'.
             target_type: A string describing the targets. For example,
                          'phonemes' or 'syllables'.
+            max_samples: The maximum length in samples of a train, valid, or
+                         test utterance. Used to save memory in exchange for
+                         reducing the number of effective training examples.
         """
         self.feat_type = feat_type
         self.target_type = target_type
+
+    def sort_and_filter_by_size(self, prefixes, max_samples):
+        """ Sorts the files by their length and returns those with less
+        than or equal to max_samples length. Returns the filename prefixes of
+        those files. The main job of the method is to filter, but the sorting
+        may give better efficiency when doing dynamic batching unless it gets
+        shuffled downstream.
+
+            prefixes: The prefix of the filenames, with the complete path. For
+            example "/home/username/data/corpus/audiofile" minus the extension.
+        """
+
+        prefix_lens = []
+        for prefix in prefixes:
+            path = "%s.%s.npy" % (prefix, self.feat_type)
+            _, batch_x_lens = utils.load_batch_x([path], flatten=True)
+            prefix_lens.append((prefix, batch_x_lens[0]))
+        prefix_lens.sort(key=lambda prefix_len: prefix_len[1])
+        prefixes = [prefix for prefix, length in prefix_lens
+                    if length <= max_samples]
+        return prefixes
 
     @abc.abstractmethod
     def prepare(self):

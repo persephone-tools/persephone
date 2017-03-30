@@ -318,13 +318,17 @@ class Corpus(corpus.AbstractCorpus):
     vocab_size = NUM_PHONES
     TRAIN_VALID_TEST_RATIOS = [.8,.1,.1]
 
-    def __init__(self, feat_type, target_type):
+    def __init__(self, feat_type, target_type, max_samples=1000):
         super().__init__(feat_type, target_type)
         if target_type != "phn":
             raise Exception("target_type %s not implemented." % target_type)
 
         input_dir = os.path.join(TGT_DIR, "wav")
-        prefixes = utils.get_prefixes(input_dir, extension=".wav")
+        prefixes = [os.path.join(input_dir, fn.strip(".wav"))
+                    for fn in os.listdir(input_dir) if fn.endswith(".wav")]
+
+        if max_samples:
+            prefixes = self.sort_and_filter_by_size(prefixes, max_samples)
 
         # To ensure we always get the same train/valid/test split, but
         # to shuffle it nonetheless.
@@ -340,6 +344,9 @@ class Corpus(corpus.AbstractCorpus):
         self.train_prefixes = prefixes[:train_end]
         self.valid_prefixes = prefixes[train_end:valid_end]
         self.test_prefixes = prefixes[valid_end:]
+        print(len(self.train_prefixes))
+        print(len(self.valid_prefixes))
+        print(len(self.test_prefixes))
 
     def prepare(self):
         """ Preprocessing the Na data."""
