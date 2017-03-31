@@ -312,6 +312,13 @@ class CorpusBatches:
         batch = next(bg)
         return batch[0].shape[-1]
 
+def get_target_prefix(prefix):
+    """ Given a prefix of the form /some/path/here/wav/prefix, returns the
+    corresponding target file name."""
+
+    fn = os.path.basename(prefix)
+    return os.path.join(TGT_DIR, "txt_norm", fn)
+
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
 
@@ -344,9 +351,6 @@ class Corpus(corpus.AbstractCorpus):
         self.train_prefixes = prefixes[:train_end]
         self.valid_prefixes = prefixes[train_end:valid_end]
         self.test_prefixes = prefixes[valid_end:]
-        print(len(self.train_prefixes))
-        print(len(self.valid_prefixes))
-        print(len(self.test_prefixes))
 
     def prepare(self):
         """ Preprocessing the Na data."""
@@ -363,20 +367,20 @@ class Corpus(corpus.AbstractCorpus):
     def get_train_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.train_prefixes]
-        target_fns = ["%s.%s" % (prefix, self.target_type)
+        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
                     for prefix in self.train_prefixes]
         return feat_fns, target_fns
 
     def get_valid_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.valid_prefixes]
-        target_fns = ["%s.%s" % (prefix, self.target_type)
+        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
                     for prefix in self.valid_prefixes]
         return feat_fns, target_fns
 
     def get_test_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.test_prefixes]
-        target_fns = ["%s.%s" % (prefix, self.target_type)
+        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
                     for prefix in self.test_prefixes]
         return feat_fns, target_fns

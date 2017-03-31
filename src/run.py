@@ -36,7 +36,7 @@ def run():
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
 
-        corpus = datasets.timit.Corpus(feat_type="log_mel_filterbank",
+        corpus = datasets.na.Corpus(feat_type="log_mel_filterbank",
                                        target_type="phn")
         corpus_reader = CorpusReader(corpus, num_train=2**i)
         model = rnn_ctc.Model(exp_dir, corpus_reader)
