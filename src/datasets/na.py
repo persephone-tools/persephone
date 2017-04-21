@@ -76,11 +76,11 @@ def segment_phonemes(syls):
                 phonemes.append(syl[i:i+3])
                 i += 3
                 continue
-            elif syl[i:i+2] in BI_PHNS:
+            elif syl[i:i+2] in BI_PHNS.union(TONES):
                 phonemes.append(syl[i:i+2])
                 i += 2
                 continue
-            elif syl[i:i+1] in UNI_PHNS:
+            elif syl[i:i+1] in UNI_PHNS.union(TONES):
                 phonemes.append(syl[i:i+1])
                 i += 1
                 continue
@@ -97,14 +97,14 @@ def trim_wav(in_fn, out_fn, start_time, end_time):
     print(args[1:])
     subprocess.run(args)
 
-def prepare_wavs_and_transcripts(filenames, segmentation, remove_tones=True):
+def prepare_wavs_and_transcripts(filenames, segmentation, tones=False):
     """ Trims available wavs into the sentence or utterance-level."""
 
     def remove_symbols(line):
         """ Remove certain symbols from the line."""
         for symbol in TO_REMOVE:
             line = line.replace(symbol, "")
-        if remove_tones:
+        if not tones:
             for tone in TONES:
                 line = line.replace(tone, "")
         return line
@@ -143,11 +143,15 @@ def prepare_wavs_and_transcripts(filenames, segmentation, remove_tones=True):
         assert fn.endswith(".txt")
         prefix = fn.strip(".txt")
         i += 1
+
+        out_fn = prefix
+        if tones:
+            out_fn += ".tones."
         if segmentation == "syllables":
-            out_fn = prefix + "." + str(i) + ".syl"
+            out_fn += str(i) + ".syl"
             labels = syls
         elif segmentation == "phonemes":
-            out_fn = prefix + "." + str(i) + ".phn"
+            out_fn += str(i) + ".phn"
             labels = segment_phonemes(syls)
 
         with open(os.path.join(TGT_TXT_NORM_DIR, out_fn), "w") as out_f:

@@ -32,7 +32,7 @@ def prep_exp_dir():
 def run():
     """ Run an experiment. """
 
-    for i in range(7, 12):
+    for i in range(11, 12):
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
 
