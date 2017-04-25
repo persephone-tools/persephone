@@ -97,7 +97,7 @@ def trim_wav(in_fn, out_fn, start_time, end_time):
     print(args[1:])
     subprocess.run(args)
 
-def prepare_wavs_and_transcripts(filenames, segmentation, tones=False):
+def prepare_wavs_and_transcripts(filenames, segmentation, tones):
     """ Trims available wavs into the sentence or utterance-level."""
 
     def remove_symbols(line):
@@ -118,7 +118,7 @@ def prepare_wavs_and_transcripts(filenames, segmentation, tones=False):
 
     syl_inv = set()
 
-    def process_utterance(line):
+    def process_utterance(line, line_id):
         """ Given a line in a transcript, processes it and extracts the
         relevant segment from a WAV file.
         """
@@ -138,35 +138,34 @@ def prepare_wavs_and_transcripts(filenames, segmentation, tones=False):
         assert is_number(end_time)
 
         syls = line.split()[2:]
-        syl_inv = syl_inv.union(syls)
+        #syl_inv = syl_inv.union(syls)
 
         assert fn.endswith(".txt")
         prefix = fn.strip(".txt")
-        i += 1
 
-        out_fn = prefix
+        out_fn = prefix + "." + str(line_id)
         if tones:
-            out_fn += ".tones."
+            out_fn += ".tones"
         if segmentation == "syllables":
-            out_fn += str(i) + ".syl"
+            out_fn += ".syl"
             labels = syls
         elif segmentation == "phonemes":
-            out_fn += str(i) + ".phn"
+            out_fn += ".phn"
             labels = segment_phonemes(syls)
 
         with open(os.path.join(TGT_TXT_NORM_DIR, out_fn), "w") as out_f:
             out_f.write(" ".join(labels))
 
         in_wav_fn = os.path.join(ORG_DIR, "wav", "%s.wav" % prefix)
-        out_wav_fn = os.path.join(wav_dir, "%s.%d.wav" % (prefix, i))
+        out_wav_fn = os.path.join(wav_dir, "%s.%d.wav" % (prefix, line_id))
         trim_wav(in_wav_fn, out_wav_fn, start_time, end_time)
 
     for fn in filenames:
         with open(os.path.join(ORG_TXT_NORM_DIR, fn)) as f:
-            i = 0
+            line_id = 0
             for line in f:
-                process_utterance(line)
-
+                process_utterance(line, line_id)
+                line_id += 1
 
 def wordlists_and_texts_fns():
     """ Determine which transcript and WAV prefixes correspond to wordlists,
@@ -329,8 +328,11 @@ class Corpus(corpus.AbstractCorpus):
     vocab_size = NUM_PHONES
     TRAIN_VALID_TEST_RATIOS = [.8,.1,.1]
 
-    def __init__(self, feat_type, target_type, max_samples=1000):
+    def __init__(self, feat_type, target_type, tones=False, max_samples=1000):
         super().__init__(feat_type, target_type)
+
+        self.tones = tones
+
         if target_type != "phn":
             raise Exception("target_type %s not implemented." % target_type)
 
@@ -358,7 +360,9 @@ class Corpus(corpus.AbstractCorpus):
 
     def prepare(self):
         """ Preprocessing the Na data."""
-        raise Exception("Not implemented.")
+
+        texts_fns = wordlists_and_texts_fns()[1]
+        prepare_wavs_and_transcripts(texts_fns, "phonemes", self.tones)
 
     @staticmethod
     def indices_to_phonemes(indices):
@@ -371,20 +375,23 @@ class Corpus(corpus.AbstractCorpus):
     def get_train_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.train_prefixes]
-        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
+        target_fns = ["%s.%s%s" % (get_target_prefix(prefix),
+                                    "tones." if self.tones else "", self.target_type)
                     for prefix in self.train_prefixes]
         return feat_fns, target_fns
 
     def get_valid_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.valid_prefixes]
-        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
+        target_fns = ["%s.%s%s" % (get_target_prefix(prefix),
+                                 "tones." if self.tones else "", self.target_type)
                     for prefix in self.valid_prefixes]
         return feat_fns, target_fns
 
     def get_test_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.test_prefixes]
-        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
+        target_fns = ["%s.%s%s" % (get_target_prefix(prefix),
+                                 "tones." if self.tones else "", self.target_type)
                     for prefix in self.test_prefixes]
         return feat_fns, target_fns
