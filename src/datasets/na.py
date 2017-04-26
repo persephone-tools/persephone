@@ -34,17 +34,26 @@ TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩"}
 PHONES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS)
 NUM_PHONES = len(PHONES)
 PHONES2INDICES = {phn: index for index, phn in enumerate(PHONES)}
-INDICES2PHONES = {index: phn for index, phn in enumerate(PHONES)}
+PHONESTONES2INDICES = {phn_tone: index for index, phn_tone in enumerate(
+                       PHONES.union(set(TONES)))}
+INDICES2PHONESTONES = {index: phn_tone for index, phn_tone in enumerate(
+                       PHONES.union(set(TONES)))}
 
-def phones2indices(phones):
+def phones2indices(phones, tones=False):
     """ Converts a list of phones to a list of indices. Increments the index by
     1 to avoid issues to do with dynamic padding in Tensorflow. """
-    return [PHONES2INDICES[phone]+1 for phone in phones]
+    if tones:
+        return [PHONESTONES2INDICES[phone]+1 for phone in phones]
+    else:
+        return [PHONES2INDICES[phone]+1 for phone in phones]
 
-def indices2phones(indices):
+def indices2phones(indices, tones=False):
     """ Converts integer representations of phones to human-readable characters. """
 
-    return [(INDICES2PHONES[index-1] if index > 0 else "pad") for index in indices]
+    if tones:
+        return [(INDICES2PHONESTONES[index-1] if index > 0 else "pad") for index in indices]
+    else:
+        return [(INDICES2PHONES[index-1] if index > 0 else "pad") for index in indices]
 
 def is_number(string):
     """ Tests if a string is valid float. """
@@ -325,13 +334,17 @@ def get_target_prefix(prefix):
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
 
-    vocab_size = NUM_PHONES
     TRAIN_VALID_TEST_RATIOS = [.8,.1,.1]
 
     def __init__(self, feat_type, target_type, tones=False, max_samples=1000):
         super().__init__(feat_type, target_type)
 
         self.tones = tones
+
+        if tones:
+            self.vocab_size = len(PHONES.union(set(TONES)))
+        else:
+            self.vocab_size = len(PHONES)
 
         if target_type != "phn":
             raise Exception("target_type %s not implemented." % target_type)
@@ -361,16 +374,24 @@ class Corpus(corpus.AbstractCorpus):
     def prepare(self):
         """ Preprocessing the Na data."""
 
-        texts_fns = wordlists_and_texts_fns()[1]
-        prepare_wavs_and_transcripts(texts_fns, "phonemes", self.tones)
+        #texts_fns = wordlists_and_texts_fns()[1]
+        #prepare_wavs_and_transcripts(texts_fns, "phonemes", self.tones)
 
-    @staticmethod
-    def indices_to_phonemes(indices):
-        return indices2phones(indices)
+        # Prepare the untranscribed WAV files.
+        org_untranscribed_dir = os.path.join(ORG_DIR, "untranscribed_wav")
+        untranscribed_dir = os.path.join(TGT_DIR, "untranscribed_wav")
+        from shutil import copyfile
+        for fn in os.listdir(org_untranscribed_dir):
+            copyfile(os.path.join(org_untranscribed_dir, fn),
+                     os.path.join(untranscribed_dir, fn))
 
-    @staticmethod
-    def phonemes_to_indices(phonemes):
-        return phones2indices(phonemes)
+        feat_extract.from_dir(os.path.join(TGT_DIR, "untranscribed_wav"), feat_type="log_mel_filterbank")
+
+    def indices_to_phonemes(self, indices):
+        return indices2phones(indices, self.tones)
+
+    def phonemes_to_indices(self, phonemes):
+        return phones2indices(phonemes, self.tones)
 
     def get_train_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)

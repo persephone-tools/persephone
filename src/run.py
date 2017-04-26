@@ -32,12 +32,14 @@ def prep_exp_dir():
 def run():
     """ Run an experiment. """
 
-    for i in range(11, 12):
+    for i in [128,2048]:
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
 
         corpus = datasets.na.Corpus(feat_type="log_mel_filterbank",
-                                       target_type="phn")
-        corpus_reader = CorpusReader(corpus, num_train=2**i)
+                                       target_type="phn", tones=True)
+        corpus_reader = CorpusReader(corpus, num_train=i)
+        print("HELLO")
+        print(corpus_reader.human_readable_hyp_ref([[0,1]],[[0,1]]))
         model = rnn_ctc.Model(exp_dir, corpus_reader)
         model.train()

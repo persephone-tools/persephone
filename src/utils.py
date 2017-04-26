@@ -61,15 +61,15 @@ def load_batch_x(path_batch, flatten, time_major=False):
         batch = collapse(batch, time_major=time_major)
     return batch, np.array(utter_lens)
 
-def batch_per(dense_y, dense_decoded):
+def batch_per(hyps, refs):
     """ Calculates the phoneme error rate of a batch."""
 
     total_per = 0
-    for i in range(len(dense_decoded)):
-        ref = [phn_i for phn_i in dense_y[i] if phn_i != 0]
-        hypo = [phn_i for phn_i in dense_decoded[i] if phn_i != 0]
-        total_per += distance.edit_distance(ref, hypo)/len(ref)
-    return total_per/len(dense_decoded)
+    for i in range(len(hyps)):
+        ref = [phn_i for phn_i in refs[i] if phn_i != 0]
+        hyp = [phn_i for phn_i in hyps[i] if phn_i != 0]
+        total_per += distance.edit_distance(ref, hyp)/len(ref)
+    return total_per/len(hyps)
 
 def get_prefixes(dirname, extension):
     """ Returns a list of prefixes to files in the directory (which might be a whole

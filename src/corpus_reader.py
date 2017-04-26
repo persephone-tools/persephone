@@ -101,14 +101,19 @@ class CorpusReader:
         test_fns = list(zip(*self.corpus.get_test_fns()))
         return self.load_batch(test_fns)
 
-    def batch_per(self, dense_y, dense_decoded):
-        """ Calculates the phoneme error rate of a batch."""
+    def human_readable_hyp_ref(self, dense_y, dense_decoded):
+        """ Returns a human readable version of the hypothesis for manual
+        inspection, along with the reference.
+        """
 
-        total_per = 0
+        hyps = []
+        refs = []
         for i in range(len(dense_decoded)):
             ref = [phn_i for phn_i in dense_y[i] if phn_i != 0]
             hyp = [phn_i for phn_i in dense_decoded[i] if phn_i != 0]
             ref = self.corpus.indices_to_phonemes(ref)
             hyp = self.corpus.indices_to_phonemes(hyp)
-            total_per += distance.edit_distance(ref, hyp)/len(ref)
-        return total_per/len(dense_decoded)
+            refs.append(ref)
+            hyps.append(hyp)
+
+        return hyps, refs

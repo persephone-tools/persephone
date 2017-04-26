@@ -5,6 +5,8 @@ import itertools
 import os
 import tensorflow as tf
 
+import utils
+
 class Model:
     """ Generic model for our ASR tasks. """
 
@@ -18,6 +20,10 @@ class Model:
     dense_decoded = None
     dense_ref = None
     corpus_reader = None
+
+    def __init__(self, exp_dir, corpus_reader):
+        self.exp_dir = exp_dir
+        self.corpus_reader = corpus_reader
 
     def train(self, early_stopping_steps=10, min_epochs=30,
               restore_model_path=None):
@@ -68,6 +74,11 @@ class Model:
         else:
             sess.run(tf.global_variables_initializer())
 
+        # Prepare directory to output hypotheses to
+        hyps_dir = os.path.join(self.exp_dir, "decoded")
+        if not os.path.isdir(hyps_dir):
+            os.mkdir(hyps_dir)
+
         for epoch in itertools.count():
             batch_gen = self.corpus_reader.train_batch_gen()
 
@@ -92,7 +103,18 @@ class Model:
             valid_ler, dense_decoded, dense_ref = sess.run(
                 [self.ler, self.dense_decoded, self.dense_ref],
                 feed_dict=feed_dict)
-            valid_per = self.corpus_reader.batch_per(dense_ref, dense_decoded)
+            hyps, refs = self.corpus_reader.human_readable_hyp_ref(
+                dense_ref, dense_decoded)
+            # Log hypotheses
+            with open(os.path.join(hyps_dir, "epoch%d_hyps" % epoch), "w") as hyps_f:
+                for hyp in hyps:
+                    print(" ".join(hyp), file=hyps_f)
+            if epoch == 0:
+                with open(os.path.join(hyps_dir, "epoch%d_refs" % epoch), "w") as refs_f:
+                    for ref in refs:
+                        print(" ".join(ref), file=refs_f)
+
+            valid_per = utils.batch_per(hyps, refs)
 
             epoch_str = "Epoch %d. Training LER: %f, validation LER: %f, validation PER: %f" % (
                 epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per)

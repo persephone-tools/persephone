@@ -25,8 +25,7 @@ class Model(model.Model):
 
     def __init__(self, exp_dir, corpus_reader, num_layers=3,
                  hidden_size=250, beam_width=100):
-
-        self.corpus_reader = corpus_reader
+        super().__init__(exp_dir, corpus_reader)
 
         # Increase vocab size by 2 since we need an extra for CTC blank labels
         # and another extra for dynamic padding with zeros.
@@ -35,7 +34,6 @@ class Model(model.Model):
         # Reset the graph.
         tf.reset_default_graph()
 
-        self.exp_dir = exp_dir
         self.num_layers = num_layers
         self.hidden_size = hidden_size
         self.beam_width = beam_width
