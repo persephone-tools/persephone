@@ -3,6 +3,7 @@
 import os
 import random
 import subprocess
+from subprocess import PIPE
 import xml.etree.ElementTree as ET
 
 import config
@@ -38,6 +39,7 @@ PHONESTONES2INDICES = {phn_tone: index for index, phn_tone in enumerate(
                        PHONES.union(set(TONES)))}
 INDICES2PHONESTONES = {index: phn_tone for index, phn_tone in enumerate(
                        PHONES.union(set(TONES)))}
+print(PHONESTONES2INDICES)
 
 def phones2indices(phones, tones=False):
     """ Converts a list of phones to a list of indices. Increments the index by
@@ -102,9 +104,19 @@ def trim_wav(in_fn, out_fn, start_time, end_time):
     end_time is output to out_fn.
     """
 
-    args = [config.SOX_PATH, in_fn, out_fn, "trim", start_time, "=" + end_time]
+    args = [config.SOX_PATH, in_fn, out_fn, "trim", str(start_time), "=" + str(end_time)]
     print(args[1:])
     subprocess.run(args)
+
+def wav_length(fn):
+    """ Returns the length of the WAV file in seconds."""
+
+    args = [config.SOX_PATH, fn, "-n", "stat"]
+    p = subprocess.Popen(
+        [config.SOX_PATH, fn, "-n", "stat"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    length_line = str(p.communicate()[1]).split("\\n")[1].split()
+    assert length_line[0] == "Length"
+    return float(length_line[-1])
 
 def prepare_wavs_and_transcripts(filenames, segmentation, tones):
     """ Trims available wavs into the sentence or utterance-level."""
@@ -352,6 +364,10 @@ class Corpus(corpus.AbstractCorpus):
         input_dir = os.path.join(TGT_DIR, "wav")
         prefixes = [os.path.join(input_dir, fn.strip(".wav"))
                     for fn in os.listdir(input_dir) if fn.endswith(".wav")]
+        untranscribed_dir = os.path.join(TGT_DIR, "untranscribed_wav")
+        self.untranscribed_prefixes = [os.path.join(
+            untranscribed_dir, fn.strip(".wav"))
+            for fn in os.listdir(untranscribed_dir) if fn.endswith(".wav")]
 
         if max_samples:
             prefixes = self.sort_and_filter_by_size(prefixes, max_samples)
@@ -382,8 +398,19 @@ class Corpus(corpus.AbstractCorpus):
         untranscribed_dir = os.path.join(TGT_DIR, "untranscribed_wav")
         from shutil import copyfile
         for fn in os.listdir(org_untranscribed_dir):
-            copyfile(os.path.join(org_untranscribed_dir, fn),
-                     os.path.join(untranscribed_dir, fn))
+            #copyfile(os.path.join(org_untranscribed_dir, fn),
+            #   os.path.join(untranscribed_dir, fn))
+            in_fn = os.path.join(org_untranscribed_dir, fn)
+            length = wav_length(in_fn)
+            t = 0.0
+            trim_id = 0
+            while t < length:
+                prefix = fn.split(".")[0]
+                out_fn = os.path.join(
+                    untranscribed_dir, "%s.%d.wav" % (prefix, trim_id))
+                trim_wav(in_fn, out_fn, t, t+10)
+                t += 10
+                trim_id += 1
 
         feat_extract.from_dir(os.path.join(TGT_DIR, "untranscribed_wav"), feat_type="log_mel_filterbank")
 
@@ -416,3 +443,8 @@ class Corpus(corpus.AbstractCorpus):
                                  "tones." if self.tones else "", self.target_type)
                     for prefix in self.test_prefixes]
         return feat_fns, target_fns
+
+    def get_untranscribed_fns(self):
+        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
+                    for prefix in self.untranscribed_prefixes]
+        return feat_fns, None # Returning None because there is no transcript.
