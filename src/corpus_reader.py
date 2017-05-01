@@ -101,7 +101,15 @@ class CorpusReader:
         test_fns = list(zip(*self.corpus.get_test_fns()))
         return self.load_batch(test_fns)
 
-    def human_readable_hyp_ref(self, dense_y, dense_decoded):
+    def untranscribed_batch(self):
+        """ Returns a batch with all the untranscribed data. """
+
+        feat_fn_batch = self.corpus.get_untranscribed_fns()
+        batch_inputs, batch_inputs_lens = utils.load_batch_x(feat_fn_batch,
+                                                             flatten=True)
+        return batch_inputs, batch_inputs_lens
+
+    def human_readable_hyp_ref(self, dense_decoded, dense_y):
         """ Returns a human readable version of the hypothesis for manual
         inspection, along with the reference.
         """
@@ -117,3 +125,16 @@ class CorpusReader:
             hyps.append(hyp)
 
         return hyps, refs
+
+    def human_readable(self, dense_repr):
+        """ Returns a human readable version of a dense representation of
+        either or reference to facilitate simple manual inspection.
+        """
+
+        transcripts = []
+        for i in range(len(dense_repr)):
+            transcript = [phn_i for phn_i in dense_repr[i] if phn_i != 0]
+            transcript = self.corpus.indices_to_phonemes(transcript)
+            transcripts.append(transcript)
+
+        return transcripts

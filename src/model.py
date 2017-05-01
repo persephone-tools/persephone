@@ -20,10 +20,79 @@ class Model:
     dense_decoded = None
     dense_ref = None
     corpus_reader = None
+    saved_model_path = None
 
     def __init__(self, exp_dir, corpus_reader):
         self.exp_dir = exp_dir
         self.corpus_reader = corpus_reader
+
+    def transcribe(self, restore_model_path=None):
+        """ Transcribes an untranscribed dataset. Similar to eval() except
+        no reference translation is assumed, thus no LER is calculated.
+        """
+
+        saver = tf.train.Saver()
+        with tf.Session() as sess:
+            if restore_model_path:
+                saver.restore(sess, restore_model_path)
+            else:
+                if self.saved_model_path:
+                    saver.restore(sess, self.saved_model_path)
+                else:
+                    raise Exception("No model to use for transcription.")
+
+            test_x, test_x_lens = self.corpus_reader.untranscribed_batch()
+
+            feed_dict = {self.batch_x: test_x,
+                         self.batch_x_lens: test_x_lens}
+
+            [dense_decoded] = sess.run([self.dense_decoded], feed_dict=feed_dict)
+            print(dense_decoded)
+            hyps = self.corpus_reader.human_readable(dense_decoded)
+            # Log hypotheses
+            hyps_dir = os.path.join(self.exp_dir, "auto_transcripts")
+            if not os.path.isdir(hyps_dir):
+                os.mkdir(hyps_dir)
+            with open(os.path.join(hyps_dir, "hyps"), "w") as hyps_f:
+                for hyp in hyps:
+                    print(" ".join(hyp), file=hyps_f)
+
+    def eval(self, restore_model_path=None):
+        """ Evaluates the model on a test set."""
+
+        saver = tf.train.Saver()
+        with tf.Session() as sess:
+            if restore_model_path:
+                saver.restore(sess, restore_model_path)
+            else:
+                assert self.saved_model_path
+                saver.restore(sess, self.saved_model_path)
+
+            test_x, test_x_lens, test_y = self.corpus_reader.valid_batch()
+
+            feed_dict = {self.batch_x: test_x,
+                         self.batch_x_lens: test_x_lens,
+                         self.batch_y: test_y}
+
+            test_ler, dense_decoded, dense_ref = sess.run(
+                [self.ler, self.dense_decoded, self.dense_ref],
+                feed_dict=feed_dict)
+            hyps, refs = self.corpus_reader.human_readable_hyp_ref(
+                dense_decoded, dense_ref)
+            # Log hypotheses
+            hyps_dir = os.path.join(self.exp_dir, "test")
+            if not os.path.isdir(hyps_dir):
+                os.mkdir(hyps_dir)
+            with open(os.path.join(hyps_dir, "hyps"), "w") as hyps_f:
+                for hyp in hyps:
+                    print(" ".join(hyp), file=hyps_f)
+            with open(os.path.join(hyps_dir, "refs"), "w") as refs_f:
+                for ref in refs:
+                    print(" ".join(ref), file=refs_f)
+
+            test_per = utils.batch_per(hyps, refs)
+            with open(os.path.join(hyps_dir, "test_per"), "w") as per_f:
+                print("Test PER: %f, tf LER: %f" % (test_per, test_ler), file=per_f)
 
     def train(self, early_stopping_steps=10, min_epochs=30,
               restore_model_path=None):
@@ -110,7 +179,7 @@ class Model:
                 for hyp in hyps:
                     print(" ".join(hyp), file=hyps_f)
             if epoch == 0:
-                with open(os.path.join(hyps_dir, "epoch%d_refs" % epoch), "w") as refs_f:
+                with open(os.path.join(hyps_dir, "refs" % epoch), "w") as refs_f:
                     for ref in refs:
                         print(" ".join(ref), file=refs_f)
 
@@ -126,13 +195,13 @@ class Model:
                 best_valid_ler = valid_ler
                 best_epoch_str = epoch_str
                 steps_since_last_record = 0
-                best_epoch = epoch
 
                 # Save the model.
                 path = os.path.join(self.exp_dir, "model", "model_best.ckpt")
                 if not os.path.exists(os.path.dirname(path)):
                     os.mkdir(os.path.dirname(path))
                 saver.save(sess, path)
+                self.saved_model_path = path
             else:
                 print("Steps since last best valid_ler: %d" % (
                     steps_since_last_record), file=out_file)
@@ -142,9 +211,9 @@ class Model:
                         # Then we've done the minimum number of epochs and can
                         # stop training.
                         print("""Stopping since best validation score hasn't been
-                                beaten in %d epochs and at least %d have been
-                                done""" % (early_stopping_steps, min_epochs),
-                                file=out_file, flush=True)
+                              beaten in %d epochs and at least %d have been
+                              done""" % (early_stopping_steps, min_epochs),
+                              file=out_file, flush=True)
                         with open(os.path.join(self.exp_dir, "best_scores.txt"), "w") as best_f:
                             print(best_epoch_str, file=best_f, flush=True)
                             sess.close()

@@ -29,17 +29,42 @@ def prep_exp_dir():
 
     return os.path.join(EXP_DIR, str(exp_num))
 
-def run():
+def train():
     """ Run an experiment. """
 
-    for i in [128,2048]:
+    for i in [128, 2048]:
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
 
         corpus = datasets.na.Corpus(feat_type="log_mel_filterbank",
-                                       target_type="phn", tones=True)
+                                    target_type="phn", tones=True)
         corpus_reader = CorpusReader(corpus, num_train=i)
-        print("HELLO")
-        print(corpus_reader.human_readable_hyp_ref([[0,1]],[[0,1]]))
         model = rnn_ctc.Model(exp_dir, corpus_reader)
+        restore_model_path = os.path.join(
+            EXP_DIR, "114", "model", "model_best.ckpt")
         model.train()
+
+def test():
+    """ Apply a previously trained model to some test data. """
+    exp_dir = prep_exp_dir()
+    corpus = datasets.na.Corpus(feat_type="log_mel_filterbank",
+                                target_type="phn", tones=True)
+    corpus_reader = CorpusReader(corpus, num_train=2048)
+    model = rnn_ctc.Model(exp_dir, corpus_reader)
+    restore_model_path = os.path.join(
+        EXP_DIR, "131", "model", "model_best.ckpt")
+    model.eval(restore_model_path)
+
+def transcribe():
+    """ Applies a trained model to the untranscribed Na data for Alexis. """
+
+    exp_dir = prep_exp_dir()
+    corpus = datasets.na.Corpus(feat_type="log_mel_filterbank",
+                                target_type="phn", tones=True)
+    corpus_reader = CorpusReader(corpus, num_train=2048)
+    model = rnn_ctc.Model(exp_dir, corpus_reader)
+    #print(corpus_reader.untranscribed_batch())
+    restore_model_path = os.path.join(
+        EXP_DIR, "131", "model", "model_best.ckpt")
+    #model.eval(restore_model_path, corpus_reader.)
+    model.transcribe(restore_model_path)

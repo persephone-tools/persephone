@@ -447,4 +447,4 @@ class Corpus(corpus.AbstractCorpus):
     def get_untranscribed_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.untranscribed_prefixes]
-        return feat_fns, None # Returning None because there is no transcript.
+        return feat_fns
