@@ -32,7 +32,7 @@ def prep_exp_dir():
 def train():
     """ Run an experiment. """
 
-    for i in [128, 2048]:
+    for i in [2048]:
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
 
@@ -40,8 +40,6 @@ def train():
                                     target_type="phn", tones=True)
         corpus_reader = CorpusReader(corpus, num_train=i)
         model = rnn_ctc.Model(exp_dir, corpus_reader)
-        restore_model_path = os.path.join(
-            EXP_DIR, "114", "model", "model_best.ckpt")
         model.train()
 
 def test():

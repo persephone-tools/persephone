@@ -41,20 +41,20 @@ class Model:
                 else:
                     raise Exception("No model to use for transcription.")
 
-            test_x, test_x_lens = self.corpus_reader.untranscribed_batch()
+            test_x, test_x_lens, feat_fn_batch = self.corpus_reader.untranscribed_batch()
 
             feed_dict = {self.batch_x: test_x,
                          self.batch_x_lens: test_x_lens}
 
             [dense_decoded] = sess.run([self.dense_decoded], feed_dict=feed_dict)
-            print(dense_decoded)
             hyps = self.corpus_reader.human_readable(dense_decoded)
             # Log hypotheses
             hyps_dir = os.path.join(self.exp_dir, "auto_transcripts")
             if not os.path.isdir(hyps_dir):
                 os.mkdir(hyps_dir)
             with open(os.path.join(hyps_dir, "hyps"), "w") as hyps_f:
-                for hyp in hyps:
+                for hyp, fn in zip(hyps, feat_fn_batch):
+                    print(fn + ": ", file=hyps_f, end="")
                     print(" ".join(hyp), file=hyps_f)
 
     def eval(self, restore_model_path=None):
@@ -173,13 +173,13 @@ class Model:
                 [self.ler, self.dense_decoded, self.dense_ref],
                 feed_dict=feed_dict)
             hyps, refs = self.corpus_reader.human_readable_hyp_ref(
-                dense_ref, dense_decoded)
+                dense_decoded, dense_ref)
             # Log hypotheses
             with open(os.path.join(hyps_dir, "epoch%d_hyps" % epoch), "w") as hyps_f:
                 for hyp in hyps:
                     print(" ".join(hyp), file=hyps_f)
             if epoch == 0:
-                with open(os.path.join(hyps_dir, "refs" % epoch), "w") as refs_f:
+                with open(os.path.join(hyps_dir, "refs"), "w") as refs_f:
                     for ref in refs:
                         print(" ".join(ref), file=refs_f)
 

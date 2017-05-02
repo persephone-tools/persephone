@@ -107,7 +107,7 @@ class CorpusReader:
         feat_fn_batch = self.corpus.get_untranscribed_fns()
         batch_inputs, batch_inputs_lens = utils.load_batch_x(feat_fn_batch,
                                                              flatten=True)
-        return batch_inputs, batch_inputs_lens
+        return batch_inputs, batch_inputs_lens, feat_fn_batch
 
     def human_readable_hyp_ref(self, dense_decoded, dense_y):
         """ Returns a human readable version of the hypothesis for manual

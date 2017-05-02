@@ -35,10 +35,9 @@ TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩"}
 PHONES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS)
 NUM_PHONES = len(PHONES)
 PHONES2INDICES = {phn: index for index, phn in enumerate(PHONES)}
-PHONESTONES2INDICES = {phn_tone: index for index, phn_tone in enumerate(
-                       PHONES.union(set(TONES)))}
-INDICES2PHONESTONES = {index: phn_tone for index, phn_tone in enumerate(
-                       PHONES.union(set(TONES)))}
+PHONES_TONES = sorted(list(PHONES.union(set(TONES)))) # Sort for determinism
+PHONESTONES2INDICES = {phn_tone: index for index, phn_tone in enumerate(PHONES_TONES)}
+INDICES2PHONESTONES = {index: phn_tone for index, phn_tone in enumerate(PHONES_TONES)}
 print(PHONESTONES2INDICES)
 
 def phones2indices(phones, tones=False):
