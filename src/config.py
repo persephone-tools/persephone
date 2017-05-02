@@ -10,3 +10,5 @@ SOX_PATH = "/home/oadams/tools/sox-14.4.2/src/sox"
 EXP_DIR = "../exp"
 # The path to the Na directory.
 NA_DIR = "/lt/work/oadams/Na/"
+# The path to the Griko directory
+GRIKO_DIR = "/lt/work/oadams/griko-data/"
