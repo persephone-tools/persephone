@@ -54,7 +54,8 @@ class Model:
                 os.mkdir(hyps_dir)
             with open(os.path.join(hyps_dir, "hyps"), "w") as hyps_f:
                 for hyp, fn in zip(hyps, feat_fn_batch):
-                    print(fn + ": ", file=hyps_f, end="")
+                    fn = "_".join(os.path.basename(fn).split(".")[:2])
+                    print(fn + ": ", file=hyps_f)
                     print(" ".join(hyp), file=hyps_f)
 
     def eval(self, restore_model_path=None):

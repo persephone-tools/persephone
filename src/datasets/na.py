@@ -38,7 +38,6 @@ PHONES2INDICES = {phn: index for index, phn in enumerate(PHONES)}
 PHONES_TONES = sorted(list(PHONES.union(set(TONES)))) # Sort for determinism
 PHONESTONES2INDICES = {phn_tone: index for index, phn_tone in enumerate(PHONES_TONES)}
 INDICES2PHONESTONES = {index: phn_tone for index, phn_tone in enumerate(PHONES_TONES)}
-print(PHONESTONES2INDICES)
 
 def phones2indices(phones, tones=False):
     """ Converts a list of phones to a list of indices. Increments the index by
@@ -446,4 +445,9 @@ class Corpus(corpus.AbstractCorpus):
     def get_untranscribed_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.untranscribed_prefixes]
+        # Sort by the id of the wav slice.
+        fn_id_pairs = [("".join(fn.split(".")[:-3]), int(fn.split(".")[-3])) for fn in feat_fns]
+        fn_id_pairs.sort()
+        feat_fns = ["..%s.%d.%s.npy" % (fn, fn_id, self.feat_type) for fn, fn_id in fn_id_pairs]
+
         return feat_fns

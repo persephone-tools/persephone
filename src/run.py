@@ -63,6 +63,17 @@ def transcribe():
     model = rnn_ctc.Model(exp_dir, corpus_reader)
     #print(corpus_reader.untranscribed_batch())
     restore_model_path = os.path.join(
-        EXP_DIR, "131", "model", "model_best.ckpt")
+        EXP_DIR, "155", "model", "model_best.ckpt")
     #model.eval(restore_model_path, corpus_reader.)
     model.transcribe(restore_model_path)
+
+def train_griko():
+
+    # Prepares a new experiment dir for all logging.
+    exp_dir = prep_exp_dir()
+
+    corpus = datasets.griko.Corpus(feat_type="log_mel_filterbank",
+                                   target_type="char")
+    corpus_reader = CorpusReader(corpus, num_train=256)
+    model = rnn_ctc.Model(exp_dir, corpus_reader)
+    model.train()
