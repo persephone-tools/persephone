@@ -209,17 +209,23 @@ class Model:
                 steps_since_last_record += 1
                 if steps_since_last_record >= early_stopping_steps:
                     if epoch >= min_epochs:
-                        # Then we've done the minimum number of epochs and can
-                        # stop training.
-                        print("""Stopping since best validation score hasn't been
-                              beaten in %d epochs and at least %d have been
-                              done""" % (early_stopping_steps, min_epochs),
-                              file=out_file, flush=True)
-                        with open(os.path.join(self.exp_dir, "best_scores.txt"), "w") as best_f:
-                            print(best_epoch_str, file=best_f, flush=True)
-                            sess.close()
-                            out_file.close()
-                            return
+                        # Then we've done the minimum number of epochs.
+                        if ler < 0.5:
+                            # Then training error has moved sufficiently
+                            # towards convergence.
+                            print("""Stopping since best validation score hasn't been
+                                  beaten in %d epochs and at least %d have been
+                                  done""" % (early_stopping_steps, min_epochs),
+                                  file=out_file, flush=True)
+                            with open(os.path.join(self.exp_dir, "best_scores.txt"), "w") as best_f:
+                                print(best_epoch_str, file=best_f, flush=True)
+                                sess.close()
+                                out_file.close()
+                                return
+                        else:
+                            # Keep training because we haven't achieved
+                            # convergence.
+                            continue
                     else:
                         # Keep training because we haven't done the minimum
                         # numper of epochs.
