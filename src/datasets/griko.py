@@ -15,8 +15,8 @@ def get_target_prefix(prefix):
     """ Given a prefix of the form /some/path/here/wav/prefix, returns the
     corresponding target file name."""
 
-    fn = os.path.basename(prefix)
-    return os.path.join(TGT_DIR, "transcriptions", fn)
+    filename = os.path.basename(prefix)
+    return os.path.join(TGT_DIR, "transcriptions", filename)
 
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Griko corpus."""
@@ -27,9 +27,13 @@ class Corpus(corpus.AbstractCorpus):
     def __init__(self, feat_type, target_type):
         super().__init__(feat_type, target_type)
 
-        input_dir = os.path.join(ORG_DIR, "raw")
-        self.prefixes = [os.path.join(input_dir, fn.strip(".wav"))
-                    for fn in os.listdir(input_dir) if fn.endswith(".wav")]
+        tgt_wav_dir = os.path.join(TGT_DIR, "wav")
+
+        if not os.path.isdir(tgt_wav_dir):
+            self.prepare()
+
+        self.prefixes = [os.path.join(tgt_wav_dir, fn.strip(".wav"))
+                         for fn in os.listdir(tgt_wav_dir) if fn.endswith(".wav")]
         random.seed(0)
         random.shuffle(self.prefixes)
         self.train_prefixes = self.prefixes[:self.TRAIN_VALID_TEST_SPLIT[0]]
@@ -39,6 +43,7 @@ class Corpus(corpus.AbstractCorpus):
 
         self.CHARS2INDICES = {char: index for index, char in enumerate(sorted(list(self.chars)))}
         self.INDICES2CHARS = {index: char for index, char in enumerate(sorted(list(self.chars)))}
+        self.vocab_size = len(self.chars)
 
     @property
     def chars(self):
@@ -60,14 +65,17 @@ class Corpus(corpus.AbstractCorpus):
     def prepare(self):
         """ Preprocess the Griko data."""
 
+        input_dir = os.path.join(ORG_DIR, "raw")
+        wav_dir = os.path.join(TGT_DIR, "wav")
+        os.makedirs(wav_dir)
+
         transcript_dir = os.path.join(TGT_DIR, "transcriptions")
         if not os.path.isdir(transcript_dir):
             os.makedirs(transcript_dir)
-        wav_dir = os.path.join(TGT_DIR, "wav")
-        if not os.path.isdir(wav_dir):
-            os.makedirs(wav_dir)
 
-        for prefix in self.prefixes:
+        org_prefixes = [os.path.join(input_dir, fn.strip(".wav"))
+                        for fn in os.listdir(input_dir) if fn.endswith(".wav")]
+        for prefix in org_prefixes:
             prefix = os.path.basename(prefix)
             # Split characters in the transcript.
             org_transcript_fn = os.path.join(ORG_DIR, "transcriptions", "%s.gr" % prefix)

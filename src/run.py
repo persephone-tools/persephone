@@ -6,6 +6,7 @@ import shutil
 import config
 import rnn_ctc
 import datasets.na
+import datasets.griko
 import datasets.timit
 from corpus_reader import CorpusReader
 
