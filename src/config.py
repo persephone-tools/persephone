@@ -12,3 +12,4 @@ EXP_DIR = "../exp"
 NA_DIR = "/lt/work/oadams/Na/"
 # The path to the Griko directory
 GRIKO_DIR = "/lt/work/oadams/griko-data/"
+CHATINO_DIR = "/lt/work/oadams/chatino/CTP/"
