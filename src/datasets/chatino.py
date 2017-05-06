@@ -124,40 +124,34 @@ class Corpus(corpus.AbstractCorpus):
 
         org_transcriptions_dir = os.path.join(ORG_DIR, "transcriptions")
 
-        tgt_wav_dir = os.path.join(TGT_DIR, "wav")
-#        if not os.path.isdir(tgt_wav_dir):
-        self.prepare()
+        if tones:
+            self.phonemes = ONE_CHAR_PHONEMES.union(TWO_CHAR_PHONEMES)
+            self.phonemes = self.phonemes.union(ONE_CHAR_TONES)
+            self.phonemes = self.phonemes.union(TWO_CHAR_TONES)
+            self.phonemes = self.phonemes.union(THREE_CHAR_TONES)
+        else:
+            self.phonemes = ONE_CHAR_PHONEMES.union(TWO_CHAR_PHONEMES)
+            raise Exception("Not implemented yet.")
 
-        self.prefixes = [os.path.join(org_transcriptions_dir, fn.strip(".txt"))
-                         for fn in os.listdir(org_transcriptions_dir)]
+        tgt_wav_dir = os.path.join(TGT_DIR, "wav")
+        if not os.path.isdir(tgt_wav_dir):
+            self.prepare()
+
+        self.prefixes = [os.path.join(tgt_wav_dir, fn.strip(".wav"))
+                         for fn in os.listdir(tgt_wav_dir) if fn.endswith(".wav")]
         random.seed(0)
         random.shuffle(self.prefixes)
         self.train_prefixes = self.prefixes[:self.TRAIN_VALID_TEST_SPLIT[0]]
         valid_end = self.TRAIN_VALID_TEST_SPLIT[0]+self.TRAIN_VALID_TEST_SPLIT[1]
         self.valid_prefixes = self.prefixes[self.TRAIN_VALID_TEST_SPLIT[0]:valid_end]
         self.test_prefixes = self.prefixes[valid_end:]
-        print(len(self.prefixes))
+        print(len(self.train_prefixes))
+        print(len(self.valid_prefixes))
+        print(len(self.test_prefixes))
 
         self.PHONEMES2INDICES = {phn: index for index, phn in enumerate(sorted(list(self.phonemes)))}
         self.INDICES2PHONEMES = {index: phn for index, phn in enumerate(sorted(list(self.phonemes)))}
-        self.vocab_size = len()
-
-#    @property
-#    def phonemes(self):
-#        """ Determine the characters present in the corpus. """
-#
-#        if not self._chars:
-#            self._chars = set()
-#            for prefix in self.prefixes:
-#                prefix = os.path.basename(prefix)
-#                transcript_fn = os.path.join(ORG_DIR, "transcriptions", "%s.txt" % prefix)
-#                with open(transcript_fn) as transcript_f:
-#                    line = transcript_f.readline()
-#                    for char in line.lower():
-#                        self._chars.add(char)
-#            self._chars = self._chars - {" ", "\n"}
-#
-#        return self._chars
+        self.vocab_size = len(self.phonemes)
 
     def prepare(self):
         """ Preprocess the Griko data."""
@@ -182,13 +176,18 @@ class Corpus(corpus.AbstractCorpus):
             tgt_transcript_fn = os.path.join(tgt_transcript_dir, "%s.phn" % prefix)
             convert_transcript(org_transcript_fn, tgt_transcript_fn)
 
+        prefixes = [os.path.join(tgt_transcript_dir, fn.strip(".phn"))
+                        for fn in os.listdir(tgt_transcript_dir)]
+        # For each of the prefixes we kept based on the transcriptions...
+        for prefix in prefixes:
+            prefix = os.path.basename(prefix)
             # Copy the wav to the local dir.
             org_wav_fn = os.path.join(org_wav_dir, "%s.wav" % prefix)
             tgt_wav_fn = os.path.join(tgt_wav_dir, "%s.wav" % prefix)
-            #convert_wav(org_wav_fn, tgt_wav_fn)
+            convert_wav(org_wav_fn, tgt_wav_fn)
 
         # Extract features from the wavs.
-        #feat_extract.from_dir(tgt_wav_dir, feat_type="log_mel_filterbank")
+        feat_extract.from_dir(tgt_wav_dir, feat_type="log_mel_filterbank")
 
     def indices_to_phonemes(self, indices):
         return [(self.INDICES2PHONEMES[index-1] if index > 0 else "pad") for index in indices]
