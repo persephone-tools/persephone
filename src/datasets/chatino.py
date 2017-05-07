@@ -97,13 +97,16 @@ def convert_transcript(org_transcript_fn, tgt_transcript_fn):
                     input()
         return phonemes
 
-    with open(org_transcript_fn) as org_f, open(tgt_transcript_fn, "w") as tgt_f:
+    with open(org_transcript_fn) as org_f:
         line = org_f.readline()
         phonemes = extract_phonemes(line)
-        print(phonemes)
         if phonemes == None:
             return
-        print(" ".join(phonemes), file=tgt_f)
+        if phonemes == []:
+            # If the transcription is empty
+            return
+        with open(tgt_transcript_fn, "w") as tgt_f:
+            print(" ".join(phonemes), file=tgt_f)
 
 def get_target_prefix(prefix):
     """ Given a prefix of the form /some/path/here/wav/prefix, returns the
@@ -115,11 +118,11 @@ def get_target_prefix(prefix):
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Griko corpus."""
 
-    TRAIN_VALID_TEST_SPLIT = [2048, 233, 232]
+    TRAIN_VALID_TEST_SPLIT = [2048, 207, 206]
     _phonemes = None
     _chars = None
 
-    def __init__(self, feat_type, target_type, tones=False):
+    def __init__(self, feat_type, target_type, tones=False, max_samples=1000):
         super().__init__(feat_type, target_type)
 
         org_transcriptions_dir = os.path.join(ORG_DIR, "transcriptions")
@@ -137,17 +140,20 @@ class Corpus(corpus.AbstractCorpus):
         if not os.path.isdir(tgt_wav_dir):
             self.prepare()
 
-        self.prefixes = [os.path.join(tgt_wav_dir, fn.strip(".wav"))
+        self.prefixes = [os.path.join(tgt_wav_dir, fn.replace(".wav", ""))
                          for fn in os.listdir(tgt_wav_dir) if fn.endswith(".wav")]
+
+        if max_samples:
+            self.prefixes = self.sort_and_filter_by_size(self.prefixes, max_samples)
+
+        print(len(self.prefixes))
+
         random.seed(0)
         random.shuffle(self.prefixes)
         self.train_prefixes = self.prefixes[:self.TRAIN_VALID_TEST_SPLIT[0]]
         valid_end = self.TRAIN_VALID_TEST_SPLIT[0]+self.TRAIN_VALID_TEST_SPLIT[1]
         self.valid_prefixes = self.prefixes[self.TRAIN_VALID_TEST_SPLIT[0]:valid_end]
         self.test_prefixes = self.prefixes[valid_end:]
-        print(len(self.train_prefixes))
-        print(len(self.valid_prefixes))
-        print(len(self.test_prefixes))
 
         self.PHONEMES2INDICES = {phn: index for index, phn in enumerate(sorted(list(self.phonemes)))}
         self.INDICES2PHONEMES = {index: phn for index, phn in enumerate(sorted(list(self.phonemes)))}

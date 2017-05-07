@@ -7,6 +7,7 @@ import config
 import rnn_ctc
 import datasets.na
 import datasets.griko
+import datasets.chatino
 import datasets.timit
 from corpus_reader import CorpusReader
 
@@ -49,7 +50,7 @@ def train_chatino():
     # Prepares a new experiment dir for all logging.
     exp_dir = prep_exp_dir()
 
-    corpus = datasets.na.Corpus(feat_type="log_mel_filterbank",
+    corpus = datasets.chatino.Corpus(feat_type="log_mel_filterbank",
                                 target_type="phn", tones=True)
     corpus_reader = CorpusReader(corpus, num_train=2048)
     model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
