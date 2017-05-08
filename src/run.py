@@ -47,14 +47,15 @@ def train():
 def train_chatino():
     """ Run an experiment. """
 
-    # Prepares a new experiment dir for all logging.
-    exp_dir = prep_exp_dir()
+    for i in [128,256,512,1024]:
+        # Prepares a new experiment dir for all logging.
+        exp_dir = prep_exp_dir()
 
-    corpus = datasets.chatino.Corpus(feat_type="log_mel_filterbank",
-                                target_type="phn", tones=True)
-    corpus_reader = CorpusReader(corpus, num_train=2048)
-    model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
-    model.train()
+        corpus = datasets.chatino.Corpus(feat_type="log_mel_filterbank",
+                                    target_type="phn", tones=True)
+        corpus_reader = CorpusReader(corpus, num_train=i)
+        model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
+        model.train()
 
 def test():
     """ Apply a previously trained model to some test data. """
