@@ -2,6 +2,7 @@ __pycache__
 data/timit
 data/na/
 data/griko/
+data/chatino/
 exp/
 *.swp
 *.pyc
