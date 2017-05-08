@@ -27,7 +27,7 @@ def convert_wav(org_wav_fn, tgt_wav_fn):
             "-i", org_wav_fn, "-ac", "1", "-ar", "16000", tgt_wav_fn]
     subprocess.run(args)
 
-def convert_transcript(org_transcript_fn, tgt_transcript_fn):
+def convert_transcript(org_transcript_fn, tgt_transcript_fn, tones):
     """ Splits the Chatino transcript into phonemes. """
 
     def extract_phonemes(line):
@@ -64,7 +64,8 @@ def convert_transcript(org_transcript_fn, tgt_transcript_fn):
             i = 0
             while i < len(word):
                 if word[i:i+3] in THREE_CHAR_TONES:
-                    phonemes.append(word[i:i+3])
+                    if tones:
+                        phonemes.append(word[i:i+3])
                     i += 3
                     continue
                 if word[i:i+2] in TWO_CHAR_PHONEMES:
@@ -72,7 +73,8 @@ def convert_transcript(org_transcript_fn, tgt_transcript_fn):
                     i += 2
                     continue
                 if word[i:i+2] in TWO_CHAR_TONES:
-                    phonemes.append(word[i:i+2])
+                    if tones:
+                        phonemes.append(word[i:i+2])
                     i += 2
                     continue
                 elif word[i:i+1] in ONE_CHAR_PHONEMES:
@@ -80,7 +82,8 @@ def convert_transcript(org_transcript_fn, tgt_transcript_fn):
                     i += 1
                     continue
                 elif word[i:i+1] in ONE_CHAR_TONES:
-                    phonemes.append(word[i:i+1])
+                    if tones:
+                        phonemes.append(word[i:i+1])
                     i += 1
                     continue
                 elif word[i:i+1] == "'":
@@ -121,6 +124,7 @@ class Corpus(corpus.AbstractCorpus):
     TRAIN_VALID_TEST_SPLIT = [2048, 207, 206]
     _phonemes = None
     _chars = None
+    tones = False
 
     def __init__(self, feat_type, target_type, tones=False, max_samples=1000):
         super().__init__(feat_type, target_type)
@@ -132,13 +136,13 @@ class Corpus(corpus.AbstractCorpus):
             self.phonemes = self.phonemes.union(ONE_CHAR_TONES)
             self.phonemes = self.phonemes.union(TWO_CHAR_TONES)
             self.phonemes = self.phonemes.union(THREE_CHAR_TONES)
+            self.tones = True
         else:
             self.phonemes = ONE_CHAR_PHONEMES.union(TWO_CHAR_PHONEMES)
-            raise Exception("Not implemented yet.")
 
         tgt_wav_dir = os.path.join(TGT_DIR, "wav")
         if not os.path.isdir(tgt_wav_dir):
-            self.prepare()
+            self.prepare(tones)
 
         self.prefixes = [os.path.join(tgt_wav_dir, fn.replace(".wav", ""))
                          for fn in os.listdir(tgt_wav_dir) if fn.endswith(".wav")]
@@ -159,7 +163,7 @@ class Corpus(corpus.AbstractCorpus):
         self.INDICES2PHONEMES = {index: phn for index, phn in enumerate(sorted(list(self.phonemes)))}
         self.vocab_size = len(self.phonemes)
 
-    def prepare(self):
+    def prepare(self, tones):
         """ Preprocess the Griko data."""
 
         org_wav_dir = os.path.join(ORG_DIR, "wav")
@@ -179,8 +183,8 @@ class Corpus(corpus.AbstractCorpus):
             print(prefix)
             # Split phonemes in the transcript.
             org_transcript_fn = os.path.join(org_transcript_dir, "%s.txt" % prefix)
-            tgt_transcript_fn = os.path.join(tgt_transcript_dir, "%s.phn" % prefix)
-            convert_transcript(org_transcript_fn, tgt_transcript_fn)
+            tgt_transcript_fn = os.path.join(tgt_transcript_dir, "%s.tones%s.phn" % (prefix, str(tones)))
+            convert_transcript(org_transcript_fn, tgt_transcript_fn, tones)
 
         prefixes = [os.path.join(tgt_transcript_dir, fn.strip(".phn"))
                         for fn in os.listdir(tgt_transcript_dir)]
@@ -204,18 +208,18 @@ class Corpus(corpus.AbstractCorpus):
     def get_train_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.train_prefixes]
-        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
+        target_fns = ["%s.tones%s.%s" % (get_target_prefix(prefix), str(self.tones), self.target_type)
                       for prefix in self.train_prefixes]
         return feat_fns, target_fns
     def get_valid_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.valid_prefixes]
-        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
+        target_fns = ["%s.tones%s.%s" % (get_target_prefix(prefix), str(self.tones), self.target_type)
                       for prefix in self.valid_prefixes]
         return feat_fns, target_fns
     def get_test_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.test_prefixes]
-        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
+        target_fns = ["%s.tones%s.%s" % (get_target_prefix(prefix), str(self.tones), self.target_type)
                       for prefix in self.test_prefixes]
         return feat_fns, target_fns
