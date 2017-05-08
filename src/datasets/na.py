@@ -396,19 +396,18 @@ class Corpus(corpus.AbstractCorpus):
         untranscribed_dir = os.path.join(TGT_DIR, "untranscribed_wav")
         from shutil import copyfile
         for fn in os.listdir(org_untranscribed_dir):
-            #copyfile(os.path.join(org_untranscribed_dir, fn),
-            #   os.path.join(untranscribed_dir, fn))
-            in_fn = os.path.join(org_untranscribed_dir, fn)
-            length = wav_length(in_fn)
-            t = 0.0
-            trim_id = 0
-            while t < length:
-                prefix = fn.split(".")[0]
-                out_fn = os.path.join(
-                    untranscribed_dir, "%s.%d.wav" % (prefix, trim_id))
-                trim_wav(in_fn, out_fn, t, t+10)
-                t += 10
-                trim_id += 1
+            if fn.endswith(".wav"):
+                in_fn = os.path.join(org_untranscribed_dir, fn)
+                length = wav_length(in_fn)
+                t = 0.0
+                trim_id = 0
+                while t < length:
+                    prefix = fn.split(".")[0]
+                    out_fn = os.path.join(
+                        untranscribed_dir, "%s.%d.wav" % (prefix, trim_id))
+                    trim_wav(in_fn, out_fn, t, t+10)
+                    t += 10
+                    trim_id += 1
 
         feat_extract.from_dir(os.path.join(TGT_DIR, "untranscribed_wav"), feat_type="log_mel_filterbank")
 
@@ -445,6 +444,7 @@ class Corpus(corpus.AbstractCorpus):
     def get_untranscribed_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.untranscribed_prefixes]
+        feat_fns = [fn for fn in feat_fns if "HOUSEBUILDING2" in fn]
         # Sort by the id of the wav slice.
         fn_id_pairs = [("".join(fn.split(".")[:-3]), int(fn.split(".")[-3])) for fn in feat_fns]
         fn_id_pairs.sort()
