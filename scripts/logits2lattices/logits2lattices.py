@@ -36,12 +36,12 @@ def softmax2confusion(prefix, vocab=["a","b","c"]):
                 print("%d %d %s %s %f" % (
                     node_id, node_id+1, vocab[phone_id], vocab[phone_id], prob),
                     file=out_f)
-
-    create_symbol_tables(prefix, vocab)
+        print("%d 1" % (node_id+1), file=out_f)
 
 def confusion2lattice_fst(vocab=["a","b","c"]):
     with open("confusion2lattice_fst.txt", "w") as out_f:
         for i, phone in enumerate(vocab):
-            print("0 %d <eps> <eps>" % (i+1), file=out_f)
-            print("%d %d %s <eps>" % (i+1, i+1, phone), file=out_f)
-            print("%d 0 <eps> %s" % (i+1, phone), file=out_f)
+            print("0 %d <eps> <eps>" % (i+2), file=out_f)
+            print("%d %d %s <eps>" % (i+2, i+2, phone), file=out_f)
+            print("%d 1 <eps> %s" % (i+2, phone), file=out_f)
+        print("1 1", file=out_f)
