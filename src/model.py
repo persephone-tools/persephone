@@ -3,6 +3,8 @@
 import inspect
 import itertools
 import os
+
+import numpy as np
 import tensorflow as tf
 
 import utils
@@ -57,6 +59,34 @@ class Model:
                     fn = "_".join(os.path.basename(fn).split(".")[:2])
                     print(fn + ": ", file=hyps_f)
                     print(" ".join(hyp), file=hyps_f)
+
+    def output_log_softmax(self, batch, restore_model_path=None):
+        """ Outputs the logits from the model, given an input batch, so that
+            lattices can ultimately be extracted."""
+
+        saver = tf.train.Saver()
+        with tf.Session() as sess:
+            if restore_model_path:
+                saver.restore(sess, restore_model_path)
+            else:
+                assert self.saved_model_path
+                saver.restore(sess, self.saved_model_path)
+
+            batch_x, batch_x_lens, batch_y = batch
+
+            feed_dict = {self.batch_x: batch_x,
+                         self.batch_x_lens: batch_x_lens,
+                         self.batch_y: batch_y}
+
+            log_softmax = sess.run([self.log_softmax], feed_dict=feed_dict)
+            log_softmax = log_softmax[0]
+            log_softmax = np.swapaxes(log_softmax, 0, 1)
+            out_dir = os.path.join(self.exp_dir, "lattice")
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
+            for i, training_example in enumerate(log_softmax):
+                np.save(os.path.join(out_dir, "example_%d_softmax" % i),
+                        training_example)
 
     def eval(self, restore_model_path=None):
         """ Evaluates the model on a test set."""
