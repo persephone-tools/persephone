@@ -159,8 +159,10 @@ class Corpus(corpus.AbstractCorpus):
         self.valid_prefixes = self.prefixes[self.TRAIN_VALID_TEST_SPLIT[0]:valid_end]
         self.test_prefixes = self.prefixes[valid_end:]
 
-        self.PHONEMES2INDICES = {phn: index for index, phn in enumerate(sorted(list(self.phonemes)))}
-        self.INDICES2PHONEMES = {index: phn for index, phn in enumerate(sorted(list(self.phonemes)))}
+        self.PHONEME_TO_INDEX = {phn: index for index, phn in enumerate(
+                                 ["pad"] + sorted(list(self.phonemes)))}
+        self.INDEX_TO_PHONEME = {index: phn for index, phn in enumerate(
+                                 ["pad"] + sorted(list(self.phonemes)))}
         self.vocab_size = len(self.phonemes)
 
     def prepare(self, tones):
@@ -200,10 +202,10 @@ class Corpus(corpus.AbstractCorpus):
         feat_extract.from_dir(tgt_wav_dir, feat_type="log_mel_filterbank")
 
     def indices_to_phonemes(self, indices):
-        return [(self.INDICES2PHONEMES[index-1] if index > 0 else "pad") for index in indices]
+        return [(self.INDEX_TO_PHONEME[index]) for index in indices]
 
     def phonemes_to_indices(self, phonemes):
-        return [self.PHONEMES2INDICES[phoneme]+1 for phoneme in phonemes]
+        return [self.PHONEME_TO_INDEX[phoneme] for phoneme in phonemes]
 
     def get_train_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)

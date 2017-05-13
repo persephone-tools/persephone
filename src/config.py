@@ -13,3 +13,4 @@ NA_DIR = "/lt/work/oadams/Na/"
 # The path to the Griko directory
 GRIKO_DIR = "/lt/work/oadams/griko-data/"
 CHATINO_DIR = "/lt/work/oadams/chatino/CTP/"
+OPENFST_BIN_PATH = "/home/oadams/tools/openfst-1.6.2/src/bin"

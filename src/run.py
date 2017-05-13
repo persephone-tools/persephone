@@ -70,7 +70,7 @@ def test():
         EXP_DIR, "131", "model", "model_best.ckpt")
     model.eval(restore_model_path)
 
-def produce_chatino_softmax():
+def produce_chatino_lattices():
     """ Apply a previously trained model to some test data. """
     exp_dir = prep_exp_dir()
     corpus = datasets.chatino.Corpus(feat_type="log_mel_filterbank",
@@ -79,7 +79,7 @@ def produce_chatino_softmax():
     model = rnn_ctc.Model(exp_dir, corpus_reader)
     restore_model_path = os.path.join(
         EXP_DIR, "194", "model", "model_best.ckpt")
-    model.output_log_softmax(corpus_reader.valid_batch(), restore_model_path)
+    model.output_lattices(corpus_reader.valid_batch(), restore_model_path)
 
 def transcribe():
     """ Applies a trained model to the untranscribed Na data for Alexis. """

@@ -8,6 +8,7 @@ import numpy as np
 import tensorflow as tf
 
 import utils
+import lattice
 
 class Model:
     """ Generic model for our ASR tasks. """
@@ -60,7 +61,7 @@ class Model:
                     print(fn + ": ", file=hyps_f)
                     print(" ".join(hyp), file=hyps_f)
 
-    def output_log_softmax(self, batch, restore_model_path=None):
+    def output_lattices(self, batch, restore_model_path=None):
         """ Outputs the logits from the model, given an input batch, so that
             lattices can ultimately be extracted."""
 
@@ -78,15 +79,26 @@ class Model:
                          self.batch_x_lens: batch_x_lens,
                          self.batch_y: batch_y}
 
+            # Get the log_softmax matrices
             log_softmax = sess.run([self.log_softmax], feed_dict=feed_dict)
             log_softmax = log_softmax[0]
             log_softmax = np.swapaxes(log_softmax, 0, 1)
             out_dir = os.path.join(self.exp_dir, "lattice")
             if not os.path.exists(out_dir):
                 os.makedirs(out_dir)
-            for i, training_example in enumerate(log_softmax):
-                np.save(os.path.join(out_dir, "example_%d_softmax" % i),
-                        training_example)
+            for i, example in enumerate(log_softmax):
+                np.save(os.path.join(out_dir, "utterance_%d_log_softmax" % i),
+                        example)
+
+        # Create the lattices.
+        index_to_token = self.corpus_reader.corpus.INDEX_TO_PHONEME
+        lattice.create_collapse_fst(index_to_token,
+                                    os.path.join(out_dir, "collapse_fst.txt"))
+        for i, log_softmax_example in enumerate(log_softmax):
+            lattice.logsoftmax2confusion(log_softmax_example,
+                                       index_to_token,
+                                       os.path.join(out_dir, "utterance_%d" % i)
+                                       )
 
     def eval(self, restore_model_path=None):
         """ Evaluates the model on a test set."""

@@ -3,12 +3,12 @@
     collapse paths.
 """
 
+import subprocess
+
 import tensorflow as tf
 
 from corpus_reader import CorpusReader
-import datasets.na
-import rnn_ctc
-import run
+import config
 
 def test_sampling():
     """ As a proof of concept, first we want to sample paths from a trained CTC
@@ -16,22 +16,75 @@ def test_sampling():
     phoneme error rate to ensure we frequently get decent PERs."""
     pass
 
-def test_1_best():
-    """ Test my own 1-best path generator. """
+def compile_fst(prefix, syms_fn):
+    """ Compiles the given text-based FST into a binary using OpenFST."""
 
-    # Train the model
-    exp_dir = run.prep_exp_dir()
-    corpus = datasets.na.Corpus(feat_type="log_mel_filterbank",
-                                target_type="phn")
-    corpus_reader = CorpusReader(corpus, num_train=512)
-    model = rnn_ctc.Model(exp_dir, corpus_reader)
-    model.train()
+    # Compile the fst
+    args = ["fstcompile", "--isymbols=%s" % syms_fn,
+            "--osymbols=%s" % syms_fn,
+            "%s.txt" % prefix, "%s.bin" % prefix]
+    subprocess.run(args)
 
-    valid_x, valid_x_lens, valid_y = corpus_reader.valid_batch()
-    feed_dict = {model.batch_x: valid_x,
-                 model.batch_x_lens: valid_x_lens,
-                 model.batch_y: valid_y}
+def draw_fst(prefix, syms_fn):
+    """ Draws the given fst using dot."""
 
-    with tf.Session() as sess:
-        logits, dense_decoded = sess.run([model.logits, model.dense_decoded],
-                                         feed_dict=feed_dict)
+    args = ["fstdraw", "--isymbols=%s" % syms_fn,
+            "--osymbols=%s" % syms_fn,
+            "%s.bin" % prefix, "%s.dot" % prefix]
+    subprocess.run(args)
+
+#    args = ["dot", "-Tpdf", "%s.dot" % prefix]
+#    with open("%s.pdf" % prefix, "w") as out_f:
+#        subprocess.run(args, stdout=out_f)
+
+def create_symbol_tables(vocab, fn):
+    """ Creates a symbol table for the given vocab."""
+    # Store the symbol tables
+    with open(fn, "w") as out_f:
+        print("<eps> 0", file=out_f)
+        for phone_id, phone in enumerate(vocab):
+            print("%s %d" % (phone, phone_id+1), file=out_f)
+
+def logsoftmax2confusion(logsoftmax, index_to_token, prefix):
+    """ Converts a sequence of softmax outputs into a confusion network."""
+
+    with open(prefix + ".confusion.txt", "w") as out_f:
+        for node_id, timestep_softmax in enumerate(logsoftmax):
+            for phone_id, prob in enumerate(timestep_softmax):
+                if phone_id == len(index_to_token):
+                    # Then it's just outside the range of the mapping and is
+                    # thus a blank symbol
+                    print("%d %d <bl> <bl> %f" % (node_id, node_id+1, -prob),
+                          file=out_f)
+                else:
+                    print("%d %d %s %s %f" % (
+                        node_id, node_id+1,
+                        index_to_token[phone_id], index_to_token[phone_id],
+                        -prob),
+                        file=out_f)
+        # If I'm writing -logsoftmax values where they are arc costs, then
+        # I believe 0 means a cost of zero.
+        print("%d 0" % (node_id+1), file=out_f)
+
+def create_collapse_fst(index_to_token, fst_fn):
+    with open(fst_fn, "w") as out_f:
+        for i, phone in sorted(index_to_token.items()):
+            print("0 %d %s %s" % (i+1, phone, phone), file=out_f)
+            print("%d %d %s <eps>" % (i+1, i+1, phone), file=out_f)
+            for j, phone in sorted(index_to_token.items()):
+                if j != i:
+                    print("%d %d %s %s" % (i+1, j+1, phone, phone), file=out_f)
+            print("%d 0 <bl> <eps>" % (i+1), file=out_f)
+        print("0 0 <bl> <eps>", file=out_f)
+        for i, phone in sorted(index_to_token.items()):
+            print("%d 0" % (i+1), file=out_f)
+        print("0 0", file=out_f)
+
+def logsoftmax2lattice(logsoftmax, index_to_token, prefix):
+    """ Takes a numpy array of shape [time_steps, vocab] along with a function
+    to produce tokens from their indices and an output filename prefix. A
+    lattice is written to the output filename.
+    """
+
+    # Create the confusion network based on logsoftmax
+    logsoftmax2confusion(logsoftmax, index_to_token, prefix)
