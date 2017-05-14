@@ -90,15 +90,28 @@ class Model:
                 np.save(os.path.join(out_dir, "utterance_%d_log_softmax" % i),
                         example)
 
-        # Create the lattices.
+        ### Create the lattices.###
         index_to_token = self.corpus_reader.corpus.INDEX_TO_PHONEME
+
+        # Create symbol table.
+        lattice.create_symbol_table(index_to_token,
+                                    os.path.join(out_dir, "symbols.txt"))
+
+        # Create the FST that removes blanks and repeated tokens.
         lattice.create_collapse_fst(index_to_token,
                                     os.path.join(out_dir, "collapse_fst.txt"))
+
         for i, log_softmax_example in enumerate(log_softmax):
+            # Create a confusion network
             lattice.logsoftmax2confusion(log_softmax_example,
                                        index_to_token,
                                        os.path.join(out_dir, "utterance_%d" % i)
                                        )
+
+            # Compose the confusion network with the FST that removes blanks
+            # and repetitions, expanding to a larger lattice-like FST.
+
+            # Take the output projection of the FST.
 
     def eval(self, restore_model_path=None):
         """ Evaluates the model on a test set."""

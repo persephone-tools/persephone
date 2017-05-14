@@ -37,13 +37,14 @@ def draw_fst(prefix, syms_fn):
 #    with open("%s.pdf" % prefix, "w") as out_f:
 #        subprocess.run(args, stdout=out_f)
 
-def create_symbol_tables(vocab, fn):
+def create_symbol_table(index_to_token, fn):
     """ Creates a symbol table for the given vocab."""
-    # Store the symbol tables
+
     with open(fn, "w") as out_f:
         print("<eps> 0", file=out_f)
-        for phone_id, phone in enumerate(vocab):
+        for phone_id, phone in index_to_token.items():
             print("%s %d" % (phone, phone_id+1), file=out_f)
+        print("<bl> %d" % (len(index_to_token)+1), file=out_f)
 
 def logsoftmax2confusion(logsoftmax, index_to_token, prefix):
     """ Converts a sequence of softmax outputs into a confusion network."""
