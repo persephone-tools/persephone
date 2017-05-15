@@ -3,12 +3,16 @@
 import inspect
 import itertools
 import os
+import subprocess
 
 import numpy as np
 import tensorflow as tf
 
 import utils
 import lattice
+import config
+
+OPENFST_PATH = config.OPENFST_BIN_PATH
 
 class Model:
     """ Generic model for our ASR tasks. """
@@ -94,12 +98,13 @@ class Model:
         index_to_token = self.corpus_reader.corpus.INDEX_TO_PHONEME
 
         # Create symbol table.
-        lattice.create_symbol_table(index_to_token,
-                                    os.path.join(out_dir, "symbols.txt"))
+        syms_fn = os.path.join(out_dir, "symbols.txt")
+        lattice.create_symbol_table(index_to_token, syms_fn)
 
         # Create the FST that removes blanks and repeated tokens.
         lattice.create_collapse_fst(index_to_token,
                                     os.path.join(out_dir, "collapse_fst.txt"))
+        lattice.compile_fst(os.path.join(out_dir, "collapse_fst"), syms_fn)
 
         for i, log_softmax_example in enumerate(log_softmax):
             # Create a confusion network
@@ -107,11 +112,35 @@ class Model:
                                        index_to_token,
                                        os.path.join(out_dir, "utterance_%d" % i)
                                        )
+            lattice.compile_fst(os.path.join(out_dir, "utterance_%d.confusion" % i),
+                                syms_fn)
 
+            prefix = os.path.join(out_dir, "utterance_%d" % i)
             # Compose the confusion network with the FST that removes blanks
             # and repetitions, expanding to a larger lattice-like FST.
+            run_args = [os.path.join(OPENFST_PATH, "fstcompose"),
+                        prefix + ".confusion.bin",
+                        os.path.join(out_dir, "collapse_fst.bin"),
+                        prefix + ".collapsed.bin"]
+            subprocess.run(run_args)
 
             # Take the output projection of the FST.
+            run_args = [os.path.join(OPENFST_PATH, "fstproject"),
+                        "--project_output",
+                        prefix + ".collapsed.bin", prefix + ".projection.bin"]
+            subprocess.run(run_args)
+
+            # Push weights
+#            run_args = [os.path.join(OPENFST_PATH, "fstpush"),
+#                        "--push_weights",
+#                        prefix + ".projection.bin", prefix + ".pushed.bin"]
+#            subprocess.run(run_args)
+
+            # Remove epsilons
+            run_args = [os.path.join(OPENFST_PATH, "fstrmepsilon"),
+                        "--reverse=true",
+                        prefix + ".projection.bin", prefix + ".rmepsilon.bin"]
+            subprocess.run(run_args)
 
     def eval(self, restore_model_path=None):
         """ Evaluates the model on a test set."""
