@@ -109,17 +109,23 @@ class Model:
         for i, log_softmax_example in enumerate(log_softmax):
             # Create a confusion network
             lattice.logsoftmax2confusion(log_softmax_example,
-                                       index_to_token,
-                                       os.path.join(out_dir, "utterance_%d" % i)
-                                       )
+                                         index_to_token,
+                                         os.path.join(out_dir, "utterance_%d" % i),
+                                         beam_size=5)
             lattice.compile_fst(os.path.join(out_dir, "utterance_%d.confusion" % i),
                                 syms_fn)
 
             prefix = os.path.join(out_dir, "utterance_%d" % i)
+
+            run_args = [os.path.join(OPENFST_PATH, "fstarcsort"),
+                        prefix + ".confusion.bin",
+                        prefix + ".confusion.sort.bin"]
+            subprocess.run(run_args)
+
             # Compose the confusion network with the FST that removes blanks
             # and repetitions, expanding to a larger lattice-like FST.
             run_args = [os.path.join(OPENFST_PATH, "fstcompose"),
-                        prefix + ".confusion.bin",
+                        prefix + ".confusion.sort.bin",
                         os.path.join(out_dir, "collapse_fst.bin"),
                         prefix + ".collapsed.bin"]
             subprocess.run(run_args)

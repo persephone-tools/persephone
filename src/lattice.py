@@ -38,21 +38,24 @@ def draw_fst(prefix, syms_fn):
 #    with open("%s.pdf" % prefix, "w") as out_f:
 #        subprocess.run(args, stdout=out_f)
 
-def create_symbol_table(index_to_token, fn):
+def create_symbol_table(index_to_token, filename):
     """ Creates a symbol table for the given vocab."""
 
-    with open(fn, "w") as out_f:
+    with open(filename, "w") as out_f:
         print("<eps> 0", file=out_f)
         for phone_id, phone in index_to_token.items():
             print("%s %d" % (phone, phone_id+1), file=out_f)
         print("<bl> %d" % (len(index_to_token)+1), file=out_f)
 
-def logsoftmax2confusion(logsoftmax, index_to_token, prefix):
+def logsoftmax2confusion(logsoftmax, index_to_token, prefix, beam_size):
     """ Converts a sequence of softmax outputs into a confusion network."""
 
     with open(prefix + ".confusion.txt", "w") as out_f:
         for node_id, timestep_softmax in enumerate(logsoftmax):
-            for phone_id, prob in enumerate(timestep_softmax):
+            phone_probs = list(zip(timestep_softmax, range(len(timestep_softmax))))
+            # Only take the top entries within the beam.
+            beam = sorted(phone_probs, reverse=True)[:beam_size]
+            for prob, phone_id in beam:
                 if phone_id == len(index_to_token):
                     # Then it's just outside the range of the mapping and is
                     # thus a blank symbol
@@ -60,10 +63,10 @@ def logsoftmax2confusion(logsoftmax, index_to_token, prefix):
                           file=out_f)
                 else:
                     print("%d %d %s %s %f" % (
-                        node_id, node_id+1,
-                        index_to_token[phone_id], index_to_token[phone_id],
-                        -prob),
-                        file=out_f)
+                          node_id, node_id+1,
+                          index_to_token[phone_id], index_to_token[phone_id],
+                          -prob),
+                          file=out_f)
         # If I'm writing -logsoftmax values where they are arc costs, then
         # I believe 0 means a cost of zero.
         print("%d 0" % (node_id+1), file=out_f)
@@ -82,11 +85,11 @@ def create_collapse_fst(index_to_token, fst_fn):
             print("%d 0" % (i+1), file=out_f)
         print("0 0", file=out_f)
 
-def logsoftmax2lattice(logsoftmax, index_to_token, prefix):
+def logsoftmax2lattice(logsoftmax, index_to_token, prefix, beam_size):
     """ Takes a numpy array of shape [time_steps, vocab] along with a function
     to produce tokens from their indices and an output filename prefix. A
     lattice is written to the output filename.
     """
 
     # Create the confusion network based on logsoftmax
-    logsoftmax2confusion(logsoftmax, index_to_token, prefix)
+    logsoftmax2confusion(logsoftmax, index_to_token, prefix, beam_size)
