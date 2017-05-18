@@ -13,23 +13,82 @@ ORG_DIR = config.JAPHUG_DIR
 TGT_DIR = os.path.join(config.TGT_DIR, "japhug")
 
 PHONEMES = ["a", "e", "i", "o", "u", "ɯ", "y",
-            "k", "kh", "g", "ŋg", "ŋ", "x", "ɣ",
+            "k", "kh", "g", "ŋg", "ŋ", "x", "ɤ",
             "t", "th", "d", "nd", "n",
             "ts", "tsh", "dz", "ndz", "s", "z",
             "tɕ", "tɕh", "dʑ", "ndʑ", "ɕ", "ʑ",
             "tʂ", "tʂh", "dʐ", "ndʐ", "ʂ", "", "r",
-            "c", "ch", "ɟ", "ɲɟ", "ɲ", "j"
+            "c", "ch", "ɟ", "ɲɟ", "ɲ", "j",
             "p", "ph", "b", "mb", "m", "w", "β",
-            "h"]
-PHONEMES_LEN_SORTED = sorted(PHONEMES, key=lambda x: len(x), reverse=True)
-print(PHONEMES_LEN_SORTED)
+            "h", "ʁ", "q", "f", "l", "ɬ", "mɢ"]
+PHONEMES_THREE_CHAR = set([phn for phn in PHONEMES if len(phn) == 3])
+PHONEMES_TWO_CHAR = set([phn for phn in PHONEMES if len(phn) == 2])
+PHONEMES_ONE_CHAR = set([phn for phn in PHONEMES if len(phn) == 1])
 
 def extract_phonemes(sent, tgt_fn):
-    print("Phonemes")
+    print(sent)
 
+    sent = sent.replace(",", " ")
+    sent = sent.replace("，", " ")
+    sent = sent.replace("-", " ")
+    sent = sent.replace('"', " ")
+    sent = sent.replace('...', " ")
+    sent = sent.replace('.', " ")
+    sent = sent.replace("ú", "u")
+    sent = sent.replace("ú", "u")
+    sent = sent.replace("ɯ́", "ɯ")
+    sent = sent.replace("á", "a")
+    sent = sent.replace("á", "a")
+    sent = sent.replace("í", "i")
+    sent = sent.replace("í", "i")
+    sent = sent.replace("é", "e")
+    sent = sent.replace("é", "e")
+    sent = sent.replace("ó", "o")
+    sent = sent.replace("ó", "o")
+    sent = sent.replace("ɤ́", "ɤ")
+    sent = sent.replace("ɣ", "ɤ")
+    sent = sent.replace("χ", "x")
+    sent = sent.replace("?", " ")
+    sent = sent.replace("!", " ")
+    sent = sent.replace("[", " ")
+    sent = sent.replace("]", " ")
+    sent = sent.replace("(", " ")
+    sent = sent.replace(")", " ")
+    sent = sent.replace("{", " ")
+    sent = sent.replace("}", " ")
+    sent = sent.replace("#", " ")
+    sent = sent.replace("ɴɢ", "ŋ")
+    sent = sent.replace("ɴ", "ŋ")
+    if "skalpa" in sent:
+        return None
+    if "qhe" in sent:
+        return None
+    if "lonba" in sent:
+        return None
+    phonemes = []
     with open(tgt_fn, "w") as tgt_f:
         words = sent.split()
-        input()
+        for word in words:
+            i = 0
+            while i < len(word):
+                if word[i:i+3] in PHONEMES_THREE_CHAR:
+                    phonemes.append(word[i:i+3])
+                    i += 3
+                    continue
+                elif word[i:i+2] in PHONEMES_TWO_CHAR:
+                    phonemes.append(word[i:i+2])
+                    i += 2
+                    continue
+                elif word[i:i+1] in PHONEMES_ONE_CHAR:
+                    phonemes.append(word[i:i+1])
+                    i += 1
+                    continue
+                else:
+                    print(PHONEMES_ONE_CHAR)
+                    print(sent)
+                    print(word[i:])
+                    raise Exception("Failed to segment word: %s" % word)
+                    continue
 
 def extract_sents_and_times(fn):
     sentences = []
