@@ -91,8 +91,9 @@ class Model:
             if not os.path.exists(out_dir):
                 os.makedirs(out_dir)
             for i, example in enumerate(log_softmax):
+                length = batch_x_lens[i]
                 np.save(os.path.join(out_dir, "utterance_%d_log_softmax" % i),
-                        example)
+                        example[:length])
 
         ### Create the lattices.###
         index_to_token = self.corpus_reader.corpus.INDEX_TO_PHONEME
@@ -108,10 +109,11 @@ class Model:
 
         for i, log_softmax_example in enumerate(log_softmax):
             # Create a confusion network
-            lattice.logsoftmax2confusion(log_softmax_example,
+            length = batch_x_lens[i]
+            lattice.logsoftmax2confusion(log_softmax_example[:length],
                                          index_to_token,
                                          os.path.join(out_dir, "utterance_%d" % i),
-                                         beam_size=5)
+                                         beam_size=4)
             lattice.compile_fst(os.path.join(out_dir, "utterance_%d.confusion" % i),
                                 syms_fn)
 

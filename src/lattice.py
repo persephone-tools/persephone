@@ -21,7 +21,9 @@ def compile_fst(prefix, syms_fn):
     """ Compiles the given text-based FST into a binary using OpenFST."""
 
     # Compile the fst
-    args = [os.path.join(config.OPENFST_BIN_PATH, "fstcompile"), "--isymbols=%s" % syms_fn,
+    args = [os.path.join(config.OPENFST_BIN_PATH, "fstcompile"),
+            "--arc_type=log",
+            "--isymbols=%s" % syms_fn,
             "--osymbols=%s" % syms_fn,
             "%s.txt" % prefix, "%s.bin" % prefix]
     subprocess.run(args)
