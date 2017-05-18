@@ -6,23 +6,53 @@ import subprocess
 from xml.etree import ElementTree
 
 import config
+import feat_extract
+import utils
 
 ORG_DIR = config.JAPHUG_DIR
 TGT_DIR = os.path.join(config.TGT_DIR, "japhug")
 
-def extract_audio_snippet(src_fn, tgt_fn, start, end):
-    print("Audio")
-    print(src_fn, tgt_fn, start, end)
-    pass
+PHONEMES = ["a", "e", "i", "o", "u", "ɯ", "y",
+            "k", "kh", "g", "ŋg", "ŋ", "x", "ɣ",
+            "t", "th", "d", "nd", "n",
+            "ts", "tsh", "dz", "ndz", "s", "z",
+            "tɕ", "tɕh", "dʑ", "ndʑ", "ɕ", "ʑ",
+            "tʂ", "tʂh", "dʐ", "ndʐ", "ʂ", "", "r",
+            "c", "ch", "ɟ", "ɲɟ", "ɲ", "j"
+            "p", "ph", "b", "mb", "m", "w", "β",
+            "h"]
+PHONEMES_LEN_SORTED = sorted(PHONEMES, key=lambda x: len(x), reverse=True)
+print(PHONEMES_LEN_SORTED)
 
-def extract_phonemes(src_fn, tgt_fn):
+def extract_phonemes(sent, tgt_fn):
     print("Phonemes")
-    print(src_fn, tgt_fn)
-    pass
 
-# This time I will have  prepare function that is separate to the Corpus
+    with open(tgt_fn, "w") as tgt_f:
+        words = sent.split()
+        input()
+
+def extract_sents_and_times(fn):
+    sentences = []
+    times = []
+    tree = ElementTree.parse(fn)
+    root = tree.getroot()
+    assert root.tag == "TEXT"
+    i = 0
+    for child in root:
+        if child.tag == "S":
+            assert len(child.findall("FORM")) == 1
+            sentence = child.find("FORM").text
+            audio = child.find("AUDIO")
+            if audio != None:
+                start_time = float(audio.attrib["start"])
+                end_time = float(audio.attrib["end"])
+                times.append((start_time, end_time))
+                sentences.append(sentence)
+    return sentences, times
+
+# This time I will have prepare function that is separate to the Corpus
 # class
-def prepare():
+def prepare(feat_type="log_mel_filterbank"):
     """ Prepares the Japhug data for downstream use. """
 
     # Copy the data across to the tgt dir. Make the tgt dir if necessary.
@@ -45,44 +75,47 @@ def prepare():
     # time indications in the XML.
     audio_dir = os.path.join(TGT_DIR, "audio")
     audio_utter_dir = os.path.join(audio_dir, "utterances")
+    if not os.path.isdir(audio_utter_dir):
+        os.makedirs(audio_utter_dir)
     audio_fns = os.listdir(audio_dir)
     transcript_dir = os.path.join(TGT_DIR, "transcriptions")
     transcript_utter_dir = os.path.join(transcript_dir, "utterances")
+    if not os.path.isdir(transcript_utter_dir):
+        os.makedirs(transcript_utter_dir)
     for fn in os.listdir(transcript_dir):
         pre, ext = os.path.splitext(fn)
         if ext == ".xml":
             # Assumes file name is like "crdo-JYA_DIVINATION.xml"
             rec_name = pre.split("_")[-1]
-            tree = ElementTree.parse(os.path.join(transcript_dir, fn))
-            root = tree.getroot()
-            assert root.tag == "TEXT"
+            sentences, times = extract_sents_and_times(
+                os.path.join(transcript_dir, fn))
+            assert len(sentences) == len(times)
 
-            i = 0
+            for audio_fn in audio_fns:
+                pre, ext = os.path.splitext(audio_fn)
+                if ext == ".wav":
+                    if rec_name in audio_fn:
+                        src_fn = os.path.join(audio_dir, audio_fn)
 
-            for child in root:
-                if child.tag == "S":
-                    assert len(child.findall("FORM")) == 1
-                    sentence = child.find("FORM").text
-                    audio = child.find("AUDIO")
-                    if audio != None:
-                        start_time = float(audio.attrib["start"])
-                        end_time = float(audio.attrib["end"])
+            for i, sentence in enumerate(sentences):
 
-                        for audio_fn in audio_fns:
-                            if rec_name in audio_fn:
-                                src_fn = os.path.join(audio_dir, audio_fn)
-                        tgt_fn = os.path.join(
-                            audio_utter_dir, "%s.%d.wav" % (rec_name, i))
+                start_time, end_time = times[i]
 
-                        # Trim the audio
-                        extract_audio_snippet(src_fn, tgt_fn,
-                                              start_time, end_time)
+                tgt_fn = os.path.join(
+                    audio_utter_dir, "%s.%d.wav" % (rec_name, i))
 
-                        # Extract the phones.
-                        extract_phonemes(
-                            sentence, os.path.join(transcript_utter_dir,
-                            "%s.%d.phn" % (rec_name, i)))
+                if rec_name == "LWLU":
+                    print(src_fn)
+                    print(tgt_fn)
+                    print(start_time)
+                    print(end_time)
 
-                    i += 1
+                # Trim the audio
+                utils.trim_wav(src_fn, tgt_fn, start_time, end_time)
+
+                # Extract the phones.
+                extract_phonemes(sentence, os.path.join(transcript_utter_dir,
+                                 "%s.%d.phn" % (rec_name, i)))
 
     # Extract features from the WAV files.
+    #feat_extract.from_dir(audio_utter_dir, feat_type)

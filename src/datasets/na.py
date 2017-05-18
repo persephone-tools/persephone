@@ -97,15 +97,6 @@ def segment_phonemes(syls):
                 raise Exception("Failed to segment syllable: %s" % syl)
     return phonemes
 
-def trim_wav(in_fn, out_fn, start_time, end_time):
-    """ Crops the wav file at in_fn so that the audio between start_time and
-    end_time is output to out_fn.
-    """
-
-    args = [config.SOX_PATH, in_fn, out_fn, "trim", str(start_time), "=" + str(end_time)]
-    print(args[1:])
-    subprocess.run(args)
-
 def wav_length(fn):
     """ Returns the length of the WAV file in seconds."""
 
@@ -177,7 +168,7 @@ def prepare_wavs_and_transcripts(filenames, segmentation, tones):
 
         in_wav_fn = os.path.join(ORG_DIR, "wav", "%s.wav" % prefix)
         out_wav_fn = os.path.join(wav_dir, "%s.%d.wav" % (prefix, line_id))
-        trim_wav(in_wav_fn, out_wav_fn, start_time, end_time)
+        utils.trim_wav(in_wav_fn, out_wav_fn, start_time, end_time)
 
     for fn in filenames:
         with open(os.path.join(ORG_TXT_NORM_DIR, fn)) as f:
@@ -405,7 +396,7 @@ class Corpus(corpus.AbstractCorpus):
                     prefix = fn.split(".")[0]
                     out_fn = os.path.join(
                         untranscribed_dir, "%s.%d.wav" % (prefix, trim_id))
-                    trim_wav(in_fn, out_fn, t, t+10)
+                    utils.trim_wav(in_fn, out_fn, t, t+10)
                     t += 10
                     trim_id += 1
 

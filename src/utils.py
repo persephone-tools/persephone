@@ -6,6 +6,9 @@ import numpy as np
 
 from nltk.metrics import distance
 
+import config
+import subprocess
+
 def target_list_to_sparse_tensor(target_list):
     """ Make tensorflow SparseTensor from list of targets, with each element in
     the list being a list or array with the values of the target sequence
@@ -85,3 +88,12 @@ def get_prefixes(dirname, extension):
                 # correspond to a training example
                 prefixes.append(os.path.join(root, filename.split(".")[0]))
     return sorted(prefixes)
+
+def trim_wav(in_fn, out_fn, start_time, end_time):
+    """ Crops the wav file at in_fn so that the audio between start_time and
+    end_time is output to out_fn.
+    """
+
+    args = [config.SOX_PATH, in_fn, out_fn, "trim", str(start_time), "=" + str(end_time)]
+    print(args[1:])
+    subprocess.run(args)
