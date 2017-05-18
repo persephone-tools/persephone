@@ -13,4 +13,6 @@ NA_DIR = "/lt/work/oadams/Na/"
 # The path to the Griko directory
 GRIKO_DIR = "/lt/work/oadams/griko-data/"
 CHATINO_DIR = "/lt/work/oadams/chatino/CTP/"
+JAPHUG_DIR = "/lt/work/oadams/japhug/"
 OPENFST_BIN_PATH = "/home/oadams/tools/openfst-1.6.2/src/bin"
+FFMPEG_PATH = "/home/oadams/tools/ffmpeg-3.3/ffmpeg"
