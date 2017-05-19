@@ -1,11 +1,13 @@
 """ Interface to the Japhug data. """
 
 import os
+import random
 import shutil
 import subprocess
 from xml.etree import ElementTree
 
 import config
+import corpus
 import feat_extract
 import utils
 
@@ -17,17 +19,32 @@ PHONEMES = ["a", "e", "i", "o", "u", "ɯ", "y",
             "t", "th", "d", "nd", "n",
             "ts", "tsh", "dz", "ndz", "s", "z",
             "tɕ", "tɕh", "dʑ", "ndʑ", "ɕ", "ʑ",
-            "tʂ", "tʂh", "dʐ", "ndʐ", "ʂ", "", "r",
+            "tʂ", "tʂh", "dʐ", "ndʐ", "ʂ", "r",
             "c", "ch", "ɟ", "ɲɟ", "ɲ", "j",
             "p", "ph", "b", "mb", "m", "w", "β",
-            "h", "ʁ", "q", "f", "l", "ɬ", "mɢ"]
+            "h",
+            "q", "qh", "ɴɢ", "χ", "ʁ",
+            "f", "l", "ɬ", "ɴ"]
 PHONEMES_THREE_CHAR = set([phn for phn in PHONEMES if len(phn) == 3])
 PHONEMES_TWO_CHAR = set([phn for phn in PHONEMES if len(phn) == 2])
 PHONEMES_ONE_CHAR = set([phn for phn in PHONEMES if len(phn) == 1])
 
-def extract_phonemes(sent, tgt_fn):
-    print(sent)
+def remove_parentheses(sentence):
+    out_sentence = ''
+    skip_c = 0
+    for c in sentence:
+        if c == '(':
+            skip_c += 1
+        elif c == ')' and skip_c > 0:
+            skip_c -= 1
+        elif skip_c == 0:
+            out_sentence += c
+    return out_sentence
 
+def extract_phonemes(sent, tgt_fn):
+
+    org_sent = sent
+    sent = remove_parentheses(sent)
     sent = sent.replace(",", " ")
     sent = sent.replace("，", " ")
     sent = sent.replace("-", " ")
@@ -47,24 +64,14 @@ def extract_phonemes(sent, tgt_fn):
     sent = sent.replace("ó", "o")
     sent = sent.replace("ɤ́", "ɤ")
     sent = sent.replace("ɣ", "ɤ")
-    sent = sent.replace("χ", "x")
     sent = sent.replace("?", " ")
     sent = sent.replace("!", " ")
     sent = sent.replace("[", " ")
     sent = sent.replace("]", " ")
-    sent = sent.replace("(", " ")
-    sent = sent.replace(")", " ")
     sent = sent.replace("{", " ")
     sent = sent.replace("}", " ")
     sent = sent.replace("#", " ")
-    sent = sent.replace("ɴɢ", "ŋ")
-    sent = sent.replace("ɴ", "ŋ")
-    if "skalpa" in sent:
-        return None
-    if "qhe" in sent:
-        return None
-    if "lonba" in sent:
-        return None
+    sent = sent.replace("mɢ", "mɴɢ")
     phonemes = []
     with open(tgt_fn, "w") as tgt_f:
         words = sent.split()
@@ -84,11 +91,13 @@ def extract_phonemes(sent, tgt_fn):
                     i += 1
                     continue
                 else:
-                    print(PHONEMES_ONE_CHAR)
-                    print(sent)
-                    print(word[i:])
+                    print("Filename:\n\t", tgt_fn)
+                    print("original sentence:\n\t", org_sent)
+                    print("Preprocessed sentence:\n\t", sent)
+                    print("Word remainder:\n\t", word[i:])
                     raise Exception("Failed to segment word: %s" % word)
-                    continue
+    with open(tgt_fn, "w") as out_f:
+        print(" ".join(phonemes), file=out_f)
 
 def extract_sents_and_times(fn):
     sentences = []
@@ -163,12 +172,6 @@ def prepare(feat_type="log_mel_filterbank"):
                 tgt_fn = os.path.join(
                     audio_utter_dir, "%s.%d.wav" % (rec_name, i))
 
-                if rec_name == "LWLU":
-                    print(src_fn)
-                    print(tgt_fn)
-                    print(start_time)
-                    print(end_time)
-
                 # Trim the audio
                 utils.trim_wav(src_fn, tgt_fn, start_time, end_time)
 
@@ -177,4 +180,41 @@ def prepare(feat_type="log_mel_filterbank"):
                                  "%s.%d.phn" % (rec_name, i)))
 
     # Extract features from the WAV files.
-    #feat_extract.from_dir(audio_utter_dir, feat_type)
+    feat_extract.from_dir(audio_utter_dir, feat_type)
+
+class Corpus(corpus.AbstractCorpus):
+    """ Class interface to the Japhug corpus. """
+
+    TGT_DIR = TGT_DIR
+
+    TRAIN_VALID_SPLIT = [800, 157]
+    _phonemes = None
+    tones = False
+
+    def __init__(self, feat_type, target_type, max_samples=1000):
+        super().__init__(feat_type, target_type)
+
+        transcript_dir = os.path.join(
+            config.TGT_DIR, "japhug", "transcriptions", "utterances")
+        audio_dir = os.path.join(
+            config.TGT_DIR, "japhug", "audio", "utterances")
+
+        self.prefixes = [os.path.join(audio_dir, os.path.splitext(fn)[0])
+                         for fn in os.listdir(transcript_dir)]
+
+        if max_samples:
+            self.prefixes = self.sort_and_filter_by_size(self.prefixes,
+                                                         max_samples)
+
+        random.seed(0)
+        random.shuffle(self.prefixes)
+        self.train_prefixes = self.prefixes[:self.TRAIN_VALID_SPLIT[0]]
+        self.valid_prefixes = self.prefixes[self.TRAIN_VALID_SPLIT[0]:]
+
+        self.phonemes = PHONEMES
+        self.PHONEME_TO_INDEX = {phn: index for index, phn in enumerate(
+                                 ["pad"] + sorted(list(self.phonemes)))}
+        self.INDEX_TO_PHONEME = {index: phn for index, phn in enumerate(
+                                 ["pad"] + sorted(list(self.phonemes)))}
+
+        self.vocab_size = len(self.phonemes)
