@@ -6,6 +6,9 @@ import shutil
 import subprocess
 from xml.etree import ElementTree
 
+import numpy as np
+from sklearn import preprocessing
+
 import config
 import corpus
 import feat_extract
@@ -218,3 +221,41 @@ class Corpus(corpus.AbstractCorpus):
                                  ["pad"] + sorted(list(self.phonemes)))}
 
         self.vocab_size = len(self.phonemes)
+
+    def normalize(self):
+        """ Normalizes each element of the input vectors so that they have zero
+        mean and unit variance over the whole training corpus.
+        """
+
+        lens = []
+
+        # Load the utterances
+        utters = [np.load(fn) for fn in self.get_train_fns()[0]]
+
+        # Reshape each utterance to collapse derivative dimensions
+        for utter in utters:
+            utter.shape = (utter.shape[0], utter.shape[1]*utter.shape[2])
+
+        # Records the duration of each utterance for later reconstructions.
+        lens = [a.shape[0] for a in utters]
+
+        # Stack them all into one array.
+        stacked = np.vstack(utters)
+
+        scaler = preprocessing.StandardScaler().fit(stacked)
+        print(len(scaler.mean_))
+        print(scaler.scale_)
+        stacked = scaler.transform(stacked)
+        print(stacked)
+        print(sum(stacked[:,1]))
+
+        for fn in self.get_train_fns()[0]:
+            a = np.load(fn)
+            # Append length on time dimension
+            lens.append(a.shape[0])
+
+            # Stack derivative dimensions
+            a.shape = (871,123)
+
+            return
+
