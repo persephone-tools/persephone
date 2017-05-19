@@ -21,6 +21,7 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
     train_prefixes = None
     valid_prefixes = None
     test_prefixes = None
+    normalized = False
 
     def get_target_prefix(self, prefix):
         """ Gets the target gfn given a prefix. """
@@ -82,9 +83,13 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
 
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.train_prefixes]
+        if self.normalized:
+            feat_fns = [os.path.splitext(fn)[0] + ".norm" + os.path.splitext(fn)[1]
+                        for fn in feat_fns]
         target_fns = ["%s.%s" % (self.get_target_prefix(prefix), self.target_type)
                       for prefix in self.train_prefixes]
         return feat_fns, target_fns
+
     def get_valid_fns(self):
         """ Returns a tuple of two elements representing the validation set.
         The first element is a list of the filenames of all the input features.
@@ -94,6 +99,9 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
 
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.valid_prefixes]
+        if self.normalized:
+            feat_fns = [os.path.splitext(fn)[0] + ".norm" + os.path.splitext(fn)[1]
+                        for fn in feat_fns]
         target_fns = ["%s.%s" % (self.get_target_prefix(prefix), self.target_type)
                       for prefix in self.valid_prefixes]
         return feat_fns, target_fns
@@ -106,6 +114,9 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
 
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.test_prefixes]
+        if self.normalized:
+            feat_fns = [os.path.splitext(fn)[0] + ".norm" + os.path.splitext(fn)[1]
+                        for fn in feat_fns]
         target_fns = ["%s.%s" % (self.get_target_prefix(prefix), self.target_type)
                       for prefix in self.test_prefixes]
         return feat_fns, target_fns

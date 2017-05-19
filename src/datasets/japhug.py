@@ -194,7 +194,7 @@ class Corpus(corpus.AbstractCorpus):
     _phonemes = None
     tones = False
 
-    def __init__(self, feat_type, target_type, max_samples=1000):
+    def __init__(self, feat_type, target_type, max_samples=1000, normalize=False):
         super().__init__(feat_type, target_type)
 
         transcript_dir = os.path.join(
@@ -222,40 +222,59 @@ class Corpus(corpus.AbstractCorpus):
 
         self.vocab_size = len(self.phonemes)
 
-    def normalize(self):
+        # Potentially normalize the data to have zero mean and unit variance.
+        if normalize:
+            self.prepare_normalized()
+            self.normalized=normalize
+
+
+    def prepare_normalized(self):
         """ Normalizes each element of the input vectors so that they have zero
         mean and unit variance over the whole training corpus.
         """
 
-        lens = []
+        def load_stacked_utters(fns):
 
-        # Load the utterances
-        utters = [np.load(fn) for fn in self.get_train_fns()[0]]
+            # Load the utterances
+            utters = [np.load(fn) for fn in fns]
 
-        # Reshape each utterance to collapse derivative dimensions
-        for utter in utters:
-            utter.shape = (utter.shape[0], utter.shape[1]*utter.shape[2])
+            # Reshape each utterance to collapse derivative dimensions
+            for utter in utters:
+                utter.shape = (utter.shape[0], utter.shape[1]*utter.shape[2])
 
-        # Records the duration of each utterance for later reconstructions.
-        lens = [a.shape[0] for a in utters]
+            # Records the duration of each utterance for later reconstructions.
+            lens = [a.shape[0] for a in utters]
 
-        # Stack them all into one array.
-        stacked = np.vstack(utters)
+            # Stack them all into one array and return, along with the original
+            # lengths.
+            return np.vstack(utters), lens
 
-        scaler = preprocessing.StandardScaler().fit(stacked)
-        print(len(scaler.mean_))
-        print(scaler.scale_)
-        stacked = scaler.transform(stacked)
-        print(stacked)
-        print(sum(stacked[:,1]))
+        def write_stacked_utters(stacked, lens, src_fns):
 
-        for fn in self.get_train_fns()[0]:
-            a = np.load(fn)
-            # Append length on time dimension
-            lens.append(a.shape[0])
+            # Unstack them into separate arrays.
+            utters = []
+            for length in lens:
+                utters.append(stacked[:length])
+                # TODO These dimensions shouldn't be hardcoded.
+                utters[-1].shape = (length, 41, 3)
+                stacked = stacked[length:]
 
-            # Stack derivative dimensions
-            a.shape = (871,123)
+            # Write the normalized set.
+            fns_utters = zip(src_fns, utters)
+            for src_fn, utter in fns_utters:
+                pre, ext = os.path.splitext(src_fn)
+                norm_fn = "%s.norm%s" % (pre, ext)
+                np.save(norm_fn, utter)
 
-            return
+        train_fns = self.get_train_fns()[0]
+        valid_fns = self.get_valid_fns()[0]
+        stacked_train, train_lens = load_stacked_utters(train_fns)
+        stacked_valid, valid_lens = load_stacked_utters(valid_fns)
 
+        # Scale the data based on the training distribution.
+        scaler = preprocessing.StandardScaler().fit(stacked_train)
+        norm_train = scaler.transform(stacked_train)
+        norm_valid = scaler.transform(stacked_valid)
+
+        write_stacked_utters(norm_train, train_lens, train_fns)
+        write_stacked_utters(norm_valid, valid_lens, valid_fns)

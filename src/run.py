@@ -9,6 +9,7 @@ import datasets.na
 import datasets.griko
 import datasets.chatino
 import datasets.timit
+import datasets.japhug
 from corpus_reader import CorpusReader
 
 EXP_DIR = config.EXP_DIR
@@ -67,7 +68,7 @@ def train_japhug():
         exp_dir = prep_exp_dir()
 
         corpus = datasets.japhug.Corpus(feat_type="log_mel_filterbank",
-                                    target_type="phn")
+                                    target_type="phn", normalize=True)
         corpus_reader = CorpusReader(corpus, num_train=i)
         model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
         model.train()
