@@ -1,4 +1,4 @@
-""" Interface to the Griko data."""
+""" Interface to the Chatino data."""
 
 import os
 import random
