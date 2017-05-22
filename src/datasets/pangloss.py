@@ -2,7 +2,7 @@
 
 from xml.etree import ElementTree
 
-def sents_times_translations(xml_fn):
+def get_sents_times_and_translations(xml_fn):
     """ Given an XML filename, loads the transcriptions, their start/end times,
     and translations. """
 
@@ -10,6 +10,9 @@ def sents_times_translations(xml_fn):
     root = tree.getroot()
     assert root.tag == "TEXT"
 
+    transcriptions = []
+    times = []
+    translations = []
     for child in root:
         if child.tag == "S":
             assert len(child.findall("FORM")) == 1
@@ -19,10 +22,21 @@ def sents_times_translations(xml_fn):
                 start_time = float(audio_info.attrib["start"])
                 end_time = float(audio_info.attrib["end"])
                 time = (start_time, end_time)
-            translations = [trans.text for trans in child.findall("TRANSL")]
-            if translations == None:
-                print("no translation")
-            print("transcription: ", transcription)
-            print("start, end: ", time)
-            print("translations", translations)
-            input()
+            translation = [trans.text for trans in child.findall("TRANSL")]
+            transcriptions.append(transcription)
+            times.append(time)
+            translations.append(translation)
+
+    return transcriptions, times, translations
+
+def remove_content_in_brackets(sentence, brackets="[]"):
+    out_sentence = ''
+    skip_c = 0
+    for c in sentence:
+        if c == brackets[0]:
+            skip_c += 1
+        elif c == brackets[1] and skip_c > 0:
+            skip_c -= 1
+        elif skip_c == 0:
+            out_sentence += c
+    return out_sentence

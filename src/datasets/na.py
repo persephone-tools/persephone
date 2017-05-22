@@ -4,12 +4,17 @@ import os
 import random
 import subprocess
 from subprocess import PIPE
+
 import xml.etree.ElementTree as ET
+import spacy
 
 import config
 import corpus
 import feat_extract
+import datasets.pangloss
 import utils
+
+fr_nlp = spacy.load("fr")
 
 random.seed(0)
 
@@ -17,6 +22,7 @@ ORG_DIR = config.NA_DIR
 TGT_DIR = "../data/na"
 ORG_TXT_NORM_DIR = os.path.join(ORG_DIR, "txt_norm")
 TGT_TXT_NORM_DIR = os.path.join(TGT_DIR, "txt_norm")
+ORG_XML_DIR = os.path.join(ORG_DIR, "xml")
 
 if not os.path.isdir(TGT_DIR):
     os.makedirs(TGT_DIR)
@@ -122,6 +128,10 @@ def prepare_wavs_and_transcripts(filenames, segmentation, tones):
     if not os.path.exists(TGT_TXT_NORM_DIR):
         os.makedirs(TGT_TXT_NORM_DIR)
 
+    TGT_TRANS_DIR = os.path.join(TGT_DIR, "translations")
+    if not os.path.exists(TGT_TRANS_DIR):
+        os.makedirs(TGT_TRANS_DIR)
+
     wav_dir = os.path.join(TGT_DIR, "wav")
     if not os.path.exists(wav_dir):
         os.makedirs(wav_dir)
@@ -131,6 +141,9 @@ def prepare_wavs_and_transcripts(filenames, segmentation, tones):
     def process_utterance(line, line_id):
         """ Given a line in a transcript, processes it and extracts the
         relevant segment from a WAV file.
+
+            Returns True if the utterance is to be kept and had its
+            transcription written; False otherwise.
         """
 
         # Remove lines with certain words in it.
@@ -150,8 +163,8 @@ def prepare_wavs_and_transcripts(filenames, segmentation, tones):
         syls = line.split()[2:]
         #syl_inv = syl_inv.union(syls)
 
-        assert fn.endswith(".txt")
-        prefix = fn.strip(".txt")
+        assert text_fn.endswith(".txt")
+        prefix = text_fn.strip(".txt")
 
         out_fn = prefix + "." + str(line_id)
         if tones:
@@ -163,19 +176,53 @@ def prepare_wavs_and_transcripts(filenames, segmentation, tones):
             out_fn += ".phn"
             labels = segment_phonemes(syls)
 
-        with open(os.path.join(TGT_TXT_NORM_DIR, out_fn), "w") as out_f:
+        out_path = os.path.join(TGT_TXT_NORM_DIR, out_fn)
+        with open(out_path, "w") as out_f:
             out_f.write(" ".join(labels))
 
         in_wav_fn = os.path.join(ORG_DIR, "wav", "%s.wav" % prefix)
         out_wav_fn = os.path.join(wav_dir, "%s.%d.wav" % (prefix, line_id))
-        utils.trim_wav(in_wav_fn, out_wav_fn, start_time, end_time)
+        #utils.trim_wav(in_wav_fn, out_wav_fn, start_time, end_time)
 
-    for fn in filenames:
-        with open(os.path.join(ORG_TXT_NORM_DIR, fn)) as f:
-            line_id = 0
-            for line in f:
-                process_utterance(line, line_id)
-                line_id += 1
+        return out_path
+
+    def process_translation(translation, remove_brackets_content=True):
+        """ Takes the translation(s) of some utterance, preprocesses it and 
+        writes it to file.
+        """
+
+        if remove_brackets_content:
+            trans = datasets.pangloss.remove_content_in_brackets(
+                translation[0], "[]")
+        # Not sure why I have to split and rejoin, but that fixes a Spacy token
+        # error.
+        trans = fr_nlp(" ".join(trans.split()[:]))
+        #trans = fr_nlp(trans)
+        trans = " ".join([token.lower_ for token in trans if not token.is_punct])
+        return trans
+
+    lattm_fn = os.path.join(TGT_DIR, "latticetm_filelist.tones%s.txt" % (str(tones)))
+    with open(lattm_fn, "w") as lattm_f:
+        for text_fn in filenames:
+            xml_fn = get_xml_fn(text_fn)
+            translations = datasets.pangloss.get_sents_times_and_translations(xml_fn)[2]
+            pre, ext = os.path.splitext(text_fn)
+            with open(os.path.join(ORG_TXT_NORM_DIR, text_fn)) as f:
+                lines = f.readlines()
+                assert len(lines) == len(translations)
+            with open(os.path.join(ORG_TXT_NORM_DIR, text_fn)) as f:
+                line_id = 0
+                for line in f:
+                    transcript_path = process_utterance(line, line_id)
+                    translation_fn = os.path.join(
+                        TGT_TRANS_DIR, "%s.%d.removebracs.%s" % (pre, line_id, "fr"))
+                    print(transcript_path)
+                    if transcript_path:
+                        print("%s\t%s" % (os.path.abspath(transcript_path), os.path.abspath(translation_fn)), file=lattm_f)
+                    translation = process_translation(translations[line_id])
+                    with open(translation_fn, "w") as transl_f:
+                        print(translation, file=transl_f)
+                    line_id += 1
 
 def wordlists_and_texts_fns():
     """ Determine which transcript and WAV prefixes correspond to wordlists,
@@ -332,6 +379,25 @@ def get_target_prefix(prefix):
     fn = os.path.basename(prefix)
     return os.path.join(TGT_DIR, "txt_norm", fn)
 
+def get_xml_fn(text_fn):
+    """ Fetches the filenames of the xml file corresponding to the txt_norm
+    transcription. (The formatting is slightly different, XML files are
+    prefixed with a lowercase "crdo" and do not have "HEADMIC" or "TABLEMIC"
+    suffixes.
+    """
+
+    pre, ext = os.path.splitext(text_fn)
+    sp = pre.split("-")
+    assert len(sp) == 2
+    headmic = "_HEADMIC"
+    if pre.endswith(headmic):
+        xml_fn = "crdo-" + sp[1][:-len(headmic)] + ".xml"
+    else:
+        xml_fn = "crdo-" + sp[1] + ".xml"
+    xml_fn = os.path.join(ORG_XML_DIR, xml_fn)
+
+    return xml_fn
+
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
 
@@ -379,10 +445,11 @@ class Corpus(corpus.AbstractCorpus):
     def prepare(self):
         """ Preprocessing the Na data."""
 
-        #texts_fns = wordlists_and_texts_fns()[1]
-        #prepare_wavs_and_transcripts(texts_fns, "phonemes", self.tones)
+        texts_fns = wordlists_and_texts_fns()[1]
+        prepare_wavs_and_transcripts(texts_fns, "phonemes", self.tones)
 
         # Prepare the untranscribed WAV files.
+        """
         org_untranscribed_dir = os.path.join(ORG_DIR, "untranscribed_wav")
         untranscribed_dir = os.path.join(TGT_DIR, "untranscribed_wav")
         from shutil import copyfile
@@ -401,6 +468,7 @@ class Corpus(corpus.AbstractCorpus):
                     trim_id += 1
 
         feat_extract.from_dir(os.path.join(TGT_DIR, "untranscribed_wav"), feat_type="log_mel_filterbank")
+        """
 
     def indices_to_phonemes(self, indices):
         return indices2phones(indices, self.tones)

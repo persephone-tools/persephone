@@ -11,6 +11,7 @@ from sklearn import preprocessing
 
 import config
 import corpus
+import datasets.pangloss
 import feat_extract
 import utils
 
@@ -32,22 +33,10 @@ PHONEMES_THREE_CHAR = set([phn for phn in PHONEMES if len(phn) == 3])
 PHONEMES_TWO_CHAR = set([phn for phn in PHONEMES if len(phn) == 2])
 PHONEMES_ONE_CHAR = set([phn for phn in PHONEMES if len(phn) == 1])
 
-def remove_parentheses(sentence):
-    out_sentence = ''
-    skip_c = 0
-    for c in sentence:
-        if c == '(':
-            skip_c += 1
-        elif c == ')' and skip_c > 0:
-            skip_c -= 1
-        elif skip_c == 0:
-            out_sentence += c
-    return out_sentence
-
 def extract_phonemes(sent, tgt_fn):
 
     org_sent = sent
-    sent = remove_parentheses(sent)
+    sent = datasets.pangloss.remove_content_in_brackets(sent, "()")
     sent = sent.replace(",", " ")
     sent = sent.replace("，", " ")
     sent = sent.replace("-", " ")
