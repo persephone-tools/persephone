@@ -32,10 +32,11 @@ def prep_exp_dir():
 
     return os.path.join(EXP_DIR, str(exp_num))
 
-def train():
+def train_na():
     """ Run an experiment. """
 
-    for i in [128,256,512,1024,2048]:
+#    for i in [128,256,512,1024,2048]:
+    for i in [1024]:
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
 
@@ -94,6 +95,17 @@ def produce_chatino_lattices():
     model = rnn_ctc.Model(exp_dir, corpus_reader)
     restore_model_path = os.path.join(
         EXP_DIR, "194", "model", "model_best.ckpt")
+    model.output_lattices(corpus_reader.valid_batch(), restore_model_path)
+
+def produce_na_lattices():
+    """ Apply a previously trained model to some test data. """
+    exp_dir = prep_exp_dir()
+    corpus = datasets.na.Corpus(feat_type="log_mel_filterbank",
+                                target_type="phn", tones=True)
+    corpus_reader = CorpusReader(corpus, num_train=2048)
+    model = rnn_ctc.Model(exp_dir, corpus_reader)
+    restore_model_path = os.path.join(
+        EXP_DIR, "131", "model", "model_best.ckpt")
     model.output_lattices(corpus_reader.valid_batch(), restore_model_path)
 
 def transcribe():

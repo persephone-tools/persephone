@@ -187,7 +187,7 @@ def prepare_wavs_and_transcripts(filenames, segmentation, tones):
         return out_path
 
     def process_translation(translation, remove_brackets_content=True):
-        """ Takes the translation(s) of some utterance, preprocesses it and 
+        """ Takes the translation(s) of some utterance, preprocesses it and
         writes it to file.
         """
 
@@ -409,9 +409,9 @@ class Corpus(corpus.AbstractCorpus):
         self.tones = tones
 
         if tones:
-            self.vocab_size = len(PHONES.union(set(TONES)))
+            self.phonemes = PHONES.union(set(TONES))
         else:
-            self.vocab_size = len(PHONES)
+            self.phonemes = PHONES
 
         if target_type != "phn":
             raise Exception("target_type %s not implemented." % target_type)
@@ -441,6 +441,12 @@ class Corpus(corpus.AbstractCorpus):
         self.train_prefixes = prefixes[:train_end]
         self.valid_prefixes = prefixes[train_end:valid_end]
         self.test_prefixes = prefixes[valid_end:]
+
+        self.PHONEME_TO_INDEX = {phn: index for index, phn in enumerate(
+                                 ["pad"] + sorted(list(self.phonemes)))}
+        self.INDEX_TO_PHONEME = {index: phn for index, phn in enumerate(
+                                 ["pad"] + sorted(list(self.phonemes)))}
+        self.vocab_size = len(self.phonemes)
 
     def prepare(self):
         """ Preprocessing the Na data."""
