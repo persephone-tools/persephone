@@ -3,6 +3,7 @@ data/timit
 data/na/
 data/griko/
 data/chatino/
+data/japhug/
 exp/
 *.swp
 *.pyc

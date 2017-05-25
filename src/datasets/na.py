@@ -376,8 +376,15 @@ def get_target_prefix(prefix):
     """ Given a prefix of the form /some/path/here/wav/prefix, returns the
     corresponding target file name."""
 
-    fn = os.path.basename(prefix)
-    return os.path.join(TGT_DIR, "txt_norm", fn)
+    bn = os.path.basename(prefix)
+    return os.path.join(TGT_DIR, "txt_norm", bn)
+
+def get_transl_prefix(prefix):
+    """ Given a prefix of the form /some/path/here/wav/prefix, returns the
+    corresponding target file name."""
+
+    bn = os.path.basename(prefix)
+    return os.path.join(TGT_DIR, "translations", bn)
 
 def get_xml_fn(text_fn):
     """ Fetches the filenames of the xml file corresponding to the txt_norm
@@ -488,7 +495,10 @@ class Corpus(corpus.AbstractCorpus):
         target_fns = ["%s.%s%s" % (get_target_prefix(prefix),
                                     "tones." if self.tones else "", self.target_type)
                     for prefix in self.train_prefixes]
-        return feat_fns, target_fns
+        # TODO Make more general
+        transl_fns = ["%s.removebracs.fr" % get_transl_prefix(prefix)
+                      for prefix in self.train_prefixes]
+        return feat_fns, target_fns, transl_fns
 
     def get_valid_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
@@ -496,7 +506,9 @@ class Corpus(corpus.AbstractCorpus):
         target_fns = ["%s.%s%s" % (get_target_prefix(prefix),
                                  "tones." if self.tones else "", self.target_type)
                     for prefix in self.valid_prefixes]
-        return feat_fns, target_fns
+        transl_fns = ["%s.removebracs.fr" % get_transl_prefix(prefix)
+                      for prefix in self.valid_prefixes]
+        return feat_fns, target_fns, transl_fns
 
     def get_test_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
@@ -504,7 +516,9 @@ class Corpus(corpus.AbstractCorpus):
         target_fns = ["%s.%s%s" % (get_target_prefix(prefix),
                                  "tones." if self.tones else "", self.target_type)
                     for prefix in self.test_prefixes]
-        return feat_fns, target_fns
+        transl_fns = ["%s.removebracs.fr" % get_transl_prefix(prefix)
+                      for prefix in self.valid_prefixes]
+        return feat_fns, target_fns, transl_fns
 
     def get_untranscribed_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)

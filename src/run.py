@@ -74,7 +74,6 @@ def train_japhug():
         model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
         model.train()
 
-
 def test():
     """ Apply a previously trained model to some test data. """
     exp_dir = prep_exp_dir()
