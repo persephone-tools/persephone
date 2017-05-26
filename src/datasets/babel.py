@@ -1,6 +1,7 @@
 """ Preprocess and interface with the LORELEI Babel data. """
 
 import os
+import shutil
 import subprocess
 
 from context_manager import cd
@@ -8,6 +9,7 @@ from context_manager import cd
 ORG_BABEL_DIR = ("/scratch/ariel/data/IARPA-BABEL-unpacked/oasis/projects/"
                  "nsf/cmu131/fmetze/babel-corpus/")
 WORK_BABEL_DIR = "/lt/work/oadams/babel/"
+BABELIPA_DIR = "/home/oadams/data/babelipa/"
 
 LANG_DIR_MAP = {"turkish":("105-B/BABEL_BP_105", "105-turkish"),
                 "tagalog":("106-B/BABEL_BP_106", "106-tagalog"),
@@ -33,7 +35,9 @@ def sph2wav(input_fn, output_fn):
     subprocess.run(args)
 
 def babel_sph2wav(langs=LANGS):
-    """ Converts the Babel data into WAV formats."""
+    """ Converts the Babel sphere files in the original directory to WAV files
+    in the working directory.
+    """
 
     for lang in langs:
         org_lang_dir = os.path.join(ORG_BABEL_DIR, LANG_DIR_MAP[lang][0])
@@ -48,6 +52,26 @@ def babel_sph2wav(langs=LANGS):
                         output_fn = os.path.splitext(input_fn)[0] + ".wav"
                         output_path = os.path.join(output_dir, output_fn)
                         input_path = os.path.join(input_dir, input_fn)
-#                        print(input_path)
-                        print(output_path)
                         sph2wav(input_path, output_path)
+
+def babelipa_transcriptions(langs=LANGS):
+    """ Puts IPA transcriptions of the Babel data in the working directory. """
+    # TODO Currently just moves the conversational transcripts Antonis
+    # generated. Should generalize to the scripted too, as we'll want that for
+    # training data.
+
+    for lang in langs:
+        org_lang_dir = os.path.join(BABELIPA_DIR, LANG_DIR_MAP[lang][1])
+        with cd(org_lang_dir):
+            for input_dir, leaf_dirs, input_fns in os.walk("."):
+                for leaf_dir in leaf_dirs:
+                    if leaf_dir == "ipatranscription":
+                        input_path = os.path.join(input_dir, leaf_dir)
+                        print(input_path)
+                        output_path = os.path.join(WORK_BABEL_DIR,
+                                                   LANG_DIR_MAP[lang][1],
+                                                   "conversational",
+                                                   input_dir,
+                                                   leaf_dir)
+                        print(output_path)
+                        shutil.copytree(input_path, output_path)
