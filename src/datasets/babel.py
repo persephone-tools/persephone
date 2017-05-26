@@ -5,6 +5,7 @@ import shutil
 import subprocess
 
 from context_manager import cd
+import utils
 
 ORG_BABEL_DIR = ("/scratch/ariel/data/IARPA-BABEL-unpacked/oasis/projects/"
                  "nsf/cmu131/fmetze/babel-corpus/")
@@ -75,3 +76,71 @@ def babelipa_transcriptions(langs=LANGS):
                                                    leaf_dir)
                         print(output_path)
                         shutil.copytree(input_path, output_path)
+
+def split_wavs_and_txts(langs=LANGS):
+    """ Based on timing information in transcriptions, splits the WAV files and
+    the transcriptions such that there is one file per utterance. Puts the
+    split files in an 'utters' subdir of our working Babel dir.
+    """
+
+    def get_wav_path(txt_path):
+        """ Given a transcription path, gets the corresponding wav."""
+
+        pre, ext = os.path.splitext(os.path.basename(txt_path))
+        parent_dir = os.path.dirname(os.path.dirname(txt_path))
+        wav_path = os.path.join(parent_dir, "audio", "%s.wav" % pre)
+        return wav_path
+
+    def split_wav_and_txt(input_wav_path, input_txt_path):
+        """ Takes the path to an individual WAV and txt file and outputs a
+        number of wavs and txt files corresponding to invidual utterances."""
+
+        times = []
+        utter_txts = []
+        with open(input_txt_path) as input_txt_f:
+            for line in input_txt_f:
+                if line.startswith("[") and line.endswith("]\n"):
+                    # Len 9 line indicates times. Eg. "[577.805]"
+                    num_str = line.replace("[", "").replace("]", "")
+                    times.append(float(num_str))
+                else:
+                    utter_txts.append(line)
+
+        assert len(times) == len(utter_txts) + 1
+
+        for i, utter_txt in enumerate(utter_txts):
+
+            if utter_txt.strip() != "<no-speech>":
+                # Split the wav
+                output_wav_path = os.path.join(output_dir, input_wav_path)
+                pre, ext = os.path.splitext(output_wav_path)
+                output_wav_path = pre + "_utter%s" % i + ext
+                utils.make_parent(output_wav_path)
+                start_time = times[i]
+                end_time = times[i+1]
+                utils.trim_wav(input_wav_path, output_wav_path,
+                               start_time, end_time)
+
+                # Split the transcription
+                output_txt_path = os.path.join(output_dir, input_txt_path)
+                pre, ext = os.path.splitext(output_txt_path)
+                output_txt_path = pre + "_utter%s" % i + ext
+                utils.make_parent(output_txt_path)
+                print(output_txt_path)
+                print(output_wav_path)
+                with open(output_txt_path, "w") as output_txt_f:
+                    print(utter_txt, end="", file=output_txt_f)
+
+    for lang in langs:
+        org_lang_dir = os.path.join(WORK_BABEL_DIR, LANG_DIR_MAP[lang][1])
+        output_dir = os.path.join(WORK_BABEL_DIR, "utters",
+                                  LANG_DIR_MAP[lang][1])
+        with cd(org_lang_dir):
+            for input_dir, _, input_fns in os.walk("."):
+                for input_fn in input_fns:
+                    if input_fn.endswith(".txt"):
+                        input_txt_path = os.path.join(input_dir, input_fn)
+                        input_wav_path = get_wav_path(input_txt_path)
+                        print(input_txt_path)
+                        print(input_wav_path)
+                        split_wav_and_txt(input_wav_path, input_txt_path)
