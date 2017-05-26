@@ -5,6 +5,8 @@ import shutil
 import subprocess
 
 from context_manager import cd
+import corpus
+import feat_extract
 import utils
 
 ORG_BABEL_DIR = ("/scratch/ariel/data/IARPA-BABEL-unpacked/oasis/projects/"
@@ -27,6 +29,12 @@ LANG_DIR_MAP = {"turkish":("105-B/BABEL_BP_105", "105-turkish"),
                 "cebuano":("IARPA-babel301b-v2.0b-build/BABEL_OP2_301", "301-cebuano"),
                 "kazakh":("IARPA-babel302b-v1.0a-build/BABEL_OP2_302", "302-kazakh")}
 LANGS = list(LANG_DIR_MAP.keys())
+
+def prepare(langs=LANGS, feat_type="log_mel_filterbank"):
+    babel_sph2wav(langs)
+    babelipa_transcriptions(langs)
+    split_wavs_and_txts(langs)
+    feat_extraction(feat_type)
 
 def sph2wav(input_fn, output_fn):
     """ Call sph2pipe to convert alaw .sph files to ulaw .wav files, which will
@@ -144,3 +152,72 @@ def split_wavs_and_txts(langs=LANGS):
                         print(input_txt_path)
                         print(input_wav_path)
                         split_wav_and_txt(input_wav_path, input_txt_path)
+
+
+def feat_extraction(feat_type):
+    """ Extracts features from all the utterances. """
+
+    if feat_type != "log_mel_filterbank":
+        raise Exception("Feature type %s not implemented." % feat_type)
+
+    count = 0
+    utters_dir = os.path.join(WORK_BABEL_DIR, "utters")
+    for input_dir, _, input_fns in os.walk(utters_dir):
+        for input_fn in input_fns:
+            if input_fn.endswith(".wav"):
+                count += 1
+                input_path = os.path.join(input_dir, input_fn)
+                feat_extract.logfbank_feature_extraction(input_path)
+
+def load_phns(lang):
+    """ Loads the phone lexicon for the given language."""
+
+    phn_lex_path = os.path.join(BABELIPA_DIR, LANG_DIR_MAP[lang][1],
+                                "phone.lexicon.txt")
+    phones = []
+    with open(phn_lex_path) as phn_f:
+        for line in phn_f:
+            phones.append(line.split()[0])
+
+    return phones
+
+class Corpus(corpus.AbstractCorpus):
+
+    def __init__(self, langs,
+                 feat_type="log_mel_filterbank", tgt_type="phn",
+                 max_samples=1000, scripted=False):
+
+        if tgt_type != "phn":
+            raise Exception("Target type %s not implemented." % tgt_type)
+
+        dev_utters = []
+        eval_utters = []
+        train_utters = []
+
+        txt_paths = []
+        # Create list of utterance_ids based on the languages, 
+        for lang in langs:
+            lang_dir = os.path.join(WORK_BABEL_DIR, "utters",
+                                    LANG_DIR_MAP[lang][1])
+            if not scripted:
+                # Then we exclusively use conversational training data.
+                lang_dir = os.path.join(lang_dir, "conversational")
+
+            # Load transcription paths
+            for input_dir, _, input_fns in os.walk(lang_dir):
+                for input_fn in input_fns:
+                    if input_fn.endswith(".txt"):
+                        txt_path = os.path.join(input_dir, input_fn)
+                        txt_paths.append(txt_path)
+
+        feat_paths = [get_feat_path(txt_path) for txt_path in txt_paths]
+        train_feat_paths = [feat_path for feat_path in feat_paths
+                            if "/training/" in feat_path]
+        train_txt_paths = [txt_path for txt_path in txt_paths
+                           if "/training/" in txt_path]
+        dev_feat_paths = [feat_path for feat_path in feat_paths
+                          if "/dev/" in feat_path]
+        dev_txt_paths = [txt_path for txt_path in txt_paths
+                         if "/dev/" in txt_path]
+
+        phones = load_phns(lang)
