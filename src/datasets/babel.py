@@ -31,7 +31,7 @@ LANG_DIR_MAP = {"turkish":("105-B/BABEL_BP_105", "105-turkish"),
 LANGS = list(LANG_DIR_MAP.keys())
 
 def prepare(langs=LANGS, feat_type="log_mel_filterbank"):
-    langs.remove("assamese")
+#    langs.remove("assamese")
     babel_sph2wav(langs)
     babelipa_transcriptions(langs)
     split_wavs_and_txts(langs)
@@ -125,23 +125,28 @@ def split_wavs_and_txts(langs=LANGS):
         for i, utter_txt in enumerate(utter_txts):
 
             if utter_txt.strip() != "<no-speech>":
-                # Split the wav
-                output_wav_path = os.path.join(output_dir, input_wav_path)
-                pre, ext = os.path.splitext(output_wav_path)
-                output_wav_path = pre + "_utter%s" % i + ext
-                utils.make_parent(output_wav_path)
+
                 start_time = times[i]
                 end_time = times[i+1]
-                utils.trim_wav(input_wav_path, output_wav_path,
-                               start_time, end_time)
 
-                # Split the transcription
-                output_txt_path = os.path.join(output_dir, input_txt_path)
-                pre, ext = os.path.splitext(output_txt_path)
-                output_txt_path = pre + "_utter%s" % i + ext
-                utils.make_parent(output_txt_path)
-                with open(output_txt_path, "w") as output_txt_f:
-                    print(utter_txt, end="", file=output_txt_f)
+                if end_time - start_time < 10:
+                    # To ensure we don't end up with utterances too long
+
+                    # Split the wav
+                    output_wav_path = os.path.join(output_dir, input_wav_path)
+                    pre, ext = os.path.splitext(output_wav_path)
+                    output_wav_path = pre + "_utter%s" % i + ext
+                    utils.make_parent(output_wav_path)
+                    utils.trim_wav(input_wav_path, output_wav_path,
+                                   start_time, end_time)
+
+                    # Split the transcription
+                    output_txt_path = os.path.join(output_dir, input_txt_path)
+                    pre, ext = os.path.splitext(output_txt_path)
+                    output_txt_path = pre + "_utter%s" % i + ext
+                    utils.make_parent(output_txt_path)
+                    with open(output_txt_path, "w") as output_txt_f:
+                        print(utter_txt, end="", file=output_txt_f)
 
     for lang in langs:
         print("Splitting wavs for %s" % lang)
@@ -173,8 +178,8 @@ def feat_extraction(langs, feat_type):
                 if input_fn.endswith(".wav"):
                     count += 1
                     input_path = os.path.join(input_dir, input_fn)
-                    print(input_path)
-#                    feat_extract.logfbank_feature_extraction(input_path)
+                    print(count, input_path)
+                    feat_extract.logfbank_feature_extraction(input_path)
 
 def load_phns(lang):
     """ Loads the phone lexicon for the given language."""
@@ -234,8 +239,8 @@ class Corpus(corpus.AbstractCorpus):
                         feat_path = os.path.join(input_dir, input_fn)
                         feat_paths.append(feat_path)
 
-        if max_samples:
-            feat_paths = filter_by_size(feat_paths, max_samples)
+        #if max_samples:
+        #    feat_paths = filter_by_size(feat_paths, max_samples)
 
         print(len(feat_paths))
 

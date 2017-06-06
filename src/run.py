@@ -5,11 +5,12 @@ import shutil
 
 import config
 import rnn_ctc
-import datasets.na
-import datasets.griko
-import datasets.chatino
-import datasets.timit
-import datasets.japhug
+#import datasets.na
+#import datasets.griko
+#import datasets.chatino
+#import datasets.timit
+#import datasets.japhug
+import datasets.babel
 from corpus_reader import CorpusReader
 
 EXP_DIR = config.EXP_DIR
@@ -31,6 +32,15 @@ def prep_exp_dir():
     shutil.copytree(os.getcwd(), code_dir)
 
     return os.path.join(EXP_DIR, str(exp_num))
+
+def train_babel():
+    # Prepares a new experiment dir for all logging.
+    exp_dir = prep_exp_dir()
+
+    corpus = datasets.babel.Corpus(["turkish"])
+    corpus_reader = CorpusReader(corpus, num_train=len(corpus.get_train_fns()), batch_size=128)
+    model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
+    model.train()
 
 def train_na():
     """ Run an experiment. """
