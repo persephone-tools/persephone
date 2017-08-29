@@ -182,7 +182,7 @@ def prepare_wavs_and_transcripts(filenames, segmentation, tones):
 
         in_wav_fn = os.path.join(ORG_DIR, "wav", "%s.wav" % prefix)
         out_wav_fn = os.path.join(wav_dir, "%s.%d.wav" % (prefix, line_id))
-        #utils.trim_wav(in_wav_fn, out_wav_fn, start_time, end_time)
+        utils.trim_wav(in_wav_fn, out_wav_fn, start_time, end_time)
 
         return out_path
 
@@ -455,11 +455,11 @@ class Corpus(corpus.AbstractCorpus):
                                  ["pad"] + sorted(list(self.phonemes)))}
         self.vocab_size = len(self.phonemes)
 
-    def prepare(self):
+    def prepare(tones):
         """ Preprocessing the Na data."""
 
         texts_fns = wordlists_and_texts_fns()[1]
-        prepare_wavs_and_transcripts(texts_fns, "phonemes", self.tones)
+        prepare_wavs_and_transcripts(texts_fns, "phonemes", tones)
 
         # Prepare the untranscribed WAV files.
         """
