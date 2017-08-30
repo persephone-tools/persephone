@@ -62,7 +62,7 @@ class CorpusReader:
         training example minus the extension.
         """
 
-        feat_fn_batch, target_fn_batch = zip(*fn_batch)
+        feat_fn_batch, target_fn_batch, trans_fn_batch = zip(*fn_batch)
 
         batch_inputs, batch_inputs_lens = utils.load_batch_x(feat_fn_batch,
                                                              flatten=True)

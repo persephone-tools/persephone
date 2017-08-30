@@ -5,7 +5,7 @@ import shutil
 
 import config
 import rnn_ctc
-#import datasets.na
+import datasets.na
 #import datasets.griko
 #import datasets.chatino
 #import datasets.timit
@@ -45,13 +45,13 @@ def train_babel():
 def train_na():
     """ Run an experiment. """
 
-#    for i in [128,256,512,1024,2048]:
-    for i in [1024]:
+    for i in [128,256,512,1024,2048]:
+#    for i in [1024]:
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
 
         corpus = datasets.na.Corpus(feat_type="log_mel_filterbank",
-                                    target_type="phn", tones=True)
+                                    target_type="phn", tones=False)
         corpus_reader = CorpusReader(corpus, num_train=i)
         model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
         model.train()

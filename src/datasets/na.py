@@ -41,6 +41,7 @@ TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩"}
 PHONES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS)
 NUM_PHONES = len(PHONES)
 PHONES2INDICES = {phn: index for index, phn in enumerate(PHONES)}
+INDICES2PHONES = {index: phn for index, phn in enumerate(PHONES)}
 PHONES_TONES = sorted(list(PHONES.union(set(TONES)))) # Sort for determinism
 PHONESTONES2INDICES = {phn_tone: index for index, phn_tone in enumerate(PHONES_TONES)}
 INDICES2PHONESTONES = {index: phn_tone for index, phn_tone in enumerate(PHONES_TONES)}
@@ -427,9 +428,9 @@ class Corpus(corpus.AbstractCorpus):
         prefixes = [os.path.join(input_dir, fn.strip(".wav"))
                     for fn in os.listdir(input_dir) if fn.endswith(".wav")]
         untranscribed_dir = os.path.join(TGT_DIR, "untranscribed_wav")
-        self.untranscribed_prefixes = [os.path.join(
-            untranscribed_dir, fn.strip(".wav"))
-            for fn in os.listdir(untranscribed_dir) if fn.endswith(".wav")]
+        #self.untranscribed_prefixes = [os.path.join(
+        #    untranscribed_dir, fn.strip(".wav"))
+        #    for fn in os.listdir(untranscribed_dir) if fn.endswith(".wav")]
 
         if max_samples:
             prefixes = self.sort_and_filter_by_size(prefixes, max_samples)
@@ -455,11 +456,13 @@ class Corpus(corpus.AbstractCorpus):
                                  ["pad"] + sorted(list(self.phonemes)))}
         self.vocab_size = len(self.phonemes)
 
-    def prepare(tones):
+    def prepare(tones, feat_type="log_mel_filterbank"):
         """ Preprocessing the Na data."""
 
-        texts_fns = wordlists_and_texts_fns()[1]
-        prepare_wavs_and_transcripts(texts_fns, "phonemes", tones)
+        #texts_fns = wordlists_and_texts_fns()[1]
+        #prepare_wavs_and_transcripts(texts_fns, "phonemes", tones)
+        input_dir = os.path.join(TGT_DIR, "wav")
+        feat_extract.from_dir(input_dir, feat_type)
 
         # Prepare the untranscribed WAV files.
         """
