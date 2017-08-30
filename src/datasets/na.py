@@ -533,3 +533,31 @@ class Corpus(corpus.AbstractCorpus):
         feat_fns = ["..%s.%d.%s.npy" % (fn, fn_id, self.feat_type) for fn, fn_id in fn_id_pairs]
 
         return feat_fns
+
+def tones_only(sent):
+    """ Returns only the Na tones present in the sentence."""
+    return [tone for tone in sent if tone in TONES]
+
+def phones_only(sent):
+    """ Returns only the Na phones present in the sentence."""
+    return [phone for phone in sent if phone in PHONES]
+
+def phones_only_error_rate(hyps_path, refs_path):
+    with open(hyps_path) as hyps_f:
+        lines = hyps_f.readlines()
+        hyps = [phones_only(line.split()) for line in lines]
+    with open(refs_path) as refs_f:
+        lines = refs_f.readlines()
+        refs = [phones_only(line.split()) for line in lines]
+
+    return utils.batch_per(hyps, refs)
+
+def tones_only_error_rate(hyps_path, refs_path):
+    with open(hyps_path) as hyps_f:
+        lines = hyps_f.readlines()
+        hyps = [tones_only(line.split()) for line in lines]
+    with open(refs_path) as refs_f:
+        lines = refs_f.readlines()
+        refs = [tones_only(line.split()) for line in lines]
+
+    print(utils.batch_per(hyps, refs))
