@@ -411,17 +411,16 @@ class Corpus(corpus.AbstractCorpus):
 
     TRAIN_VALID_TEST_RATIOS = [.8,.1,.1]
 
-    def __init__(self, feat_type, target_type, tones=False, max_samples=1000):
+    def __init__(self, feat_type, target_type="phonemes_and_tones", max_samples=1000):
         super().__init__(feat_type, target_type)
 
-        self.tones = tones
-
-        if tones:
+        if target_type == "phonemes_and_tones":
             self.phonemes = PHONES.union(set(TONES))
-        else:
+        if target_type == "phonemes":
             self.phonemes = PHONES
-
-        if target_type != "phn":
+        if target_type == "tones":
+            self.phonemes = TONES
+        else:
             raise Exception("target_type %s not implemented." % target_type)
 
         input_dir = os.path.join(TGT_DIR, "wav")
@@ -456,11 +455,11 @@ class Corpus(corpus.AbstractCorpus):
                                  ["pad"] + sorted(list(self.phonemes)))}
         self.vocab_size = len(self.phonemes)
 
-    def prepare(tones, feat_type="log_mel_filterbank"):
+    def prepare(target_type="phones_and_tones", feat_type="log_mel_filterbank"):
         """ Preprocessing the Na data."""
 
-        #texts_fns = wordlists_and_texts_fns()[1]
-        #prepare_wavs_and_transcripts(texts_fns, "phonemes", tones)
+        texts_fns = wordlists_and_texts_fns()[1]
+        prepare_wavs_and_transcripts(texts_fns, target_type)
         input_dir = os.path.join(TGT_DIR, "wav")
         feat_extract.from_dir(input_dir, feat_type)
 
