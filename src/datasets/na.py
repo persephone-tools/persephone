@@ -6,15 +6,12 @@ import subprocess
 from subprocess import PIPE
 
 import xml.etree.ElementTree as ET
-import spacy
 
 import config
 import corpus
 import feat_extract
 import datasets.pangloss
 import utils
-
-fr_nlp = spacy.load("fr")
 
 random.seed(0)
 
@@ -114,8 +111,27 @@ def wav_length(fn):
     assert length_line[0] == "Length"
     return float(length_line[-1])
 
+def prepare_na_sent(sent):
+    """ New function phasing into MAM. Processes sentences obtained from
+    datasets.pangloss.get_sents_times_and_translations() so that we can bypass
+    use of the text_norm directory and generalize to more Na Pangloss data. """
+
+    def remove_symbols(line):
+        """ Remove certain symbols from the line."""
+        for symbol in TO_REMOVE:
+            line = line.replace(symbol, " ")
+        #if not tones:
+        #    for tone in TONES:
+        #        line = line.replace(tone, " ")
+        return line
+
+    return remove_symbols(sent)
+
 def prepare_wavs_and_transcripts(filenames, segmentation, tones):
     """ Trims available wavs into the sentence or utterance-level."""
+
+    import spacy
+    fr_nlp = spacy.load("fr")
 
     def remove_symbols(line):
         """ Remove certain symbols from the line."""
