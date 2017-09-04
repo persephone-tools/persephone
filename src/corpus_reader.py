@@ -58,14 +58,14 @@ class CorpusReader:
         self.train_fns = self.train_fns[:self.num_train]
 
     def load_batch(self, fn_batch):
-        """ Loads a batch with the given prefix. The prefix is the full path to the
+        """ Loads a batch with the given prefixes. The prefixes is the full path to the
         training example minus the extension.
         """
 
         feat_fn_batch, target_fn_batch, trans_fn_batch = zip(*fn_batch)
 
         batch_inputs, batch_inputs_lens = utils.load_batch_x(feat_fn_batch,
-                                                             flatten=True)
+                                                             flatten=False)
         batch_targets_list = []
         for targets_path in target_fn_batch:
             with open(targets_path) as targets_f:
@@ -106,7 +106,7 @@ class CorpusReader:
 
         feat_fn_batch = self.corpus.get_untranscribed_fns()
         batch_inputs, batch_inputs_lens = utils.load_batch_x(feat_fn_batch,
-                                                             flatten=True)
+                                                             flatten=False)
         return batch_inputs, batch_inputs_lens, feat_fn_batch
 
     def human_readable_hyp_ref(self, dense_decoded, dense_y):

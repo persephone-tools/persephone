@@ -53,8 +53,8 @@ def train_na():
         exp_dir = prep_exp_dir()
         exp_dirs.append(exp_dir)
 
-        corpus = datasets.na.Corpus(feat_type="log_mel_filterbank",
-                                    target_type="phn", tones=False)
+        corpus = datasets.na.Corpus(feat_type="filterbank_pitch",
+                                    target_type="phn", tones=True)
         corpus_reader = CorpusReader(corpus, num_train=i)
         model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
         model.train()

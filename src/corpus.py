@@ -55,7 +55,7 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         prefix_lens = []
         for prefix in prefixes:
             path = "%s.%s.npy" % (prefix, self.feat_type)
-            _, batch_x_lens = utils.load_batch_x([path], flatten=True)
+            _, batch_x_lens = utils.load_batch_x([path], flatten=False)
             prefix_lens.append((prefix, batch_x_lens[0]))
         prefix_lens.sort(key=lambda prefix_len: prefix_len[1])
         prefixes = [prefix for prefix, length in prefix_lens
@@ -137,6 +137,9 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
             if len(feats.shape) == 3:
                 # Then there are multiple channels of multiple feats
                 self._num_feats = feats.shape[1] * feats.shape[2]
+            elif len(feats.shape) == 2:
+                # Otherwise it is just of shape time x feats
+                self._num_feats = feats.shape[1]
             else:
                 raise Exception(
                     "Feature matrix of shape %s unexpected" % str(feats.shape))
