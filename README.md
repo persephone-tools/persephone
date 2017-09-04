@@ -1,6 +1,5 @@
 ## MAM
-A tool for simple development of multilingual acoustic models using end-to-end
-models.
+A tool for development of CTC-based acoustic models for low-resource scenarios.
 
 ## Requirements
 * Tensorflow (API v1.0)
