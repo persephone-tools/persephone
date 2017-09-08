@@ -5,6 +5,9 @@ import datasets.na
 import os
 import utils
 
+def round_items(floats):
+    return ["%0.3f" % fl for fl in floats]
+
 def format(exp_paths,
                    phones=datasets.na.PHONES,
                    tones=datasets.na.TONES):
@@ -15,23 +18,29 @@ def format(exp_paths,
     valid_pers = []
     test_lers = []
     test_pers = []
+    test_ters = []
 
     for path in exp_paths:
 
-        test_ler, test_per = test_results(path, phones)
+        test_ler, test_per, test_ter = test_results(path, phones, tones)
         test_lers.append(test_ler)
         test_pers.append(test_per)
+        test_ters.append(test_ter)
 
         with open(os.path.join(path, "best_scores.txt")) as best_f:
             sp = best_f.readline().replace(",", "").split()
             training_ler, valid_ler, valid_per = float(sp[4]), float(sp[7]), float(sp[10])
-            valid_pers.append(valid_per)
+            valid_lers.append(valid_ler)
 
-    print(valid_pers)
-    print(test_lers)
-    print(test_pers)
+    print("Valid LER", round_items(valid_lers))
+    print("Test LER", round_items(test_lers))
+    print("Test PER", round_items(test_pers))
+    print("Test TER", round_items(test_ters))
 
-def test_results(exp_path, phones):
+    for item in zip([128,256,512,1024,2048], test_pers):
+        print("(%d, %f)" % item)
+
+def test_results(exp_path, phones, tones):
     """ Gets results of the model on the test set. """
 
     test_path = os.path.join(exp_path, "test")
@@ -43,8 +52,11 @@ def test_results(exp_path, phones):
                                       os.path.join(test_path, "refs"),
                                       phones)
 
+    test_ter = tones_only_error_rate(os.path.join(test_path, "hyps"),
+                                      os.path.join(test_path, "refs"),
+                                      tones)
 
-    return test_ler, test_per
+    return test_ler, test_per, test_ter
 
 def phones_only_error_rate(hyps_path, refs_path, phones):
 
@@ -74,4 +86,12 @@ def tones_only_error_rate(hyps_path, refs_path, tones):
         lines = refs_f.readlines()
         refs = [tones_only(line.split()) for line in lines]
 
-    print(utils.batch_per(hyps, refs))
+    # For the case where there are no tones (the experiment was phones only).
+    only_empty = True
+    for entry in hyps:
+        if entry != []:
+            only_empty = False
+    if only_empty:
+        return -1
+
+    return utils.batch_per(hyps, refs)
