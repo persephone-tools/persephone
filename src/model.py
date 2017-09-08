@@ -282,6 +282,7 @@ class Model:
                 epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per)
             print(epoch_str, flush=True, file=out_file)
 
+
             # Implement early stopping.
             if valid_ler < best_valid_ler:
                 print("New best valid_ler", file=out_file)
@@ -295,6 +296,7 @@ class Model:
                     os.mkdir(os.path.dirname(path))
                 saver.save(sess, path)
                 self.saved_model_path = path
+
             else:
                 print("Steps since last best valid_ler: %d" % (steps_since_last_record), file=out_file)
                 steps_since_last_record += 1
@@ -323,7 +325,7 @@ class Model:
                         continue
 
         # Finally, run evaluation on the test set.
-        eval(restore_model_path=self.saved_model_path)
+        self.eval(restore_model_path=self.saved_model_path)
 
         sess.close()
         out_file.close()
