@@ -14,8 +14,6 @@ import feat_extract
 import datasets.pangloss
 import utils
 
-fr_nlp = spacy.load("fr")
-
 random.seed(0)
 
 ORG_DIR = config.NA_DIR
@@ -114,8 +112,12 @@ def wav_length(fn):
     assert length_line[0] == "Length"
     return float(length_line[-1])
 
-def prepare_wavs_and_transcripts(filenames, segmentation, tones):
+def prepare_wavs_and_transcripts(filenames, target_type):
     """ Trims available wavs into the sentence or utterance-level."""
+    # TODO To be deprecated. This functionality should be broken down into
+    # smaller parts and made a part of the method of the class "Corpus".
+
+    fr_nlp = spacy.load("fr")
 
     def remove_symbols(line):
         """ Remove certain symbols from the line."""
@@ -140,7 +142,7 @@ def prepare_wavs_and_transcripts(filenames, segmentation, tones):
     syl_inv = set()
 
     def process_utterance(line, line_id):
-        """ Given a line in a transcript, processes it and extracts the
+        """ Given a line in a txt_norm/ transcript, processes it and extracts the
         relevant segment from a WAV file.
 
             Returns True if the utterance is to be kept and had its
@@ -416,12 +418,16 @@ class Corpus(corpus.AbstractCorpus):
 
         if target_type == "phonemes_and_tones":
             self.phonemes = PHONES.union(set(TONES))
-        if target_type == "phonemes":
+        elif target_type == "phonemes":
             self.phonemes = PHONES
-        if target_type == "tones":
+        elif target_type == "tones":
             self.phonemes = TONES
         else:
             raise Exception("target_type %s not implemented." % target_type)
+
+        # TODO Change self.phonemes field to self.tgt_labels, and related
+        # variables names that might represent tones as well, or just tones.
+        self.target_set = self.phonemes
 
         input_dir = os.path.join(TGT_DIR, "wav")
         prefixes = [os.path.join(input_dir, fn.strip(".wav"))
@@ -455,13 +461,59 @@ class Corpus(corpus.AbstractCorpus):
                                  ["pad"] + sorted(list(self.phonemes)))}
         self.vocab_size = len(self.phonemes)
 
-    def prepare(target_type="phones_and_tones", feat_type="log_mel_filterbank"):
+    def prepare(self):
         """ Preprocessing the Na data."""
 
+        def remove_symbols(line):
+            """ Remove certain symbols from the line."""
+            for symbol in TO_REMOVE:
+                line = line.replace(symbol, "")
+            #if not tones:
+            #    for tone in TONES:
+            #        line = line.replace(tone, "")
+            return line
+
+        def prepare_transcripts(texts_fns):
+
+            if not os.path.exists(TGT_TXT_NORM_DIR):
+                os.makedirs(TGT_TXT_NORM_DIR)
+
+            for text_fn in texts_fns:
+                #pre, ext = os.path.splitext(text_fn)
+                with open(os.path.join(ORG_TXT_NORM_DIR, text_fn)) as f:
+                    line_id = 0
+                    for line in f:
+                        #transcript_path = process_utterance(line, line_id)
+                        # Remove lines with certain words in it.
+                        if contains_forbidden_word(line):
+                            line_id += 1
+                            continue
+                        # Remove certain symbols from lines.
+                        line = remove_symbols(line)
+                        # Get syllables
+                        syls = line.split()[2:]
+                        # Break syllables tokens into phonemes and tones
+                        phones_and_tones = segment_phonemes(syls)
+                        # Filter for the tokens we want (phonemes, tones or
+                        # both)
+                        tokens = [tok for tok in phones_and_tones if tok in self.target_set]
+
+                        assert text_fn.endswith(".txt")
+                        prefix = text_fn.strip(".txt")
+
+                        out_fn = prefix + "." + str(line_id) + "." + self.target_type
+
+                        out_path = os.path.join(TGT_TXT_NORM_DIR, out_fn)
+                        with open(out_path, "w") as out_f:
+                            out_f.write(" ".join(tokens))
+                        line_id += 1
+
         texts_fns = wordlists_and_texts_fns()[1]
-        prepare_wavs_and_transcripts(texts_fns, target_type)
-        input_dir = os.path.join(TGT_DIR, "wav")
-        feat_extract.from_dir(input_dir, feat_type)
+        # TODO prepare_wavs_and_transcripts should be a method of this class.
+        #prepare_wavs_and_transcripts(texts_fns, target_type)
+        prepare_transcripts(texts_fns)
+        #input_dir = os.path.join(TGT_DIR, "wav")
+        #feat_extract.from_dir(input_dir, feat_type)
 
         # Prepare the untranscribed WAV files.
         """
