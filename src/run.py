@@ -42,23 +42,49 @@ def train_babel():
     model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
     model.train()
 
+def calc_time():
+    """ Calculates the total spoken time a given number of utterances
+    corresponds to. """
+
+    import numpy as np
+
+    for i in [128,256,512,1024,2048,2935]:
+        corpus = datasets.na.Corpus(feat_type="filterbank_pitch",
+                                    target_type="phn", tones=True)
+        corpus_reader = CorpusReader(corpus, num_train=i)
+
+        print(len(corpus_reader.train_fns))
+
+        total_frames = 0
+        #for feat_fn, _, _ in corpus.get_train_fns():
+        for feat_fn, _, _ in corpus_reader.train_fns:
+            #print(feat_fn)
+            frames = len(np.load(feat_fn))
+            total_frames += frames
+
+        total_time = ((total_frames*10)/1000)/60
+        print(total_time)
+        print("%0.3f minutes." % total_time)
+
 def train_na():
     """ Run an experiment. """
 
     exp_dirs = []
 
-    for i in [128, 256]:
+    #for i in [128,256]:#, 256]:
+    for i in [512]:#, 1024, 2048]:
 #    for i in [1024]:
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
         exp_dirs.append(exp_dir)
 
-        corpus = datasets.na.Corpus(feat_type="log_mel_filterbank",
-                                    target_type="phn", tones=False)
+        corpus = datasets.na.Corpus(feat_type="filterbank_pitch",
+                                    target_type="phn", tones=True)
         corpus_reader = CorpusReader(corpus, num_train=i)
-        model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
+        model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3, hidden_size=400)
         model.train()
 
+    print(locals())
     print("Exp dirs:", exp_dirs)
 
 def train_chatino():
