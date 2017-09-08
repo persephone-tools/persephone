@@ -429,8 +429,7 @@ class Corpus(corpus.AbstractCorpus):
     def get_train_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.train_prefixes]
-        target_fns = ["%s.%s%s" % (get_target_prefix(prefix),
-                                    "tones." if self.tones else "", self.target_type)
+        target_fns = ["%s.%s%s" % (get_target_prefix(prefix), self.target_type)
                     for prefix in self.train_prefixes]
         # TODO Make more general
         transl_fns = ["%s.removebracs.fr" % get_transl_prefix(prefix)
@@ -440,8 +439,7 @@ class Corpus(corpus.AbstractCorpus):
     def get_valid_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.valid_prefixes]
-        target_fns = ["%s.%s%s" % (get_target_prefix(prefix),
-                                 "tones." if self.tones else "", self.target_type)
+        target_fns = ["%s.%s%s" % (get_target_prefix(prefix), self.target_type)
                     for prefix in self.valid_prefixes]
         transl_fns = ["%s.removebracs.fr" % get_transl_prefix(prefix)
                       for prefix in self.valid_prefixes]
@@ -450,8 +448,7 @@ class Corpus(corpus.AbstractCorpus):
     def get_test_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.test_prefixes]
-        target_fns = ["%s.%s%s" % (get_target_prefix(prefix),
-                                 "tones." if self.tones else "", self.target_type)
+        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
                     for prefix in self.test_prefixes]
         transl_fns = ["%s.removebracs.fr" % get_transl_prefix(prefix)
                       for prefix in self.valid_prefixes]
