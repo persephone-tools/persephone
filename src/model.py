@@ -187,7 +187,7 @@ class Model:
             with open(os.path.join(hyps_dir, "test_per"), "w") as per_f:
                 print("Test PER: %f, tf LER: %f" % (test_per, test_ler), file=per_f)
 
-    def train(self, early_stopping_steps=10, min_epochs=30,
+    def train(self, early_stopping_steps=30, min_epochs=50, max_ler=1.0,
               restore_model_path=None):
         """ Train the model.
 
@@ -303,7 +303,7 @@ class Model:
                 if steps_since_last_record >= early_stopping_steps:
                     if epoch >= min_epochs:
                         # Then we've done the minimum number of epochs.
-                        if ler < 0.5:
+                        if ler < max_ler:
                             # Then training error has moved sufficiently
                             # towards convergence.
                             print("""Stopping since best validation score hasn't been

@@ -66,22 +66,28 @@ def calc_time():
         print(total_time)
         print("%0.3f minutes." % total_time)
 
-def train_na():
+def f():
+    train_na("filterbank_pitch", "tones", 3, 250)
+    train_na("filterbank_pitch", "tones", 4, 400)
+    train_na("pitch", "tones", 3, 250)
+    train_na("pitch", "tones", 6, 250)
+
+def train_na(feat_type, target_type, num_layers, hidden_size):
     """ Run an experiment. """
 
     exp_dirs = []
 
-    #for i in [128,256]:#, 256]:
-    for i in [512]:#, 1024, 2048]:
-#    for i in [1024]:
+    for i in [128, 256]:
+    #for i in [512, 1024, 2048]:
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
         exp_dirs.append(exp_dir)
 
-        corpus = datasets.na.Corpus(feat_type="filterbank_pitch",
-                                    target_type="phn", tones=True)
+        corpus = datasets.na.Corpus(feat_type=feat_type,
+                                    target_type=target_type)
         corpus_reader = CorpusReader(corpus, num_train=i)
-        model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3, hidden_size=400)
+        model = rnn_ctc.Model(exp_dir, corpus_reader,
+                              num_layers=num_layers, hidden_size=hidden_size)
         model.train()
 
     print(locals())

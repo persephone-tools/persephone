@@ -37,7 +37,8 @@ def format(exp_paths,
     print("Test PER", round_items(test_pers))
     print("Test TER", round_items(test_ters))
 
-    for item in zip([128,256,512,1024,2048], test_pers):
+    #for item in zip([128,256,512,1024,2048], test_pers):
+    for item in zip([512,1024,2048], test_pers):
         print("(%d, %f)" % item)
 
 def test_results(exp_path, phones, tones):
@@ -70,6 +71,14 @@ def phones_only_error_rate(hyps_path, refs_path, phones):
     with open(refs_path) as refs_f:
         lines = refs_f.readlines()
         refs = [phones_only(line.split()) for line in lines]
+
+    # For the case where there are no tones (the experiment was phones only).
+    only_empty = True
+    for entry in hyps:
+        if entry != []:
+            only_empty = False
+    if only_empty:
+        return -1
 
     return utils.batch_per(hyps, refs)
 
