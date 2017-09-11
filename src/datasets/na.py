@@ -21,9 +21,13 @@ TGT_DIR = "../data/na"
 ORG_TXT_NORM_DIR = os.path.join(ORG_DIR, "txt_norm")
 TGT_TXT_NORM_DIR = os.path.join(TGT_DIR, "txt_norm")
 ORG_XML_DIR = os.path.join(ORG_DIR, "xml")
+FEAT_DIR = os.path.join(TGT_DIR, "feats")
 
 if not os.path.isdir(TGT_DIR):
     os.makedirs(TGT_DIR)
+
+if not os.path.isdir(FEAT_DIR):
+    os.makedirs(FEAT_DIR)
 
 TO_REMOVE = {"|", "ǀ", "↑", "«", "»", "¨", "“", "”", "D", "F"}
 WORDS_TO_REMOVE = {"CHEVRON", "audible", "qʰʰʰʰʰ", "qʰʰʰʰ", "D"}
@@ -337,7 +341,7 @@ class Corpus(corpus.AbstractCorpus):
         else:
             raise Exception("target_type %s not implemented." % target_type)
 
-        if feat_type == "phonemes":
+        if feat_type == "phonemes_onehot":
             # We assume we are predicting tones given phonemes.
             assert target_type == "tones"
 
@@ -345,6 +349,10 @@ class Corpus(corpus.AbstractCorpus):
         # variables names that might represent tones as well, or just tones.
         self.target_set = self.phonemes
 
+        # TODO Make prefixes not include the path ../data/na/wav/. But note
+        # that doing so might change what the training and test breakdown is
+        # because of the shuffling... I should hardcode the selection
+        # somewhere."
         input_dir = os.path.join(TGT_DIR, "wav")
         prefixes = [os.path.join(input_dir, fn.strip(".wav"))
                     for fn in os.listdir(input_dir) if fn.endswith(".wav")]
@@ -353,8 +361,8 @@ class Corpus(corpus.AbstractCorpus):
         #    untranscribed_dir, fn.strip(".wav"))
         #    for fn in os.listdir(untranscribed_dir) if fn.endswith(".wav")]
 
-        if max_samples:
-            prefixes = self.sort_and_filter_by_size(prefixes, max_samples)
+        #if max_samples:
+        #    prefixes = self.sort_and_filter_by_size(prefixes, max_samples)
 
         # To ensure we always get the same train/valid/test split, but
         # to shuffle it nonetheless.
@@ -441,7 +449,9 @@ class Corpus(corpus.AbstractCorpus):
                 for i, index in enumerate(indices):
                     one_hots[i][index] = 1
                 one_hots = np.array(one_hots)
-                np.save(utterance_fn + ".feat", one_hots)
+
+                prefix = os.path.basename(utterance_fn)
+                np.save(os.path.join(FEAT_DIR, prefix + ".onehot"), one_hots)
 
         texts_fns = wordlists_and_texts_fns()[1]
 
@@ -456,7 +466,7 @@ class Corpus(corpus.AbstractCorpus):
 
         prepare_transcripts(texts_fns, target_set)
 
-        if feat_type == "phonemes":
+        if feat_type == "phonemes_onehot":
             # We assume we are predicting tones given phonemes.
             assert target_type == "tones"
             prepare_phoneme_feats(texts_fns)
@@ -495,7 +505,8 @@ class Corpus(corpus.AbstractCorpus):
         return phones2indices(phonemes, self.target_type)
 
     def get_train_fns(self):
-        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
+
+        feat_fns = ["%s.%s.npy" % (FEAT_DIR, os.path.basename(prefix), self.feat_type)
                     for prefix in self.train_prefixes]
         target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
                     for prefix in self.train_prefixes]
@@ -505,7 +516,7 @@ class Corpus(corpus.AbstractCorpus):
         return feat_fns, target_fns, transl_fns
 
     def get_valid_fns(self):
-        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
+        feat_fns = ["%s.%s.npy" % (FEAT_DIR, os.path.basename(prefix), self.feat_type)
                     for prefix in self.valid_prefixes]
         target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
                     for prefix in self.valid_prefixes]
@@ -514,7 +525,7 @@ class Corpus(corpus.AbstractCorpus):
         return feat_fns, target_fns, transl_fns
 
     def get_test_fns(self):
-        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
+        feat_fns = ["%s.%s.npy" % (FEAT_DIR, os.path.basename(prefix), self.feat_type)
                     for prefix in self.test_prefixes]
         target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
                     for prefix in self.test_prefixes]
