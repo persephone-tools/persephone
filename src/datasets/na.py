@@ -451,7 +451,7 @@ class Corpus(corpus.AbstractCorpus):
                 one_hots = np.array(one_hots)
 
                 prefix = os.path.basename(utterance_fn)
-                np.save(os.path.join(FEAT_DIR, prefix + ".onehot"), one_hots)
+                np.save(os.path.join(FEAT_DIR, prefix + "_onehot"), one_hots)
 
         texts_fns = wordlists_and_texts_fns()[1]
 
@@ -506,7 +506,7 @@ class Corpus(corpus.AbstractCorpus):
 
     def get_train_fns(self):
 
-        feat_fns = ["%s.%s.npy" % (FEAT_DIR, os.path.basename(prefix), self.feat_type)
+        feat_fns = ["%s.%s.npy" % (os.path.join(FEAT_DIR, os.path.basename(prefix)), self.feat_type)
                     for prefix in self.train_prefixes]
         target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
                     for prefix in self.train_prefixes]
@@ -516,7 +516,7 @@ class Corpus(corpus.AbstractCorpus):
         return feat_fns, target_fns, transl_fns
 
     def get_valid_fns(self):
-        feat_fns = ["%s.%s.npy" % (FEAT_DIR, os.path.basename(prefix), self.feat_type)
+        feat_fns = ["%s.%s.npy" % (os.path.join(FEAT_DIR, os.path.basename(prefix)), self.feat_type)
                     for prefix in self.valid_prefixes]
         target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
                     for prefix in self.valid_prefixes]
@@ -525,7 +525,7 @@ class Corpus(corpus.AbstractCorpus):
         return feat_fns, target_fns, transl_fns
 
     def get_test_fns(self):
-        feat_fns = ["%s.%s.npy" % (FEAT_DIR, os.path.basename(prefix), self.feat_type)
+        feat_fns = ["%s.%s.npy" % (os.path.join(FEAT_DIR, os.path.basename(prefix)), self.feat_type)
                     for prefix in self.test_prefixes]
         target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
                     for prefix in self.test_prefixes]

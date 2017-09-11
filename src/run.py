@@ -77,8 +77,8 @@ def train_na(feat_type, target_type, num_layers, hidden_size):
 
     exp_dirs = []
 
-    for i in [128, 256]:
-    #for i in [512, 1024, 2048]:
+    #for i in [128, 256]:
+    for i in [512, 1024, 2048]:
         # Prepares a new experiment dir for all logging.
         exp_dir = prep_exp_dir()
         exp_dirs.append(exp_dir)
