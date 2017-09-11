@@ -5,6 +5,7 @@ import random
 import subprocess
 from subprocess import PIPE
 
+import numpy as np
 import xml.etree.ElementTree as ET
 
 import config
@@ -35,6 +36,7 @@ BI_PHNS = {'dʑ', 'ẽ', 'ɖʐ', 'w̃', 'æ̃', 'qʰ', 'i͂', 'tɕ', 'v̩', 'o̥
            'ɻ̩', 'ã', 'ə̃', 'ṽ', 'pʰ', 'tʰ', 'ɤ̃', 'ʈʰ', 'ʈʂ', 'ɑ̃', 'ɻ̃', 'kʰ',
            'ĩ', 'õ', 'dz'}
 TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩"}
+# TODO Change to "PHONEMES"?
 PHONES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS)
 NUM_PHONES = len(PHONES)
 PHONES2INDICES = {phn: index for index, phn in enumerate(PHONES)}
@@ -335,6 +337,10 @@ class Corpus(corpus.AbstractCorpus):
         else:
             raise Exception("target_type %s not implemented." % target_type)
 
+        if feat_type == "phonemes":
+            # We assume we are predicting tones given phonemes.
+            assert target_type == "tones"
+
         # TODO Change self.phonemes field to self.tgt_labels, and related
         # variables names that might represent tones as well, or just tones.
         self.target_set = self.phonemes
@@ -371,23 +377,22 @@ class Corpus(corpus.AbstractCorpus):
                                  ["pad"] + sorted(list(self.phonemes)))}
         self.vocab_size = len(self.phonemes)
 
-    def prepare(self):
+    @staticmethod
+    def prepare(feat_type, target_type):
         """ Preprocessing the Na data."""
 
         def remove_symbols(line):
             """ Remove certain symbols from the line."""
             for symbol in TO_REMOVE:
                 line = line.replace(symbol, "")
-            #if not tones:
-            #    for tone in TONES:
-            #        line = line.replace(tone, "")
             return line
 
-        def prepare_transcripts(texts_fns):
+        def prepare_transcripts(texts_fns, target_set, target_type=target_type):
 
             if not os.path.exists(TGT_TXT_NORM_DIR):
                 os.makedirs(TGT_TXT_NORM_DIR)
 
+            transcript_fns = []
             for text_fn in texts_fns:
                 #pre, ext = os.path.splitext(text_fn)
                 with open(os.path.join(ORG_TXT_NORM_DIR, text_fn)) as f:
@@ -406,22 +411,58 @@ class Corpus(corpus.AbstractCorpus):
                         phones_and_tones = segment_phonemes(syls)
                         # Filter for the tokens we want (phonemes, tones or
                         # both)
-                        tokens = [tok for tok in phones_and_tones if tok in self.target_set]
+                        tokens = [tok for tok in phones_and_tones if tok in target_set]
 
                         assert text_fn.endswith(".txt")
                         prefix = text_fn.strip(".txt")
 
-                        out_fn = prefix + "." + str(line_id) + "." + self.target_type
-
+                        out_fn = prefix + "." + str(line_id) + "." + target_type
                         out_path = os.path.join(TGT_TXT_NORM_DIR, out_fn)
+                        transcript_fns.append(out_path)
                         with open(out_path, "w") as out_f:
                             out_f.write(" ".join(tokens))
                         line_id += 1
 
+            return transcript_fns
+
+        def prepare_phoneme_feats(texts_fns):
+            """ Prepare one-hot phoneme representations as input features so
+            that tones can be predicted from phonemes."""
+
+            # Prepare the phonemes so they can be converted to one-hot vectors.
+            phoneme_fns = prepare_transcripts(texts_fns, target_set=PHONES,
+                                              target_type="phonemes")
+
+            for utterance_fn in phoneme_fns:
+                with open(utterance_fn) as f:
+                    phonemes = f.readlines()[0].split()
+                indices = [PHONES2INDICES[phoneme] for phoneme in phonemes]
+                one_hots = [[0]*len(PHONES) for _ in phonemes]
+                for i, index in enumerate(indices):
+                    one_hots[i][index] = 1
+                one_hots = np.array(one_hots)
+                np.save(utterance_fn + ".feat", one_hots)
+
         texts_fns = wordlists_and_texts_fns()[1]
+
+        if target_type == "phonemes_and_tones":
+            target_set = PHONES.union(set(TONES))
+        elif target_type == "phonemes":
+            target_set = PHONES
+        elif target_type == "tones":
+            target_set = TONES
+        else:
+            raise Exception("target_type %s not implemented." % target_type)
+
+        prepare_transcripts(texts_fns, target_set)
+
+        if feat_type == "phonemes":
+            # We assume we are predicting tones given phonemes.
+            assert target_type == "tones"
+            prepare_phoneme_feats(texts_fns)
+
         # TODO prepare_wavs_and_transcripts should be a method of this class.
         #prepare_wavs_and_transcripts(texts_fns, target_type)
-        prepare_transcripts(texts_fns)
         #input_dir = os.path.join(TGT_DIR, "wav")
         #feat_extract.from_dir(input_dir, feat_type)
 
