@@ -42,22 +42,31 @@ INDICES2PHONES = {index: phn for index, phn in enumerate(PHONES)}
 PHONES_TONES = sorted(list(PHONES.union(set(TONES)))) # Sort for determinism
 PHONESTONES2INDICES = {phn_tone: index for index, phn_tone in enumerate(PHONES_TONES)}
 INDICES2PHONESTONES = {index: phn_tone for index, phn_tone in enumerate(PHONES_TONES)}
+TONES2INDICES = {tone: index for index, tone in enumerate(TONES)}
+INDICES2TONES = {index: tone for index, tone in enumerate(TONES)}
 
-def phones2indices(phones, tones=False):
+# TODO rename this to "tokens2indices" or something similar.
+def phones2indices(tokens, target_type):
     """ Converts a list of phones to a list of indices. Increments the index by
     1 to avoid issues to do with dynamic padding in Tensorflow. """
-    if tones:
-        return [PHONESTONES2INDICES[phone]+1 for phone in phones]
+    if target_type == "phonemes_and_tones":
+        return [PHONESTONES2INDICES[token]+1 for token in tokens]
+    elif target_type == "phonemes":
+        return [PHONES2INDICES[token]+1 for token in tokens]
+    elif target_type == "tones":
+        return [TONES2INDICES[token]+1 for token in tokens]
     else:
-        return [PHONES2INDICES[phone]+1 for phone in phones]
+        raise Exception("Target type %s not supported." % target_type)
 
-def indices2phones(indices, tones=False):
+def indices2phones(indices, target_type):
     """ Converts integer representations of phones to human-readable characters. """
 
-    if tones:
+    if target_type == "phonemes_and_tones":
         return [(INDICES2PHONESTONES[index-1] if index > 0 else "pad") for index in indices]
-    else:
+    elif target_type == "phonemes":
         return [(INDICES2PHONES[index-1] if index > 0 else "pad") for index in indices]
+    elif target_type == "tones":
+        return [(INDICES2TONES[index-1] if index > 0 else "pad") for index in indices]
 
 def is_number(string):
     """ Tests if a string is valid float. """
@@ -439,15 +448,15 @@ class Corpus(corpus.AbstractCorpus):
         """
 
     def indices_to_phonemes(self, indices):
-        return indices2phones(indices, self.tones)
+        return indices2phones(indices, self.target_type)
 
     def phonemes_to_indices(self, phonemes):
-        return phones2indices(phonemes, self.tones)
+        return phones2indices(phonemes, self.target_type)
 
     def get_train_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.train_prefixes]
-        target_fns = ["%s.%s%s" % (get_target_prefix(prefix), self.target_type)
+        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
                     for prefix in self.train_prefixes]
         # TODO Make more general
         transl_fns = ["%s.removebracs.fr" % get_transl_prefix(prefix)
@@ -457,7 +466,7 @@ class Corpus(corpus.AbstractCorpus):
     def get_valid_fns(self):
         feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
                     for prefix in self.valid_prefixes]
-        target_fns = ["%s.%s%s" % (get_target_prefix(prefix), self.target_type)
+        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
                     for prefix in self.valid_prefixes]
         transl_fns = ["%s.removebracs.fr" % get_transl_prefix(prefix)
                       for prefix in self.valid_prefixes]
