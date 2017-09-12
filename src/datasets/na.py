@@ -21,7 +21,10 @@ TGT_DIR = "../data/na"
 ORG_TXT_NORM_DIR = os.path.join(ORG_DIR, "txt_norm")
 TGT_TXT_NORM_DIR = os.path.join(TGT_DIR, "txt_norm")
 ORG_XML_DIR = os.path.join(ORG_DIR, "xml")
-FEAT_DIR = os.path.join(TGT_DIR, "feats")
+# TODO To make this not 'wav', but 'feats' I either need to move the manually
+# made fbank+pitch feats from wav to feats, or better, automate the whole
+# process.
+FEAT_DIR = os.path.join(TGT_DIR, "wav")
 
 if not os.path.isdir(TGT_DIR):
     os.makedirs(TGT_DIR)
