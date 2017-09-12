@@ -37,8 +37,7 @@ def format(exp_paths,
     print("Test PER", round_items(test_pers))
     print("Test TER", round_items(test_ters))
 
-    #for item in zip([128,256,512,1024,2048], test_pers):
-    for item in zip([512,1024,2048], test_pers):
+    for item in zip([128,256,512,1024,2048], test_ters):
         print("(%d, %f)" % item)
 
 def test_results(exp_path, phones, tones):
