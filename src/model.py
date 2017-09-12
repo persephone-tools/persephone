@@ -187,7 +187,7 @@ class Model:
             with open(os.path.join(hyps_dir, "test_per"), "w") as per_f:
                 print("Test PER: %f, tf LER: %f" % (test_per, test_ler), file=per_f)
 
-    def train(self, early_stopping_steps=30, min_epochs=50, max_ler=1.0,
+    def train(self, early_stopping_steps=10, min_epochs=40, max_ler=1.0,
               restore_model_path=None):
         """ Train the model.
 
