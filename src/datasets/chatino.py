@@ -24,12 +24,18 @@ PREFIXES = [os.path.splitext(fn)[0]
             for fn in os.listdir(ORG_TRANSCRIPT_DIR)
             if fn.endswith(".txt")]
 
+# Hardcode the phoneme set
 ONE_CHAR_PHONEMES = set(["p", "t", "d", "k", "q", "s", "x", "j", "m", "n", "r", "l",
                          "y", "w", "i", "u", "e", "o", "a"])
-ONE_CHAR_TONES = set(["0", "3", "1", "4", "2"])
-TWO_CHAR_TONES = set(["04", "14", "24", "20", "42", "32", "40", "10"])
 TWO_CHAR_PHONEMES = set(["ty", "dy", "kw", "ts", "dz", "ch", "ny", "ly",
                          "in", "en", "On", "an"])
+PHONEMES = ONE_CHAR_PHONEMES.union(TWO_CHAR_PHONEMES)
+PHONEMES_TO_INDICES = {phn: index for index, phn in enumerate(PHONEMES)}
+INDICES_TO_PHONEMES = {index: phn for index, phn in enumerate(PHONEMES)}
+
+# Hardcode the tone set
+ONE_CHAR_TONES = set(["0", "3", "1", "4", "2"])
+TWO_CHAR_TONES = set(["04", "14", "24", "20", "42", "32", "40", "10"])
 THREE_CHAR_TONES = set(["140"])
 
 def process_transcript(org_transcript_fn, label_fn, label_type):
@@ -170,15 +176,36 @@ def prepare_feats(feat_type):
     if not os.path.isdir(FEAT_DIR):
         os.makedirs(FEAT_DIR)
 
-    for prefix in PREFIXES:
-        # Convert the wave to 16k mono.
-        org_wav_fn = os.path.join(ORG_WAV_DIR, "%s.wav" % prefix)
-        mono16k_wav_fn = os.path.join(FEAT_DIR, "%s.wav" % prefix)
-        if not os.path.isfile(mono16k_wav_fn):
-            feat_extract.convert_wav(org_wav_fn, mono16k_wav_fn)
+    if feat_type=="phonemes_onehot":
+        import numpy as np
+        prepare_labels("phonemes")
+        for prefix in PREFIXES:
+            label_fn = os.path.join(LABEL_DIR, "%s.phonemes" % prefix)
+            print(label_fn)
+            try:
+                with open(label_fn) as label_f:
+                    labels = label_f.readlines()[0].split()
+            except FileNotFoundError:
+                continue
+            print(label_fn)
+            indices = [PHONEMES_TO_INDICES[label] for label in labels]
+            one_hots = one_hots = [[0]*len(PHONEMES) for _ in labels]
+            for i, index in enumerate(indices):
+                one_hots[i][index] = 1
+                one_hots = np.array(one_hots)
+                np.save(os.path.join(FEAT_DIR, "%s.phonemes_onehot" %  prefix),
+                        one_hots)
+    else:
+        # Otherwise, work with the wavs.
+        for prefix in PREFIXES:
+            # Convert the wave to 16k mono.
+            org_wav_fn = os.path.join(ORG_WAV_DIR, "%s.wav" % prefix)
+            mono16k_wav_fn = os.path.join(FEAT_DIR, "%s.wav" % prefix)
+            if not os.path.isfile(mono16k_wav_fn):
+                feat_extract.convert_wav(org_wav_fn, mono16k_wav_fn)
 
-    # Extract features from the wavs.
-    feat_extract.from_dir(FEAT_DIR, feat_type=feat_type)
+        # Extract features from the wavs.
+        feat_extract.from_dir(FEAT_DIR, feat_type=feat_type)
 
 # TODO Get rid of this.
 def get_target_prefix(prefix):
