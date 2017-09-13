@@ -216,7 +216,8 @@ class Corpus(corpus.AbstractCorpus):
 
             for prefix in prefixes:
                 org_fn = os.path.join(ORG_TRANSCRIPT_DIR, "%s.txt" % prefix)
-                label_fn = os.path.join(LABEL_DIR, "%s.txt" % prefix)
+                label_fn = os.path.join(
+                    LABEL_DIR, "%s.%s" % (prefix, label_type))
                 process_transcript(org_fn, label_fn, label_type)
 
         # Obtain the filename prefixes that identify recordings and their
