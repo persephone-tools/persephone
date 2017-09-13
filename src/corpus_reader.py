@@ -62,10 +62,12 @@ class CorpusReader:
         training example minus the extension.
         """
 
-        feat_fn_batch, target_fn_batch, trans_fn_batch = zip(*fn_batch)
+        inverse = list(zip(*fn_batch))
+        feat_fn_batch = inverse[0]
+        target_fn_batch = inverse[1]
 
         batch_inputs, batch_inputs_lens = utils.load_batch_x(feat_fn_batch,
-                                                             flatten=False)
+                                                             flatten=True)
         batch_targets_list = []
         for targets_path in target_fn_batch:
             with open(targets_path) as targets_f:

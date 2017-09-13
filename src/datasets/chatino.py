@@ -277,9 +277,9 @@ class Corpus(corpus.AbstractCorpus):
 
     # TODO Use 'labels' instead of 'phonemes' here and in corpus.py
     def indices_to_phonemes(self, indices):
-        return [(self.INDEX_TO_LABELS[index]) for index in indices]
+        return [(self.INDEX_TO_LABEL[index]) for index in indices]
     def phonemes_to_indices(self, labels):
-        return [self.LABEL_TO_INDEX[label] for labels in labels]
+        return [self.LABEL_TO_INDEX[label] for label in labels]
 
     # TODO Consider factoring out as non-Chatino specific
     def get_train_fns(self):
