@@ -18,6 +18,12 @@ FEAT_DIR = os.path.join(TGT_DIR, "feat")
 ORG_TRANSCRIPT_DIR = os.path.join(ORG_DIR, "transcriptions")
 LABEL_DIR = os.path.join(TGT_DIR, "label")
 
+# Obtain the filename prefixes that identify recordings and their
+# transcriptions
+PREFIXES = [os.path.splitext(fn)[0]
+            for fn in os.listdir(ORG_TRANSCRIPT_DIR)
+            if fn.endswith(".txt")]
+
 ONE_CHAR_PHONEMES = set(["p", "t", "d", "k", "q", "s", "x", "j", "m", "n", "r", "l",
                          "y", "w", "i", "u", "e", "o", "a"])
 ONE_CHAR_TONES = set(["0", "3", "1", "4", "2"])
@@ -146,6 +152,35 @@ def process_transcript(org_transcript_fn, label_fn, label_type):
     with open(label_fn, "w") as tgt_f:
         print(" ".join(phonemes), file=tgt_f)
 
+def prepare_labels(label_type):
+    """ Prepare the neural network output targets."""
+
+    if not os.path.isdir(LABEL_DIR):
+        os.makedirs(LABEL_DIR)
+
+    for prefix in PREFIXES:
+        org_fn = os.path.join(ORG_TRANSCRIPT_DIR, "%s.txt" % prefix)
+        label_fn = os.path.join(
+            LABEL_DIR, "%s.%s" % (prefix, label_type))
+        process_transcript(org_fn, label_fn, label_type)
+
+def prepare_feats(feat_type):
+    """ Prepare the input features."""
+
+    if not os.path.isdir(FEAT_DIR):
+        os.makedirs(FEAT_DIR)
+
+    for prefix in PREFIXES:
+        # Convert the wave to 16k mono.
+        org_wav_fn = os.path.join(ORG_WAV_DIR, "%s.wav" % prefix)
+        mono16k_wav_fn = os.path.join(FEAT_DIR, "%s.wav" % prefix)
+        if not os.path.isfile(mono16k_wav_fn):
+            feat_extract.convert_wav(org_wav_fn, mono16k_wav_fn)
+
+    # Extract features from the wavs.
+    feat_extract.from_dir(FEAT_DIR, feat_type=feat_type)
+
+# TODO Get rid of this.
 def get_target_prefix(prefix):
     """ Given a prefix of the form /some/path/here/wav/prefix, returns the
     corresponding target file name."""
@@ -177,6 +212,13 @@ class Corpus(corpus.AbstractCorpus):
         else:
             self.phonemes = ONE_CHAR_PHONEMES.union(TWO_CHAR_PHONEMES)
 
+        # TODO Make sure I choose the prefixes based on the transcriptions.
+        """
+        prefixes = [os.path.join(LABEL_DIR, fn.strip(".phn"))
+                        for fn in os.listdir(LABEL_DIR)]
+        # For each of the prefixes we kept based on the transcriptions...
+        """
+
         self.prefixes = [os.path.join(FEAT_DIR, fn.replace(".wav", ""))
                          for fn in os.listdir(FEAT_DIR) if fn.endswith(".wav")]
 
@@ -197,61 +239,6 @@ class Corpus(corpus.AbstractCorpus):
         self.INDEX_TO_PHONEME = {index: phn for index, phn in enumerate(
                                  ["pad"] + sorted(list(self.phonemes)))}
         self.vocab_size = len(self.phonemes)
-
-    @staticmethod
-    def prepare(feat_type, label_type):
-        """ Preprocess the Chatino data."""
-
-        def prepare_feats(feat_type):
-            """ Prepare the input features."""
-
-            if not os.path.isdir(FEAT_DIR):
-                os.makedirs(FEAT_DIR)
-
-        def prepare_labels(label_type):
-            """ Prepare the neural network output targets."""
-
-            if not os.path.isdir(LABEL_DIR):
-                os.makedirs(LABEL_DIR)
-
-            for prefix in prefixes:
-                org_fn = os.path.join(ORG_TRANSCRIPT_DIR, "%s.txt" % prefix)
-                label_fn = os.path.join(
-                    LABEL_DIR, "%s.%s" % (prefix, label_type))
-                process_transcript(org_fn, label_fn, label_type)
-
-        # Obtain the filename prefixes that identify recordings and their
-        # transcriptions
-        prefixes = [os.path.splitext(fn)[0]
-                    for fn in os.listdir(ORG_TRANSCRIPT_DIR)
-                    if fn.endswith(".txt")]
-
-        prepare_feats(feat_type)
-        prepare_labels(label_type)
-
-
-        """
-        for prefix in org_prefixes:
-            prefix = os.path.basename(prefix)
-            print(prefix)
-            # Split phonemes in the transcript.
-            org_transcript_fn = os.path.join(ORG_TRANSCRIPT_DIR, "%s.txt" % prefix)
-            label_fn = os.path.join(LABEL_DIR, "%s.tones%s.phn" % (prefix, str(tones)))
-            process_transcript(org_transcript_fn, label_fn, tones)
-
-        prefixes = [os.path.join(LABEL_DIR, fn.strip(".phn"))
-                        for fn in os.listdir(LABEL_DIR)]
-        # For each of the prefixes we kept based on the transcriptions...
-        for prefix in prefixes:
-            prefix = os.path.basename(prefix)
-            # Copy the wav to the local dir.
-            org_wav_fn = os.path.join(org_wav_dir, "%s.wav" % prefix)
-            feat_fn = os.path.join(FEAT_DIR, "%s.wav" % prefix)
-            feat_extract.convert_wav(org_wav_fn, feat_fn)
-
-        # Extract features from the wavs.
-        feat_extract.from_dir(FEAT_DIR, feat_type="log_mel_filterbank")
-        """
 
     def indices_to_phonemes(self, indices):
         return [(self.INDEX_TO_PHONEME[index]) for index in indices]

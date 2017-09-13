@@ -1,6 +1,7 @@
 """ Performs feature extraction of WAV files for acoustic modelling."""
 
 import os
+import subprocess
 
 import numpy as np
 import python_speech_features
