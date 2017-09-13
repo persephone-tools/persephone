@@ -3,14 +3,13 @@
 import os
 import random
 from shutil import copyfile
-import subprocess
 
 import config
 import corpus
 import feat_extract
 
 ORG_DIR = config.CHATINO_DIR
-TGT_DIR = "../data/chatino"
+TGT_DIR = os.path.join(config.TGT_DIR, "chatino")
 
 ONE_CHAR_PHONEMES = set(["p", "t", "d", "k", "q", "s", "x", "j", "m", "n", "r", "l",
                          "y", "w", "i", "u", "e", "o", "a"])
@@ -19,13 +18,6 @@ TWO_CHAR_TONES = set(["04", "14", "24", "20", "42", "32", "40", "10"])
 TWO_CHAR_PHONEMES = set(["ty", "dy", "kw", "ts", "dz", "ch", "ny", "ly",
                          "in", "en", "On", "an"])
 THREE_CHAR_TONES = set(["140"])
-
-def convert_wav(org_wav_fn, tgt_wav_fn):
-    """ Converts the wav into a 16bit mono 16000Hz wav."""
-    home = os.path.expanduser("~")
-    args = [os.path.join(home, "tools", "ffmpeg-3.3", "ffmpeg"),
-            "-i", org_wav_fn, "-ac", "1", "-ar", "16000", tgt_wav_fn]
-    subprocess.run(args)
 
 def convert_transcript(org_transcript_fn, tgt_transcript_fn, tones):
     """ Splits the Chatino transcript into phonemes. """
@@ -196,7 +188,7 @@ class Corpus(corpus.AbstractCorpus):
             # Copy the wav to the local dir.
             org_wav_fn = os.path.join(org_wav_dir, "%s.wav" % prefix)
             tgt_wav_fn = os.path.join(tgt_wav_dir, "%s.wav" % prefix)
-            convert_wav(org_wav_fn, tgt_wav_fn)
+            feat_extract.convert_wav(org_wav_fn, tgt_wav_fn)
 
         # Extract features from the wavs.
         feat_extract.from_dir(tgt_wav_dir, feat_type="log_mel_filterbank")

@@ -58,3 +58,10 @@ def from_dir(dirname, feat_type):
                 feature_extraction(wav)
             else:
                 raise Exception("Feature type not found: %s" % feat_type)
+
+def convert_wav(org_wav_fn, tgt_wav_fn):
+    """ Converts the wav into a 16bit mono 16000Hz wav."""
+    home = os.path.expanduser("~")
+    args = [os.path.join(home, "tools", "ffmpeg-3.3", "ffmpeg"),
+            "-i", org_wav_fn, "-ac", "1", "-ar", "16000", tgt_wav_fn]
+    subprocess.run(args)
