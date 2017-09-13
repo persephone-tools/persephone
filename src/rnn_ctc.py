@@ -83,7 +83,7 @@ class Model(model.Model):
 
         self.decoded, self.log_prob = tf.nn.ctc_beam_search_decoder(
                 self.logits, self.batch_x_lens, beam_width=beam_width,
-                merge_repeated=False)
+                merge_repeated=True)
 
         # If we want to do manual PER decoding. The decoded[0] beans the best
         # hypothesis (0th) in an n-best list.
