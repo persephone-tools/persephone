@@ -8,8 +8,15 @@ import config
 import corpus
 import feat_extract
 
+### Initialize path variables.###
+# Path to unpreprocessed Chatino data from GORILLA.
 ORG_DIR = config.CHATINO_DIR
+# The directory for storing input features and targets.
 TGT_DIR = os.path.join(config.TGT_DIR, "chatino")
+ORG_WAV_DIR = os.path.join(ORG_DIR, "wav")
+FEAT_DIR = os.path.join(TGT_DIR, "feat")
+ORG_TRANSCRIPT_DIR = os.path.join(ORG_DIR, "transcriptions")
+LABEL_DIR = os.path.join(TGT_DIR, "label")
 
 ONE_CHAR_PHONEMES = set(["p", "t", "d", "k", "q", "s", "x", "j", "m", "n", "r", "l",
                          "y", "w", "i", "u", "e", "o", "a"])
@@ -19,10 +26,12 @@ TWO_CHAR_PHONEMES = set(["ty", "dy", "kw", "ts", "dz", "ch", "ny", "ly",
                          "in", "en", "On", "an"])
 THREE_CHAR_TONES = set(["140"])
 
-def convert_transcript(org_transcript_fn, tgt_transcript_fn, tones):
+def process_transcript(org_transcript_fn, label_fn, label_type):
     """ Splits the Chatino transcript into phonemes. """
 
-    def extract_phonemes(line):
+    def remove_punctuation(line):
+        """ Replace symbols we don't care about.""" 
+
         line = line.lower()
         line = line.replace(",", "")
         line = line.replace("-", "")
@@ -34,74 +43,108 @@ def convert_transcript(org_transcript_fn, tgt_transcript_fn, tones):
         line = line.replace("?", "")
         line = line.replace("[blurry]", "")
         line = line.replace("[plata]", "")
+
+        return line
+
+    def bad_transcript(line):
+        """ True if we should disregard the utterance; false otherwise."""
+
         if "g" in line:
-            return
+            return True
         if "ñ" in line:
-            return
+            return True
         if "<" in line:
-            return
+            return True
         if ">" in line:
-            return
+            return True
         if "b" in line:
-            return
+            return True
         if "(" in line:
-            return
+            return True
         if "[" in line:
-            return
+            return True
         if "õ" in line:
-            return
+            return True
+        if "chaqF" in line:
+            return True
+        if "Bautista" in line:
+            return True
+        if "ntsaqG" in line:
+            return True
+        return False
+
+    def extract_labels(line):
+
+        # Do we want phonemes, tones, or both?
+        if label_type == "phonemes":
+            phonemes = True
+            tones = False
+        elif label_type == "tones":
+            phonemes = False
+            tones = True
+        elif label_type == "phonemes_and_tones":
+            phonemes = True
+            tones = True
+
         words = line.split()
-        phonemes = []
+        labels = []
         for word in words:
             i = 0
             while i < len(word):
                 if word[i:i+3] in THREE_CHAR_TONES:
                     if tones:
-                        phonemes.append(word[i:i+3])
+                        labels.append(word[i:i+3])
                     i += 3
                     continue
                 if word[i:i+2] in TWO_CHAR_PHONEMES:
-                    phonemes.append(word[i:i+2])
+                    if phonemes:
+                        labels.append(word[i:i+2])
                     i += 2
                     continue
                 if word[i:i+2] in TWO_CHAR_TONES:
                     if tones:
-                        phonemes.append(word[i:i+2])
+                        labels.append(word[i:i+2])
                     i += 2
                     continue
                 elif word[i:i+1] in ONE_CHAR_PHONEMES:
-                    phonemes.append(word[i:i+1])
+                    if phonemes:
+                        labels.append(word[i:i+1])
                     i += 1
                     continue
                 elif word[i:i+1] in ONE_CHAR_TONES:
                     if tones:
-                        phonemes.append(word[i:i+1])
+                        labels.append(word[i:i+1])
                     i += 1
                     continue
                 elif word[i:i+1] == "'":
                     # Then assume it's distinguishing n'y from ny.
                     i += 1
                     continue
-                elif word[i:i+1] == "c": #It wasn't ch
-                    return
-                elif word[i:i+1] == "h": #It wasn't ch
-                    return
+                elif word[i:i+1] == "c":
+                    #It wasn't ch, return nothing and remove utterance.
+                    return []
+                elif word[i:i+1] == "h":
+                    #It wasn't ch, return nothing and remove utterance.
+                    return []
                 else:
+                    print(org_transcript_fn)
+                    print(words)
                     print(word)
                     print(word[i:], end="")
                     input()
-        return phonemes
+                    break
+        return labels
 
     with open(org_transcript_fn) as org_f:
         line = org_f.readline()
-        phonemes = extract_phonemes(line)
-        if phonemes == None:
-            return
-        if phonemes == []:
-            # If the transcription is empty
-            return
-        with open(tgt_transcript_fn, "w") as tgt_f:
-            print(" ".join(phonemes), file=tgt_f)
+    if bad_transcript(line):
+        return
+    line = remove_punctuation(line)
+    phonemes = extract_labels(line)
+    if phonemes == []: # If the transcription is empty, don't use the utterance
+        return
+    with open(label_fn, "w") as tgt_f:
+        print(" ".join(phonemes), file=tgt_f)
 
 def get_target_prefix(prefix):
     """ Given a prefix of the form /some/path/here/wav/prefix, returns the
@@ -111,14 +154,16 @@ def get_target_prefix(prefix):
     return os.path.join(TGT_DIR, "transcriptions", filename)
 
 class Corpus(corpus.AbstractCorpus):
-    """ Class to interface with the Griko corpus."""
+    """ Class to interface with the Chatino corpus."""
 
+    # TODO Reconsider the place of these splits. Perhaps train/dev/test
+    # directories should be used instead, and generated in the prepare() step.
     TRAIN_VALID_TEST_SPLIT = [2048, 207, 206]
     _phonemes = None
     _chars = None
     tones = False
 
-    def __init__(self, feat_type, target_type, tones=False, max_samples=1000):
+    def __init__(self, feat_type, target_type, max_samples=1000):
         super().__init__(feat_type, target_type)
 
         org_transcriptions_dir = os.path.join(ORG_DIR, "transcriptions")
@@ -132,12 +177,8 @@ class Corpus(corpus.AbstractCorpus):
         else:
             self.phonemes = ONE_CHAR_PHONEMES.union(TWO_CHAR_PHONEMES)
 
-        tgt_wav_dir = os.path.join(TGT_DIR, "wav")
-        if not os.path.isdir(tgt_wav_dir):
-            self.prepare(tones)
-
-        self.prefixes = [os.path.join(tgt_wav_dir, fn.replace(".wav", ""))
-                         for fn in os.listdir(tgt_wav_dir) if fn.endswith(".wav")]
+        self.prefixes = [os.path.join(FEAT_DIR, fn.replace(".wav", ""))
+                         for fn in os.listdir(FEAT_DIR) if fn.endswith(".wav")]
 
         if max_samples:
             self.prefixes = self.sort_and_filter_by_size(self.prefixes, max_samples)
@@ -157,41 +198,59 @@ class Corpus(corpus.AbstractCorpus):
                                  ["pad"] + sorted(list(self.phonemes)))}
         self.vocab_size = len(self.phonemes)
 
-    def prepare(self, tones):
-        """ Preprocess the Griko data."""
+    @staticmethod
+    def prepare(feat_type, label_type):
+        """ Preprocess the Chatino data."""
 
-        org_wav_dir = os.path.join(ORG_DIR, "wav")
-        tgt_wav_dir = os.path.join(TGT_DIR, "wav")
-        if not os.path.isdir(tgt_wav_dir):
-            os.makedirs(tgt_wav_dir)
+        def prepare_feats(feat_type):
+            """ Prepare the input features."""
 
-        org_transcript_dir = os.path.join(ORG_DIR, "transcriptions")
-        tgt_transcript_dir = os.path.join(TGT_DIR, "transcriptions")
-        if not os.path.isdir(tgt_transcript_dir):
-            os.makedirs(tgt_transcript_dir)
+            if not os.path.isdir(FEAT_DIR):
+                os.makedirs(FEAT_DIR)
 
-        org_prefixes = [os.path.join(tgt_transcript_dir, fn.strip(".txt"))
-                        for fn in os.listdir(org_transcript_dir) if fn.endswith(".txt")]
+        def prepare_labels(label_type):
+            """ Prepare the neural network output targets."""
+
+            if not os.path.isdir(LABEL_DIR):
+                os.makedirs(LABEL_DIR)
+
+            for prefix in prefixes:
+                org_fn = os.path.join(ORG_TRANSCRIPT_DIR, "%s.txt" % prefix)
+                label_fn = os.path.join(LABEL_DIR, "%s.txt" % prefix)
+                process_transcript(org_fn, label_fn, label_type)
+
+        # Obtain the filename prefixes that identify recordings and their
+        # transcriptions
+        prefixes = [os.path.splitext(fn)[0]
+                    for fn in os.listdir(ORG_TRANSCRIPT_DIR)
+                    if fn.endswith(".txt")]
+
+        prepare_feats(feat_type)
+        prepare_labels(label_type)
+
+
+        """
         for prefix in org_prefixes:
             prefix = os.path.basename(prefix)
             print(prefix)
             # Split phonemes in the transcript.
-            org_transcript_fn = os.path.join(org_transcript_dir, "%s.txt" % prefix)
-            tgt_transcript_fn = os.path.join(tgt_transcript_dir, "%s.tones%s.phn" % (prefix, str(tones)))
-            convert_transcript(org_transcript_fn, tgt_transcript_fn, tones)
+            org_transcript_fn = os.path.join(ORG_TRANSCRIPT_DIR, "%s.txt" % prefix)
+            label_fn = os.path.join(LABEL_DIR, "%s.tones%s.phn" % (prefix, str(tones)))
+            process_transcript(org_transcript_fn, label_fn, tones)
 
-        prefixes = [os.path.join(tgt_transcript_dir, fn.strip(".phn"))
-                        for fn in os.listdir(tgt_transcript_dir)]
+        prefixes = [os.path.join(LABEL_DIR, fn.strip(".phn"))
+                        for fn in os.listdir(LABEL_DIR)]
         # For each of the prefixes we kept based on the transcriptions...
         for prefix in prefixes:
             prefix = os.path.basename(prefix)
             # Copy the wav to the local dir.
             org_wav_fn = os.path.join(org_wav_dir, "%s.wav" % prefix)
-            tgt_wav_fn = os.path.join(tgt_wav_dir, "%s.wav" % prefix)
-            feat_extract.convert_wav(org_wav_fn, tgt_wav_fn)
+            feat_fn = os.path.join(FEAT_DIR, "%s.wav" % prefix)
+            feat_extract.convert_wav(org_wav_fn, feat_fn)
 
         # Extract features from the wavs.
-        feat_extract.from_dir(tgt_wav_dir, feat_type="log_mel_filterbank")
+        feat_extract.from_dir(FEAT_DIR, feat_type="log_mel_filterbank")
+        """
 
     def indices_to_phonemes(self, indices):
         return [(self.INDEX_TO_PHONEME[index]) for index in indices]
