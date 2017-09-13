@@ -41,27 +41,6 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         self.feat_type = feat_type
         self.target_type = target_type
 
-    def sort_and_filter_by_size(self, prefixes, max_samples):
-        """ Sorts the files by their length and returns those with less
-        than or equal to max_samples length. Returns the filename prefixes of
-        those files. The main job of the method is to filter, but the sorting
-        may give better efficiency when doing dynamic batching unless it gets
-        shuffled downstream.
-
-            prefixes: The prefix of the filenames, with the complete path. For
-            example "/home/username/data/corpus/audiofile" minus the extension.
-        """
-
-        prefix_lens = []
-        for prefix in prefixes:
-            path = "%s.%s.npy" % (prefix, self.feat_type)
-            _, batch_x_lens = utils.load_batch_x([path], flatten=False)
-            prefix_lens.append((prefix, batch_x_lens[0]))
-        prefix_lens.sort(key=lambda prefix_len: prefix_len[1])
-        prefixes = [prefix for prefix, length in prefix_lens
-                    if length <= max_samples]
-        return prefixes
-
     def indices_to_phonemes(self, indices):
         """ Converts a sequence of indices representing labels into their
         corresponding (possibly collapsed) phonemes.

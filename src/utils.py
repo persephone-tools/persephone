@@ -103,3 +103,21 @@ def make_parent(file_path):
     parent_dir = os.path.dirname(file_path)
     if not os.path.isdir(parent_dir):
         os.makedirs(parent_dir)
+
+def sort_and_filter_by_size(feat_dir, prefixes, feat_type, max_samples):
+    """ Sorts the files by their length and returns those with less
+    than or equal to max_samples length. Returns the filename prefixes of
+    those files. The main job of the method is to filter, but the sorting
+    may give better efficiency when doing dynamic batching unless it gets
+    shuffled downstream.
+    """
+
+    prefix_lens = []
+    for prefix in prefixes:
+        path = os.path.join(feat_dir, "%s.%s.npy" % (prefix, feat_type))
+        _, batch_x_lens = load_batch_x([path], flatten=False)
+        prefix_lens.append((prefix, batch_x_lens[0]))
+    prefix_lens.sort(key=lambda prefix_len: prefix_len[1])
+    prefixes = [prefix for prefix, length in prefix_lens
+                if length <= max_samples]
+    return prefixes

@@ -7,6 +7,7 @@ from shutil import copyfile
 import config
 import corpus
 import feat_extract
+import utils
 
 ### Initialize path variables.###
 # Path to unpreprocessed Chatino data from GORILLA.
@@ -14,12 +15,15 @@ ORG_DIR = config.CHATINO_DIR
 # The directory for storing input features and targets.
 TGT_DIR = os.path.join(config.TGT_DIR, "chatino")
 ORG_WAV_DIR = os.path.join(ORG_DIR, "wav")
+# TODO Consider factoring out as non-Chatino specific
 FEAT_DIR = os.path.join(TGT_DIR, "feat")
 ORG_TRANSCRIPT_DIR = os.path.join(ORG_DIR, "transcriptions")
+# TODO Consider factoring out as non-Chatino specific
 LABEL_DIR = os.path.join(TGT_DIR, "label")
 
 # Obtain the filename prefixes that identify recordings and their
 # transcriptions
+# TODO Consider factoring out as non-Chatino specific
 PREFIXES = [os.path.splitext(fn)[0]
             for fn in os.listdir(ORG_TRANSCRIPT_DIR)
             if fn.endswith(".txt")]
@@ -30,6 +34,8 @@ ONE_CHAR_PHONEMES = set(["p", "t", "d", "k", "q", "s", "x", "j", "m", "n", "r", 
 TWO_CHAR_PHONEMES = set(["ty", "dy", "kw", "ts", "dz", "ch", "ny", "ly",
                          "in", "en", "On", "an"])
 PHONEMES = ONE_CHAR_PHONEMES.union(TWO_CHAR_PHONEMES)
+
+# TODO Consider factoring out as non-Chatino specific
 PHONEMES_TO_INDICES = {phn: index for index, phn in enumerate(PHONEMES)}
 INDICES_TO_PHONEMES = {index: phn for index, phn in enumerate(PHONEMES)}
 
@@ -37,6 +43,7 @@ INDICES_TO_PHONEMES = {index: phn for index, phn in enumerate(PHONEMES)}
 ONE_CHAR_TONES = set(["0", "3", "1", "4", "2"])
 TWO_CHAR_TONES = set(["04", "14", "24", "20", "42", "32", "40", "10"])
 THREE_CHAR_TONES = set(["140"])
+TONES = ONE_CHAR_TONES.union(TWO_CHAR_TONES.union(THREE_CHAR_TONES))
 
 def process_transcript(org_transcript_fn, label_fn, label_type):
     """ Splits the Chatino transcript into phonemes. """
@@ -170,6 +177,7 @@ def prepare_labels(label_type):
             LABEL_DIR, "%s.%s" % (prefix, label_type))
         process_transcript(org_fn, label_fn, label_type)
 
+# TODO Consider factoring out as non-Chatino specific
 def prepare_feats(feat_type):
     """ Prepare the input features."""
 
@@ -197,6 +205,7 @@ def prepare_feats(feat_type):
                         one_hots)
     else:
         # Otherwise, work with the wavs.
+
         for prefix in PREFIXES:
             # Convert the wave to 16k mono.
             org_wav_fn = os.path.join(ORG_WAV_DIR, "%s.wav" % prefix)
@@ -221,38 +230,35 @@ class Corpus(corpus.AbstractCorpus):
     # TODO Reconsider the place of these splits. Perhaps train/dev/test
     # directories should be used instead, and generated in the prepare() step.
     TRAIN_VALID_TEST_SPLIT = [2048, 207, 206]
-    _phonemes = None
-    _chars = None
-    tones = False
 
-    def __init__(self, feat_type, target_type, max_samples=1000):
-        super().__init__(feat_type, target_type)
+    def __init__(self, feat_type, label_type, max_samples=1000):
+        super().__init__(feat_type, label_type)
 
-        org_transcriptions_dir = os.path.join(ORG_DIR, "transcriptions")
-
-        if tones:
-            self.phonemes = ONE_CHAR_PHONEMES.union(TWO_CHAR_PHONEMES)
-            self.phonemes = self.phonemes.union(ONE_CHAR_TONES)
-            self.phonemes = self.phonemes.union(TWO_CHAR_TONES)
-            self.phonemes = self.phonemes.union(THREE_CHAR_TONES)
-            self.tones = True
+        if label_type == "phonemes":
+            self.labels = PHONEMES
+        elif label_type == "tones":
+            self.labels = TONES
+        elif label_type == "phonemes_and_tones":
+            self.labels = PHONEMES.union(TONES)
         else:
-            self.phonemes = ONE_CHAR_PHONEMES.union(TWO_CHAR_PHONEMES)
+            raise Exception("label_type=%s not supported." % (label_type))
 
-        # TODO Make sure I choose the prefixes based on the transcriptions.
-        """
-        prefixes = [os.path.join(LABEL_DIR, fn.strip(".phn"))
-                        for fn in os.listdir(LABEL_DIR)]
-        # For each of the prefixes we kept based on the transcriptions...
-        """
+        self.feat_type = feat_type
+        self.label_type = label_type
 
-        self.prefixes = [os.path.join(FEAT_DIR, fn.replace(".wav", ""))
-                         for fn in os.listdir(FEAT_DIR) if fn.endswith(".wav")]
+        # Filter prefixes based on what we find in the feat/ dir.
+        self.prefixes = [prefix for prefix in PREFIXES
+                         if os.path.isfile(os.path.join(
+                             FEAT_DIR, "%s.%s.npy" % (prefix, feat_type)))]
+        # Filter prefixes based on what we find in the label/ dir.
+        self.prefixes = [prefix for prefix in self.prefixes
+                         if os.path.isfile(os.path.join(
+                             LABEL_DIR, "%s.%s" % (prefix, label_type)))]
 
+        # Remove prefixes whose feature files are too long.
         if max_samples:
-            self.prefixes = self.sort_and_filter_by_size(self.prefixes, max_samples)
-
-        print(len(self.prefixes))
+            self.prefixes = utils.sort_and_filter_by_size(
+                FEAT_DIR, self.prefixes, feat_type, max_samples)
 
         random.seed(0)
         random.shuffle(self.prefixes)
@@ -261,33 +267,36 @@ class Corpus(corpus.AbstractCorpus):
         self.valid_prefixes = self.prefixes[self.TRAIN_VALID_TEST_SPLIT[0]:valid_end]
         self.test_prefixes = self.prefixes[valid_end:]
 
-        self.PHONEME_TO_INDEX = {phn: index for index, phn in enumerate(
-                                 ["pad"] + sorted(list(self.phonemes)))}
-        self.INDEX_TO_PHONEME = {index: phn for index, phn in enumerate(
-                                 ["pad"] + sorted(list(self.phonemes)))}
-        self.vocab_size = len(self.phonemes)
+        # TODO Make the distinction between this and the constants at the start
+        # of the file clear.
+        self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
+                                 ["pad"] + sorted(list(self.labels)))}
+        self.INDEX_TO_LABEL = {index: label for index, label in enumerate(
+                                 ["pad"] + sorted(list(self.labels)))}
+        self.vocab_size = len(self.labels)
 
+    # TODO Use 'labels' instead of 'phonemes' here and in corpus.py
     def indices_to_phonemes(self, indices):
-        return [(self.INDEX_TO_PHONEME[index]) for index in indices]
+        return [(self.INDEX_TO_LABELS[index]) for index in indices]
+    def phonemes_to_indices(self, labels):
+        return [self.LABEL_TO_INDEX[label] for labels in labels]
 
-    def phonemes_to_indices(self, phonemes):
-        return [self.PHONEME_TO_INDEX[phoneme] for phoneme in phonemes]
-
+    # TODO Consider factoring out as non-Chatino specific
     def get_train_fns(self):
-        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
+        feat_fns = [os.path.join(FEAT_DIR, "%s.%s.npy" % (prefix, self.feat_type))
                     for prefix in self.train_prefixes]
-        target_fns = ["%s.tones%s.%s" % (get_target_prefix(prefix), str(self.tones), self.target_type)
+        label_fns = [os.path.join(LABEL_DIR, "%s.%s" % (prefix, self.label_type))
                       for prefix in self.train_prefixes]
-        return feat_fns, target_fns
+        return feat_fns, label_fns
     def get_valid_fns(self):
-        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
+        feat_fns = [os.path.join(FEAT_DIR, "%s.%s.npy" % (prefix, self.feat_type))
                     for prefix in self.valid_prefixes]
-        target_fns = ["%s.tones%s.%s" % (get_target_prefix(prefix), str(self.tones), self.target_type)
+        label_fns = [os.path.join(LABEL_DIR, "%s.%s" % (prefix, self.label_type))
                       for prefix in self.valid_prefixes]
-        return feat_fns, target_fns
+        return feat_fns, label_fns
     def get_test_fns(self):
-        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
+        feat_fns = [os.path.join(FEAT_DIR, "%s.%s.npy" % (prefix, self.feat_type))
                     for prefix in self.test_prefixes]
-        target_fns = ["%s.tones%s.%s" % (get_target_prefix(prefix), str(self.tones), self.target_type)
+        label_fns = [os.path.join(LABEL_DIR, "%s.%s" % (prefix, self.label_type))
                       for prefix in self.test_prefixes]
-        return feat_fns, target_fns
+        return feat_fns, label_fns
