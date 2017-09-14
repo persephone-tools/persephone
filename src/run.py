@@ -7,7 +7,7 @@ import config
 import rnn_ctc
 import datasets.na
 #import datasets.griko
-#import datasets.chatino
+import datasets.chatino
 #import datasets.timit
 #import datasets.japhug
 import datasets.babel
@@ -33,10 +33,45 @@ def prep_exp_dir():
 
     return os.path.join(EXP_DIR, str(exp_num))
 
+def train():
+    """ Run an experiment. """
+
+    feat_type = "phonemes_onehot"
+    label_type = "tones"
+    language = "chatino"
+    num_layers = 3
+    hidden_size = 250
+    #num_trains = [128,256,512,1024,2048]
+    num_trains = [128]
+
+    if language == "chatino":
+        corpus = datasets.chatino.Corpus(feat_type, label_type)
+    elif language == "na":
+        corpus = datasets.na.Corpus(feat_type, label_type)
+    else:
+        raise Exception("Language '%s' not supported." % language)
+
+    exp_dirs = []
+    for i in num_trains:
+        # Prepares a new experiment dir for all logging.
+        exp_dir = prep_exp_dir()
+        exp_dirs.append(exp_dir)
+        corpus_reader = CorpusReader(corpus, num_train=i)
+        model = rnn_ctc.Model(exp_dir, corpus_reader,
+                              num_layers=num_layers,
+                              hidden_size=hidden_size)
+        model.train()
+
+    print("language: %s" % language)
+    print("feat_type: %s" % feat_type)
+    print("label_type: %s" % label_type)
+    print("num_layers: %d" % num_layers)
+    print("hidden_size: %d" % hidden_size)
+    print("Exp dirs:", exp_dirs)
+
 def train_babel():
     # Prepares a new experiment dir for all logging.
     exp_dir = prep_exp_dir()
-
     corpus = datasets.babel.Corpus(["turkish"])
     corpus_reader = CorpusReader(corpus, num_train=len(corpus.get_train_fns()), batch_size=128)
     model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
@@ -65,46 +100,6 @@ def calc_time():
         total_time = ((total_frames*10)/1000)/60
         print(total_time)
         print("%0.3f minutes." % total_time)
-
-def f():
-    train_na("filterbank_pitch", "tones", 3, 250)
-    train_na("filterbank_pitch", "tones", 4, 400)
-    train_na("pitch", "tones", 3, 250)
-    train_na("pitch", "tones", 6, 250)
-
-def train_na(feat_type, target_type, num_layers, hidden_size):
-    """ Run an experiment. """
-
-    exp_dirs = []
-
-    for i in [128, 256, 512, 1024, 2048]:
-        # Prepares a new experiment dir for all logging.
-        exp_dir = prep_exp_dir()
-        exp_dirs.append(exp_dir)
-
-        corpus = datasets.na.Corpus(feat_type=feat_type,
-                                    target_type=target_type)
-        corpus_reader = CorpusReader(corpus, num_train=i)
-        model = rnn_ctc.Model(exp_dir, corpus_reader,
-                              num_layers=num_layers, hidden_size=hidden_size)
-        model.train()
-
-    print(locals())
-    print("Exp dirs:", exp_dirs)
-
-def train_chatino():
-    """ Run an experiment. """
-
-    #for i in [128,256,512,1024, 2048]:
-    for i in [2048]:
-        # Prepares a new experiment dir for all logging.
-        exp_dir = prep_exp_dir()
-
-        corpus = datasets.chatino.Corpus(feat_type="log_mel_filterbank",
-                                    target_type="phn", tones=False)
-        corpus_reader = CorpusReader(corpus, num_train=i)
-        model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
-        model.train()
 
 def train_japhug():
     """ Run an experiment. """
