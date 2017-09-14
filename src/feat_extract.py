@@ -55,6 +55,43 @@ def mfcc(wav_path):
     feat_fn = wav_path[:-3] + "mfcc13_d.npy"
     np.save(feat_fn, all_feats)
 
+def combine_fbank_and_pitch(feat_dir, prefix):
+
+    fbank_fn = os.path.join(feat_dir, prefix + ".fbank.npy")
+    fbanks = np.load(fbank_fn)
+    pitch_fn = os.path.join(feat_dir, prefix + ".pitch.npy")
+    pitches = np.load(pitch_fn)
+
+    # Check that the fbanks are flat
+    if len(fbanks.shape) == 3:
+        def flatten(feats_3d):
+            swapped = np.swapaxes(feats_3d, 0, 1)
+            concatenated = np.concatenate(swapped, axis=1)
+            return concatenated
+        fbanks = flatten(fbanks)
+    elif len(fbanks.shape) == 2:
+        pass
+    else:
+        raise Exception("Invalid fbank array shape %s" % (str(fbanks.shape)))
+
+    diff = len(fbanks) - len(pitches)
+
+    # When using python_speech_features fbank extraction and kaldi pitch
+    # extraction, there are slightly differing numbers of frames. Usually only
+    # by 1 or so. Just pad with zeros to match.
+    # TODO This could be a sign that it might just be best to use Kaldi for
+    # fbank feature extraction as well (I kind of want to see how using those
+    # features goes anyway). But I'm currently keeping it this way for
+    # experimental consistency.
+    if diff > 2:
+        raise Exception("Excessive difference in number of frames. %d" % diff)
+    elif diff > 0:
+        pitches = np.concatenate((np.array([[0,0]]*(len(fbanks) - len(pitches))), pitches))
+    fbank_pitch_feats = np.concatenate((fbanks, pitches), axis=1)
+
+    out_fn = os.path.join(feat_dir, prefix + ".fbank_and_pitch.npy")
+    np.save(out_fn, fbank_pitch_feats)
+
 # TODO I'm operating at the directory level for pitch feats, but at the file
 # level for other things. Change this? Currently wav normalization occurs
 # elsewhere too (in say, datasets.chatin.prepare_feats()). Kaldi expects
@@ -63,7 +100,7 @@ def mfcc(wav_path):
 def from_dir(dirname, feat_type):
     # If pitch features are needed as part of this, extract them
     if feat_type == "pitch" or feat_type == "fbank_and_pitch":
-        kaldi_pitch(FEAT_DIR, FEAT_DIR)
+        kaldi_pitch(dirname, dirname)
 
     # Then apply file-wise feature extraction
     for filename in os.listdir(dirname):
@@ -75,7 +112,7 @@ def from_dir(dirname, feat_type):
                 fbank(path)
                 prefix = os.path.splitext(filename)[0]
                 # TODO
-                combine_fbank_pitch(prefix)
+                combine_fbank_and_pitch(dirname, prefix)
             elif feat_type == "pitch":
                 # Already extracted pitch at the start of this function.
                 pass
