@@ -7,6 +7,8 @@ import numpy as np
 import python_speech_features
 import scipy.io.wavfile as wav
 
+import config
+
 def extract_energy(rate, sig):
     """ Extracts the energy of frames. """
 
@@ -38,7 +40,7 @@ def fbank(wav_path, flat=True):
     feat_fn = wav_path[:-3] + "fbank.npy"
     np.save(feat_fn, all_feats)
 
-def feature_extraction(wav_path):
+def mfcc(wav_path):
     """ Grabs MFCC features with energy and derivates. """
 
     (rate, sig) = wav.read(wav_path)
@@ -69,4 +71,29 @@ def convert_wav(org_wav_fn, tgt_wav_fn):
     home = os.path.expanduser("~")
     args = [os.path.join(home, "tools", "ffmpeg-3.3", "ffmpeg"),
             "-i", org_wav_fn, "-ac", "1", "-ar", "16000", tgt_wav_fn]
+    subprocess.run(args)
+
+def kaldi_pitch(wav_dir, feat_dir):
+    """ Extract Kaldi pitch features. """
+
+    # Make wav.scp and pitch.scp files
+    prefixes = []
+    for fn in os.listdir(wav_dir):
+        prefix, ext = os.path.splitext(fn)
+        if ext == ".wav":
+            prefixes.append(prefix)
+
+    wav_scp_path = os.path.join(feat_dir, "wavs.scp")
+    with open(wav_scp_path, "w") as wav_scp:
+        for prefix in prefixes:
+            print(prefix, os.path.join(wav_dir, prefix + ".wav"), file=wav_scp)
+
+    pitch_scp_path = os.path.join(feat_dir, "pitch_feats.scp")
+    with open(pitch_scp_path, "w") as pitch_scp:
+        for prefix in prefixes:
+            print(prefix, os.path.join(feat_dir, prefix + ".pitch.txt"), file=pitch_scp)
+
+    # Call Kaldi pitch feat extraction
+    args = [os.path.join(config.KALDI_ROOT, "src/featbin/compute-kaldi-pitch-feats"),
+            "scp:%s" % (wav_scp_path), "scp,t:%s" % pitch_scp_path]
     subprocess.run(args)
