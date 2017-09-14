@@ -67,7 +67,7 @@ class CorpusReader:
         target_fn_batch = inverse[1]
 
         batch_inputs, batch_inputs_lens = utils.load_batch_x(feat_fn_batch,
-                                                             flatten=True)
+                                                             flatten=False)
         batch_targets_list = []
         for targets_path in target_fn_batch:
             with open(targets_path) as targets_f:

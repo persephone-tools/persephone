@@ -41,8 +41,8 @@ def train():
     language = "chatino"
     num_layers = 3
     hidden_size = 250
-    #num_trains = [128,256,512,1024,2048]
-    num_trains = [128]
+    num_trains = [128,256,512,1024,2048]
+    #num_trains = [128]
 
     if language == "chatino":
         corpus = datasets.chatino.Corpus(feat_type, label_type)
