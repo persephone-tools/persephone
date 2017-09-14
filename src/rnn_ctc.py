@@ -24,7 +24,7 @@ class Model(model.Model):
                 print("%s=%s" % (key, val), file=desc_f)
 
     def __init__(self, exp_dir, corpus_reader, num_layers=3,
-                 hidden_size=250, beam_width=100):
+                 hidden_size=250, beam_width=100, decoding_merge_repeated=True):
         super().__init__(exp_dir, corpus_reader)
 
         # Increase vocab size by 2 since we need an extra for CTC blank labels
@@ -83,7 +83,7 @@ class Model(model.Model):
 
         self.decoded, self.log_prob = tf.nn.ctc_beam_search_decoder(
                 self.logits, self.batch_x_lens, beam_width=beam_width,
-                merge_repeated=True)
+                merge_repeated=decoding_merge_repeated)
 
         # If we want to do manual PER decoding. The decoded[0] beans the best
         # hypothesis (0th) in an n-best list.

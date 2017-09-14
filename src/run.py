@@ -59,7 +59,10 @@ def train():
         corpus_reader = CorpusReader(corpus, num_train=i)
         model = rnn_ctc.Model(exp_dir, corpus_reader,
                               num_layers=num_layers,
-                              hidden_size=hidden_size)
+                              hidden_size=hidden_size,
+                              decoding_merge_repeated=(False if
+                                                       label_type=="tones"
+                                                       else True))
         model.train()
 
     print("language: %s" % language)
