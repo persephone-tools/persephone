@@ -205,7 +205,6 @@ def prepare_feats(feat_type):
                         one_hots)
     else:
         # Otherwise, work with the wavs.
-
         for prefix in PREFIXES:
             # Convert the wave to 16k mono.
             org_wav_fn = os.path.join(ORG_WAV_DIR, "%s.wav" % prefix)
@@ -215,14 +214,6 @@ def prepare_feats(feat_type):
 
         # Extract features from the wavs.
         feat_extract.from_dir(FEAT_DIR, feat_type=feat_type)
-
-# TODO Get rid of this.
-def get_target_prefix(prefix):
-    """ Given a prefix of the form /some/path/here/wav/prefix, returns the
-    corresponding target file name."""
-
-    filename = os.path.basename(prefix)
-    return os.path.join(TGT_DIR, "transcriptions", filename)
 
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Chatino corpus."""

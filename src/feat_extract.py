@@ -55,12 +55,30 @@ def mfcc(wav_path):
     feat_fn = wav_path[:-3] + "mfcc13_d.npy"
     np.save(feat_fn, all_feats)
 
+# TODO I'm operating at the directory level for pitch feats, but at the file
+# level for other things. Change this? Currently wav normalization occurs
+# elsewhere too (in say, datasets.chatin.prepare_feats()). Kaldi expects
+# specific wav format, so that should be coupled together with pitch extraction
+# here.
 def from_dir(dirname, feat_type):
+    # If pitch features are needed as part of this, extract them
+    if feat_type == "pitch" or feat_type == "fbank_and_pitch":
+        kaldi_pitch(FEAT_DIR, FEAT_DIR)
+
+    # Then apply file-wise feature extraction
     for filename in os.listdir(dirname):
         path = os.path.join(dirname, filename)
         if path.endswith(".wav"):
             if feat_type == "fbank":
                 fbank(path)
+            elif feat_type == "fbank_and_pitch":
+                fbank(path)
+                prefix = os.path.splitext(filename)[0]
+                # TODO
+                combine_fbank_pitch(prefix)
+            elif feat_type == "pitch":
+                # Already extracted pitch at the start of this function.
+                pass
             elif feat_type == "mfcc13_d":
                 feature_extraction(wav)
             else:
