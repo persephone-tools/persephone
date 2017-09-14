@@ -92,7 +92,7 @@ def convert_wav(org_wav_fn, tgt_wav_fn):
     subprocess.run(args)
 
 def kaldi_pitch(wav_dir, feat_dir):
-    """ Extract Kaldi pitch features. """
+    """ Extract Kaldi pitch features. Assumes 16k mono wav files."""
 
     # Make wav.scp and pitch.scp files
     prefixes = []
@@ -115,3 +115,17 @@ def kaldi_pitch(wav_dir, feat_dir):
     args = [os.path.join(config.KALDI_ROOT, "src/featbin/compute-kaldi-pitch-feats"),
             "scp:%s" % (wav_scp_path), "scp,t:%s" % pitch_scp_path]
     subprocess.run(args)
+
+    # Convert the Kaldi pitch *.txt files to numpy arrays.
+    for fn in os.listdir(feat_dir):
+        if fn.endswith(".pitch.txt"):
+            pitch_feats = []
+            with open(os.path.join(feat_dir, fn)) as f:
+                for line in f:
+                    sp = line.split()
+                    if len(sp) > 1:
+                        pitch_feats.append([float(sp[0]), float(sp[1])])
+            prefix, _ = os.path.splitext(fn)
+            out_fn = prefix + ".npy"
+            a = np.array(pitch_feats)
+            np.save(os.path.join(feat_dir, out_fn), a)
