@@ -33,11 +33,16 @@ def prep_exp_dir():
 
     return os.path.join(EXP_DIR, str(exp_num))
 
-def train():
+def multi_train():
+    train("fbank_and_pitch", "phonemes")
+    train("fbank_and_pitch", "phonemes_and_tones")
+    train("fbank_and_pitch", "tones")
+
+def train(feat_type, label_type):
     """ Run an experiment. """
 
-    feat_type = "phonemes_onehot"
-    label_type = "tones"
+    #feat_type = "fbank"
+    #label_type = "tones"
     language = "chatino"
     num_layers = 3
     hidden_size = 250

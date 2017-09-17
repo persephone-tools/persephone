@@ -37,6 +37,9 @@ def format(exp_paths,
     print("Test PER", round_items(test_pers))
     print("Test TER", round_items(test_ters))
 
+    for item in zip([128,256,512,1024,2048], test_pers):
+        print("(%d, %f)" % item)
+
     for item in zip([128,256,512,1024,2048], test_ters):
         print("(%d, %f)" % item)
 

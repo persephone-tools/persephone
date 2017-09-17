@@ -189,13 +189,11 @@ def prepare_feats(feat_type):
         prepare_labels("phonemes")
         for prefix in PREFIXES:
             label_fn = os.path.join(LABEL_DIR, "%s.phonemes" % prefix)
-            print(label_fn)
             try:
                 with open(label_fn) as label_f:
                     labels = label_f.readlines()[0].split()
             except FileNotFoundError:
                 continue
-            print(label_fn)
             indices = [PHONEMES_TO_INDICES[label] for label in labels]
             one_hots = one_hots = [[0]*len(PHONEMES) for _ in labels]
             for i, index in enumerate(indices):
