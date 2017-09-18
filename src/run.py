@@ -91,16 +91,16 @@ def calc_time():
 
     import numpy as np
 
-    for i in [128,256,512,1024,2048,2935]:
-        corpus = datasets.na.Corpus(feat_type="filterbank_pitch",
-                                    target_type="phn", tones=True)
+    for i in [128,256,512,1024,2048]:
+        corpus = datasets.chatino.Corpus(feat_type="fbank",
+                                         label_type="phonemes")
         corpus_reader = CorpusReader(corpus, num_train=i)
 
         print(len(corpus_reader.train_fns))
 
         total_frames = 0
         #for feat_fn, _, _ in corpus.get_train_fns():
-        for feat_fn, _, _ in corpus_reader.train_fns:
+        for feat_fn, _, in corpus_reader.train_fns:
             #print(feat_fn)
             frames = len(np.load(feat_fn))
             total_frames += frames
