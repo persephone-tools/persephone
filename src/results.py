@@ -43,6 +43,10 @@ def format(exp_paths,
     for item in zip([128,256,512,1024,2048], test_ters):
         print("(%d, %f)" % item)
 
+def filter_labels(sent, labels):
+    """ Returns only the tokens present in the sentence that are in labels."""
+    return [tok for tok in sent if tok in labels]
+
 def test_results(exp_path, phones, tones):
     """ Gets results of the model on the test set. """
 
@@ -51,53 +55,26 @@ def test_results(exp_path, phones, tones):
         line = test_f.readlines()[0]
         test_ler = float(line.split()[2].strip(","))
 
-    test_per = phones_only_error_rate(os.path.join(test_path, "hyps"),
+    test_per = filtered_error_rate(os.path.join(test_path, "hyps"),
                                       os.path.join(test_path, "refs"),
                                       phones)
 
-    test_ter = tones_only_error_rate(os.path.join(test_path, "hyps"),
+    test_ter = filtered_error_rate(os.path.join(test_path, "hyps"),
                                       os.path.join(test_path, "refs"),
                                       tones)
 
     return test_ler, test_per, test_ter
 
-def phones_only_error_rate(hyps_path, refs_path, phones):
-
-    def phones_only(sent):
-        """ Returns only the Na phones present in the sentence."""
-        return [phone for phone in sent if phone in phones]
+def filtered_error_rate(hyps_path, refs_path, labels):
 
     with open(hyps_path) as hyps_f:
         lines = hyps_f.readlines()
-        hyps = [phones_only(line.split()) for line in lines]
+        hyps = [filter_labels(line.split(), labels) for line in lines]
     with open(refs_path) as refs_f:
         lines = refs_f.readlines()
-        refs = [phones_only(line.split()) for line in lines]
+        refs = [filter_labels(line.split(), labels) for line in lines]
 
-    # For the case where there are no tones (the experiment was phones only).
-    only_empty = True
-    for entry in hyps:
-        if entry != []:
-            only_empty = False
-    if only_empty:
-        return -1
-
-    return utils.batch_per(hyps, refs)
-
-def tones_only_error_rate(hyps_path, refs_path, tones):
-
-    def tones_only(sent):
-        """ Returns only the Na tones present in the sentence."""
-        return [tone for tone in sent if tone in tones]
-
-    with open(hyps_path) as hyps_f:
-        lines = hyps_f.readlines()
-        hyps = [tones_only(line.split()) for line in lines]
-    with open(refs_path) as refs_f:
-        lines = refs_f.readlines()
-        refs = [tones_only(line.split()) for line in lines]
-
-    # For the case where there are no tones (the experiment was phones only).
+    # For the case where there are no tokens left after filtering.
     only_empty = True
     for entry in hyps:
         if entry != []:
