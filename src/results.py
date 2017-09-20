@@ -5,6 +5,8 @@ import datasets.na
 import os
 import utils
 
+from distance import min_edit_distance_align
+
 def round_items(floats):
     return ["%0.3f" % fl for fl in floats]
 
@@ -83,3 +85,37 @@ def filtered_error_rate(hyps_path, refs_path, labels):
         return -1
 
     return utils.batch_per(hyps, refs)
+
+def error_types(exp_path, labels):
+    """ Stats about the most common types of errors in the test set."""
+
+    test_path = os.path.join(exp_path, "test")
+    hyps_path = os.path.join(test_path, "hyps")
+    refs_path = os.path.join(test_path, "refs")
+
+    with open(hyps_path) as hyps_f:
+        lines = hyps_f.readlines()
+        hyps = [filter_labels(line.split(), labels) for line in lines]
+    with open(refs_path) as refs_f:
+        lines = refs_f.readlines()
+        refs = [filter_labels(line.split(), labels) for line in lines]
+
+    alignments = []
+    errors = []
+    for ref, hyp in zip(refs, hyps):
+        alignment = min_edit_distance_align(ref, hyp)
+        alignments.append(alignment)
+        for arrow in alignment:
+            if arrow[0] != arrow[1]:
+                errors.append(arrow)
+
+    err_hist = {}
+    for error in errors:
+        if error in err_hist:
+            err_hist[error] += 1
+        else:
+            err_hist[error] = 1
+
+    error_list = sorted(err_hist.items(), key=lambda x: x[1], reverse=False)
+    for thing in error_list:
+        print(thing)
