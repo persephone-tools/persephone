@@ -53,59 +53,6 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
 
         return [self.PHONEME_TO_INDEX[phoneme] for phoneme in phonemes]
 
-    def get_train_fns(self):
-        """ Returns a tuple of two elements representing the training set. The
-        first element is a list of the filenames of all the input features. The
-        second element is a list of the filenames of all the targets. There is
-        a one-to-one correspondence between these two lists.
-        """
-
-        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
-                    for prefix in self.train_prefixes]
-        if self.normalized:
-            feat_fns = [os.path.splitext(fn)[0] + ".norm" + os.path.splitext(fn)[1]
-                        for fn in feat_fns]
-        target_fns = ["%s.%s" % (self.get_target_prefix(prefix), self.target_type)
-                      for prefix in self.train_prefixes]
-        return feat_fns, target_fns
-
-    def get_valid_fns(self):
-        """ Returns a tuple of two elements representing the validation set.
-        The first element is a list of the filenames of all the input features.
-        The second element is a list of the filenames of all the targets. There
-        is a one-to-one correspondence between these two lists.
-        """
-
-        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
-                    for prefix in self.valid_prefixes]
-        if self.normalized:
-            feat_fns = [os.path.splitext(fn)[0] + ".norm" + os.path.splitext(fn)[1]
-                        for fn in feat_fns]
-        target_fns = ["%s.%s" % (self.get_target_prefix(prefix), self.target_type)
-                      for prefix in self.valid_prefixes]
-        return feat_fns, target_fns
-    def get_test_fns(self):
-        """ Returns a tuple of two elements representing the test set.
-        The first element is a list of the filenames of all the input features.
-        The second element is a list of the filenames of all the targets. There
-        is a one-to-one correspondence between these two lists.
-        """
-
-        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
-                    for prefix in self.test_prefixes]
-        if self.normalized:
-            feat_fns = [os.path.splitext(fn)[0] + ".norm" + os.path.splitext(fn)[1]
-                        for fn in feat_fns]
-        target_fns = ["%s.%s" % (self.get_target_prefix(prefix), self.target_type)
-                      for prefix in self.test_prefixes]
-        return feat_fns, target_fns
-
-#    @abc.abstractmethod
-#    def prepare(self):
-        """ Performs preprocessing of the raw corpus data to make it ready
-        for model training.
-        """
-
     @property
     def num_feats(self):
         """ The number of features per time step in the corpus. """
@@ -123,3 +70,24 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
                 raise Exception(
                     "Feature matrix of shape %s unexpected" % str(feats.shape))
         return self._num_feats
+
+    def get_train_fns(self):
+        feat_fns = [os.path.join(self.FEAT_DIR, "%s.%s.npy" % (prefix, self.feat_type))
+                    for prefix in self.train_prefixes]
+        label_fns = [os.path.join(self.LABEL_DIR, "%s.%s" % (prefix, self.label_type))
+                      for prefix in self.train_prefixes]
+        return feat_fns, label_fns
+
+    def get_valid_fns(self):
+        feat_fns = [os.path.join(self.FEAT_DIR, "%s.%s.npy" % (prefix, self.feat_type))
+                    for prefix in self.valid_prefixes]
+        label_fns = [os.path.join(self.LABEL_DIR, "%s.%s" % (prefix, self.label_type))
+                      for prefix in self.valid_prefixes]
+        return feat_fns, label_fns
+
+    def get_test_fns(self):
+        feat_fns = [os.path.join(self.FEAT_DIR, "%s.%s.npy" % (prefix, self.feat_type))
+                    for prefix in self.test_prefixes]
+        label_fns = [os.path.join(self.LABEL_DIR, "%s.%s" % (prefix, self.label_type))
+                      for prefix in self.test_prefixes]
+        return feat_fns, label_fns

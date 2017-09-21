@@ -17,21 +17,26 @@ import utils
 random.seed(0)
 
 ORG_DIR = config.NA_DIR
-TGT_DIR = "../data/na"
-ORG_TXT_NORM_DIR = os.path.join(ORG_DIR, "txt_norm")
-TGT_TXT_NORM_DIR = os.path.join(TGT_DIR, "txt_norm")
+TGT_DIR = os.path.join(config.TGT_DIR, "na")
+#ORG_TXT_NORM_DIR = os.path.join(ORG_DIR, "txt_norm")
+#TGT_TXT_NORM_DIR = os.path.join(TGT_DIR, "txt_norm")
 ORG_XML_DIR = os.path.join(ORG_DIR, "xml")
-# TODO To make this not 'wav', but 'feats' I either need to move the manually
-# made fbank+pitch feats from wav to feats, or better, automate the whole
-# process.
-FEAT_DIR = os.path.join(TGT_DIR, "wav")
+ORG_WAV_DIR = os.path.join(ORG_DIR, "wav")
+FEAT_DIR = os.path.join(TGT_DIR, "feat")
+LABEL_DIR = os.path.join(TGT_DIR, "label")
 
+#PREFIXES = [os.path.splitext(fn)[0]
+#            for fn in os.listdir(ORG_TRANSCRIPT_DIR)
+#            if fn.endswith(".txt")]
+
+# TODO Move into feat creation functions.
 if not os.path.isdir(TGT_DIR):
     os.makedirs(TGT_DIR)
 
 if not os.path.isdir(FEAT_DIR):
     os.makedirs(FEAT_DIR)
 
+# HARDCODED values
 TO_REMOVE = {"|", "ǀ", "↑", "«", "»", "¨", "“", "”", "D", "F"}
 WORDS_TO_REMOVE = {"CHEVRON", "audible", "qʰʰʰʰʰ", "qʰʰʰʰ", "D"}
 TONES = ["˧˥", "˩˥", "˩˧", "˧˩", "˩", "˥", "˧"]
@@ -55,39 +60,27 @@ TONES2INDICES = {tone: index for index, tone in enumerate(TONES)}
 INDICES2TONES = {index: tone for index, tone in enumerate(TONES)}
 
 # TODO rename this to "tokens2indices" or something similar.
-def phones2indices(tokens, target_type):
-    """ Converts a list of phones to a list of indices. Increments the index by
-    1 to avoid issues to do with dynamic padding in Tensorflow. """
-    if target_type == "phonemes_and_tones":
-        return [PHONESTONES2INDICES[token]+1 for token in tokens]
-    elif target_type == "phonemes":
-        return [PHONES2INDICES[token]+1 for token in tokens]
-    elif target_type == "tones":
-        return [TONES2INDICES[token]+1 for token in tokens]
-    else:
-        raise Exception("Target type %s not supported." % target_type)
+#def phones2indices(tokens, target_type):
+#    """ Converts a list of phones to a list of indices. Increments the index by
+#    1 to avoid issues to do with dynamic padding in Tensorflow. """
+#    if target_type == "phonemes_and_tones":
+#        return [PHONESTONES2INDICES[token]+1 for token in tokens]
+#    elif target_type == "phonemes":
+#        return [PHONES2INDICES[token]+1 for token in tokens]
+#    elif target_type == "tones":
+#        return [TONES2INDICES[token]+1 for token in tokens]
+#    else:
+#        raise Exception("Target type %s not supported." % target_type)
 
-def indices2phones(indices, target_type):
-    """ Converts integer representations of phones to human-readable characters. """
-
-    if target_type == "phonemes_and_tones":
-        return [(INDICES2PHONESTONES[index-1] if index > 0 else "pad") for index in indices]
-    elif target_type == "phonemes":
-        return [(INDICES2PHONES[index-1] if index > 0 else "pad") for index in indices]
-    elif target_type == "tones":
-        return [(INDICES2TONES[index-1] if index > 0 else "pad") for index in indices]
-
-def is_number(string):
-    """ Tests if a string is valid float. """
-    try:
-        float(string)
-        return True
-    except ValueError:
-        return False
-
-def remove_multi(to_remove, target_list):
-    """ Removes instances of a from the list ys."""
-    return list(filter(lambda x: x != to_remove, target_list))
+#def indices2phones(indices, target_type):
+#    """ Converts integer representations of phones to human-readable characters. """
+#
+#    if target_type == "phonemes_and_tones":
+#        return [(INDICES2PHONESTONES[index-1] if index > 0 else "pad") for index in indices]
+#    elif target_type == "phonemes":
+#        return [(INDICES2PHONES[index-1] if index > 0 else "pad") for index in indices]
+#    elif target_type == "tones":
+#        return [(INDICES2TONES[index-1] if index > 0 else "pad") for index in indices]
 
 def contains_forbidden_word(line):
     """ Tests if a line contains a non-Na word to remove."""
@@ -119,16 +112,6 @@ def segment_phonemes(syls):
                 raise Exception("Failed to segment syllable: %s" % syl)
     return phonemes
 
-def wav_length(fn):
-    """ Returns the length of the WAV file in seconds."""
-
-    args = [config.SOX_PATH, fn, "-n", "stat"]
-    p = subprocess.Popen(
-        [config.SOX_PATH, fn, "-n", "stat"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    length_line = str(p.communicate()[1]).split("\\n")[1].split()
-    assert length_line[0] == "Length"
-    return float(length_line[-1])
-
 def prepare_na_sent(sent):
     """ New function phasing into MAM. Processes sentences obtained from
     datasets.pangloss.get_sents_times_and_translations() so that we can bypass
@@ -149,8 +132,6 @@ def prepare_wavs_and_transcripts(filenames, target_type):
     """ Trims available wavs into the sentence or utterance-level."""
     # TODO To be deprecated. This functionality should be broken down into
     # smaller parts and made a part of the method of the class "Corpus".
-
-    fr_nlp = spacy.load("fr")
 
     import spacy
     fr_nlp = spacy.load("fr")
@@ -196,8 +177,8 @@ def prepare_wavs_and_transcripts(filenames, target_type):
         start_time = times[0]
         end_time = times[1]
         #Ensure the line has utterance time markers.
-        assert is_number(start_time)
-        assert is_number(end_time)
+        assert utils.is_number(start_time)
+        assert utils.is_number(end_time)
 
         syls = line.split()[2:]
         #syl_inv = syl_inv.union(syls)
@@ -225,21 +206,6 @@ def prepare_wavs_and_transcripts(filenames, target_type):
 
         return out_path
 
-    def process_translation(translation, remove_brackets_content=True):
-        """ Takes the translation(s) of some utterance, preprocesses it and
-        writes it to file.
-        """
-
-        if remove_brackets_content:
-            trans = datasets.pangloss.remove_content_in_brackets(
-                translation[0], "[]")
-        # Not sure why I have to split and rejoin, but that fixes a Spacy token
-        # error.
-        trans = fr_nlp(" ".join(trans.split()[:]))
-        #trans = fr_nlp(trans)
-        trans = " ".join([token.lower_ for token in trans if not token.is_punct])
-        return trans
-
     lattm_fn = os.path.join(TGT_DIR, "latticetm_filelist.tones%s.txt" % (str(tones)))
     with open(lattm_fn, "w") as lattm_f:
         for text_fn in filenames:
@@ -263,69 +229,119 @@ def prepare_wavs_and_transcripts(filenames, target_type):
                         print(translation, file=transl_f)
                     line_id += 1
 
-def wordlists_and_texts_fns():
-    """ Determine which transcript and WAV prefixes correspond to wordlists,
-    and which to stories.
-    """
+#def wordlists_and_texts_fns():
+#    """ Determine which transcript and WAV prefixes correspond to wordlists,
+#    and which to stories.
+#    """
+#
+#    wordlists = []
+#    texts = []
+#    XML_DIR = os.path.join(ORG_DIR, "xml")
+#    txt_norm_files = os.listdir(ORG_TXT_NORM_DIR)
+#    for filename in os.listdir(XML_DIR):
+#        tree = ET.parse(os.path.join(XML_DIR, filename))
+#        root = tree.getroot()
+#        if "TEXT" in root.tag:
+#            prefix = filename.strip(".xml").upper()
+#            if prefix + "_HEADMIC.txt" in txt_norm_files:
+#                texts.append(prefix + "_HEADMIC.txt")
+#            elif prefix + ".txt" in txt_norm_files:
+#                texts.append(prefix + ".txt")
+#            else:
+#                print("Couldn't find: %s" % prefix)
+#        elif "WORDLIST" in root.tag:
+#            wordlists.append(filename.strip(".xml").upper())
+#        else:
+#            raise Exception("Unexpected type of transcription: %s" % root.tag)
+#    return wordlists, texts
 
-    wordlists = []
-    texts = []
-    XML_DIR = os.path.join(ORG_DIR, "xml")
-    txt_norm_files = os.listdir(ORG_TXT_NORM_DIR)
-    for filename in os.listdir(XML_DIR):
-        tree = ET.parse(os.path.join(XML_DIR, filename))
-        root = tree.getroot()
-        if "TEXT" in root.tag:
-            prefix = filename.strip(".xml").upper()
-            if prefix + "_HEADMIC.txt" in txt_norm_files:
-                texts.append(prefix + "_HEADMIC.txt")
-            elif prefix + ".txt" in txt_norm_files:
-                texts.append(prefix + ".txt")
-            else:
-                print("Couldn't find: %s" % prefix)
-        elif "WORDLIST" in root.tag:
-            wordlists.append(filename.strip(".xml").upper())
-        else:
-            raise Exception("Unexpected type of transcription: %s" % root.tag)
-    return wordlists, texts
+#def get_target_prefix(prefix):
+#    """ Given a prefix of the form /some/path/here/wav/prefix, returns the
+#    corresponding target file name."""
+#
+#    bn = os.path.basename(prefix)
+#    return os.path.join(TGT_DIR, "txt_norm", bn)
 
-def extract_features():
-    """ Extract features from wave files in a given path. """
+#def get_transl_prefix(prefix):
+#    """ Given a prefix of the form /some/path/here/wav/prefix, returns the
+#    corresponding target file name."""
+#
+#    bn = os.path.basename(prefix)
+#    return os.path.join(TGT_DIR, "translations", bn)
 
-    feat_extract.from_dir(os.path.join(TGT_DIR, "wav"), feat_type="log_mel_filterbank")
+#def get_xml_fn(text_fn):
+#    """ Fetches the filenames of the xml file corresponding to the txt_norm
+#    transcription. (The formatting is slightly different, XML files are
+#    prefixed with a lowercase "crdo" and do not have "HEADMIC" or "TABLEMIC"
+#    suffixes.
+#    """
+#
+#    pre, ext = os.path.splitext(text_fn)
+#    sp = pre.split("-")
+#    assert len(sp) == 2
+#    headmic = "_HEADMIC"
+#    if pre.endswith(headmic):
+#        xml_fn = "crdo-" + sp[1][:-len(headmic)] + ".xml"
+#    else:
+#        xml_fn = "crdo-" + sp[1] + ".xml"
+#    xml_fn = os.path.join(ORG_XML_DIR, xml_fn)
+#
+#    return xml_fn
 
-def get_target_prefix(prefix):
-    """ Given a prefix of the form /some/path/here/wav/prefix, returns the
-    corresponding target file name."""
+def preprocess_french(trans, fr_nlp, remove_brackets_content=True):
+    """ Takes a list of sentences in french and preprocesses them."""
 
-    bn = os.path.basename(prefix)
-    return os.path.join(TGT_DIR, "txt_norm", bn)
+    if remove_brackets_content:
+        trans = datasets.pangloss.remove_content_in_brackets(trans, "[]")
+    # Not sure why I have to split and rejoin, but that fixes a Spacy token
+    # error.
+    trans = fr_nlp(" ".join(trans.split()[:]))
+    #trans = fr_nlp(trans)
+    trans = " ".join([token.lower_ for token in trans if not token.is_punct])
 
-def get_transl_prefix(prefix):
-    """ Given a prefix of the form /some/path/here/wav/prefix, returns the
-    corresponding target file name."""
+    return trans
 
-    bn = os.path.basename(prefix)
-    return os.path.join(TGT_DIR, "translations", bn)
+def preprocess_from_xml(org_xml_dir, org_wav_dir, tgt_sent_dir, tgt_transl_dir, tgt_wav_dir):
+    """ Extracts sentence-level transcriptions, translations and wavs from the
+    Na Pangloss XML and WAV files. But otherwise doesn't preprocess them."""
 
-def get_xml_fn(text_fn):
-    """ Fetches the filenames of the xml file corresponding to the txt_norm
-    transcription. (The formatting is slightly different, XML files are
-    prefixed with a lowercase "crdo" and do not have "HEADMIC" or "TABLEMIC"
-    suffixes.
-    """
+    import spacy
+    fr_nlp = spacy.load("fr")
 
-    pre, ext = os.path.splitext(text_fn)
-    sp = pre.split("-")
-    assert len(sp) == 2
-    headmic = "_HEADMIC"
-    if pre.endswith(headmic):
-        xml_fn = "crdo-" + sp[1][:-len(headmic)] + ".xml"
-    else:
-        xml_fn = "crdo-" + sp[1] + ".xml"
-    xml_fn = os.path.join(ORG_XML_DIR, xml_fn)
+    for fn in os.listdir(org_xml_dir):
+        print(fn)
+        path = os.path.join(org_xml_dir, fn)
+        sents, times, transls = datasets.pangloss.get_sents_times_and_translations(path)
 
-    return xml_fn
+        assert len(sents) == len(times)
+        assert len(sents) == len(transls)
+
+        prefix, _ = os.path.splitext(fn)
+
+        # Write the transcriptions to file
+        for i, sent in enumerate(sents):
+            out_prefix = "%s.%d" % (prefix, i)
+            sent_path = os.path.join(tgt_sent_dir, out_prefix + ".txt")
+            with open(sent_path, "w") as sent_f:
+                print(sent, file=sent_f)
+
+        # Extract the wavs given the times.
+        for i, (start_time, end_time) in enumerate(times):
+            headmic_path = os.path.join(org_wav_dir, prefix.upper()) + "_HEADMIC.wav"
+            in_wav_path = os.path.join(org_wav_dir, prefix.upper()) + ".wav"
+            if os.path.isfile(headmic_path):
+                in_wav_path = headmic_path
+
+            out_wav_path = os.path.join(tgt_wav_dir, "%s.%d.wav" % (prefix, i))
+            #utils.trim_wav(in_wav_path, out_wav_path, start_time, end_time)
+
+        # Tokenize the French translations and write them to file.
+        transls = [preprocess_french(transl[0], fr_nlp) for transl in transls]
+        for i, transl in enumerate(transls):
+            out_prefix = "%s.%d" % (prefix, i)
+            transl_path = os.path.join(tgt_transl_dir, out_prefix + ".fr.txt")
+            with open(transl_path, "w") as transl_f:
+                print(transl, file=transl_f)
 
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
@@ -336,11 +352,11 @@ class Corpus(corpus.AbstractCorpus):
         super().__init__(feat_type, target_type)
 
         if target_type == "phonemes_and_tones":
-            self.phonemes = PHONES.union(set(TONES))
+            self.labels = PHONES.union(set(TONES))
         elif target_type == "phonemes":
-            self.phonemes = PHONES
+            self.labels = PHONES
         elif target_type == "tones":
-            self.phonemes = TONES
+            self.labels = TONES
         else:
             raise Exception("target_type %s not implemented." % target_type)
 
@@ -350,7 +366,7 @@ class Corpus(corpus.AbstractCorpus):
 
         # TODO Change self.phonemes field to self.tgt_labels, and related
         # variables names that might represent tones as well, or just tones.
-        self.target_set = self.phonemes
+        self.target_set = self.labels
 
         # TODO Make prefixes not include the path ../data/na/wav/. But note
         # that doing so might change what the training and test breakdown is
@@ -382,11 +398,11 @@ class Corpus(corpus.AbstractCorpus):
         self.valid_prefixes = prefixes[train_end:valid_end]
         self.test_prefixes = prefixes[valid_end:]
 
-        self.PHONEME_TO_INDEX = {phn: index for index, phn in enumerate(
-                                 ["pad"] + sorted(list(self.phonemes)))}
-        self.INDEX_TO_PHONEME = {index: phn for index, phn in enumerate(
-                                 ["pad"] + sorted(list(self.phonemes)))}
-        self.vocab_size = len(self.phonemes)
+        self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
+                                 ["pad"] + sorted(list(self.labels)))}
+        self.INDEX_TO_LABEL = {index: phn for index, phn in enumerate(
+                                 ["pad"] + sorted(list(self.labels)))}
+        self.vocab_size = len(self.labels)
 
     @staticmethod
     def prepare(feat_type, target_type):

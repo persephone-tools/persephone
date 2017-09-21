@@ -121,3 +121,25 @@ def sort_and_filter_by_size(feat_dir, prefixes, feat_type, max_samples):
     prefixes = [prefix for prefix, length in prefix_lens
                 if length <= max_samples]
     return prefixes
+
+def is_number(string):
+    """ Tests if a string is valid float. """
+    try:
+        float(string)
+        return True
+    except ValueError:
+        return False
+
+def remove_multi(to_remove, target_list):
+    """ Removes instances of an item from a list."""
+    return list(filter(lambda x: x != to_remove, target_list))
+
+def wav_length(fn):
+    """ Returns the length of the WAV file in seconds."""
+
+    args = [config.SOX_PATH, fn, "-n", "stat"]
+    p = subprocess.Popen(
+        [config.SOX_PATH, fn, "-n", "stat"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    length_line = str(p.communicate()[1]).split("\\n")[1].split()
+    assert length_line[0] == "Length"
+    return float(length_line[-1])

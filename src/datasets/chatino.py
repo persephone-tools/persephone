@@ -24,6 +24,7 @@ LABEL_DIR = os.path.join(TGT_DIR, "label")
 # Obtain the filename prefixes that identify recordings and their
 # transcriptions
 # TODO Consider factoring out as non-Chatino specific
+
 PREFIXES = [os.path.splitext(fn)[0]
             for fn in os.listdir(ORG_TRANSCRIPT_DIR)
             if fn.endswith(".txt")]
@@ -202,7 +203,7 @@ def prepare_feats(feat_type):
                 np.save(os.path.join(FEAT_DIR, "%s.phonemes_onehot" %  prefix),
                         one_hots)
     else:
-        # Otherwise, work with the wavs.
+        # Otherwise, 
         for prefix in PREFIXES:
             # Convert the wave to 16k mono.
             org_wav_fn = os.path.join(ORG_WAV_DIR, "%s.wav" % prefix)
@@ -219,6 +220,8 @@ class Corpus(corpus.AbstractCorpus):
     # TODO Reconsider the place of these splits. Perhaps train/dev/test
     # directories should be used instead, and generated in the prepare() step.
     TRAIN_VALID_TEST_SPLIT = [2048, 207, 206]
+    FEAT_DIR = FEAT_DIR
+    LABEL_DIR = LABEL_DIR
 
     def __init__(self, feat_type, label_type, max_samples=1000):
         super().__init__(feat_type, label_type)
@@ -265,27 +268,8 @@ class Corpus(corpus.AbstractCorpus):
         self.vocab_size = len(self.labels)
 
     # TODO Use 'labels' instead of 'phonemes' here and in corpus.py
+    # Also, factor out as non-Chatino-specific.
     def indices_to_phonemes(self, indices):
         return [(self.INDEX_TO_LABEL[index]) for index in indices]
     def phonemes_to_indices(self, labels):
         return [self.LABEL_TO_INDEX[label] for label in labels]
-
-    # TODO Consider factoring out as non-Chatino specific
-    def get_train_fns(self):
-        feat_fns = [os.path.join(FEAT_DIR, "%s.%s.npy" % (prefix, self.feat_type))
-                    for prefix in self.train_prefixes]
-        label_fns = [os.path.join(LABEL_DIR, "%s.%s" % (prefix, self.label_type))
-                      for prefix in self.train_prefixes]
-        return feat_fns, label_fns
-    def get_valid_fns(self):
-        feat_fns = [os.path.join(FEAT_DIR, "%s.%s.npy" % (prefix, self.feat_type))
-                    for prefix in self.valid_prefixes]
-        label_fns = [os.path.join(LABEL_DIR, "%s.%s" % (prefix, self.label_type))
-                      for prefix in self.valid_prefixes]
-        return feat_fns, label_fns
-    def get_test_fns(self):
-        feat_fns = [os.path.join(FEAT_DIR, "%s.%s.npy" % (prefix, self.feat_type))
-                    for prefix in self.test_prefixes]
-        label_fns = [os.path.join(LABEL_DIR, "%s.%s" % (prefix, self.label_type))
-                      for prefix in self.test_prefixes]
-        return feat_fns, label_fns
