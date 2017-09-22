@@ -288,6 +288,66 @@ def prepare_wavs_and_transcripts(filenames, target_type):
 #
 #    return xml_fn
 
+def preprocess_na(sent):
+
+    def pop_phoneme(sentence):
+        if sentence[:3] in tri_char_phonemes:
+            return sentence[:3], sentence[3:]
+        if sentence[:2] in bi_char_phonemes:
+            return sentence[:2], sentence[2:]
+        if sentence[0] in uni_char_phonemes:
+            return sentence[0], sentence[1:]
+        if sentence[0] in tones:
+            # We assume tones cannot be captured.
+            return None, sentence[1:]
+        if sentence[0] in misc_symbols:
+            # We assume these symbols cannot be captured.
+            return None, sentence[1:]
+        if sentence[0] in bad_na_symbols:
+            return None, sentence[1:]
+        if sentence[0] in punctuation_symbols:
+            return None, sentence[1:]
+        if sentence[0] in ["-", "ʰ"]:
+            return None, sentence[1:]
+        if sentence[0] in set(["<", ">", "[", "]", "/"]):
+            # We assume these symbols cannot be captured.
+            return sentence[0], sentence[1:]
+        if sentence[0] in set([" ", "\t", "\n"]):
+            # Return a space char so that it can be identified in word segmentation
+            # processing.
+            return " ", sentence[1:]
+        if sentence[0] == "v̩":
+            return "v", sentence[1:]
+        if sentence[0] == "ṽ̩":
+            return "ṽ", sentence[1:]
+        if sentence[0] == "ɻ̩":
+            return "ɻ", sentence[1:]
+        if sentence[0] == "|":
+            return "|", sentence[1:]
+        raise Exception("Next character not recognized: " + sentence[:1])
+
+    def filter_for_phonemes(sentence):
+        """ Returns a sequence of phonemes and pipes (word delimiters). Tones,
+        syllable boundaries, whitespace are all removed."""
+
+        filtered_sentence = []
+        while sentence != "":
+            phoneme, sentence = pop_phoneme(sentence)
+            if phoneme != " ":
+                filtered_sentence.append(phoneme)
+        filtered_sentence = [item for item in filtered_sentence if item != None]
+        return " ".join(filtered_sentence)
+
+    print(sent)
+    sent = filter_for_phonemes(sent)
+    print(sent)
+    input()
+    #sent = remove_pipes(sent)
+    #sent = sent.replace("\n", " ")
+    #sent = sent.replace("\t", " ")
+    #sent = process_brackets(sent)
+    return sent
+
 def preprocess_french(trans, fr_nlp, remove_brackets_content=True):
     """ Takes a list of sentences in french and preprocesses them."""
 
@@ -319,6 +379,7 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir, tgt_sent_dir, tgt_transl_dir, 
         prefix, _ = os.path.splitext(fn)
 
         # Write the transcriptions to file
+        sents = [preprocess_na(sent) for sent in sents]
         for i, sent in enumerate(sents):
             out_prefix = "%s.%d" % (prefix, i)
             sent_path = os.path.join(tgt_sent_dir, out_prefix + ".txt")
