@@ -54,7 +54,9 @@ TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩"}
 
 TO_REMOVE = {"|", "ǀ", "↑", "«", "»", "¨", "“", "”", "D", "F"}
 WORDS_TO_REMOVE = {"CHEVRON", "audible", "qʰʰʰʰʰ", "qʰʰʰʰ", "D"}
-TONES = ["˧˥", "˩˥", "˩˧", "˧˩", "˩", "˥", "˧"]
+UNI_TONES = {"˩", "˥", "˧"}
+BI_TONES = {"˧˥", "˩˥", "˩˧", "˧˩"}
+TONES = UNI_TONES.union(BI_TONES)
 # TODO Change to "PHONEMES"?
 PHONES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS)
 NUM_PHONES = len(PHONES)
@@ -295,19 +297,46 @@ def prepare_wavs_and_transcripts(filenames, target_type):
 #
 #    return xml_fn
 
-def preprocess_na(sent):
+def preprocess_na(sent, label_type):
+
+    if label_type == "phonemes_and_tones":
+        phonemes = True
+        tones = True
+    elif label_type == "phonemes":
+        phonemes = True
+        tones = False
+    elif label_type == "tones":
+        phonemes = False
+        tones = True
+    else:
+        raise Exception("Unrecognized label type: %s" % label_type)
 
     def pop_phoneme(sentence):
         if sentence[:3] in TRI_PHNS:
-            return sentence[:3], sentence[3:]
+            if phonemes:
+                return sentence[:3], sentence[3:]
+            else:
+                return None, sentence[3:]
         if sentence[:2] in BI_PHNS:
-            return sentence[:2], sentence[2:]
+            if phonemes:
+                return sentence[:2], sentence[2:]
+            else:
+                return None, sentence[2:]
         if sentence[0] in UNI_PHNS:
-            return sentence[0], sentence[1:]
-        if sentence[0] in TONES:
-            # TODO This assumption no longer holds
-            # We assume tones cannot be captured.
-            return None, sentence[1:]
+            if phonemes:
+                return sentence[0], sentence[1:]
+            else:
+                return None, sentence[1:]
+        if sentence[0] in UNI_TONES:
+            if tones:
+                return sentence[0], sentence[1:]
+            else:
+                return None, sentence[1:]
+        if sentence[:2] in BI_TONES:
+            if tones:
+                return sentence[:2], sentence[2:]
+            else:
+                return None, sentence[2:]
         if sentence[0] in MISC_SYMBOLS:
             # We assume these symbols cannot be captured.
             return None, sentence[1:]
@@ -324,12 +353,6 @@ def preprocess_na(sent):
             # Return a space char so that it can be identified in word segmentation
             # processing.
             return " ", sentence[1:]
-#        if sentence[0] == "v̩":
-#            return "v", sentence[1:]
-#        if sentence[0] == "ṽ̩":
-#            return "ṽ", sentence[1:]
-#        if sentence[0] == "ɻ̩":
-#            return "ɻ", sentence[1:]
         if sentence[0] == "|":
             return None, sentence[1:]
         raise Exception("Next character not recognized: " + sentence[:1])
@@ -369,7 +392,9 @@ def preprocess_french(trans, fr_nlp, remove_brackets_content=True):
 
     return trans
 
-def preprocess_from_xml(org_xml_dir, org_wav_dir, tgt_sent_dir, tgt_transl_dir, tgt_wav_dir):
+def preprocess_from_xml(org_xml_dir, org_wav_dir,
+                        tgt_sent_dir, tgt_transl_dir, tgt_wav_dir,
+                        label_type):
     """ Extracts sentence-level transcriptions, translations and wavs from the
     Na Pangloss XML and WAV files. But otherwise doesn't preprocess them."""
 
@@ -387,10 +412,10 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir, tgt_sent_dir, tgt_transl_dir, 
         prefix, _ = os.path.splitext(fn)
 
         # Write the transcriptions to file
-        sents = [preprocess_na(sent) for sent in sents]
+        sents = [preprocess_na(sent, label_type) for sent in sents]
         for i, sent in enumerate(sents):
-            out_prefix = "%s.%d" % (prefix, i)
-            sent_path = os.path.join(tgt_sent_dir, out_prefix + ".txt")
+            out_fn = "%s.%d.%s" % (prefix, i, label_type)
+            sent_path = os.path.join(tgt_sent_dir, out_fn)
             with open(sent_path, "w") as sent_f:
                 print(sent, file=sent_f)
 
