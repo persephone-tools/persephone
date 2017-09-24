@@ -191,6 +191,9 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
         # Write the transcriptions to file
         sents = [preprocess_na(sent, label_type) for sent in sents]
         for i, sent in enumerate(sents):
+            if sent.strip() == "":
+                # Then there's no transcription, so ignore this.
+                continue
             out_fn = "%s.%d.%s" % (prefix, i, label_type)
             sent_path = os.path.join(tgt_sent_dir, out_fn)
             with open(sent_path, "w") as sent_f:
@@ -302,9 +305,8 @@ class Corpus(corpus.AbstractCorpus):
         self.feat_type = feat_type
         self.label_type = label_type
 
-        input_dir = os.path.join(TGT_DIR, "wav")
-        self.prefixes = [fn.strip(".wav")
-                    for fn in os.listdir(input_dir) if fn.endswith(".wav")]
+        self.prefixes = [fn.strip("." + label_type)
+                    for fn in os.listdir(LABEL_DIR) if fn.endswith(label_type)]
 
         # TODO Reintegrate transcribing untranscribed stuff.
         #untranscribed_dir = os.path.join(TGT_DIR, "untranscribed_wav")
