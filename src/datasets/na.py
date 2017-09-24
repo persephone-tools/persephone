@@ -346,9 +346,18 @@ def preprocess_na(sent, label_type):
             return None, sentence[1:]
         if sentence[0] in ["-", "ʰ", "/"]:
             return None, sentence[1:]
-        if sentence[0] in set(["<", ">", "[", "]"]):
-            # Brackets will get processed afterwards.
-            return sentence[0], sentence[1:]
+        if sentence[0] in set(["<", ">"]):
+            # We keep everything literal, thus including what is in <>
+            # brackets; so we just remove these tokens"
+            return None, sentence[1:]
+        if sentence[0] == "[":
+            # It's an opening square bracket, so ignore everything until we
+            # find a closing one.
+            if sentence.find("]") == len(sentence)-1:
+                # If the closing bracket is the last char
+                return None, ""
+            else:
+                return None, sentence[sentence.find("]")+1]
         if sentence[0] in set([" ", "\t", "\n"]):
             # Return a space char so that it can be identified in word segmentation
             # processing.
@@ -369,14 +378,7 @@ def preprocess_na(sent, label_type):
         filtered_sentence = [item for item in filtered_sentence if item != None]
         return " ".join(filtered_sentence)
 
-    print(sent)
     sent = filter_for_phonemes(sent)
-    print(sent)
-    #input()
-    #sent = remove_pipes(sent)
-    #sent = sent.replace("\n", " ")
-    #sent = sent.replace("\t", " ")
-    #sent = process_brackets(sent)
     return sent
 
 def preprocess_french(trans, fr_nlp, remove_brackets_content=True):
