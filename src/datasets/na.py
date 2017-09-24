@@ -182,6 +182,7 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
 
         prefix, _ = os.path.splitext(fn)
 
+        """
         # Write the transcriptions to file
         sents = [preprocess_na(sent, label_type) for sent in sents]
         for i, sent in enumerate(sents):
@@ -189,18 +190,24 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
             sent_path = os.path.join(tgt_sent_dir, out_fn)
             with open(sent_path, "w") as sent_f:
                 print(sent, file=sent_f)
-
         """
+
         # Extract the wavs given the times.
         for i, (start_time, end_time) in enumerate(times):
+            if prefix.endswith("PLUSEGG"):
+                in_wav_path = os.path.join(org_wav_dir, prefix.upper()[:-len("PLUSEGG")]) + ".wav"
+            else:
+                in_wav_path = os.path.join(org_wav_dir, prefix.upper()) + ".wav"
             headmic_path = os.path.join(org_wav_dir, prefix.upper()) + "_HEADMIC.wav"
-            in_wav_path = os.path.join(org_wav_dir, prefix.upper()) + ".wav"
             if os.path.isfile(headmic_path):
                 in_wav_path = headmic_path
 
+
             out_wav_path = os.path.join(tgt_wav_dir, "%s.%d.wav" % (prefix, i))
+            assert os.path.isfile(in_wav_path)
             utils.trim_wav(in_wav_path, out_wav_path, start_time, end_time)
 
+        """
         # Tokenize the French translations and write them to file.
         transls = [preprocess_french(transl[0], fr_nlp) for transl in transls]
         for i, transl in enumerate(transls):
