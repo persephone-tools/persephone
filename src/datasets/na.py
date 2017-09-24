@@ -39,7 +39,7 @@ if not os.path.isdir(FEAT_DIR):
 
 # HARDCODED values
 MISC_SYMBOLS = [' ̩', '~', '=', ':', 'F', '¨', '↑', '“', '”', '…', '«', '»',
-'D', 'a', 'ː', '#', '$']
+'D', 'a', 'ː', '#', '$', "‡"]
 BAD_NA_SYMBOLS = ['D', 'F', '~', '…', '=', '↑', ':']
 PUNC_SYMBOLS = [',', '!', '.', ';', '?', "'", '"', '*', ':', '«', '»', '“', '”']
 UNI_PHNS = {'q', 'p', 'ɭ', 'ɳ', 'h', 'ʐ', 'n', 'o', 'ɤ', 'ʝ', 'ɛ', 'g',
@@ -48,7 +48,7 @@ UNI_PHNS = {'q', 'p', 'ɭ', 'ɳ', 'h', 'ʐ', 'n', 'o', 'ɤ', 'ʝ', 'ɛ', 'g',
             's', 'ŋ', 'ə', 'e', 'æ', 'f', 'j', 'k', 'z', 'ʂ'}
 BI_PHNS = {'dʑ', 'ẽ', 'ɖʐ', 'w̃', 'æ̃', 'qʰ', 'i͂', 'tɕ', 'v̩', 'o̥', 'ts',
            'ɻ̩', 'ã', 'ə̃', 'ṽ', 'pʰ', 'tʰ', 'ɤ̃', 'ʈʰ', 'ʈʂ', 'ɑ̃', 'ɻ̃', 'kʰ',
-           'ĩ', 'õ', 'dz'}
+           'ĩ', 'õ', 'dz', "ɻ̍"}
 TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩"}
 UNI_TONES = {"˩", "˥", "˧"}
 BI_TONES = {"˧˥", "˩˥", "˩˧", "˧˩"}
@@ -130,8 +130,9 @@ def preprocess_na(sent, label_type):
             # Return a space char so that it can be identified in word segmentation
             # processing.
             return " ", sentence[1:]
-        if sentence[0] == "|":
+        if sentence[0] == "|" or sentence[0] == "ǀ":
             return None, sentence[1:]
+        print("***" + sentence)
         raise Exception("Next character not recognized: " + sentence[:1])
 
     def filter_for_phonemes(sentence):
@@ -189,6 +190,7 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
             with open(sent_path, "w") as sent_f:
                 print(sent, file=sent_f)
 
+        """
         # Extract the wavs given the times.
         for i, (start_time, end_time) in enumerate(times):
             headmic_path = os.path.join(org_wav_dir, prefix.upper()) + "_HEADMIC.wav"
@@ -206,6 +208,7 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
             transl_path = os.path.join(tgt_transl_dir, out_prefix + ".fr.txt")
             with open(transl_path, "w") as transl_f:
                 print(transl, file=transl_f)
+        """
 
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
