@@ -42,6 +42,10 @@ class CorpusReader:
             # Dynamically change batch size based on number of training
             # examples.
             self.batch_size = int(num_train / 32.0)
+            if self.batch_size > 64:
+                # I was getting OOM errors when training with 4096 sents, as
+                # the batch size jumped to 128
+                self.batch_size = 64
             # For now we hope that training numbers are powers of two or
             # something... If not, crash before anything else happens.
             assert num_train % self.batch_size == 0
