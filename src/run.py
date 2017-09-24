@@ -47,8 +47,8 @@ def train(feat_type, label_type):
     num_layers = 3
     hidden_size = 250
     #num_trains = [128,256,512,1024,2048]
-    #num_trains = [4096]
-    num_trains = [2048]
+    num_trains = [6592]
+    #num_trains = [2048]
 
     if language == "chatino":
         corpus = datasets.chatino.Corpus(feat_type, label_type)
@@ -102,12 +102,12 @@ def calc_time():
         #print(len(corpus_reader.train_fns))
 
         total_frames = 0
-        for feat_fn in corpus.get_train_fns()[0]:
-            frames = len(np.load(feat_fn))
-            total_frames += frames
-        for feat_fn in corpus.get_valid_fns()[0]:
-            frames = len(np.load(feat_fn))
-            total_frames += frames
+        #for feat_fn in corpus.get_train_fns()[0]:
+        #    frames = len(np.load(feat_fn))
+        #    total_frames += frames
+        #for feat_fn in corpus.get_valid_fns()[0]:
+        #    frames = len(np.load(feat_fn))
+        #    total_frames += frames
         for feat_fn in corpus.get_test_fns()[0]:
             frames = len(np.load(feat_fn))
             total_frames += frames

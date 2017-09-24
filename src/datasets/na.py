@@ -286,7 +286,7 @@ class Corpus(corpus.AbstractCorpus):
     # TODO Probably should be hardcoding the list of train/dev/test utterances
     # values externally? Slight changes to the list means the shuffling will
     # probably completely change the test set.
-    TRAIN_VALID_TEST_RATIOS = [.8,.1,.1]
+    TRAIN_VALID_TEST_RATIOS = [.92,.04,.04]
     FEAT_DIR = FEAT_DIR
     LABEL_DIR = LABEL_DIR
 
