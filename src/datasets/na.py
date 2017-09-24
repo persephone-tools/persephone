@@ -17,7 +17,8 @@ import utils
 random.seed(0)
 
 ORG_DIR = config.NA_DIR
-TGT_DIR = os.path.join(config.TGT_DIR, "na")
+# TODO eventually remove "new" when ALTA experiments are finished.
+TGT_DIR = os.path.join(config.TGT_DIR, "na", "new")
 #ORG_TXT_NORM_DIR = os.path.join(ORG_DIR, "txt_norm")
 #TGT_TXT_NORM_DIR = os.path.join(TGT_DIR, "txt_norm")
 ORG_XML_DIR = os.path.join(ORG_DIR, "xml")
@@ -37,9 +38,10 @@ if not os.path.isdir(FEAT_DIR):
     os.makedirs(FEAT_DIR)
 
 # HARDCODED values
-TO_REMOVE = {"|", "ǀ", "↑", "«", "»", "¨", "“", "”", "D", "F"}
-WORDS_TO_REMOVE = {"CHEVRON", "audible", "qʰʰʰʰʰ", "qʰʰʰʰ", "D"}
-TONES = ["˧˥", "˩˥", "˩˧", "˧˩", "˩", "˥", "˧"]
+MISC_SYMBOLS = [' ̩', '~', '=', ':', 'F', '¨', '↑', '“', '”', '…', '«', '»',
+'D', 'a', 'ː', '#', '$']
+BAD_NA_SYMBOLS = ['D', 'F', '~', '…', '=', '↑', ':']
+PUNC_SYMBOLS = [',', '!', '.', ';', '?', "'", '"', '*', ':', '«', '»', '“', '”']
 UNI_PHNS = {'q', 'p', 'ɭ', 'ɳ', 'h', 'ʐ', 'n', 'o', 'ɤ', 'ʝ', 'ɛ', 'g',
             'i', 'u', 'b', 'ɔ', 'ɯ', 'v', 'ɑ', 'l', 'ɖ', 'ɻ', 'ĩ', 'm',
             't', 'w', 'õ', 'ẽ', 'd', 'ɣ', 'ɕ', 'c', 'ʁ', 'ʑ', 'ʈ', 'ɲ', 'ɬ',
@@ -48,6 +50,11 @@ BI_PHNS = {'dʑ', 'ẽ', 'ɖʐ', 'w̃', 'æ̃', 'qʰ', 'i͂', 'tɕ', 'v̩', 'o̥
            'ɻ̩', 'ã', 'ə̃', 'ṽ', 'pʰ', 'tʰ', 'ɤ̃', 'ʈʰ', 'ʈʂ', 'ɑ̃', 'ɻ̃', 'kʰ',
            'ĩ', 'õ', 'dz'}
 TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩"}
+
+
+TO_REMOVE = {"|", "ǀ", "↑", "«", "»", "¨", "“", "”", "D", "F"}
+WORDS_TO_REMOVE = {"CHEVRON", "audible", "qʰʰʰʰʰ", "qʰʰʰʰ", "D"}
+TONES = ["˧˥", "˩˥", "˩˧", "˧˩", "˩", "˥", "˧"]
 # TODO Change to "PHONEMES"?
 PHONES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS)
 NUM_PHONES = len(PHONES)
@@ -291,39 +298,40 @@ def prepare_wavs_and_transcripts(filenames, target_type):
 def preprocess_na(sent):
 
     def pop_phoneme(sentence):
-        if sentence[:3] in tri_char_phonemes:
+        if sentence[:3] in TRI_PHNS:
             return sentence[:3], sentence[3:]
-        if sentence[:2] in bi_char_phonemes:
+        if sentence[:2] in BI_PHNS:
             return sentence[:2], sentence[2:]
-        if sentence[0] in uni_char_phonemes:
+        if sentence[0] in UNI_PHNS:
             return sentence[0], sentence[1:]
-        if sentence[0] in tones:
+        if sentence[0] in TONES:
+            # TODO This assumption no longer holds
             # We assume tones cannot be captured.
             return None, sentence[1:]
-        if sentence[0] in misc_symbols:
+        if sentence[0] in MISC_SYMBOLS:
             # We assume these symbols cannot be captured.
             return None, sentence[1:]
-        if sentence[0] in bad_na_symbols:
+        if sentence[0] in BAD_NA_SYMBOLS:
             return None, sentence[1:]
-        if sentence[0] in punctuation_symbols:
+        if sentence[0] in PUNC_SYMBOLS:
             return None, sentence[1:]
-        if sentence[0] in ["-", "ʰ"]:
+        if sentence[0] in ["-", "ʰ", "/"]:
             return None, sentence[1:]
-        if sentence[0] in set(["<", ">", "[", "]", "/"]):
-            # We assume these symbols cannot be captured.
+        if sentence[0] in set(["<", ">", "[", "]"]):
+            # Brackets will get processed afterwards.
             return sentence[0], sentence[1:]
         if sentence[0] in set([" ", "\t", "\n"]):
             # Return a space char so that it can be identified in word segmentation
             # processing.
             return " ", sentence[1:]
-        if sentence[0] == "v̩":
-            return "v", sentence[1:]
-        if sentence[0] == "ṽ̩":
-            return "ṽ", sentence[1:]
-        if sentence[0] == "ɻ̩":
-            return "ɻ", sentence[1:]
+#        if sentence[0] == "v̩":
+#            return "v", sentence[1:]
+#        if sentence[0] == "ṽ̩":
+#            return "ṽ", sentence[1:]
+#        if sentence[0] == "ɻ̩":
+#            return "ɻ", sentence[1:]
         if sentence[0] == "|":
-            return "|", sentence[1:]
+            return None, sentence[1:]
         raise Exception("Next character not recognized: " + sentence[:1])
 
     def filter_for_phonemes(sentence):
@@ -341,7 +349,7 @@ def preprocess_na(sent):
     print(sent)
     sent = filter_for_phonemes(sent)
     print(sent)
-    input()
+    #input()
     #sent = remove_pipes(sent)
     #sent = sent.replace("\n", " ")
     #sent = sent.replace("\t", " ")
@@ -386,6 +394,7 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir, tgt_sent_dir, tgt_transl_dir, 
             with open(sent_path, "w") as sent_f:
                 print(sent, file=sent_f)
 
+        """
         # Extract the wavs given the times.
         for i, (start_time, end_time) in enumerate(times):
             headmic_path = os.path.join(org_wav_dir, prefix.upper()) + "_HEADMIC.wav"
@@ -403,6 +412,7 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir, tgt_sent_dir, tgt_transl_dir, 
             transl_path = os.path.join(tgt_transl_dir, out_prefix + ".fr.txt")
             with open(transl_path, "w") as transl_f:
                 print(transl, file=transl_f)
+        """
 
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
