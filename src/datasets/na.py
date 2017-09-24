@@ -23,8 +23,10 @@ TGT_DIR = os.path.join(config.TGT_DIR, "na", "new")
 #TGT_TXT_NORM_DIR = os.path.join(TGT_DIR, "txt_norm")
 ORG_XML_DIR = os.path.join(ORG_DIR, "xml")
 ORG_WAV_DIR = os.path.join(ORG_DIR, "wav")
+TGT_WAV_DIR = os.path.join(TGT_DIR, "wav")
 FEAT_DIR = os.path.join(TGT_DIR, "feat")
 LABEL_DIR = os.path.join(TGT_DIR, "label")
+TRANSL_DIR = os.path.join(TGT_DIR, "transl")
 
 #PREFIXES = [os.path.splitext(fn)[0]
 #            for fn in os.listdir(ORG_TRANSCRIPT_DIR)
@@ -54,16 +56,17 @@ UNI_TONES = {"˩", "˥", "˧"}
 BI_TONES = {"˧˥", "˩˥", "˩˧", "˧˩"}
 TONES = UNI_TONES.union(BI_TONES)
 
-# TODO Change to "PHONEMES"?
-PHONES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS)
-NUM_PHONES = len(PHONES)
-PHONES2INDICES = {phn: index for index, phn in enumerate(PHONES)}
-INDICES2PHONES = {index: phn for index, phn in enumerate(PHONES)}
-PHONES_TONES = sorted(list(PHONES.union(set(TONES)))) # Sort for determinism
-PHONESTONES2INDICES = {phn_tone: index for index, phn_tone in enumerate(PHONES_TONES)}
-INDICES2PHONESTONES = {index: phn_tone for index, phn_tone in enumerate(PHONES_TONES)}
-TONES2INDICES = {tone: index for index, tone in enumerate(TONES)}
-INDICES2TONES = {index: tone for index, tone in enumerate(TONES)}
+PHONEMES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS)
+NUM_PHONEMES = len(PHONEMES)
+PHONEMES_TO_INDICES = {phn: index for index, phn in enumerate(PHONEMES)}
+INDICES_TO_PHONEMES = {index: phn for index, phn in enumerate(PHONEMES)}
+
+# TODO Potentially remove?
+#PHONES_TONES = sorted(list(PHONES.union(set(TONES)))) # Sort for determinism
+#PHONESTONES2INDICES = {phn_tone: index for index, phn_tone in enumerate(PHONES_TONES)}
+#INDICES2PHONESTONES = {index: phn_tone for index, phn_tone in enumerate(PHONES_TONES)}
+#TONES2INDICES = {tone: index for index, tone in enumerate(TONES)}
+#INDICES2TONES = {index: tone for index, tone in enumerate(TONES)}
 
 def preprocess_na(sent, label_type):
 
@@ -166,6 +169,9 @@ def preprocess_french(trans, fr_nlp, remove_brackets_content=True):
 def preprocess_from_xml(org_xml_dir, org_wav_dir,
                         tgt_sent_dir, tgt_transl_dir, tgt_wav_dir,
                         label_type):
+    # TODO Remove label_type from here and use the TGT_DIR/txt dir for the
+    # unprocessed transcription from XML; then extract labels with
+    # prepare_labels()
     """ Extracts sentence-level transcriptions, translations and wavs from the
     Na Pangloss XML and WAV files. But otherwise doesn't preprocess them."""
 
@@ -182,7 +188,6 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
 
         prefix, _ = os.path.splitext(fn)
 
-        """
         # Write the transcriptions to file
         sents = [preprocess_na(sent, label_type) for sent in sents]
         for i, sent in enumerate(sents):
@@ -190,8 +195,8 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
             sent_path = os.path.join(tgt_sent_dir, out_fn)
             with open(sent_path, "w") as sent_f:
                 print(sent, file=sent_f)
-        """
 
+        """
         # Extract the wavs given the times.
         for i, (start_time, end_time) in enumerate(times):
             if prefix.endswith("PLUSEGG"):
@@ -207,7 +212,6 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
             assert os.path.isfile(in_wav_path)
             utils.trim_wav(in_wav_path, out_wav_path, start_time, end_time)
 
-        """
         # Tokenize the French translations and write them to file.
         transls = [preprocess_french(transl[0], fr_nlp) for transl in transls]
         for i, transl in enumerate(transls):
@@ -217,60 +221,115 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
                 print(transl, file=transl_f)
         """
 
+def prepare_labels(label_type):
+    """ Prepare the neural network output targets."""
+
+    # TODO This is very computationally wasteful right now as all the wavs get
+    # trimmed again. Better to pull out Na preprocessing from the XML
+    # extraction.
+    # If the XML hasn't been preprocessed.
+    preprocess_from_xml(ORG_XML_DIR, ORG_WAV_DIR,
+                        LABEL_DIR, TRANSL_DIR, TGT_WAV_DIR,
+                        label_type)
+
+# TODO Consider factoring out as non-Na specific
+def prepare_feats(feat_type):
+    """ Prepare the input features."""
+
+    # TODO Currently assumes that the wav trimming from XML has already been
+    # done.
+    PREFIXES = []
+    for fn in os.listdir(TGT_WAV_DIR):
+        if fn.endswith(".wav"):
+            pre, _ = os.path.splitext(fn)
+            PREFIXES.append(pre)
+
+    if not os.path.isdir(FEAT_DIR):
+        os.makedirs(FEAT_DIR)
+
+    if feat_type=="phonemes_onehot":
+        import numpy as np
+        #prepare_labels("phonemes")
+        for prefix in PREFIXES:
+            label_fn = os.path.join(LABEL_DIR, "%s.phonemes" % prefix)
+            try:
+                with open(label_fn) as label_f:
+                    labels = label_f.readlines()[0].split()
+            except FileNotFoundError:
+                continue
+            indices = [PHONEMES_TO_INDICES[label] for label in labels]
+            one_hots = one_hots = [[0]*len(PHONEMES) for _ in labels]
+            for i, index in enumerate(indices):
+                one_hots[i][index] = 1
+                one_hots = np.array(one_hots)
+                np.save(os.path.join(FEAT_DIR, "%s.phonemes_onehot" %  prefix),
+                        one_hots)
+    else:
+        # Otherwise, 
+        for prefix in PREFIXES:
+            # Convert the wave to 16k mono.
+            wav_fn = os.path.join(TGT_WAV_DIR, "%s.wav" % prefix)
+            mono16k_wav_fn = os.path.join(FEAT_DIR, "%s.wav" % prefix)
+            if not os.path.isfile(mono16k_wav_fn):
+                feat_extract.convert_wav(wav_fn, mono16k_wav_fn)
+
+        # Extract features from the wavs.
+        feat_extract.from_dir(FEAT_DIR, feat_type=feat_type)
+
+
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
 
+    # TODO Probably should be hardcoding the list of train/dev/test utterances
+    # values externally? Slight changes to the list means the shuffling will
+    # probably completely change the test set.
     TRAIN_VALID_TEST_RATIOS = [.8,.1,.1]
+    FEAT_DIR = FEAT_DIR
+    LABEL_DIR = LABEL_DIR
 
-    def __init__(self, feat_type, target_type="phonemes_and_tones", max_samples=1000):
-        super().__init__(feat_type, target_type)
+    def __init__(self, feat_type, label_type="phonemes_and_tones", max_samples=1000):
+        super().__init__(feat_type, label_type)
 
-        if target_type == "phonemes_and_tones":
-            self.labels = PHONES.union(set(TONES))
-        elif target_type == "phonemes":
-            self.labels = PHONES
-        elif target_type == "tones":
+        if label_type == "phonemes_and_tones":
+            self.labels = PHONEMES.union(set(TONES))
+        elif label_type == "phonemes":
+            self.labels = PHONEMES
+        elif label_type == "tones":
             self.labels = TONES
         else:
-            raise Exception("target_type %s not implemented." % target_type)
+            raise Exception("label_type %s not implemented." % label_type)
 
-        if feat_type == "phonemes_onehot":
-            # We assume we are predicting tones given phonemes.
-            assert target_type == "tones"
+        self.feat_type = feat_type
+        self.label_type = label_type
 
-        # TODO Change self.phonemes field to self.tgt_labels, and related
-        # variables names that might represent tones as well, or just tones.
-        self.target_set = self.labels
-
-        # TODO Make prefixes not include the path ../data/na/wav/. But note
-        # that doing so might change what the training and test breakdown is
-        # because of the shuffling... I should hardcode the selection
-        # somewhere."
         input_dir = os.path.join(TGT_DIR, "wav")
-        prefixes = [os.path.join(input_dir, fn.strip(".wav"))
+        self.prefixes = [fn.strip(".wav")
                     for fn in os.listdir(input_dir) if fn.endswith(".wav")]
-        untranscribed_dir = os.path.join(TGT_DIR, "untranscribed_wav")
+
+        # TODO Reintegrate transcribing untranscribed stuff.
+        #untranscribed_dir = os.path.join(TGT_DIR, "untranscribed_wav")
         #self.untranscribed_prefixes = [os.path.join(
         #    untranscribed_dir, fn.strip(".wav"))
         #    for fn in os.listdir(untranscribed_dir) if fn.endswith(".wav")]
 
-        #if max_samples:
-        #    prefixes = self.sort_and_filter_by_size(prefixes, max_samples)
+        if max_samples:
+            self.prefixes = utils.sort_and_filter_by_size(
+                FEAT_DIR, self.prefixes, feat_type, max_samples)
 
         # To ensure we always get the same train/valid/test split, but
         # to shuffle it nonetheless.
         random.seed(0)
-        random.shuffle(prefixes)
+        random.shuffle(self.prefixes)
 
         # Get indices of the end points of the train/valid/test parts of the
         # data.
-        train_end = round(len(prefixes)*self.TRAIN_VALID_TEST_RATIOS[0])
-        valid_end = round(len(prefixes)*self.TRAIN_VALID_TEST_RATIOS[0] +
-                          len(prefixes)*self.TRAIN_VALID_TEST_RATIOS[1])
+        train_end = round(len(self.prefixes)*self.TRAIN_VALID_TEST_RATIOS[0])
+        valid_end = round(len(self.prefixes)*self.TRAIN_VALID_TEST_RATIOS[0] +
+                          len(self.prefixes)*self.TRAIN_VALID_TEST_RATIOS[1])
 
-        self.train_prefixes = prefixes[:train_end]
-        self.valid_prefixes = prefixes[train_end:valid_end]
-        self.test_prefixes = prefixes[valid_end:]
+        self.train_prefixes = self.prefixes[:train_end]
+        self.valid_prefixes = self.prefixes[train_end:valid_end]
+        self.test_prefixes = self.prefixes[valid_end:]
 
         self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
                                  ["pad"] + sorted(list(self.labels)))}
@@ -278,161 +337,9 @@ class Corpus(corpus.AbstractCorpus):
                                  ["pad"] + sorted(list(self.labels)))}
         self.vocab_size = len(self.labels)
 
-    @staticmethod
-    def prepare(feat_type, target_type):
-        """ Preprocessing the Na data."""
-
-        def remove_symbols(line):
-            """ Remove certain symbols from the line."""
-            for symbol in TO_REMOVE:
-                line = line.replace(symbol, "")
-            return line
-
-        def prepare_transcripts(texts_fns, target_set, target_type=target_type):
-
-            if not os.path.exists(TGT_TXT_NORM_DIR):
-                os.makedirs(TGT_TXT_NORM_DIR)
-
-            transcript_fns = []
-            for text_fn in texts_fns:
-                #pre, ext = os.path.splitext(text_fn)
-                with open(os.path.join(ORG_TXT_NORM_DIR, text_fn)) as f:
-                    line_id = 0
-                    for line in f:
-                        #transcript_path = process_utterance(line, line_id)
-                        # Remove lines with certain words in it.
-                        if contains_forbidden_word(line):
-                            line_id += 1
-                            continue
-                        # Remove certain symbols from lines.
-                        line = remove_symbols(line)
-                        # Get syllables
-                        syls = line.split()[2:]
-                        # Break syllables tokens into phonemes and tones
-                        phones_and_tones = segment_phonemes(syls)
-                        # Filter for the tokens we want (phonemes, tones or
-                        # both)
-                        tokens = [tok for tok in phones_and_tones if tok in target_set]
-
-                        assert text_fn.endswith(".txt")
-                        prefix = text_fn.strip(".txt")
-
-                        out_fn = prefix + "." + str(line_id) + "." + target_type
-                        out_path = os.path.join(TGT_TXT_NORM_DIR, out_fn)
-                        transcript_fns.append(out_path)
-                        with open(out_path, "w") as out_f:
-                            out_f.write(" ".join(tokens))
-                        line_id += 1
-
-            return transcript_fns
-
-        def prepare_phoneme_feats(texts_fns):
-            """ Prepare one-hot phoneme representations as input features so
-            that tones can be predicted from phonemes."""
-
-            # Prepare the phonemes so they can be converted to one-hot vectors.
-            phoneme_fns = prepare_transcripts(texts_fns, target_set=PHONES,
-                                              target_type="phonemes")
-
-            for utterance_fn in phoneme_fns:
-                with open(utterance_fn) as f:
-                    phonemes = f.readlines()[0].split()
-                indices = [PHONES2INDICES[phoneme] for phoneme in phonemes]
-                one_hots = [[0]*len(PHONES) for _ in phonemes]
-                for i, index in enumerate(indices):
-                    one_hots[i][index] = 1
-                one_hots = np.array(one_hots)
-
-                prefix = os.path.basename(utterance_fn)
-                np.save(os.path.join(FEAT_DIR, prefix + "_onehot"), one_hots)
-
-        texts_fns = wordlists_and_texts_fns()[1]
-
-        if target_type == "phonemes_and_tones":
-            target_set = PHONES.union(set(TONES))
-        elif target_type == "phonemes":
-            target_set = PHONES
-        elif target_type == "tones":
-            target_set = TONES
-        else:
-            raise Exception("target_type %s not implemented." % target_type)
-
-        prepare_transcripts(texts_fns, target_set)
-
-        if feat_type == "phonemes_onehot":
-            # We assume we are predicting tones given phonemes.
-            assert target_type == "tones"
-            prepare_phoneme_feats(texts_fns)
-
-        # TODO prepare_wavs_and_transcripts should be a method of this class.
-        #prepare_wavs_and_transcripts(texts_fns, target_type)
-        #input_dir = os.path.join(TGT_DIR, "wav")
-        #feat_extract.from_dir(input_dir, feat_type)
-
-        # Prepare the untranscribed WAV files.
-        """
-        org_untranscribed_dir = os.path.join(ORG_DIR, "untranscribed_wav")
-        untranscribed_dir = os.path.join(TGT_DIR, "untranscribed_wav")
-        from shutil import copyfile
-        for fn in os.listdir(org_untranscribed_dir):
-            if fn.endswith(".wav"):
-                in_fn = os.path.join(org_untranscribed_dir, fn)
-                length = wav_length(in_fn)
-                t = 0.0
-                trim_id = 0
-                while t < length:
-                    prefix = fn.split(".")[0]
-                    out_fn = os.path.join(
-                        untranscribed_dir, "%s.%d.wav" % (prefix, trim_id))
-                    utils.trim_wav(in_fn, out_fn, t, t+10)
-                    t += 10
-                    trim_id += 1
-
-        feat_extract.from_dir(os.path.join(TGT_DIR, "untranscribed_wav"), feat_type="log_mel_filterbank")
-        """
-
+    # TODO Use 'labels' instead of 'phonemes' here and in corpus.py
+    # Also, factor out as non-Chatino-specific.
     def indices_to_phonemes(self, indices):
-        return indices2phones(indices, self.target_type)
-
-    def phonemes_to_indices(self, phonemes):
-        return phones2indices(phonemes, self.target_type)
-
-    def get_train_fns(self):
-
-        feat_fns = ["%s.%s.npy" % (os.path.join(FEAT_DIR, os.path.basename(prefix)), self.feat_type)
-                    for prefix in self.train_prefixes]
-        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
-                    for prefix in self.train_prefixes]
-        # TODO Make more general
-        transl_fns = ["%s.removebracs.fr" % get_transl_prefix(prefix)
-                      for prefix in self.train_prefixes]
-        return feat_fns, target_fns, transl_fns
-
-    def get_valid_fns(self):
-        feat_fns = ["%s.%s.npy" % (os.path.join(FEAT_DIR, os.path.basename(prefix)), self.feat_type)
-                    for prefix in self.valid_prefixes]
-        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
-                    for prefix in self.valid_prefixes]
-        transl_fns = ["%s.removebracs.fr" % get_transl_prefix(prefix)
-                      for prefix in self.valid_prefixes]
-        return feat_fns, target_fns, transl_fns
-
-    def get_test_fns(self):
-        feat_fns = ["%s.%s.npy" % (os.path.join(FEAT_DIR, os.path.basename(prefix)), self.feat_type)
-                    for prefix in self.test_prefixes]
-        target_fns = ["%s.%s" % (get_target_prefix(prefix), self.target_type)
-                    for prefix in self.test_prefixes]
-        transl_fns = ["%s.removebracs.fr" % get_transl_prefix(prefix)
-                      for prefix in self.valid_prefixes]
-        return feat_fns, target_fns, transl_fns
-
-    def get_untranscribed_fns(self):
-        feat_fns = ["%s.%s.npy" % (prefix, self.feat_type)
-                    for prefix in self.untranscribed_prefixes]
-        feat_fns = [fn for fn in feat_fns if "HOUSEBUILDING2" in fn]
-        # Sort by the id of the wav slice.
-        fn_id_pairs = [("".join(fn.split(".")[:-3]), int(fn.split(".")[-3])) for fn in feat_fns]
-        fn_id_pairs.sort()
-        feat_fns = ["..%s.%d.%s.npy" % (fn, fn_id, self.feat_type) for fn, fn_id in fn_id_pairs]
-
-        return feat_fns
+        return [(self.INDEX_TO_LABEL[index]) for index in indices]
+    def phonemes_to_indices(self, labels):
+        return [self.LABEL_TO_INDEX[label] for label in labels]
