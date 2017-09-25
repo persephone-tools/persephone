@@ -11,7 +11,7 @@ def round_items(floats):
     return ["%0.3f" % fl for fl in floats]
 
 def format(exp_paths,
-                   phones=datasets.na.PHONES,
+                   phones=datasets.na.PHONEMES,
                    tones=datasets.na.TONES):
     """ Takes a list of experimental paths such as mam/exp/<number> and outputs
     the results. """
@@ -39,9 +39,11 @@ def format(exp_paths,
     print("Test PER", round_items(test_pers))
     print("Test TER", round_items(test_ters))
 
+    print("PERS:")
     for item in zip([128,256,512,1024,2048], test_pers):
         print("(%d, %f)" % item)
 
+    print("TERS:")
     for item in zip([128,256,512,1024,2048], test_ters):
         print("(%d, %f)" % item)
 
