@@ -6,6 +6,7 @@ import os
 import utils
 
 from distance import min_edit_distance_align
+from distance import cluster_alignment_errors
 
 def round_items(floats):
     return ["%0.3f" % fl for fl in floats]
@@ -106,6 +107,7 @@ def error_types(exp_path, labels):
     errors = []
     for ref, hyp in zip(refs, hyps):
         alignment = min_edit_distance_align(ref, hyp)
+        alignment = cluster_alignment_errors(alignment)
         alignments.append(alignment)
         for arrow in alignment:
             if arrow[0] != arrow[1]:
@@ -121,3 +123,17 @@ def error_types(exp_path, labels):
     error_list = sorted(err_hist.items(), key=lambda x: x[1], reverse=False)
     for thing in error_list:
         print(thing)
+
+    subs = 0
+    inss = 0
+    dels = 0
+    for error in error_list:
+        if len(error[0][1]) == 0:
+            dels += 1
+        if len(error[0][0]) == 0:
+            inss += 1
+        else:
+            subs += 1
+    print(subs)
+    print(inss)
+    print(dels)
