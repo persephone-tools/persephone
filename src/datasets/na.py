@@ -182,6 +182,10 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
         os.makedirs(os.path.join(tgt_label_dir, "TEXT"))
     if not os.path.exists(os.path.join(tgt_label_dir, "WORDLIST")):
         os.makedirs(os.path.join(tgt_label_dir, "WORDLIST"))
+    if not os.path.exists(os.path.join(tgt_wav_dir, "TEXT")):
+        os.makedirs(os.path.join(tgt_wav_dir, "TEXT"))
+    if not os.path.exists(os.path.join(tgt_wav_dir, "WORDLIST")):
+        os.makedirs(os.path.join(tgt_wav_dir, "WORDLIST"))
 
     import spacy
     fr_nlp = spacy.load("fr")
@@ -214,12 +218,10 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
             if os.path.isfile(headmic_path):
                 in_wav_path = headmic_path
 
-            out_wav_path = os.path.join(tgt_wav_dir, "%s.%d.wav" % (prefix, i))
+            out_wav_path = os.path.join(tgt_wav_dir, rec_type, "%s.%d.wav" % (prefix, i))
             assert os.path.isfile(in_wav_path)
             utils.trim_wav(in_wav_path, out_wav_path, start_time, end_time)
-        """
 
-        """
         # Tokenize the French translations and write them to file.
         transls = [preprocess_french(transl[0], fr_nlp) for transl in transls]
         for i, transl in enumerate(transls):
@@ -244,16 +246,22 @@ def prepare_labels(label_type):
 def prepare_feats(feat_type):
     """ Prepare the input features."""
 
+    if not os.path.isdir(os.path.join(FEAT_DIR, "WORDLIST")):
+        os.makedirs(os.path.join(FEAT_DIR, "WORDLIST"))
+    if not os.path.isdir(os.path.join(FEAT_DIR, "TEXT")):
+        os.makedirs(os.path.join(FEAT_DIR, "TEXT"))
+
     # TODO Currently assumes that the wav trimming from XML has already been
     # done.
     PREFIXES = []
-    for fn in os.listdir(TGT_WAV_DIR):
+    for fn in os.listdir(os.path.join(TGT_WAV_DIR, "WORDLIST")):
         if fn.endswith(".wav"):
             pre, _ = os.path.splitext(fn)
-            PREFIXES.append(pre)
-
-    if not os.path.isdir(FEAT_DIR):
-        os.makedirs(FEAT_DIR)
+            PREFIXES.append(os.path.join("WORDLIST", pre))
+    for fn in os.listdir(os.path.join(TGT_WAV_DIR, "TEXT")):
+        if fn.endswith(".wav"):
+            pre, _ = os.path.splitext(fn)
+            PREFIXES.append(os.path.join("TEXT", pre))
 
     if feat_type=="phonemes_onehot":
         import numpy as np
@@ -282,8 +290,8 @@ def prepare_feats(feat_type):
                 feat_extract.convert_wav(wav_fn, mono16k_wav_fn)
 
         # Extract features from the wavs.
-        feat_extract.from_dir(FEAT_DIR, feat_type=feat_type)
-
+        feat_extract.from_dir(os.path.join(FEAT_DIR, "WORDLIST"), feat_type=feat_type)
+        feat_extract.from_dir(os.path.join(FEAT_DIR, "TEXT"), feat_type=feat_type)
 
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
