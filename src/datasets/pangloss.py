@@ -8,11 +8,12 @@ def get_sents_times_and_translations(xml_fn):
 
     tree = ElementTree.parse(xml_fn)
     root = tree.getroot()
-    if root.tag == "WORDLIST" or root.tag == "TEXT":
+    if "WORDLIST" in root.tag or root.tag == "TEXT":
         transcriptions = []
         times = []
         translations = []
         for child in root:
+            # If it's a sentence or a word (this will be dictated by root_tag)
             if child.tag == "S" or child.tag == "W":
                 forms = child.findall("FORM")
                 if len(forms) > 1:
@@ -32,8 +33,9 @@ def get_sents_times_and_translations(xml_fn):
                     times.append(time)
                     translations.append(translation)
 
-        return transcriptions, times, translations
-    return [], [], []
+        return root.tag, transcriptions, times, translations
+    print(root.tag)
+    assert False
 
 def remove_content_in_brackets(sentence, brackets="[]"):
     out_sentence = ''

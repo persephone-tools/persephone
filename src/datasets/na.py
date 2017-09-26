@@ -170,7 +170,7 @@ def preprocess_french(trans, fr_nlp, remove_brackets_content=True):
     return trans
 
 def preprocess_from_xml(org_xml_dir, org_wav_dir,
-                        tgt_sent_dir, tgt_transl_dir, tgt_wav_dir,
+                        tgt_label_dir, tgt_transl_dir, tgt_wav_dir,
                         label_type):
     # TODO Remove label_type from here and use the TGT_DIR/txt dir for the
     # unprocessed transcription from XML; then extract labels with
@@ -178,27 +178,28 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
     """ Extracts sentence-level transcriptions, translations and wavs from the
     Na Pangloss XML and WAV files. But otherwise doesn't preprocess them."""
 
+    if not os.path.exists(os.path.join(tgt_label_dir, "TEXT")):
+        os.makedirs(os.path.join(tgt_label_dir, "TEXT"))
+    if not os.path.exists(os.path.join(tgt_label_dir, "WORDLIST")):
+        os.makedirs(os.path.join(tgt_label_dir, "WORDLIST"))
+
     import spacy
     fr_nlp = spacy.load("fr")
 
     for fn in os.listdir(org_xml_dir):
         print(fn)
         path = os.path.join(org_xml_dir, fn)
-        sents, times, transls = datasets.pangloss.get_sents_times_and_translations(path)
-
-        assert len(sents) == len(times)
-        assert len(sents) == len(transls)
-
         prefix, _ = os.path.splitext(fn)
 
-        # Write the transcriptions to file
+        rec_type, sents, times, transls = datasets.pangloss.get_sents_times_and_translations(path)
+        # Write the sentence transcriptions to file
         sents = [preprocess_na(sent, label_type) for sent in sents]
         for i, sent in enumerate(sents):
             if sent.strip() == "":
                 # Then there's no transcription, so ignore this.
                 continue
             out_fn = "%s.%d.%s" % (prefix, i, label_type)
-            sent_path = os.path.join(tgt_sent_dir, out_fn)
+            sent_path = os.path.join(tgt_label_dir, rec_type, out_fn)
             with open(sent_path, "w") as sent_f:
                 print(sent, file=sent_f)
 
@@ -216,7 +217,9 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
             out_wav_path = os.path.join(tgt_wav_dir, "%s.%d.wav" % (prefix, i))
             assert os.path.isfile(in_wav_path)
             utils.trim_wav(in_wav_path, out_wav_path, start_time, end_time)
+        """
 
+        """
         # Tokenize the French translations and write them to file.
         transls = [preprocess_french(transl[0], fr_nlp) for transl in transls]
         for i, transl in enumerate(transls):
