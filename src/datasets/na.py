@@ -43,7 +43,7 @@ if not os.path.isdir(FEAT_DIR):
 MISC_SYMBOLS = [' ̩', '~', '=', ':', 'F', '¨', '↑', '“', '”', '…', '«', '»',
 'D', 'a', 'ː', '#', '$', "‡"]
 BAD_NA_SYMBOLS = ['D', 'F', '~', '…', '=', '↑', ':']
-PUNC_SYMBOLS = [',', '!', '.', ';', '?', "'", '"', '*', ':', '«', '»', '“', '”']
+PUNC_SYMBOLS = [',', '!', '.', ';', '?', "'", '"', '*', ':', '«', '»', '“', '”', "ʔ"]
 UNI_PHNS = {'q', 'p', 'ɭ', 'ɳ', 'h', 'ʐ', 'n', 'o', 'ɤ', 'ʝ', 'ɛ', 'g',
             'i', 'u', 'b', 'ɔ', 'ɯ', 'v', 'ɑ', 'l', 'ɖ', 'ɻ', 'ĩ', 'm',
             't', 'w', 'õ', 'ẽ', 'd', 'ɣ', 'ɕ', 'c', 'ʁ', 'ʑ', 'ʈ', 'ɲ', 'ɬ',
@@ -51,7 +51,7 @@ UNI_PHNS = {'q', 'p', 'ɭ', 'ɳ', 'h', 'ʐ', 'n', 'o', 'ɤ', 'ʝ', 'ɛ', 'g',
 BI_PHNS = {'dʑ', 'ẽ', 'ɖʐ', 'w̃', 'æ̃', 'qʰ', 'i͂', 'tɕ', 'v̩', 'o̥', 'ts',
            'ɻ̩', 'ã', 'ə̃', 'ṽ', 'pʰ', 'tʰ', 'ɤ̃', 'ʈʰ', 'ʈʂ', 'ɑ̃', 'ɻ̃', 'kʰ',
            'ĩ', 'õ', 'dz', "ɻ̍"}
-TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩"}
+TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩", "ɻ̩̃"}
 UNI_TONES = {"˩", "˥", "˧"}
 BI_TONES = {"˧˥", "˩˥", "˩˧", "˧˩"}
 TONES = UNI_TONES.union(BI_TONES)
@@ -150,6 +150,9 @@ def preprocess_na(sent, label_type):
         filtered_sentence = [item for item in filtered_sentence if item != None]
         return " ".join(filtered_sentence)
 
+    # Filter utterances with certain words
+    if "BEGAIEMENT" in sent:
+        return ""
     sent = filter_for_phonemes(sent)
     return sent
 
@@ -210,7 +213,6 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
             if os.path.isfile(headmic_path):
                 in_wav_path = headmic_path
 
-
             out_wav_path = os.path.join(tgt_wav_dir, "%s.%d.wav" % (prefix, i))
             assert os.path.isfile(in_wav_path)
             utils.trim_wav(in_wav_path, out_wav_path, start_time, end_time)
@@ -255,6 +257,7 @@ def prepare_feats(feat_type):
         #prepare_labels("phonemes")
         for prefix in PREFIXES:
             label_fn = os.path.join(LABEL_DIR, "%s.phonemes" % prefix)
+            out_fn = os.path.join(FEAT_DIR, "%s.phonemes_onehot" %  prefix)
             try:
                 with open(label_fn) as label_f:
                     labels = label_f.readlines()[0].split()
@@ -265,8 +268,7 @@ def prepare_feats(feat_type):
             for i, index in enumerate(indices):
                 one_hots[i][index] = 1
                 one_hots = np.array(one_hots)
-                np.save(os.path.join(FEAT_DIR, "%s.phonemes_onehot" %  prefix),
-                        one_hots)
+                np.save(out_fn, one_hots)
     else:
         # Otherwise, 
         for prefix in PREFIXES:
