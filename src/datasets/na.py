@@ -306,6 +306,43 @@ def prepare_feats(feat_type):
         feat_extract.from_dir(os.path.join(FEAT_DIR, "WORDLIST"), feat_type=feat_type)
         feat_extract.from_dir(os.path.join(FEAT_DIR, "TEXT"), feat_type=feat_type)
 
+def make_data_splits(train_rec_type="all",
+                     valid_size=300, test_size=300, seed=0):
+    """ Creates a file with a list of prefixes (identifiers) of utterances to
+    include in the test set. Test utterances must never be wordlists. Assumes
+    preprocessing of label dir has already been done."""
+
+    # Get the test prefixes from TEXT.
+    prefixes = os.listdir(os.path.join(LABEL_DIR, "TEXT"))
+    random.seed(seed)
+    random.shuffle(prefixes)
+    test_prefixes = prefixes[:test_size]
+    prefixes = prefixes[test_size:]
+
+    if train_rec_type == "text":
+        valid_prefixes = prefixes[:valid_size]
+        prefixes = prefixes[valid_size:]
+        train_prefixes = prefixes
+    elif train_rec_type == "wordlist":
+        prefixes = os.listdir(os.path.join(LABEL_DIR, "WORDLIST"))
+        random.seed(seed)
+        random.shuffle(prefixes)
+        valid_prefixes = prefixes[:valid_size]
+        train_prefixes = prefixes[valid_size:]
+    elif train_rec_type == "all":
+        prefixes.extend(os.listdir(os.path.join(LABEL_DIR, "WORDLIST")))
+        random.seed(seed)
+        random.shuffle(prefixes)
+        valid_prefixes = prefixes[:valid_size]
+        train_prefixes = prefixes[valid_size:]
+    else:
+        raise Exception("train_rec_type='%s' not supported." % train_rec_type)
+
+    #print(test_prefixes)
+    print(train_prefixes)
+    print(len(train_prefixes))
+    print(len(valid_prefixes))
+
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
 
