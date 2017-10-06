@@ -169,30 +169,75 @@ def preprocess_french(trans, fr_nlp, remove_brackets_content=True):
 
     return trans
 
-def preprocess_from_xml(org_xml_dir, org_wav_dir,
-                        tgt_label_dir, tgt_transl_dir, tgt_wav_dir,
-                        label_type):
-    # TODO Remove label_type from here and use the TGT_DIR/txt dir for the
-    # unprocessed transcription from XML; then extract labels with
-    # prepare_labels()
+def trim_wavs():
     """ Extracts sentence-level transcriptions, translations and wavs from the
     Na Pangloss XML and WAV files. But otherwise doesn't preprocess them."""
 
-    if not os.path.exists(os.path.join(tgt_label_dir, "TEXT")):
-        os.makedirs(os.path.join(tgt_label_dir, "TEXT"))
-    if not os.path.exists(os.path.join(tgt_label_dir, "WORDLIST")):
-        os.makedirs(os.path.join(tgt_label_dir, "WORDLIST"))
-    if not os.path.exists(os.path.join(tgt_wav_dir, "TEXT")):
-        os.makedirs(os.path.join(tgt_wav_dir, "TEXT"))
-    if not os.path.exists(os.path.join(tgt_wav_dir, "WORDLIST")):
-        os.makedirs(os.path.join(tgt_wav_dir, "WORDLIST"))
+    print("Trimming wavs...")
+
+    if not os.path.exists(os.path.join(TGT_WAV_DIR, "TEXT")):
+        os.makedirs(os.path.join(TGT_WAV_DIR, "TEXT"))
+    if not os.path.exists(os.path.join(TGT_WAV_DIR, "WORDLIST")):
+        os.makedirs(os.path.join(TGT_WAV_DIR, "WORDLIST"))
+
+    for fn in os.listdir(ORG_XML_DIR):
+        print(fn)
+        path = os.path.join(ORG_XML_DIR, fn)
+        prefix, _ = os.path.splitext(fn)
+
+        rec_type, sents, times, transls = datasets.pangloss.get_sents_times_and_translations(path)
+
+        # Extract the wavs given the times.
+        for i, (start_time, end_time) in enumerate(times):
+            if prefix.endswith("PLUSEGG"):
+                in_wav_path = os.path.join(ORG_WAV_DIR, prefix.upper()[:-len("PLUSEGG")]) + ".wav"
+            else:
+                in_wav_path = os.path.join(ORG_WAV_DIR, prefix.upper()) + ".wav"
+            headmic_path = os.path.join(ORG_WAV_DIR, prefix.upper()) + "_HEADMIC.wav"
+            if os.path.isfile(headmic_path):
+                in_wav_path = headmic_path
+
+            out_wav_path = os.path.join(TGT_WAV_DIR, rec_type, "%s.%d.wav" % (prefix, i))
+            assert os.path.isfile(in_wav_path)
+            utils.trim_wav(in_wav_path, out_wav_path, start_time, end_time)
+
+def prepare_transls():
+    """ Prepares the French translations. """
 
     import spacy
     fr_nlp = spacy.load("fr")
 
-    for fn in os.listdir(org_xml_dir):
+    if not os.path.exists(os.path.join(TRANSL_DIR, "TEXT")):
+        os.makedirs(os.path.join(TRANSL_DIR, "TEXT"))
+    if not os.path.exists(os.path.join(TRANSL_DIR, "WORDLIST")):
+        os.makedirs(os.path.join(TRANSL_DIR, "WORDLIST"))
+
+    for fn in os.listdir(ORG_XML_DIR):
         print(fn)
-        path = os.path.join(org_xml_dir, fn)
+        path = os.path.join(ORG_XML_DIR, fn)
+        prefix, _ = os.path.splitext(fn)
+
+        rec_type, sents, times, transls = datasets.pangloss.get_sents_times_and_translations(path)
+
+        # Tokenize the French translations and write them to file.
+        transls = [preprocess_french(transl[0], fr_nlp) for transl in transls]
+        for i, transl in enumerate(transls):
+            out_prefix = "%s.%d" % (prefix, i)
+            transl_path = os.path.join(TRANSL_DIR, rec_type, out_prefix + ".fr.txt")
+            with open(transl_path, "w") as transl_f:
+                print(transl, file=transl_f)
+
+def prepare_labels(label_type):
+    """ Prepare the neural network output targets."""
+
+    if not os.path.exists(os.path.join(LABEL_DIR, "TEXT")):
+        os.makedirs(os.path.join(LABEL_DIR, "TEXT"))
+    if not os.path.exists(os.path.join(LABEL_DIR, "WORDLIST")):
+        os.makedirs(os.path.join(LABEL_DIR, "WORDLIST"))
+
+    for fn in os.listdir(ORG_XML_DIR):
+        print(fn)
+        path = os.path.join(ORG_XML_DIR, fn)
         prefix, _ = os.path.splitext(fn)
 
         rec_type, sents, times, transls = datasets.pangloss.get_sents_times_and_translations(path)
@@ -203,44 +248,9 @@ def preprocess_from_xml(org_xml_dir, org_wav_dir,
                 # Then there's no transcription, so ignore this.
                 continue
             out_fn = "%s.%d.%s" % (prefix, i, label_type)
-            sent_path = os.path.join(tgt_label_dir, rec_type, out_fn)
+            sent_path = os.path.join(LABEL_DIR, rec_type, out_fn)
             with open(sent_path, "w") as sent_f:
                 print(sent, file=sent_f)
-
-        """
-        # Extract the wavs given the times.
-        for i, (start_time, end_time) in enumerate(times):
-            if prefix.endswith("PLUSEGG"):
-                in_wav_path = os.path.join(org_wav_dir, prefix.upper()[:-len("PLUSEGG")]) + ".wav"
-            else:
-                in_wav_path = os.path.join(org_wav_dir, prefix.upper()) + ".wav"
-            headmic_path = os.path.join(org_wav_dir, prefix.upper()) + "_HEADMIC.wav"
-            if os.path.isfile(headmic_path):
-                in_wav_path = headmic_path
-
-            out_wav_path = os.path.join(tgt_wav_dir, rec_type, "%s.%d.wav" % (prefix, i))
-            assert os.path.isfile(in_wav_path)
-            utils.trim_wav(in_wav_path, out_wav_path, start_time, end_time)
-
-        # Tokenize the French translations and write them to file.
-        transls = [preprocess_french(transl[0], fr_nlp) for transl in transls]
-        for i, transl in enumerate(transls):
-            out_prefix = "%s.%d" % (prefix, i)
-            transl_path = os.path.join(tgt_transl_dir, out_prefix + ".fr.txt")
-            with open(transl_path, "w") as transl_f:
-                print(transl, file=transl_f)
-        """
-
-def prepare_labels(label_type):
-    """ Prepare the neural network output targets."""
-
-    # TODO This is very computationally wasteful right now as all the wavs get
-    # trimmed again. Better to pull out Na preprocessing from the XML
-    # extraction.
-    # If the XML hasn't been preprocessed.
-    preprocess_from_xml(ORG_XML_DIR, ORG_WAV_DIR,
-                        LABEL_DIR, TRANSL_DIR, TGT_WAV_DIR,
-                        label_type)
 
 # TODO Consider factoring out as non-Na specific
 def prepare_feats(feat_type):
@@ -250,6 +260,9 @@ def prepare_feats(feat_type):
         os.makedirs(os.path.join(FEAT_DIR, "WORDLIST"))
     if not os.path.isdir(os.path.join(FEAT_DIR, "TEXT")):
         os.makedirs(os.path.join(FEAT_DIR, "TEXT"))
+
+    # Extract utterances from WAVS.
+    trim_wavs()
 
     # TODO Currently assumes that the wav trimming from XML has already been
     # done.

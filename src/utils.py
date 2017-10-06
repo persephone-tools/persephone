@@ -94,9 +94,10 @@ def trim_wav(in_fn, out_fn, start_time, end_time):
     end_time is output to out_fn.
     """
 
-    args = [config.SOX_PATH, in_fn, out_fn, "trim", str(start_time), "=" + str(end_time)]
-    print(args[1:])
-    subprocess.run(args)
+    if not os.path.isfile(out_fn):
+        args = [config.SOX_PATH, in_fn, out_fn, "trim", str(start_time), "=" + str(end_time)]
+        print(args[1:])
+        subprocess.run(args)
 
 def make_parent(file_path):
     """ Makes parent dir for a file path."""
