@@ -144,3 +144,18 @@ def wav_length(fn):
     length_line = str(p.communicate()[1]).split("\\n")[1].split()
     assert length_line[0] == "Length"
     return float(length_line[-1])
+
+def calc_time(wav_paths):
+    """ Calculates the total spoken time a given number of utterances
+    corresponds to. """
+
+    import scipy.io.wavfile as wav
+
+    total_secs = 0
+    for path in wav_paths:
+        print(path)
+        rate, sig = wav.read(path)
+        total_secs += (len(sig) / rate)
+
+    total_mins = total_secs / 60
+    print("%0.3f minutes." % total_mins)

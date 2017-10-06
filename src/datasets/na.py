@@ -314,6 +314,8 @@ def make_data_splits(train_rec_type="all",
 
     # Get the test prefixes from TEXT.
     prefixes = os.listdir(os.path.join(LABEL_DIR, "TEXT"))
+    prefixes = [os.path.splitext(os.path.join("TEXT", prefix))[0]
+                for prefix in prefixes]
     random.seed(seed)
     random.shuffle(prefixes)
     test_prefixes = prefixes[:test_size]
@@ -323,25 +325,27 @@ def make_data_splits(train_rec_type="all",
         valid_prefixes = prefixes[:valid_size]
         prefixes = prefixes[valid_size:]
         train_prefixes = prefixes
-    elif train_rec_type == "wordlist":
-        prefixes = os.listdir(os.path.join(LABEL_DIR, "WORDLIST"))
-        random.seed(seed)
-        random.shuffle(prefixes)
-        valid_prefixes = prefixes[:valid_size]
-        train_prefixes = prefixes[valid_size:]
-    elif train_rec_type == "all":
-        prefixes.extend(os.listdir(os.path.join(LABEL_DIR, "WORDLIST")))
-        random.seed(seed)
-        random.shuffle(prefixes)
-        valid_prefixes = prefixes[:valid_size]
-        train_prefixes = prefixes[valid_size:]
     else:
-        raise Exception("train_rec_type='%s' not supported." % train_rec_type)
+        wordlist_prefixes = os.listdir(os.path.join(LABEL_DIR, "WORDLIST"))
+        wordlist_prefixes = [os.path.splitext(os.path.join("WORDLIST", prefix))[0]
+                             for prefix in wordlist_prefixes]
+        if train_rec_type == "wordlist":
+            prefixes = wordlist_prefixes
+        elif train_rec_type == "all":
+            prefixes.extend(wordlist_prefixes)
+        else:
+            raise Exception("train_rec_type='%s' not supported." % train_rec_type)
+        random.seed(seed)
+        random.shuffle(prefixes)
+        valid_prefixes = prefixes[:valid_size]
+        train_prefixes = prefixes[valid_size:]
 
     #print(test_prefixes)
     print(train_prefixes)
     print(len(train_prefixes))
     print(len(valid_prefixes))
+    train_paths = [os.path.join(FEAT_DIR, prefix) + ".wav" for prefix in train_prefixes]
+    utils.calc_time(train_paths)
 
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
