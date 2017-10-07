@@ -253,18 +253,15 @@ def prepare_labels(label_type):
                 print(sent, file=sent_f)
 
 # TODO Consider factoring out as non-Na specific.
-def prepare_untran():
+def prepare_untran(feat_type="fbank_and_pitch"):
     """ Preprocesses untranscribed audio."""
     org_dir = os.path.join(UNTRAN_DIR, "org")
     wav_dir = os.path.join(UNTRAN_DIR, "wav")
-    split_dir = os.path.join(UNTRAN_DIR, "wav_split")
     feat_dir = os.path.join(UNTRAN_DIR, "feat")
     if not os.path.isdir(wav_dir):
         os.makedirs(wav_dir)
     if not os.path.isdir(feat_dir):
         os.makedirs(feat_dir)
-    if not os.path.isdir(split_dir):
-        os.makedirs(split_dir)
 
     # Standardize into wav files.
     for fn in os.listdir(org_dir):
@@ -274,6 +271,7 @@ def prepare_untran():
         if not os.path.isfile(mono16k_wav_path):
             feat_extract.convert_wav(in_path, mono16k_wav_path)
 
+    # Split up the wavs
     wav_fns = os.listdir(wav_dir)
     for fn in wav_fns:
         in_fn = os.path.join(wav_dir, fn)
@@ -283,13 +281,16 @@ def prepare_untran():
         start, end = 0, 10 #in seconds
         length = utils.wav_length(in_fn)
         while True:
-            out_fn = os.path.join(split_dir, "%s.%d.wav" % (prefix, split_id))
+            out_fn = os.path.join(feat_dir, "%s.%d.wav" % (prefix, split_id))
             utils.trim_wav(in_fn, out_fn, start, end)
             if end > length:
                 break
             start += 10
             end += 10
             split_id += 1
+
+    # Do feat extraction.
+    feat_extract.from_dir(os.path.join(feat_dir), feat_type=feat_type)
 
 # TODO Consider factoring out as non-Na specific
 def prepare_feats(feat_type):
