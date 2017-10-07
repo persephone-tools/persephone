@@ -31,8 +31,9 @@ class CorpusReader:
         if max_samples:
             raise Exception("Not yet implemented.")
 
-        if not num_train and not batch_size:
-            batch_size = 64
+        if not num_train:
+            if not batch_size:
+                batch_size = 64
             num_train = len(corpus.get_train_fns()[0])
             num_batches = int(num_train / batch_size)
             num_train = num_batches * batch_size
