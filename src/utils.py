@@ -158,4 +158,4 @@ def calc_time(wav_paths):
         total_secs += (len(sig) / rate)
 
     total_mins = total_secs / 60
-    print("%0.3f minutes." % total_mins)
+    return total_mins

@@ -306,46 +306,53 @@ def prepare_feats(feat_type):
         feat_extract.from_dir(os.path.join(FEAT_DIR, "WORDLIST"), feat_type=feat_type)
         feat_extract.from_dir(os.path.join(FEAT_DIR, "TEXT"), feat_type=feat_type)
 
-def make_data_splits(train_rec_type="all",
-                     valid_size=300, test_size=300, seed=0):
+def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000,
+                     valid_size=200, test_size=200, seed=0):
     """ Creates a file with a list of prefixes (identifiers) of utterances to
     include in the test set. Test utterances must never be wordlists. Assumes
     preprocessing of label dir has already been done."""
 
     # Get the test prefixes from TEXT.
-    prefixes = os.listdir(os.path.join(LABEL_DIR, "TEXT"))
+    prefixes = [prefix for prefix in os.listdir(os.path.join(LABEL_DIR, "TEXT"))
+                if prefix.endswith("phonemes")]
     prefixes = [os.path.splitext(os.path.join("TEXT", prefix))[0]
                 for prefix in prefixes]
+    prefixes = utils.sort_and_filter_by_size(
+        FEAT_DIR, prefixes, "fbank", max_samples)
+
     random.seed(seed)
     random.shuffle(prefixes)
     test_prefixes = prefixes[:test_size]
     prefixes = prefixes[test_size:]
+    valid_prefixes = prefixes[:valid_size]
+    prefixes = prefixes[valid_size:]
 
     if train_rec_type == "text":
-        valid_prefixes = prefixes[:valid_size]
-        prefixes = prefixes[valid_size:]
         train_prefixes = prefixes
     else:
-        wordlist_prefixes = os.listdir(os.path.join(LABEL_DIR, "WORDLIST"))
+        wordlist_prefixes = [prefix for prefix in os.listdir(os.path.join(LABEL_DIR, "WORDLIST"))
+                             if prefix.endswith("phonemes")]
         wordlist_prefixes = [os.path.splitext(os.path.join("WORDLIST", prefix))[0]
                              for prefix in wordlist_prefixes]
+        wordlist_prefixes = utils.sort_and_filter_by_size(
+                FEAT_DIR, wordlist_prefixes, "fbank", max_samples)
         if train_rec_type == "wordlist":
             prefixes = wordlist_prefixes
-        elif train_rec_type == "all":
+        elif train_rec_type == "text_and_wordlist":
             prefixes.extend(wordlist_prefixes)
         else:
             raise Exception("train_rec_type='%s' not supported." % train_rec_type)
-        random.seed(seed)
         random.shuffle(prefixes)
-        valid_prefixes = prefixes[:valid_size]
-        train_prefixes = prefixes[valid_size:]
+        train_prefixes = prefixes
 
+    return train_prefixes, valid_prefixes, test_prefixes
     #print(test_prefixes)
-    print(train_prefixes)
-    print(len(train_prefixes))
-    print(len(valid_prefixes))
-    train_paths = [os.path.join(FEAT_DIR, prefix) + ".wav" for prefix in train_prefixes]
-    utils.calc_time(train_paths)
+    #paths = [os.path.join(FEAT_DIR, prefix) + ".wav" for prefix in train_prefixes]
+    #utils.calc_time(paths)
+    #print(len(train_prefixes))
+    #print(len(valid_prefixes))
+    #test_paths = [os.path.join(FEAT_DIR, prefix) + ".wav" for prefix in train_prefixes]
+    #utils.calc_time(test_paths)
 
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
@@ -353,11 +360,11 @@ class Corpus(corpus.AbstractCorpus):
     # TODO Probably should be hardcoding the list of train/dev/test utterances
     # values externally? Slight changes to the list means the shuffling will
     # probably completely change the test set.
-    TRAIN_VALID_TEST_RATIOS = [.92,.04,.04]
     FEAT_DIR = FEAT_DIR
     LABEL_DIR = LABEL_DIR
 
-    def __init__(self, feat_type, label_type="phonemes_and_tones", max_samples=1000):
+    def __init__(self, feat_type="fbank_and_pitch",
+                label_type="phonemes_and_tones", train_rec_type="text_and_wordlist", max_samples=1000):
         super().__init__(feat_type, label_type)
 
         if label_type == "phonemes_and_tones":
@@ -372,33 +379,11 @@ class Corpus(corpus.AbstractCorpus):
         self.feat_type = feat_type
         self.label_type = label_type
 
-        self.prefixes = [fn.strip("." + label_type)
-                    for fn in os.listdir(LABEL_DIR) if fn.endswith(label_type)]
-
-        # TODO Reintegrate transcribing untranscribed stuff.
-        #untranscribed_dir = os.path.join(TGT_DIR, "untranscribed_wav")
-        #self.untranscribed_prefixes = [os.path.join(
-        #    untranscribed_dir, fn.strip(".wav"))
-        #    for fn in os.listdir(untranscribed_dir) if fn.endswith(".wav")]
-
-        if max_samples:
-            self.prefixes = utils.sort_and_filter_by_size(
-                FEAT_DIR, self.prefixes, feat_type, max_samples)
-
-        # To ensure we always get the same train/valid/test split, but
-        # to shuffle it nonetheless.
-        random.seed(0)
-        random.shuffle(self.prefixes)
-
-        # Get indices of the end points of the train/valid/test parts of the
-        # data.
-        train_end = round(len(self.prefixes)*self.TRAIN_VALID_TEST_RATIOS[0])
-        valid_end = round(len(self.prefixes)*self.TRAIN_VALID_TEST_RATIOS[0] +
-                          len(self.prefixes)*self.TRAIN_VALID_TEST_RATIOS[1])
-
-        self.train_prefixes = self.prefixes[:train_end]
-        self.valid_prefixes = self.prefixes[train_end:valid_end]
-        self.test_prefixes = self.prefixes[valid_end:]
+        train, valid, test = make_data_splits(train_rec_type=train_rec_type,
+                                              max_samples=max_samples)
+        self.train_prefixes = train
+        self.valid_prefixes = valid
+        self.test_prefixes = test
 
         self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
                                  ["pad"] + sorted(list(self.labels)))}
