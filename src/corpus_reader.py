@@ -15,7 +15,7 @@ class CorpusReader:
 
     rand = True
 
-    def __init__(self, corpus, num_train, batch_size=None, max_samples=None, rand_seed=0):
+    def __init__(self, corpus, num_train=None, batch_size=None, max_samples=None, rand_seed=0):
         """ corpus: The Corpus object that interfaces with a given corpus.
             num_train: The number of training instances from the corpus used.
             batch_size: The size of the batches to yield. If None, then it is
@@ -31,7 +31,13 @@ class CorpusReader:
         if max_samples:
             raise Exception("Not yet implemented.")
 
+        if not num_train and not batch_size:
+            batch_size = 64
+            num_train = len(corpus.get_train_fns()[0])
+            num_batches = int(num_train / batch_size)
+            num_train = num_batches * batch_size
         self.num_train = num_train
+        print(num_train)
 
         if batch_size:
             self.batch_size = batch_size
