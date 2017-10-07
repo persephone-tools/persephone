@@ -33,9 +33,32 @@ def prep_exp_dir():
 
     return os.path.join(EXP_DIR, str(exp_num))
 
+def train_na_full():
+    feat_type = "fbank_and_pitch"
+    label_type = "phonemes_and_tones"
+    num_layers = 3
+    hidden_size = 250
+    exp_dir = prep_exp_dir()
+    corpus = datasets.na.Corpus(feat_type, label_type)
+    corpus_reader = CorpusReader(corpus, num_train=7296)
+    model = rnn_ctc.Model(exp_dir, corpus_reader,
+                          num_layers=num_layers,
+                          hidden_size=hidden_size,
+                          decoding_merge_repeated=(False if
+                                                   label_type=="tones"
+                                                   else True))
+    model.train()
+
+    print("language: %s" % language)
+    print("feat_type: %s" % feat_type)
+    print("label_type: %s" % label_type)
+    print("num_layers: %d" % num_layers)
+    print("hidden_size: %d" % hidden_size)
+    print("Exp dirs:", exp_dirs)
+
 def multi_train():
-    train("fbank_and_pitch", "phonemes")
     train("fbank_and_pitch", "phonemes_and_tones")
+    train("fbank_and_pitch", "phonemes")
     train("fbank_and_pitch", "tones")
 
 def train(feat_type, label_type):
@@ -53,7 +76,8 @@ def train(feat_type, label_type):
     if language == "chatino":
         corpus = datasets.chatino.Corpus(feat_type, label_type)
     elif language == "na":
-        corpus = datasets.na.Corpus(feat_type, label_type)
+        corpus = datasets.na.Corpus(feat_type, label_type,
+                                    train_rec_type="text_and_wordlist")
     else:
         raise Exception("Language '%s' not supported." % language)
 
