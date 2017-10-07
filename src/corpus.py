@@ -91,3 +91,10 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         label_fns = [os.path.join(self.LABEL_DIR, "%s.%s" % (prefix, self.label_type))
                       for prefix in self.test_prefixes]
         return feat_fns, label_fns
+
+    def get_untranscribed_fns(self):
+        feat_fns = [os.path.join(self.UNTRAN_FEAT_DIR, "%s.%s.npy" % (
+                    os.path.splitext(fn)[0], self.feat_type))
+                    for fn in os.listdir(self.UNTRAN_FEAT_DIR)
+                    if fn.endswith(".wav")]
+        return feat_fns

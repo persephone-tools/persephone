@@ -402,6 +402,7 @@ class Corpus(corpus.AbstractCorpus):
     # probably completely change the test set.
     FEAT_DIR = FEAT_DIR
     LABEL_DIR = LABEL_DIR
+    UNTRAN_FEAT_DIR = os.path.join(UNTRAN_DIR, "feat")
 
     def __init__(self,
                  feat_type="fbank_and_pitch",
