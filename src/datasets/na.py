@@ -14,19 +14,19 @@ import feat_extract
 import datasets.pangloss
 import utils
 
-random.seed(0)
-
 ORG_DIR = config.NA_DIR
 # TODO eventually remove "new" when ALTA experiments are finished.
 TGT_DIR = os.path.join(config.TGT_DIR, "na", "new")
-#ORG_TXT_NORM_DIR = os.path.join(ORG_DIR, "txt_norm")
-#TGT_TXT_NORM_DIR = os.path.join(TGT_DIR, "txt_norm")
 ORG_XML_DIR = os.path.join(ORG_DIR, "xml")
 ORG_WAV_DIR = os.path.join(ORG_DIR, "wav")
 TGT_WAV_DIR = os.path.join(TGT_DIR, "wav")
 FEAT_DIR = os.path.join(TGT_DIR, "feat")
 LABEL_DIR = os.path.join(TGT_DIR, "label")
 TRANSL_DIR = os.path.join(TGT_DIR, "transl")
+
+# The directory for untranscribed audio we want to transcribe with automatic
+# methods.
+UNTRAN_DIR = os.path.join(TGT_DIR, "untranscribed")
 
 #PREFIXES = [os.path.splitext(fn)[0]
 #            for fn in os.listdir(ORG_TRANSCRIPT_DIR)
@@ -252,6 +252,45 @@ def prepare_labels(label_type):
             with open(sent_path, "w") as sent_f:
                 print(sent, file=sent_f)
 
+# TODO Consider factoring out as non-Na specific.
+def prepare_untran():
+    """ Preprocesses untranscribed audio."""
+    org_dir = os.path.join(UNTRAN_DIR, "org")
+    wav_dir = os.path.join(UNTRAN_DIR, "wav")
+    split_dir = os.path.join(UNTRAN_DIR, "wav_split")
+    feat_dir = os.path.join(UNTRAN_DIR, "feat")
+    if not os.path.isdir(wav_dir):
+        os.makedirs(wav_dir)
+    if not os.path.isdir(feat_dir):
+        os.makedirs(feat_dir)
+    if not os.path.isdir(split_dir):
+        os.makedirs(split_dir)
+
+    # Standardize into wav files.
+    for fn in os.listdir(org_dir):
+        in_path = os.path.join(org_dir, fn)
+        prefix, _ = os.path.splitext(fn)
+        mono16k_wav_path = os.path.join(wav_dir, "%s.wav" % prefix)
+        if not os.path.isfile(mono16k_wav_path):
+            feat_extract.convert_wav(in_path, mono16k_wav_path)
+
+    wav_fns = os.listdir(wav_dir)
+    for fn in wav_fns:
+        in_fn = os.path.join(wav_dir, fn)
+        prefix, _ = os.path.splitext(fn)
+        # Split into sub-wavs and perform feat extraction.
+        split_id = 0
+        start, end = 0, 10 #in seconds
+        length = utils.wav_length(in_fn)
+        while True:
+            out_fn = os.path.join(split_dir, "%s.%d.wav" % (prefix, split_id))
+            utils.trim_wav(in_fn, out_fn, start, end)
+            if end > length:
+                break
+            start += 10
+            end += 10
+            split_id += 1
+
 # TODO Consider factoring out as non-Na specific
 def prepare_feats(feat_type):
     """ Prepare the input features."""
@@ -363,8 +402,10 @@ class Corpus(corpus.AbstractCorpus):
     FEAT_DIR = FEAT_DIR
     LABEL_DIR = LABEL_DIR
 
-    def __init__(self, feat_type="fbank_and_pitch",
-                label_type="phonemes_and_tones", train_rec_type="text_and_wordlist", max_samples=1000):
+    def __init__(self,
+                 feat_type="fbank_and_pitch",
+                 label_type="phonemes_and_tones",
+                 train_rec_type="text_and_wordlist", max_samples=1000):
         super().__init__(feat_type, label_type)
 
         if label_type == "phonemes_and_tones":

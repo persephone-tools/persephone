@@ -8,6 +8,7 @@ from nltk.metrics import distance
 
 import config
 import subprocess
+from subprocess import PIPE
 
 def target_list_to_sparse_tensor(target_list):
     """ Make tensorflow SparseTensor from list of targets, with each element in
@@ -142,6 +143,7 @@ def wav_length(fn):
     p = subprocess.Popen(
         [config.SOX_PATH, fn, "-n", "stat"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     length_line = str(p.communicate()[1]).split("\\n")[1].split()
+    print(length_line)
     assert length_line[0] == "Length"
     return float(length_line[-1])
 
