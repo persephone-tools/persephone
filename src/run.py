@@ -191,8 +191,8 @@ def transcribe():
     """ Applies a trained model to the untranscribed Na data for Alexis. """
 
     exp_dir = prep_exp_dir()
-    corpus = datasets.na.Corpus(feat_type="log_mel_filterbank",
-                                target_type="phn", tones=True)
+    corpus = datasets.na.Corpus(feat_type="fbank_and_pitch",
+                                label_type="phonemes_and_tones")
     corpus_reader = CorpusReader(corpus, num_train=2048)
     model = rnn_ctc.Model(exp_dir, corpus_reader)
     #print(corpus_reader.untranscribed_batch())
@@ -200,7 +200,7 @@ def transcribe():
     # Model 155 is the first Na ASR model used to give transcriptions to
     # Alexis Michaud
     restore_model_path = os.path.join(
-        EXP_DIR, "155", "model", "model_best.ckpt")
+        EXP_DIR, "552", "model", "model_best.ckpt")
 
     #model.eval(restore_model_path, corpus_reader.)
     model.transcribe(restore_model_path)

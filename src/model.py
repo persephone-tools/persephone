@@ -4,6 +4,7 @@ import inspect
 import itertools
 import os
 import subprocess
+from operator import itemgetter
 
 import numpy as np
 import tensorflow as tf
@@ -59,8 +60,15 @@ class Model:
             hyps_dir = os.path.join(self.exp_dir, "auto_transcripts")
             if not os.path.isdir(hyps_dir):
                 os.mkdir(hyps_dir)
+
+            # TODO This sorting is Na-corpus centric and won't generalize. It
+            # is to sort by recording name (ie. Benevolence) then by utterance
+            # id within that (Benevolence.0, benevolence.1, ...)
+            utters = [(hyps, feat_fn, int(feat_fn.split(".")[1]))
+                      for hyps, feat_fn in zip(hyps, feat_fn_batch)]
+            utters.sort(key=itemgetter(1,2))
             with open(os.path.join(hyps_dir, "hyps"), "w") as hyps_f:
-                for hyp, fn in zip(hyps, feat_fn_batch):
+                for hyp, fn, _ in utters:
                     fn = "_".join(os.path.basename(fn).split(".")[:2])
                     print(fn + ": ", file=hyps_f)
                     print(" ".join(hyp), file=hyps_f)
