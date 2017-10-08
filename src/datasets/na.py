@@ -346,26 +346,29 @@ def prepare_feats(feat_type):
         feat_extract.from_dir(os.path.join(FEAT_DIR, "WORDLIST"), feat_type=feat_type)
         feat_extract.from_dir(os.path.join(FEAT_DIR, "TEXT"), feat_type=feat_type)
 
-def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000,
-                     valid_size=200, test_size=200, seed=0):
+def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000, seed=0):
     """ Creates a file with a list of prefixes (identifiers) of utterances to
     include in the test set. Test utterances must never be wordlists. Assumes
     preprocessing of label dir has already been done."""
+
+    test_prefix_fn = os.path.join(TGT_DIR, "test_prefixes.txt")
+    valid_prefix_fn = os.path.join(TGT_DIR, "valid_prefixes.txt")
+    with open(test_prefix_fn) as f:
+        prefixes = f.readlines()
+        test_prefixes = [("TEXT/" + prefix).strip() for prefix in prefixes]
+    with open(valid_prefix_fn) as f:
+        prefixes = f.readlines()
+        valid_prefixes = [("TEXT/" + prefix).strip() for prefix in prefixes]
 
     # Get the test prefixes from TEXT.
     prefixes = [prefix for prefix in os.listdir(os.path.join(LABEL_DIR, "TEXT"))
                 if prefix.endswith("phonemes")]
     prefixes = [os.path.splitext(os.path.join("TEXT", prefix))[0]
                 for prefix in prefixes]
+    prefixes = list(set(prefixes) - set(valid_prefixes))
+    prefixes = list(set(prefixes) - set(test_prefixes))
     prefixes = utils.sort_and_filter_by_size(
         FEAT_DIR, prefixes, "fbank", max_samples)
-
-    random.seed(seed)
-    random.shuffle(prefixes)
-    test_prefixes = prefixes[:test_size]
-    prefixes = prefixes[test_size:]
-    valid_prefixes = prefixes[:valid_size]
-    prefixes = prefixes[valid_size:]
 
     if train_rec_type == "text":
         train_prefixes = prefixes
@@ -382,17 +385,11 @@ def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000,
             prefixes.extend(wordlist_prefixes)
         else:
             raise Exception("train_rec_type='%s' not supported." % train_rec_type)
-        random.shuffle(prefixes)
         train_prefixes = prefixes
+    random.seed(0)
+    random.shuffle(train_prefixes)
 
     return train_prefixes, valid_prefixes, test_prefixes
-    #print(test_prefixes)
-    #paths = [os.path.join(FEAT_DIR, prefix) + ".wav" for prefix in train_prefixes]
-    #utils.calc_time(paths)
-    #print(len(train_prefixes))
-    #print(len(valid_prefixes))
-    #test_paths = [os.path.join(FEAT_DIR, prefix) + ".wav" for prefix in train_prefixes]
-    #utils.calc_time(test_paths)
 
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
