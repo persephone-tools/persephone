@@ -64,11 +64,13 @@ class Model:
             # TODO This sorting is Na-corpus centric and won't generalize. It
             # is to sort by recording name (ie. Benevolence) then by utterance
             # id within that (Benevolence.0, benevolence.1, ...)
-            utters = [(hyps, feat_fn, int(feat_fn.split(".")[1]))
+            utters = [(hyps, feat_fn, feat_fn.split(".")[0], int(feat_fn.split(".")[1]))
                       for hyps, feat_fn in zip(hyps, feat_fn_batch)]
-            utters.sort(key=itemgetter(1,2))
+            print(utters)
+            utters.sort(key=itemgetter(2,3))
+            print(utters)
             with open(os.path.join(hyps_dir, "hyps"), "w") as hyps_f:
-                for hyp, fn, _ in utters:
+                for hyp, fn, _, _ in utters:
                     fn = "_".join(os.path.basename(fn).split(".")[:2])
                     print(fn + ": ", file=hyps_f)
                     print(" ".join(hyp), file=hyps_f)
@@ -250,13 +252,12 @@ class Model:
             os.mkdir(hyps_dir)
 
         for epoch in itertools.count():
-            print("epoch %d" % epoch)
+            print("exp_dir %s, epoch %d" % (self.exp_dir, epoch))
             batch_gen = self.corpus_reader.train_batch_gen()
 
             train_ler_total = 0
             batch_i = None
             for batch_i, batch in enumerate(batch_gen):
-                print("batch %d" % (batch_i))
                 batch_x, batch_x_lens, batch_y = batch
 
                 feed_dict = {self.batch_x: batch_x,
