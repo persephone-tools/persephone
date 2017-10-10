@@ -34,12 +34,14 @@ def prep_exp_dir():
     return os.path.join(EXP_DIR, str(exp_num))
 
 def multi_train():
+    #train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 250,
+    #      train_rec_type="wordlist")
+    #train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 250,
+    #      train_rec_type="text")
+    #train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
+    #      train_rec_type="text_and_wordlist", batch_size=32)
     train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 250,
-          train_rec_type="wordlist")
-    train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 250,
-          train_rec_type="text")
-    train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
-          train_rec_type="text_and_wordlist", batch_size=32)
+          train_rec_type="text_and_wordlist")
 
 def train(language, feat_type, label_type,
           num_layers, hidden_size,
