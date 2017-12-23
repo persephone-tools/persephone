@@ -1,0 +1,145 @@
+\documentclass[twoside,a4paper,11pt]{article} 
+\usepackage{polyglossia}
+\usepackage{natbib}
+\usepackage{booktabs}
+\usepackage{xltxtra} 
+\usepackage{longtable}
+ \usepackage{geometry}
+%\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+\usepackage{multirow}
+%\usepackage{gb4e} 
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref} 
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue}
+\usepackage{memhfixc}
+\usepackage{lscape}
+\usepackage{lineno}
+\usepackage[footnotesize,bf]{caption}
+
+%% For showing Python code:
+% Default fixed font does not support bold face
+\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{12} % for bold
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{12}  % for normal
+
+% Custom colors
+\usepackage{color}
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+
+\usepackage{soul} % for highlighting
+\usepackage{listings} % for showing code
+
+% Python style for highlighting
+\newcommand\pythonstyle{\lstset{
+		language=Python,
+		basicstyle=\ttm,
+		otherkeywords={self},             % Add keywords here
+		keywordstyle=\ttb\color{deepblue},
+		emph={MyClass,__init__},          % Custom highlighting
+		emphstyle=\ttb\color{deepred},    % Custom highlighting style
+		stringstyle=\color{deepgreen},
+		frame=tb,                         
+		breaklines=true,
+		postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},		% Any extra options here
+		showstringspaces=false            % 
+	}}
+	
+	
+	% Python environment
+	\lstnewenvironment{python}[1][]
+	{
+		\pythonstyle
+		\lstset{#1}
+	}
+	{}
+	
+	% Python for external files
+	\newcommand\pythonexternal[2][]{{
+			\pythonstyle
+			\lstinputlisting[#1]{#2}}}
+	
+	% Python for inline
+	\newcommand\pythoninline[1]{{\pythonstyle\lstinline!#1!}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setmainfont[Mapping=tex-text,Numbers=OldStyle,Ligatures=Common]{Junicode} 
+%\setsansfont[Mapping=tex-text,Ligatures=Common,Mapping=tex-text,Ligatures=Common,Scale=MatchLowercase]{Ubuntu} 
+\newfontfamily\phon[Mapping=tex-text,Ligatures=Common,Scale=MatchLowercase]{Charis SIL} 
+%\newfontfamily\phondroit[Mapping=tex-text,Ligatures=Common,Scale=MatchLowercase]{Doulos SIL} 
+%\newfontfamily\greek[Mapping=tex-text,Scale=MatchLowercase]{Galatia SIL} 
+\newcommand{\ipa}[1]{{\phon\textit{#1}}} 
+\newcommand{\ipab}[1]{{\phon #1}}
+\newcommand{\ipapl}[1]{{\phondroit #1}}
+\newcommand{\captionft}[1]{{\captionfont #1}} 
+%\newfontfamily\cn[Mapping=tex-text,Scale=MatchUppercase]{IPAGothic}%pour le chinois
+%\newcommand{\zh}[1]{{\cn #1}}
+\newcommand{\tgf}[1]{\mo{#1}}
+%\newfontfamily\mleccha[Mapping=tex-text,Ligatures=Common,Scale=MatchLowercase]{Galatia SIL}%pour le grec
+
+\newcommand{\sg}{\textsc{sg}}
+\newcommand{\pl}{\textsc{pl}}
+\newcommand{\grise}[1]{\cellcolor{lightgray}\textbf{#1}} 
+\newcommand{\Σ}{\greek{Σ}}
+\newcommand{\ro}{$\Sigma$}
+\newcommand{\ra}{$\Sigma--1$} 
+\newcommand{\rc}{$\Sigma--3$}  
+
+\begin{document}
+%\linenumbers
+\title{Automated phonemic and tonal transcription \\for newly documented languages: \\
+	a beginner's guide to \textsc{mam - persephone}, \\a tool for developing multilingual acoustic models}
+
+\author{Oliver Adams (\url{oliver.adams@gmail.com})\\\url{https://oadams.github.io/}}
+\date{\url{https://github.com/oadams/mam}\\{\today}}
+\maketitle
+
+\section{Introduction}
+
+Transcription of speech is an important part of language documentation, and yet speech recognition technology has not been widely harnessed to aid linguists. The software package \textsc{mam} is designed for linguists who are in the process of gathering materials on a newly documented language. \textsc{mam} takes as its input a set of transcribed audio data, referred to as the \textit{training set}. On this basis, \textsc{mam} generates a phonemic and tonal transcription of audio files.
+
+Information on the workings of the tool is available from \cite{AdamsPhonemic2017}. The present document is a user's guide designed for linguists without prior knowledge of automatic speech recognition (ASR).
+
+\section{Installing \textsc{mam}}
+
+\pythoninline{config.py} contains some user-specific variables. The main ones you need to change are the path to the Na data (\pythoninline{NA\_DIR}), and the place where preprocessed data is held (\pythoninline{TGT\_DIR}), and also the place where models and other experimental data is held (\pythoninline{EXP\_DIR}). These paths can be whatever you like.
+\hl{Question to Oliver: The folder referenced in the NA\_DIR variable should contain the addresses of two folders: wav and txt\_norm, right? 
+In the zipped set that you sent us, these two folders were in the preprocessed directory (preprocessed.tar.bz2). That is because the data gets copied into those directories after preprocessing, right? But when training from the Pangloss XML, the data needs to be copied into NA\_DIR, in two subfolders: one for the wav files and one for the transcriptions, is that right? For the latter, the folder name should be something different from txt\_norm, since the input data will not be normalized yet (right?)
+
+Let’s try to formulate it in the most general terms, anticipating use for another language.
+First, the user creates a folder with the language name, e.g. NA\_DIR, right ?
+Then they create two subfolders called wav and, say, txt?}
+
+- With that data at hand, it's time to preprocess the Na data and put it in the \pythoninline{TGT_DIR}. In a python interpreter (\pythoninline{iPython} recommended):
+
+\pythoninline{corpus.prepare()}
+
+\hl{Will the command still be the same with the new (late September 2017) conversion tool, na\_refactor ? (I did not find it in mam as of Sept 26th, 2017)}
+\begin{quotation}
+	I've addressed the preprocessing of transcripts from XML that we were discussing (see below). This is now integrated into mam in a branch called "na\_refactor". This means training at your end should theoretically be straightforward. If I adjust the code to where I want it to be, the interfaces will be such that it's easy to use, so hearing what issues you face in practice will help guide that. I'm keen on creating good documentation so that this is useable. (from e-mail)
+\end{quotation}
+
+\section{Training the model}
+
+- If this is successful, then we train the model:
+\begin{python}
+	exp_dir = prep_exp_dir()                                                
+	corpus = datasets.na.Corpus(feat_type="log_mel_filterbank", target_type="phn", tones=True)                                                                                
+	corpus_reader = CorpusReader(corpus, num_train=2048)                       
+	model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)             
+	model.train()
+\end{python}
+
+- If this is successful too, then training should start and logs will be output to a subdirectory of EXP\_DIR. There will be a training log which includes phoneme error rates of training and validation test sets. 
+
+\section{Transcribing new texts}
+(to be continued)
+
+
+
+ \bibliographystyle{unified}
+ \bibliography{alexis}
+
+\end{document}
