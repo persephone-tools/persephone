@@ -56,6 +56,7 @@ def test_results(exp_path, phones, tones):
     """ Gets results of the model on the test set. """
 
     test_path = os.path.join(exp_path, "test")
+    print(test_path)
     with open(os.path.join(test_path, "test_per")) as test_f:
         line = test_f.readlines()[0]
         test_ler = float(line.split()[2].strip(","))
