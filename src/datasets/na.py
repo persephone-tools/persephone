@@ -394,9 +394,6 @@ def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000, seed=
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
 
-    # TODO Probably should be hardcoding the list of train/dev/test utterances
-    # values externally? Slight changes to the list means the shuffling will
-    # probably completely change the test set.
     FEAT_DIR = FEAT_DIR
     LABEL_DIR = LABEL_DIR
     UNTRAN_FEAT_DIR = os.path.join(UNTRAN_DIR, "feat")
