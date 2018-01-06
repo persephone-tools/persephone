@@ -3,6 +3,8 @@
 import os
 import shutil
 
+from git import Repo
+
 import config
 import rnn_ctc
 import datasets.na
@@ -28,10 +30,35 @@ def prep_exp_dir():
 
     exp_num = get_exp_dir_num()
     exp_num = exp_num + 1
-    code_dir = os.path.join(EXP_DIR, str(exp_num), "code")
-    shutil.copytree(os.getcwd(), code_dir)
+    exp_dir = os.path.join(EXP_DIR, str(exp_num))
+    if not os.path.isdir(exp_dir):
+        os.makedirs(exp_dir)
+    repo = Repo(".", search_parent_directories=True)
+    with open(os.path.join(exp_dir, "git_hash.txt"), "w") as f:
+        print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
 
-    return os.path.join(EXP_DIR, str(exp_num))
+    return exp_dir
+
+class DirtyRepoException(Exception):
+    pass
+
+def run():
+    """
+    The only function that should be called from this module. Ensures
+    experiments are documented in their own dir with a reference to the hash
+    of the commit used to run the experiment.
+    """
+
+    repo = Repo(".", search_parent_directories=True)
+    if repo.untracked_files != []:
+        raise DirtyRepoException("Untracked files. Commit them first.")
+    # If there are changes to already tracked files
+    if repo.is_dirty():
+        raise DirtyRepoException("Changes to the index or working tree."
+                                 "Commit them first .")
+
+    prep_exp_dir()
+
 
 def multi_train():
     #train("na", "fbank", "phonemes_and_tones", 3, 250,
