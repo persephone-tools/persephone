@@ -51,6 +51,9 @@ UNI_PHNS = {'q', 'p', 'ɭ', 'ɳ', 'h', 'ʐ', 'n', 'o', 'ɤ', 'ʝ', 'ɛ', 'g',
 BI_PHNS = {'dʑ', 'ẽ', 'ɖʐ', 'w̃', 'æ̃', 'qʰ', 'i͂', 'tɕ', 'v̩', 'o̥', 'ts',
            'ɻ̩', 'ã', 'ə̃', 'ṽ', 'pʰ', 'tʰ', 'ɤ̃', 'ʈʰ', 'ʈʂ', 'ɑ̃', 'ɻ̃', 'kʰ',
            'ĩ', 'õ', 'dz', "ɻ̍"}
+FILLERS = {"ə…", "əəə…", "m…", "mm…", "mmm…"}
+#DIGRAPHS = {"wæ", "wɑ", "wɤ", "jæ", "jɤ"}
+#BI_PHNS = BI_PHNS.union(DIGRAPHS)
 TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩", "ɻ̩̃"}
 UNI_TONES = {"˩", "˥", "˧"}
 BI_TONES = {"˧˥", "˩˥", "˩˧", "˧˩"}
@@ -83,6 +86,18 @@ def preprocess_na(sent, label_type):
         raise Exception("Unrecognized label type: %s" % label_type)
 
     def pop_phoneme(sentence):
+
+        # Treating fillers as single tokens; normalizing to əəə and mmm
+        if phonemes:
+            if sentence[:4] in ["əəə…", "mmm…"]:
+                return sentence[:4], sentence[4:]
+            if sentence.startswith("ə…"):
+                return "əəə…", sentence[2:]
+            if sentence.startswith("m…"):
+                return "mmm…", sentence[2:]
+            if sentence.startswith("mm…"):
+                return "mmm…", sentence[3:]
+
         if sentence[:3] in TRI_PHNS:
             if phonemes:
                 return sentence[:3], sentence[3:]
