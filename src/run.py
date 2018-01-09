@@ -57,7 +57,7 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
 
-    train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 250,
+    train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
           train_rec_type="text")
 
 
