@@ -51,7 +51,7 @@ UNI_PHNS = {'q', 'p', 'ɭ', 'ɳ', 'h', 'ʐ', 'n', 'o', 'ɤ', 'ʝ', 'ɛ', 'g',
 BI_PHNS = {'dʑ', 'ẽ', 'ɖʐ', 'w̃', 'æ̃', 'qʰ', 'i͂', 'tɕ', 'v̩', 'o̥', 'ts',
            'ɻ̩', 'ã', 'ə̃', 'ṽ', 'pʰ', 'tʰ', 'ɤ̃', 'ʈʰ', 'ʈʂ', 'ɑ̃', 'ɻ̃', 'kʰ',
            'ĩ', 'õ', 'dz', "ɻ̍"}
-FILLERS = {"ə…", "əəə…", "m…", "mm…", "mmm…"}
+FILLERS = {"əəə…", "mmm…"}
 #DIGRAPHS = {"wæ", "wɑ", "wɤ", "jæ", "jɤ"}
 #BI_PHNS = BI_PHNS.union(DIGRAPHS)
 TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩", "ɻ̩̃"}
@@ -59,7 +59,7 @@ UNI_TONES = {"˩", "˥", "˧"}
 BI_TONES = {"˧˥", "˩˥", "˩˧", "˧˩"}
 TONES = UNI_TONES.union(BI_TONES)
 
-PHONEMES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS)
+PHONEMES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS).union(FILLERS)
 NUM_PHONEMES = len(PHONEMES)
 PHONEMES_TO_INDICES = {phn: index for index, phn in enumerate(PHONEMES)}
 INDICES_TO_PHONEMES = {index: phn for index, phn in enumerate(PHONEMES)}
