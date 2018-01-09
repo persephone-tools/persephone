@@ -59,6 +59,9 @@ def run():
 
     prep_exp_dir()
 
+    train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 250,
+          train_rec_type="text")
+
 
 def multi_train():
     #train("na", "fbank", "phonemes_and_tones", 3, 250,
