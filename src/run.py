@@ -57,10 +57,7 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
 
-    # Prepares a new experiment dir for all logging.
-    exp_dir = prep_exp_dir()
-
-    train(exp_dir, "na", "fbank_and_pitch", "phonemes_and_tones", 3, 250,
+    train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 250,
           train_rec_type="text")
 
 
@@ -69,12 +66,12 @@ def multi_train():
     #      train_rec_type="text_and_wordlist")
     train("na", "fbank", "phonemes_and_tones", 3, 250,
           train_rec_type="text")
-    train("na", "fbank", "phonemes_and_tones", 3, 250,
-          train_rec_type="wordlist")
+#    train("na", "fbank", "phonemes_and_tones", 3, 250,
+#          train_rec_type="wordlist")
     #train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
     #      train_rec_type="text_and_wordlist", batch_size=32)
 
-def train(exp_dir, language, feat_type, label_type,
+def train(language, feat_type, label_type,
           num_layers, hidden_size,
           num_train=None, batch_size=64,
           train_rec_type="text_and_wordlist"):
@@ -87,6 +84,9 @@ def train(exp_dir, language, feat_type, label_type,
                                     train_rec_type=train_rec_type)
     else:
         raise Exception("Language '%s' not supported." % language)
+
+    # Prepares a new experiment dir for all logging.
+    exp_dir = prep_exp_dir()
 
     if num_train:
         corpus_reader = CorpusReader(corpus, num_train=num_train, batch_size=batch_size)
