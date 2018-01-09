@@ -21,7 +21,7 @@ ORG_XML_DIR = os.path.join(ORG_DIR, "xml")
 ORG_WAV_DIR = os.path.join(ORG_DIR, "wav")
 TGT_WAV_DIR = os.path.join(TGT_DIR, "wav")
 FEAT_DIR = os.path.join(TGT_DIR, "feat")
-LABEL_DIR = os.path.join(TGT_DIR, "label_init_rhymes")
+LABEL_DIR = os.path.join(TGT_DIR, "label_tone_groups")
 TRANSL_DIR = os.path.join(TGT_DIR, "transl")
 
 # The directory for untranscribed audio we want to transcribe with automatic
@@ -147,7 +147,7 @@ def preprocess_na(sent, label_type):
             # processing.
             return " ", sentence[1:]
         if sentence[0] == "|" or sentence[0] == "ǀ":
-            return None, sentence[1:]
+            return "|", sentence[1:]
         print("***" + sentence)
         raise Exception("Next character not recognized: " + sentence[:1])
 
