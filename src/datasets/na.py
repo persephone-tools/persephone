@@ -113,16 +113,16 @@ def preprocess_na(sent, label_type):
                 return sentence[0], sentence[1:]
             else:
                 return None, sentence[1:]
-        if sentence[0] in UNI_TONES:
-            if tones:
-                return sentence[0], sentence[1:]
-            else:
-                return None, sentence[1:]
         if sentence[:2] in BI_TONES:
             if tones:
                 return sentence[:2], sentence[2:]
             else:
                 return None, sentence[2:]
+        if sentence[0] in UNI_TONES:
+            if tones:
+                return sentence[0], sentence[1:]
+            else:
+                return None, sentence[1:]
         if sentence[0] in MISC_SYMBOLS:
             # We assume these symbols cannot be captured.
             return None, sentence[1:]
