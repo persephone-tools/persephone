@@ -153,7 +153,7 @@ def preprocess_na(sent, label_type):
             # processing.
             return " ", sentence[1:]
         if sentence[0] == "|" or sentence[0] == "ǀ":
-            return "|", sentence[1:]
+            return None, sentence[1:]
         print("***" + sentence)
         raise Exception("Next character not recognized: " + sentence[:1])
 
