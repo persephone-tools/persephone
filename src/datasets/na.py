@@ -56,8 +56,10 @@ TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩", "ɻ̩̃", "wæ̃"}
 UNI_TONES = {"˩", "˥", "˧"}
 BI_TONES = {"˧˥", "˩˥", "˩˧", "˧˩"}
 TONES = UNI_TONES.union(BI_TONES)
+SYMBOLS_TO_PREDICT = {"|"}
 
-PHONEMES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS).union(FILLERS)
+PHONEMES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS).union(FILLERS).union(
+    SYMBOLS_TO_PREDICT)
 NUM_PHONEMES = len(PHONEMES)
 PHONEMES_TO_INDICES = {phn: index for index, phn in enumerate(PHONEMES)}
 INDICES_TO_PHONEMES = {index: phn for index, phn in enumerate(PHONEMES)}
