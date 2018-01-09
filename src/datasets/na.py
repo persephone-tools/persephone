@@ -21,7 +21,7 @@ ORG_XML_DIR = os.path.join(ORG_DIR, "xml")
 ORG_WAV_DIR = os.path.join(ORG_DIR, "wav")
 TGT_WAV_DIR = os.path.join(TGT_DIR, "wav")
 FEAT_DIR = os.path.join(TGT_DIR, "feat")
-LABEL_DIR = os.path.join(TGT_DIR, "label_init_rhymes2")
+LABEL_DIR = os.path.join(TGT_DIR, "label_norm_ṽ̩")
 TRANSL_DIR = os.path.join(TGT_DIR, "transl")
 
 # The directory for untranscribed audio we want to transcribe with automatic
@@ -99,8 +99,8 @@ def preprocess_na(sent, label_type):
         # Normalizing some stuff
         if sentence[:3] == "wæ̃":
             return "w̃æ", sentence[3:]
-#        if sentence[:3] == "ṽ̩":
-#            return "ṽ̩", sentence[3:]
+        if sentence[:3] == "ṽ̩":
+            return "ṽ̩", sentence[3:]
 
         if sentence[:3] in TRI_PHNS:
             if phonemes:
