@@ -48,9 +48,11 @@ def format(exp_paths,
     for item in zip([128,256,512,1024,2048], test_ters):
         print("(%d, %f)" % item)
 
-def filter_labels(sent, labels):
+def filter_labels(sent, labels=None):
     """ Returns only the tokens present in the sentence that are in labels."""
-    return [tok for tok in sent if tok in labels]
+    if labels:
+        return [tok for tok in sent if tok in labels]
+    return sent
 
 def test_results(exp_path, phones, tones):
     """ Gets results of the model on the test set. """
@@ -90,7 +92,86 @@ def filtered_error_rate(hyps_path, refs_path, labels):
 
     return utils.batch_per(hyps, refs)
 
-def error_types(exp_path, labels):
+def ed_alignments(exp_path):
+
+    test_path = os.path.join(exp_path, "test")
+    hyps_path = os.path.join(test_path, "hyps")
+    refs_path = os.path.join(test_path, "refs")
+
+    with open(hyps_path) as hyps_f:
+        lines = hyps_f.readlines()
+        hyps = [line.split() for line in lines]
+    with open(refs_path) as refs_f:
+        lines = refs_f.readlines()
+        refs = [line.split() for line in lines]
+
+    alignments = []
+    for ref, hyp in zip(refs, hyps):
+        alignment = min_edit_distance_align(ref, hyp)
+        alignments.append(alignment)
+
+    return alignments
+
+def symbol_errors(exp_path, symbol):
+
+    alignments = ed_alignments(exp_path)
+
+    correct = 0
+    del_ = 0
+    ins = 0
+    del_sub = 0
+    ins_sub = 0
+    total_hyp = 0
+    total_ref = 0
+    for alignment in alignments:
+        for arrow in alignment:
+            if arrow[0] == symbol and arrow[1] == symbol:
+                correct += 1
+            elif arrow[0] == symbol and arrow[1] == "":
+                del_ += 1
+            elif arrow[0] == "" and arrow[1] == symbol:
+                ins += 1
+            elif arrow[1] == symbol:
+                ins_sub += 1
+            elif arrow[0] == symbol:
+                del_sub += 1
+            if arrow[1] == symbol:
+                total_hyp += 1
+            if arrow[0] == symbol:
+                total_ref += 1
+
+    print(correct)
+    print(del_)
+    print(ins)
+    print(del_sub)
+    print(ins_sub)
+    print(total_hyp)
+    print(total_ref)
+
+    #error_rate = (del_ + ins + sub_hyp + sub_ref) / (correct + del_ + ins + sub_hyp + sub_ref)
+    del_rate = (del_ + del_sub) / (correct + del_ + del_sub)
+    print(del_rate)
+    ins_rate = (ins + ins_sub) / (correct + ins + ins_sub)
+    print(ins_rate)
+
+    errors = []
+    for alignment in alignments:
+        for arrow in alignment:
+            if arrow[0] != arrow[1]:
+                errors.append(arrow)
+
+    err_hist = {}
+    for error in errors:
+        if error in err_hist:
+            err_hist[error] += 1
+        else:
+            err_hist[error] = 1
+
+def tone_group_er(exp_path):
+    """ The tone group error rate."""
+    pass
+
+def error_types(exp_path, labels=None):
     """ Stats about the most common types of errors in the test set."""
 
     test_path = os.path.join(exp_path, "test")
