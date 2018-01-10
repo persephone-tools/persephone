@@ -59,7 +59,8 @@ def run():
 
     train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
           train_rec_type="text")
-
+    train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 500,
+          train_rec_type="text")
 
 def multi_train():
     #train("na", "fbank", "phonemes_and_tones", 3, 250,

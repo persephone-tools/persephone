@@ -21,7 +21,7 @@ ORG_XML_DIR = os.path.join(ORG_DIR, "xml")
 ORG_WAV_DIR = os.path.join(ORG_DIR, "wav")
 TGT_WAV_DIR = os.path.join(TGT_DIR, "wav")
 FEAT_DIR = os.path.join(TGT_DIR, "feat")
-LABEL_DIR = os.path.join(TGT_DIR, "label_norm_ṽ̩")
+LABEL_DIR = os.path.join(TGT_DIR, "label")
 TRANSL_DIR = os.path.join(TGT_DIR, "transl")
 
 # The directory for untranscribed audio we want to transcribe with automatic
@@ -154,7 +154,10 @@ def preprocess_na(sent, label_type):
             # processing.
             return " ", sentence[1:]
         if sentence[0] == "|" or sentence[0] == "ǀ":
-            return None, sentence[1:]
+            if tones:
+                return "|", sentence[1:]
+            else:
+                return None, sentence[1:]
         print("***" + sentence)
         raise Exception("Next character not recognized: " + sentence[:1])
 
@@ -425,7 +428,7 @@ class Corpus(corpus.AbstractCorpus):
         super().__init__(feat_type, label_type)
 
         if label_type == "phonemes_and_tones":
-            self.labels = PHONEMES.union(set(TONES))
+            self.labels = PHONEMES.union(set(TONES)).union(SYMBOLS_TO_PREDICT)
         elif label_type == "phonemes":
             self.labels = PHONEMES
         elif label_type == "tones":
