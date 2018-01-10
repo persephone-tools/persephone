@@ -21,7 +21,7 @@ ORG_XML_DIR = os.path.join(ORG_DIR, "xml")
 ORG_WAV_DIR = os.path.join(ORG_DIR, "wav")
 TGT_WAV_DIR = os.path.join(TGT_DIR, "wav")
 FEAT_DIR = os.path.join(TGT_DIR, "feat")
-LABEL_DIR = os.path.join(TGT_DIR, "label_tone_groups")
+LABEL_DIR = os.path.join(TGT_DIR, "label_norm_ṽ̩")
 TRANSL_DIR = os.path.join(TGT_DIR, "transl")
 
 # The directory for untranscribed audio we want to transcribe with automatic
@@ -50,9 +50,9 @@ UNI_PHNS = {'q', 'p', 'ɭ', 'ɳ', 'h', 'ʐ', 'n', 'o', 'ɤ', 'ʝ', 'ɛ', 'g',
             's', 'ŋ', 'ə', 'e', 'æ', 'f', 'j', 'k', 'z', 'ʂ'}
 BI_PHNS = {'dʑ', 'ẽ', 'ɖʐ', 'w̃', 'æ̃', 'qʰ', 'i͂', 'tɕ', 'v̩', 'o̥', 'ts',
            'ɻ̩', 'ã', 'ə̃', 'ṽ', 'pʰ', 'tʰ', 'ɤ̃', 'ʈʰ', 'ʈʂ', 'ɑ̃', 'ɻ̃', 'kʰ',
-           'ĩ', 'õ', 'dz', "ɻ̍", "wæ", "wɑ", "wɤ", "jæ", "jɤ"}
+           'ĩ', 'õ', 'dz', "ɻ̍", "wæ", "wɑ", "wɤ", "jæ", "jɤ", "jo"}
 FILLERS = {"əəə…", "mmm…"}
-TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩", "ɻ̩̃", "wæ̃"}
+TRI_PHNS = {"tɕʰ", "ʈʂʰ", "tsʰ", "ṽ̩", "ṽ̩", "ɻ̩̃", "wæ̃", "w̃æ"}
 UNI_TONES = {"˩", "˥", "˧"}
 BI_TONES = {"˧˥", "˩˥", "˩˧", "˧˩"}
 TONES = UNI_TONES.union(BI_TONES)
@@ -96,6 +96,12 @@ def preprocess_na(sent, label_type):
                 return "mmm…", sentence[2:]
             if sentence.startswith("mm…"):
                 return "mmm…", sentence[3:]
+
+        # Normalizing some stuff
+        if sentence[:3] == "wæ̃":
+            return "w̃æ", sentence[3:]
+        if sentence[:3] == "ṽ̩":
+            return "ṽ̩", sentence[3:]
 
         if sentence[:3] in TRI_PHNS:
             if phonemes:
@@ -148,7 +154,7 @@ def preprocess_na(sent, label_type):
             # processing.
             return " ", sentence[1:]
         if sentence[0] == "|" or sentence[0] == "ǀ":
-            return "|", sentence[1:]
+            return None, sentence[1:]
         print("***" + sentence)
         raise Exception("Next character not recognized: " + sentence[:1])
 
