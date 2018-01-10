@@ -273,9 +273,15 @@ class Model:
                          self.batch_x_lens: valid_x_lens,
                          self.batch_y: valid_y}
 
-            valid_ler, dense_decoded, dense_ref = sess.run(
-                [self.ler, self.dense_decoded, self.dense_ref],
-                feed_dict=feed_dict)
+            try:
+                valid_ler, dense_decoded, dense_ref = sess.run(
+                    [self.ler, self.dense_decoded, self.dense_ref],
+                    feed_dict=feed_dict)
+            except tf.errors.ResourceExhaustedError:
+                print("Ran out of memory allocating a batch:")
+                import pprint
+                pprint.pprint(feed_dict)
+                raise
             hyps, refs = self.corpus_reader.human_readable_hyp_ref(
                 dense_decoded, dense_ref)
             # Log hypotheses

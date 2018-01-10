@@ -1,5 +1,6 @@
 """ A driver script that runs experiments. """
 
+import logging
 import os
 import shutil
 
@@ -14,6 +15,7 @@ import datasets.chatino
 #import datasets.japhug
 import datasets.babel
 from corpus_reader import CorpusReader
+
 
 EXP_DIR = config.EXP_DIR
 
@@ -82,6 +84,22 @@ def train(language, feat_type, label_type,
           train_rec_type="text_and_wordlist"):
     """ Run an experiment. """
 
+    # Prepares a new experiment dir for all logging.
+    exp_dir = prep_exp_dir()
+
+    # get TF logger
+    log = logging.getLogger('tensorflow')
+    log.setLevel(logging.DEBUG)
+
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler(os.path.join(exp_dir, 'tensorflow.log'))
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    log.addHandler(fh)
+
     if language == "chatino":
         corpus = datasets.chatino.Corpus(feat_type, label_type)
     elif language == "na":
@@ -89,9 +107,6 @@ def train(language, feat_type, label_type,
                                     train_rec_type=train_rec_type)
     else:
         raise Exception("Language '%s' not supported." % language)
-
-    # Prepares a new experiment dir for all logging.
-    exp_dir = prep_exp_dir()
 
     if num_train:
         corpus_reader = CorpusReader(corpus, num_train=num_train, batch_size=batch_size)
