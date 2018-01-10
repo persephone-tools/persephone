@@ -1,5 +1,6 @@
 """ Script for formatting results of experiments """
 
+import config
 import datasets.na
 
 import os
@@ -167,9 +168,65 @@ def symbol_errors(exp_path, symbol):
         else:
             err_hist[error] = 1
 
-def tone_group_er(exp_path):
-    """ The tone group error rate."""
-    pass
+def latex_output(hyps_path, refs_path):
+    """ Pretty print the hypotheses and references. """
+
+    with open(hyps_path) as hyps_f:
+        lines = hyps_f.readlines()
+        hyps = [line.split() for line in lines]
+    with open(refs_path) as refs_f:
+        lines = refs_f.readlines()
+        refs = [line.split() for line in lines]
+
+    alignments = []
+    for ref, hyp in zip(refs, hyps):
+        alignment = min_edit_distance_align(ref, hyp)
+        alignments.append(alignment)
+
+    with open(os.path.join(config.TGT_DIR, "na", "new",
+              "valid_prefixes.txt")) as f:
+        prefixes = [line.replace("_", "\_") for line in f]
+        prefixes2 = []
+        for prefix in prefixes:
+            sp = prefix.split(".")
+            prefixes2.append(" ".join([sp[0], "Sent \\#" + str(int(sp[1])+1)]))
+        prefixes = prefixes2
+    #print(prefixes)
+
+    with open("hyps_refs.tex", "w") as out_f:
+
+        print("\documentclass[10pt]{article}\n"
+              "\\usepackage[a4paper,margin=0.5in,landscape]{geometry}\n"
+              "\\usepackage[utf8]{inputenc}\n"
+              "\\usepackage{xcolor}\n"
+              "\\usepackage{polyglossia}\n"
+              "\\usepackage{booktabs}\n"
+              "\\usepackage{longtable}\n"
+              "\setmainfont[Mapping=tex-text,Ligatures=Common,Scale=MatchLowercase]{Doulos SIL}\n"
+              "\DeclareRobustCommand{\hl}[1]{{\\textcolor{red}{#1}}}\n"
+              "\\begin{document}\n"
+              "\\begin{longtable}{ll}", file=out_f)
+
+        print("\\toprule", file=out_f)
+        for prefix, alignment in zip(prefixes, alignments):
+            ref_list = []
+            hyp_list = []
+            for arrow in alignment:
+                if arrow[0] == arrow[1]:
+                    # Then don't highlight it; it's correct.
+                    ref_list.append(arrow[0])
+                    hyp_list.append(arrow[1])
+                else:
+                    # Then highlight the errors.
+                    ref_list.append("\hl{%s}" % arrow[0])
+                    hyp_list.append("\hl{%s}" % arrow[1])
+            print("Sentence: &", prefix.strip(), "\\\\", file=out_f)
+            print("Ref: &", "".join(ref_list), "\\\\", file=out_f)
+            print("Hyp: &", "".join(hyp_list), "\\\\", file=out_f)
+            print("\\midrule", file=out_f)
+
+        print("\end{longtable}", file=out_f)
+        print("\end{document}", file=out_f)
 
 def error_types(exp_path, labels=None):
     """ Stats about the most common types of errors in the test set."""
