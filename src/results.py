@@ -149,7 +149,8 @@ def symbol_errors(exp_path, symbol):
     print(total_hyp)
     print(total_ref)
 
-    #error_rate = (del_ + ins + sub_hyp + sub_ref) / (correct + del_ + ins + sub_hyp + sub_ref)
+    error_rate = (del_ + ins + del_sub + ins_sub) / (correct + del_ + ins + del_sub + ins_sub)
+    print(error_rate)
     del_rate = (del_ + del_sub) / (correct + del_ + del_sub)
     print(del_rate)
     ins_rate = (ins + ins_sub) / (correct + ins + ins_sub)
@@ -168,7 +169,7 @@ def symbol_errors(exp_path, symbol):
         else:
             err_hist[error] = 1
 
-def latex_output(hyps_path, refs_path):
+def latex_output(refs_path, hyps_path):
     """ Pretty print the hypotheses and references. """
 
     with open(hyps_path) as hyps_f:
