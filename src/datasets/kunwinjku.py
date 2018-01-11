@@ -1,11 +1,14 @@
+from collections import namedtuple
 import os
 from os.path import join
+import random
 
 from nltk_contrib.textgrid import TextGrid
 
 import config
 import corpus
 import feat_extract
+import utils
 
 def prepare_butcher_labels(label_dir):
     if not os.path.isdir(label_dir):
@@ -40,7 +43,29 @@ def prepare_butcher_feats(feat_type, feat_dir):
 label_dir = join(config.TGT_DIR, "butcher/kun/labels")
 feat_dir = join(config.TGT_DIR, "butcher/kun/feats")
 #prepare_butcher_feats("fbank", feat_dir)
-prepare_butcher_labels(label_dir)
+#prepare_butcher_labels(label_dir)
+
+def make_data_splits(label_dir, max_samples=1000, seed=0):
+    fns = [prefix for prefix in os.listdir(label_dir)
+                if prefix.endswith("phonemes")]
+    prefixes = [os.path.splitext(fn)[0] for fn in fns]
+    # Note that I'm shuffling after sorting; this could be better.
+    prefixes = utils.sort_and_filter_by_size(
+        feat_dir, prefixes, "fbank", max_samples)
+    Ratios = namedtuple("Ratios", ["train", "dev", "test"])
+    ratios = Ratios(.80, .10, .10)
+    train_end = int(ratios.train*len(prefixes))
+    dev_end = int(train_end + ratios.dev*len(prefixes))
+    random.shuffle(prefixes)
+    train_prefixes = prefixes[:train_end]
+    dev_prefixes = prefixes[train_end:dev_end]
+    test_prefixes = prefixes[dev_end:]
+
+    print(len(train_prefixes))
+    print(len(dev_prefixes))
+    print(len(test_prefixes))
+
+make_data_splits(label_dir)
 
 class Corpus(corpus.AbstractCorpus):
     """ Interface to the Kunwinjku data. """
