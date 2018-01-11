@@ -40,12 +40,14 @@ def prepare_butcher_feats(feat_type, feat_dir):
 
     feat_extract.from_dir(feat_dir, feat_type)
 
-label_dir = join(config.TGT_DIR, "butcher/kun/labels")
-feat_dir = join(config.TGT_DIR, "butcher/kun/feats")
+TGT_DIR = join(config.TGT_DIR, "butcher/kun")
+label_dir = join(TGT_DIR, "labels")
+feat_dir = join(TGT_DIR, "feats")
 #prepare_butcher_feats("fbank", feat_dir)
 #prepare_butcher_labels(label_dir)
 
 def make_data_splits(label_dir, max_samples=1000, seed=0):
+
     fns = [prefix for prefix in os.listdir(label_dir)
                 if prefix.endswith("phonemes")]
     prefixes = [os.path.splitext(fn)[0] for fn in fns]
@@ -61,9 +63,15 @@ def make_data_splits(label_dir, max_samples=1000, seed=0):
     dev_prefixes = prefixes[train_end:dev_end]
     test_prefixes = prefixes[dev_end:]
 
-    print(len(train_prefixes))
-    print(len(dev_prefixes))
-    print(len(test_prefixes))
+    with open(join(TGT_DIR, "train_prefixes.txt"), "w") as train_f:
+        for prefix in train_prefixes:
+            print(prefix, file=train_f)
+    with open(join(TGT_DIR, "valid_prefixes.txt"), "w") as dev_f:
+        for prefix in train_prefixes:
+            print(prefix, file=dev_f)
+    with open(join(TGT_DIR, "test_prefixes.txt"), "w") as test_f:
+        for prefix in test_prefixes:
+            print(prefix, file=test_f)
 
 make_data_splits(label_dir)
 
