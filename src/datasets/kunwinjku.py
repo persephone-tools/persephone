@@ -120,6 +120,9 @@ make_data_splits(LABEL_DIR)
 class Corpus(corpus.AbstractCorpus):
     """ Interface to the Kunwinjku data. """
 
+    FEAT_DIR = FEAT_DIR
+    LABEL_DIR = LABEL_DIR
+
     def __init__(self, feat_type="fbank", label_type="phonemes"):
         super().__init__(feat_type, label_type)
 
