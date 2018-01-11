@@ -1,3 +1,8 @@
+"""
+Provides a Corpus interface to Kunwinjku data (the Butcher corpus for now;
+Steven's data soon).
+"""
+
 from collections import namedtuple
 import os
 from os.path import join
@@ -10,7 +15,17 @@ import corpus
 import feat_extract
 import utils
 
+TGT_DIR = join(config.TGT_DIR, "butcher/kun")
+LABEL_DIR = join(TGT_DIR, "labels")
+FEAT_DIR = join(TGT_DIR, "feats")
+#prepare_butcher_feats("fbank", feat_dir)
+#prepare_butcher_labels(label_dir)
+
 def prepare_butcher_labels(label_dir):
+    """ Prepares target labels as phonemes """
+    # TODO offer label format that is consistent with Steven's
+    # data; perhaps by using the orthographic form and lowercasing.
+
     if not os.path.isdir(label_dir):
         os.makedirs(label_dir)
 
@@ -27,6 +42,10 @@ def prepare_butcher_labels(label_dir):
                         print(" ".join(transcript).strip(), file=out_f)
 
 def prepare_butcher_feats(feat_type, feat_dir):
+    """ Prepares input features"""
+    # TODO Could probably be factored out; there's nothing so corpus-specific
+    # here.
+
     if not os.path.isdir(feat_dir):
         os.makedirs(feat_dir)
 
@@ -40,41 +59,82 @@ def prepare_butcher_feats(feat_type, feat_dir):
 
     feat_extract.from_dir(feat_dir, feat_type)
 
-TGT_DIR = join(config.TGT_DIR, "butcher/kun")
-label_dir = join(TGT_DIR, "labels")
-feat_dir = join(TGT_DIR, "feats")
-#prepare_butcher_feats("fbank", feat_dir)
-#prepare_butcher_labels(label_dir)
-
 def make_data_splits(label_dir, max_samples=1000, seed=0):
 
+    train_prefix_fn = join(TGT_DIR, "train_prefixes.txt")
+    valid_prefix_fn = join(TGT_DIR, "valid_prefixes.txt")
+    test_prefix_fn = join(TGT_DIR, "test_prefixes.txt")
+
+    train_f_exists = os.path.isfile(train_prefix_fn)
+    valid_f_exists = os.path.isfile(valid_prefix_fn)
+    test_f_exists = os.path.isfile(test_prefix_fn)
+
+    if train_f_exists and valid_f_exists and test_f_exists:
+        with open(train_prefix_fn) as train_f:
+            train_prefixes = [line.strip() for line in train_f]
+        with open(valid_prefix_fn) as valid_f:
+            valid_prefixes = [line.strip() for line in valid_f]
+        with open(test_prefix_fn) as test_f:
+            test_prefixes = [line.strip() for line in test_f]
+
+        return train_prefixes, valid_prefixes, test_prefixes
+
     fns = [prefix for prefix in os.listdir(label_dir)
-                if prefix.endswith("phonemes")]
+           if prefix.endswith("phonemes")]
     prefixes = [os.path.splitext(fn)[0] for fn in fns]
     # Note that I'm shuffling after sorting; this could be better.
     prefixes = utils.sort_and_filter_by_size(
-        feat_dir, prefixes, "fbank", max_samples)
-    Ratios = namedtuple("Ratios", ["train", "dev", "test"])
+        FEAT_DIR, prefixes, "fbank", max_samples)
+    Ratios = namedtuple("Ratios", ["train", "valid", "test"])
     ratios = Ratios(.80, .10, .10)
     train_end = int(ratios.train*len(prefixes))
-    dev_end = int(train_end + ratios.dev*len(prefixes))
+    valid_end = int(train_end + ratios.valid*len(prefixes))
     random.shuffle(prefixes)
     train_prefixes = prefixes[:train_end]
-    dev_prefixes = prefixes[train_end:dev_end]
-    test_prefixes = prefixes[dev_end:]
+    valid_prefixes = prefixes[train_end:valid_end]
+    test_prefixes = prefixes[valid_end:]
 
-    with open(join(TGT_DIR, "train_prefixes.txt"), "w") as train_f:
+    with open(train_prefix_fn, "w") as train_f:
         for prefix in train_prefixes:
             print(prefix, file=train_f)
-    with open(join(TGT_DIR, "valid_prefixes.txt"), "w") as dev_f:
+    with open(valid_prefix_fn, "w") as dev_f:
         for prefix in train_prefixes:
             print(prefix, file=dev_f)
-    with open(join(TGT_DIR, "test_prefixes.txt"), "w") as test_f:
+    with open(test_prefix_fn, "w") as test_f:
         for prefix in test_prefixes:
             print(prefix, file=test_f)
 
-make_data_splits(label_dir)
+    return train_prefixes, valid_prefixes, test_prefixes
+
+def butcher_phonemes(label_dir):
+    """ Returns a set of phonemes found in the corpus. """
+    phonemes = set()
+    for fn in os.listdir(label_dir):
+        with open(join(label_dir, fn)) as f:
+            line_phonemes = set(f.readline().split())
+            phonemes = phonemes.union(line_phonemes)
+    return phonemes
+
+make_data_splits(LABEL_DIR)
 
 class Corpus(corpus.AbstractCorpus):
     """ Interface to the Kunwinjku data. """
-    pass
+
+    def __init__(self, feat_type="fbank", label_type="phonemes"):
+        super().__init__(feat_type, label_type)
+
+        self.labels = butcher_phonemes(LABEL_DIR)
+        train, valid, test = make_data_splits(LABEL_DIR)
+        self.train_prefixes = train
+        self.valid_prefixes = valid
+        self.test_prefixes = test
+
+        # TODO Should be in the abstract corpus. It's common to all corpora but
+        # it needs to be set after self.labels. Perhaps I should use a label
+        # setter which creates this, then indices_to_phonemes/indices_to_labels
+        # will automatically call it.
+        self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
+                                 ["pad"] + sorted(list(self.labels)))}
+        self.INDEX_TO_LABEL = {index: phn for index, phn in enumerate(
+                                 ["pad"] + sorted(list(self.labels)))}
+        self.vocab_size = len(self.labels)

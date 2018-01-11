@@ -41,17 +41,15 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         self.feat_type = feat_type
         self.target_type = target_type
 
-    def indices_to_phonemes(self, indices):
-        """ Converts a sequence of indices representing labels into their
-        corresponding (possibly collapsed) phonemes.
-        """
+    def indices_to_labels(self, indices):
+        """ Converts a sequence of indices into their corresponding labels."""
 
-        return [(self.INDEX_TO_PHONEME[index]) for index in indices]
+        return [(self.INDEX_TO_LABEL[index]) for index in indices]
 
-    def phonemes_to_indices(self, phonemes):
-        """ Converts a sequence of phonemes their corresponding labels. """
+    def labels_to_indices(self, labels):
+        """ Converts a sequence of labels into their corresponding indices."""
 
-        return [self.PHONEME_TO_INDEX[phoneme] for phoneme in phonemes]
+        return [self.LABEL_TO_INDEX[phoneme] for label in label]
 
     @property
     def num_feats(self):
