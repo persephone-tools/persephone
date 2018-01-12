@@ -132,6 +132,7 @@ def sort_by_size(feat_dir, prefixes, feat_type):
     prefix_lens = get_prefix_lens(feat_dir, prefixes, feat_type)
     prefix_lens.sort(key=lambda prefix_len: prefix_len[1])
     prefixes = [prefix for prefix, _ in prefix_lens]
+    return prefixes
 
 def is_number(string):
     """ Tests if a string is valid float. """

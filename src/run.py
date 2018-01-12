@@ -60,7 +60,7 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
 
-    train("kunwinjku", "fbank", "phonemes", 3, 250)
+    train("kunwinjku", "fbank", "phonemes", 3, 250, batch_size=32)
 
 def train(language, feat_type, label_type,
           num_layers, hidden_size,
