@@ -60,12 +60,13 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
 
-    train("kunwinjku", "fbank", "phonemes", 3, 250, batch_size=32)
+    train("kunwinjku", "fbank", "phonemes", 3, 250, batch_size=64, min_epochs=100)
 
 def train(language, feat_type, label_type,
           num_layers, hidden_size,
           num_train=None, batch_size=64,
-          train_rec_type="text_and_wordlist"):
+          train_rec_type="text_and_wordlist",
+          min_epochs=30):
     """ Run an experiment. """
 
     # Prepares a new experiment dir for all logging.
@@ -104,7 +105,7 @@ def train(language, feat_type, label_type,
                           decoding_merge_repeated=(False if
                                                    label_type=="tones"
                                                    else True))
-    model.train()
+    model.train(min_epochs=min_epochs)
 
     print("language: %s" % language)
     print("feat_type: %s" % feat_type)
