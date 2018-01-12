@@ -62,9 +62,6 @@ def prepare_butcher_feats(feat_type, feat_dir):
 def make_data_splits(label_dir, max_samples=1000, seed=0):
     """ Splits the utterances into training, validation and test sets."""
 
-    def no_labels(prefix):
-        """ Does the label """
-
     train_prefix_fn = join(TGT_DIR, "train_prefixes.txt")
     valid_prefix_fn = join(TGT_DIR, "valid_prefixes.txt")
     test_prefix_fn = join(TGT_DIR, "test_prefixes.txt")
@@ -86,7 +83,7 @@ def make_data_splits(label_dir, max_samples=1000, seed=0):
     prefixes = get_prefixes()
     # TODO Note that I'm shuffling after sorting; this could be better.
     # TODO Remove explicit reference to "fbank"
-    prefixes = utils.sort_and_filter_by_size(
+    prefixes = utils.filter_by_size(
         FEAT_DIR, prefixes, "fbank", max_samples)
     Ratios = namedtuple("Ratios", ["train", "valid", "test"])
     ratios = Ratios(.80, .10, .10)
@@ -159,6 +156,10 @@ class Corpus(corpus.AbstractCorpus):
         self.train_prefixes = filter_unlabelled(train, label_type)
         self.valid_prefixes = filter_unlabelled(valid, label_type)
         self.test_prefixes = filter_unlabelled(test, label_type)
+
+        # Sort the training prefixes by size for more efficient training
+        self.train_prefixes = utils.sort_by_size(
+            self.FEAT_DIR, self.train_prefixes, feat_type)
 
         # TODO Should be in the abstract corpus. It's common to all corpora but
         # it needs to be set after self.labels. Perhaps I should use a label
