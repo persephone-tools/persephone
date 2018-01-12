@@ -21,7 +21,7 @@ FEAT_DIR = join(TGT_DIR, "feats")
 #prepare_butcher_feats("fbank", feat_dir)
 #prepare_butcher_labels(label_dir)
 
-def prepare_butcher_labels(label_dir):
+def prepare_butcher_labels(label_dir=LABEL_DIR):
     """ Prepares target labels as phonemes """
     # TODO offer label format that is consistent with Steven's
     # data; perhaps by using the orthographic form and lowercasing.
@@ -38,7 +38,8 @@ def prepare_butcher_labels(label_dir):
                 tg = TextGrid(f.read())
                 for tier in tg:
                     if tier.nameid == "etic":
-                        transcript = [text for _, _, text in tier.simple_transcript]
+                        transcript = [text for _, _, text in tier.simple_transcript
+                                      if text != "<p:>"]
                         print(" ".join(transcript).strip(), file=out_f)
 
 def prepare_butcher_feats(feat_type, feat_dir):
@@ -106,7 +107,7 @@ def make_data_splits(label_dir, max_samples=1000, seed=0):
 
     return train_prefixes, valid_prefixes, test_prefixes
 
-def butcher_phonemes(label_dir):
+def butcher_phonemes(label_dir=LABEL_DIR):
     """ Returns a set of phonemes found in the corpus. """
     phonemes = set()
     for fn in os.listdir(label_dir):
