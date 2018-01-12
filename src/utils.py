@@ -114,6 +114,7 @@ def sort_and_filter_by_size(feat_dir, prefixes, feat_type, max_samples):
     shuffled downstream.
     """
 
+    # TODO Tell the user what utterances we are removing.
     prefix_lens = []
     for prefix in prefixes:
         path = os.path.join(feat_dir, "%s.%s.npy" % (prefix, feat_type))

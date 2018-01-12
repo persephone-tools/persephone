@@ -60,6 +60,10 @@ def prepare_butcher_feats(feat_type, feat_dir):
     feat_extract.from_dir(feat_dir, feat_type)
 
 def make_data_splits(label_dir, max_samples=1000, seed=0):
+    """ Splits the utterances into training, validation and test sets."""
+
+    def no_labels(prefix):
+        """ Does the label """
 
     train_prefix_fn = join(TGT_DIR, "train_prefixes.txt")
     valid_prefix_fn = join(TGT_DIR, "valid_prefixes.txt")
@@ -79,10 +83,9 @@ def make_data_splits(label_dir, max_samples=1000, seed=0):
 
         return train_prefixes, valid_prefixes, test_prefixes
 
-    fns = [prefix for prefix in os.listdir(label_dir)
-           if prefix.endswith("phonemes")]
-    prefixes = [os.path.splitext(fn)[0] for fn in fns]
-    # Note that I'm shuffling after sorting; this could be better.
+    prefixes = get_prefixes()
+    # TODO Note that I'm shuffling after sorting; this could be better.
+    # TODO Remove explicit reference to "fbank"
     prefixes = utils.sort_and_filter_by_size(
         FEAT_DIR, prefixes, "fbank", max_samples)
     Ratios = namedtuple("Ratios", ["train", "valid", "test"])
@@ -98,7 +101,7 @@ def make_data_splits(label_dir, max_samples=1000, seed=0):
         for prefix in train_prefixes:
             print(prefix, file=train_f)
     with open(valid_prefix_fn, "w") as dev_f:
-        for prefix in train_prefixes:
+        for prefix in valid_prefixes:
             print(prefix, file=dev_f)
     with open(test_prefix_fn, "w") as test_f:
         for prefix in test_prefixes:
@@ -115,11 +118,31 @@ def butcher_phonemes(label_dir):
             phonemes = phonemes.union(line_phonemes)
     return phonemes
 
-make_data_splits(LABEL_DIR)
+def get_prefixes():
+    """ Gets the prefixes for utterances in this corpus."""
+
+    fns = [prefix for prefix in os.listdir(config.BUTCHER_DIR)
+           if prefix.endswith(".TextGrid")]
+    prefixes = [os.path.splitext(fn)[0] for fn in fns]
+    return prefixes
+
+def filter_unlabelled(prefixes, label_type):
+    filtered_prefixes = []
+    for prefix in prefixes:
+        with open(join(LABEL_DIR, "%s.%s" % (prefix, label_type))) as f:
+            if len(f.readline().split()) != 0:
+                filtered_prefixes.append(prefix)
+            else:
+                print('The labels of utterance "{prefix}" '\
+                      'with label type "{label_type}" are empty. Removed ' \
+                      'from utterance set.'.format(prefix=prefix,
+                                               label_type=label_type))
+    return filtered_prefixes
 
 class Corpus(corpus.AbstractCorpus):
     """ Interface to the Kunwinjku data. """
 
+    # TODO Do I make these attributes non-caps?
     FEAT_DIR = FEAT_DIR
     LABEL_DIR = LABEL_DIR
 
@@ -128,9 +151,14 @@ class Corpus(corpus.AbstractCorpus):
 
         self.labels = butcher_phonemes(LABEL_DIR)
         train, valid, test = make_data_splits(LABEL_DIR)
-        self.train_prefixes = train
-        self.valid_prefixes = valid
-        self.test_prefixes = test
+
+        # Filter out prefixes that have no transcription. It's probably better
+        # to have this after the splitting between train/valid/test sets,
+        # because having it before means minor changes in the way labelling
+        # occurs would lead to drastically different training sets.
+        self.train_prefixes = filter_unlabelled(train, label_type)
+        self.valid_prefixes = filter_unlabelled(valid, label_type)
+        self.test_prefixes = filter_unlabelled(test, label_type)
 
         # TODO Should be in the abstract corpus. It's common to all corpora but
         # it needs to be set after self.labels. Perhaps I should use a label
