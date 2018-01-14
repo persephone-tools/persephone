@@ -1,5 +1,6 @@
 """ Interface to the Chatino data."""
 
+from os.path import join
 import os
 import random
 from shutil import copyfile
@@ -258,6 +259,12 @@ class Corpus(corpus.AbstractCorpus):
         valid_end = self.TRAIN_VALID_TEST_SPLIT[0]+self.TRAIN_VALID_TEST_SPLIT[1]
         self.valid_prefixes = self.prefixes[self.TRAIN_VALID_TEST_SPLIT[0]:valid_end]
         self.test_prefixes = self.prefixes[valid_end:]
+
+        # Writing validation set prefixes so that latex_output can give
+        # meaningful output.
+        with open(join(TGT_DIR, "valid_prefixes.txt"), "w") as valid_f:
+            for prefix in self.valid_prefixes:
+                print(prefix, file=valid_f)
 
         # TODO Make the distinction between this and the constants at the start
         # of the file clear.

@@ -169,7 +169,7 @@ def symbol_errors(exp_path, symbol):
         else:
             err_hist[error] = 1
 
-def latex_output(refs_path, hyps_path):
+def latex_output(refs_path, hyps_path, utter_ids_fn):
     """ Pretty print the hypotheses and references. """
 
     with open(hyps_path) as hyps_f:
@@ -184,14 +184,14 @@ def latex_output(refs_path, hyps_path):
         alignment = min_edit_distance_align(ref, hyp)
         alignments.append(alignment)
 
-    with open(os.path.join(config.TGT_DIR, "na", "new",
-              "valid_prefixes.txt")) as f:
+    with open(utter_ids_fn) as f:
         prefixes = [line.replace("_", "\_") for line in f]
-        prefixes2 = []
-        for prefix in prefixes:
-            sp = prefix.split(".")
-            prefixes2.append(" ".join([sp[0], "Sent \\#" + str(int(sp[1])+1)]))
-        prefixes = prefixes2
+        # TODO Na-specific stuff commented out for work on Chatino
+        #prefixes2 = []
+        #for prefix in prefixes:
+        #    sp = prefix.split(".")
+        #    prefixes2.append(" ".join([sp[0], "Sent \\#" + str(int(sp[1])+1)]))
+        #prefixes = prefixes2
     #print(prefixes)
 
     with open("hyps_refs.tex", "w") as out_f:
@@ -221,7 +221,7 @@ def latex_output(refs_path, hyps_path):
                     # Then highlight the errors.
                     ref_list.append("\hl{%s}" % arrow[0])
                     hyp_list.append("\hl{%s}" % arrow[1])
-            print("Sentence: &", prefix.strip(), "\\\\", file=out_f)
+            print("Utterance ID: &", prefix.strip(), "\\\\", file=out_f)
             print("Ref: &", "".join(ref_list), "\\\\", file=out_f)
             print("Hyp: &", "".join(hyp_list), "\\\\", file=out_f)
             print("\\midrule", file=out_f)
