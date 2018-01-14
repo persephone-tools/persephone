@@ -59,13 +59,21 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
 
-    train("chatino", "fbank", "phonemes_and_tones", 3, 250)
-    train("chatino", "fbank", "phonemes_and_tones", 3, 400)
+
+    texts = list(datasets.na.get_texts())
+    for i, test_text in enumerate(texts):
+        valid_text = texts[(i+1) % len(texts)]
+        print("Test text: %s" % test_text)
+        print("Valid text: %s" % valid_text)
+        print()
+        train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
+               valid_story=valid_text, test_story=test_text)
 
 def train(language, feat_type, label_type,
           num_layers, hidden_size,
           num_train=None, batch_size=64,
-          train_rec_type="text_and_wordlist"):
+          train_rec_type="text_and_wordlist",
+          valid_story=None, test_story=None):
     """ Run an experiment. """
 
     # Prepares a new experiment dir for all logging.
@@ -88,7 +96,9 @@ def train(language, feat_type, label_type,
         corpus = datasets.chatino.Corpus(feat_type, label_type)
     elif language == "na":
         corpus = datasets.na.Corpus(feat_type, label_type,
-                                    train_rec_type=train_rec_type)
+                                    train_rec_type=train_rec_type,
+                                    valid_story=valid_story,
+                                    test_story=test_story)
     else:
         raise Exception("Language '%s' not supported." % language)
 
