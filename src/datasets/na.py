@@ -148,7 +148,7 @@ def preprocess_na(sent, label_type):
                 # If the closing bracket is the last char
                 return None, ""
             else:
-                return None, sentence[sentence.find("]")+1]
+                return None, sentence[sentence.find("]")+1:]
         if sentence[0] in set([" ", "\t", "\n"]):
             # Return a space char so that it can be identified in word segmentation
             # processing.
