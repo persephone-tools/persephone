@@ -59,6 +59,9 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
 
+    story_fold_cross_validation()
+
+def story_fold_cross_validation():
 
     texts = list(datasets.na.get_texts())
     for i, test_text in enumerate(texts):
