@@ -59,7 +59,8 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
 
-    story_fold_cross_validation()
+    train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
+          train_rec_type="text")
 
 def story_fold_cross_validation():
 
