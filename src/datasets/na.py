@@ -369,7 +369,7 @@ def prepare_feats(feat_type):
         feat_extract.from_dir(os.path.join(FEAT_DIR, "WORDLIST"), feat_type=feat_type)
         feat_extract.from_dir(os.path.join(FEAT_DIR, "TEXT"), feat_type=feat_type)
 
-def get_text_prefixes():
+def get_story_prefixes():
     """ Gets the Na text prefixes. """
     prefixes = [prefix for prefix in os.listdir(os.path.join(LABEL_DIR, "TEXT"))
                 if prefix.endswith("phonemes")]
@@ -391,7 +391,7 @@ def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000, seed=
         prefixes = f.readlines()
         valid_prefixes = [("TEXT/" + prefix).strip() for prefix in prefixes]
 
-    prefixes = get_text_prefixes()
+    prefixes = get_story_prefixes()
     prefixes = list(set(prefixes) - set(valid_prefixes))
     prefixes = list(set(prefixes) - set(test_prefixes))
     prefixes = utils.sort_and_filter_by_size(
@@ -418,16 +418,16 @@ def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000, seed=
 
     return train_prefixes, valid_prefixes, test_prefixes
 
-def get_texts():
+def get_stories():
     """ Returns a list of the stories in the Na corpus. """
 
-    prefixes = get_text_prefixes()
-    texts = set([prefix.split(".")[0] for prefix in prefixes])
+    prefixes = get_story_prefixes()
+    texts = list(set([prefix.split(".")[0].split("/")[1] for prefix in prefixes]))
     return texts
 
 def make_story_splits(valid_story, test_story, max_samples):
 
-    prefixes = get_text_prefixes()
+    prefixes = get_story_prefixes()
     prefixes = utils.sort_and_filter_by_size(
         FEAT_DIR, prefixes, "fbank", max_samples)
 
@@ -474,8 +474,17 @@ class Corpus(corpus.AbstractCorpus):
         self.feat_type = feat_type
         self.label_type = label_type
 
+        self.valid_story = valid_story
+        self.test_story = test_story
+
         # TODO Make this also work with wordlists.
         if valid_story or test_story:
+            if not (valid_story and test_story):
+                raise Exception(
+                    "We need a valid story if we specify a test story "
+                    "and vice versa. This shouldn't be required but for "
+                    "now it is.")
+
             train, valid, test = make_story_splits(valid_story, test_story,
                                                    max_samples)
         else:
@@ -490,6 +499,20 @@ class Corpus(corpus.AbstractCorpus):
         self.INDEX_TO_LABEL = {index: phn for index, phn in enumerate(
                                  ["pad"] + sorted(list(self.labels)))}
         self.vocab_size = len(self.labels)
+
+    def output_story_prefixes(self):
+        """ Writes the set of prefixes to a file this is useful for pretty
+        printing in results.latex_output. """
+
+        if not self.test_story:
+            raise NotImplementedError(
+                "I want to write the prefixes to a file"
+                "called <test_story>_prefixes.txt, but there's no test_story.")
+
+        fn = os.path.join(TGT_DIR, "%s_prefixes.txt" % self.test_story)
+        with open(fn, "w") as f:
+            for utter_id in self.test_prefixes:
+                print(utter_id.split("/")[1], file=f)
 
     # TODO Use 'labels' instead of 'phonemes' here and in corpus.py
     # Also, factor out as non-Chatino-specific.
