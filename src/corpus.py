@@ -2,10 +2,14 @@
     subclass. """
 
 import abc
+from collections import namedtuple
 import os
+from os.path import join
+import random
 
 import numpy as np
 
+import feat_extract
 import utils
 
 class AbstractCorpus(metaclass=abc.ABCMeta):
@@ -122,7 +126,13 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
                 if not os.path.isfile(mono16k_wav_path):
                     feat_extract.convert_wav(path, mono16k_wav_path)
 
-        feat_extract.from_dir(feat_dir, self.feat_type)
+        feat_extract.from_dir(self.FEAT_DIR, self.feat_type)
+
+    def get_prefixes(self):
+        fns = [fn for fn in os.listdir(self.LABEL_DIR)
+               if fn.endswith(self.label_type)]
+        prefixes = [os.path.splitext(fn)[0] for fn in fns]
+        return prefixes
 
     def make_data_splits(self, max_samples=1000, seed=0):
         """ Splits the utterances into training, validation and test sets."""
@@ -145,7 +155,7 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
 
             return train_prefixes, valid_prefixes, test_prefixes
 
-        prefixes = get_prefixes()
+        prefixes = self.get_prefixes()
         # TODO Note that I'm shuffling after sorting; this could be better.
         # TODO Remove explicit reference to "fbank"
         prefixes = utils.filter_by_size(
@@ -171,16 +181,16 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
 
         return train_prefixes, valid_prefixes, test_prefixes
 
-    def determine_labels(self, label_dir=self.LABEL_DIR):
+    def determine_labels(self):
         """ Returns a set of phonemes found in the corpus. """
         phonemes = set()
-        for fn in os.listdir(label_dir):
-            with open(join(label_dir, fn)) as f:
+        for fn in os.listdir(self.LABEL_DIR):
+            with open(join(self.LABEL_DIR, fn)) as f:
                 line_phonemes = set(f.readline().split())
                 phonemes = phonemes.union(line_phonemes)
         return phonemes
 
-class ReadyCorpus(corpus.AbstractCorpus):
+class ReadyCorpus(AbstractCorpus):
     """ Interface to a corpus that has WAV files and label files split into
     utterances and segregated in a directory with a "feat" and "label" dir. """
 
@@ -196,8 +206,13 @@ class ReadyCorpus(corpus.AbstractCorpus):
         if not os.path.isdir(self.LABEL_DIR):
             raise Exception("The supplied path requires a 'label' subdirectory.")
 
-        self.labels = determine_labels(self.LABEL_DIR)
+        #self.prepare_feats(self.FEAT_DIR) # In this case the feat_dir is the same as the org_dir
+        self.labels = self.determine_labels()
         train, valid, test = self.make_data_splits()
+
+        self.train_prefixes = train
+        self.valid_prefixes = train
+        self.test_prefixes = train
 
         # Sort the training prefixes by size for more efficient training
         self.train_prefixes = utils.sort_by_size(
@@ -212,3 +227,4 @@ class ReadyCorpus(corpus.AbstractCorpus):
         self.INDEX_TO_LABEL = {index: phn for index, phn in enumerate(
                                  ["pad"] + sorted(list(self.labels)))}
         self.vocab_size = len(self.labels)
+
