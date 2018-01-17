@@ -103,3 +103,20 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
                     for fn in os.listdir(self.UNTRAN_FEAT_DIR)
                     if fn.endswith(".wav")]
         return feat_fns
+
+class ReadyCorpus(corpus.AbstractCorpus):
+    """ Interface to a corpus that has WAV files and label files split into
+    utterances and segregated in a directory with a "feat" and "label" dir. """
+
+    def __init__(self, path, feat_type="fbank", label_type="phonemes"):
+        super().__init__(feat_type, label_type)
+
+        self.FEAT_DIR = os.path.join(path, "feat")
+        self.LABEL_DIR = os.path.join(path, "label")
+
+        if not os.path.isdir(self.FEAT_DIR):
+            raise Exception("The supplied path requires a 'feat' subdirectory.")
+        if not os.path.isdir(self.LABEL_DIR):
+            raise Exception("The supplied path requires a 'label' subdirectory.")
+
+        train, valid, test = 
