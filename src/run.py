@@ -10,8 +10,8 @@ import config
 import rnn_ctc
 import datasets.na
 #import datasets.griko
-import datasets.chatino
-import datasets.kunwinjku
+#import datasets.chatino
+#import datasets.kunwinjku
 #import datasets.timit
 #import datasets.japhug
 import datasets.babel
@@ -22,8 +22,15 @@ EXP_DIR = config.EXP_DIR
 
 def get_exp_dir_num():
     """ Gets the number of the current experiment directory."""
-    return max([int(fn.split(".")[0])
-                for fn in os.listdir(EXP_DIR) if fn.split(".")[0].isdigit()])
+    if not os.path.isdir(EXP_DIR):
+        os.makedirs(EXP_DIR)
+
+    exp_nums = [int(fn.split(".")[0])
+                for fn in os.listdir(EXP_DIR) if fn.split(".")[0].isdigit()]
+    if exp_nums == []:
+        return 0
+
+    return max(exp_nums)
 
 def prep_exp_dir():
     """ Prepares an experiment directory by copying the code in this directory
@@ -117,6 +124,21 @@ def train(language, feat_type, label_type,
         print("num_train: %d" % num_train)
     print("batch_size: %d" % batch_size)
     print("Exp dir:", exp_dir)
+
+def train_ready(corpus):
+    batch_size = 16
+    min_epochs = 30
+    num_layers = 2
+    hidden_size= 250
+
+    exp_dir = prep_exp_dir()
+    corpus_reader = CorpusReader(corpus, batch_size=batch_size)
+    model = rnn_ctc.Model(exp_dir, corpus_reader,
+                          num_layers=num_layers,
+                          hidden_size=hidden_size,
+                          decoding_merge_repeated=True)
+
+    model.train(min_epochs=min_epochs)
 
 def train_babel():
     # Prepares a new experiment dir for all logging.
