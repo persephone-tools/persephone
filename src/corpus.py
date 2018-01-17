@@ -22,6 +22,8 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
     valid_prefixes = None
     test_prefixes = None
     normalized = False
+    FEAT_DIR = None
+    LABEL_DIR = None
 
     def get_target_prefix(self, prefix):
         """ Gets the target gfn given a prefix. """
@@ -104,19 +106,109 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
                     if fn.endswith(".wav")]
         return feat_fns
 
+    def prepare_feats(self, org_dir):
+        """ Prepares input features"""
+        # TODO Could probably be factored out; there's nothing so corpus-specific
+        # here.
+
+        if not os.path.isdir(self.FEAT_DIR):
+            os.makedirs(self.FEAT_DIR)
+
+        for fn in os.listdir(org_dir):
+            path = join(org_dir, fn)
+            if path.endswith(".wav"):
+                prefix = os.path.basename(os.path.splitext(path)[0])
+                mono16k_wav_path = join(self.FEAT_DIR, prefix+".wav")
+                if not os.path.isfile(mono16k_wav_path):
+                    feat_extract.convert_wav(path, mono16k_wav_path)
+
+        feat_extract.from_dir(feat_dir, self.feat_type)
+
+    def make_data_splits(self, max_samples=1000, seed=0):
+        """ Splits the utterances into training, validation and test sets."""
+
+        train_prefix_fn = join(self.TGT_DIR, "train_prefixes.txt")
+        valid_prefix_fn = join(self.TGT_DIR, "valid_prefixes.txt")
+        test_prefix_fn = join(self.TGT_DIR, "test_prefixes.txt")
+
+        train_f_exists = os.path.isfile(train_prefix_fn)
+        valid_f_exists = os.path.isfile(valid_prefix_fn)
+        test_f_exists = os.path.isfile(test_prefix_fn)
+
+        if train_f_exists and valid_f_exists and test_f_exists:
+            with open(train_prefix_fn) as train_f:
+                train_prefixes = [line.strip() for line in train_f]
+            with open(valid_prefix_fn) as valid_f:
+                valid_prefixes = [line.strip() for line in valid_f]
+            with open(test_prefix_fn) as test_f:
+                test_prefixes = [line.strip() for line in test_f]
+
+            return train_prefixes, valid_prefixes, test_prefixes
+
+        prefixes = get_prefixes()
+        # TODO Note that I'm shuffling after sorting; this could be better.
+        # TODO Remove explicit reference to "fbank"
+        prefixes = utils.filter_by_size(
+            self.FEAT_DIR, prefixes, "fbank", max_samples)
+        Ratios = namedtuple("Ratios", ["train", "valid", "test"])
+        ratios = Ratios(.80, .10, .10)
+        train_end = int(ratios.train*len(prefixes))
+        valid_end = int(train_end + ratios.valid*len(prefixes))
+        random.shuffle(prefixes)
+        train_prefixes = prefixes[:train_end]
+        valid_prefixes = prefixes[train_end:valid_end]
+        test_prefixes = prefixes[valid_end:]
+
+        with open(train_prefix_fn, "w") as train_f:
+            for prefix in train_prefixes:
+                print(prefix, file=train_f)
+        with open(valid_prefix_fn, "w") as dev_f:
+            for prefix in valid_prefixes:
+                print(prefix, file=dev_f)
+        with open(test_prefix_fn, "w") as test_f:
+            for prefix in test_prefixes:
+                print(prefix, file=test_f)
+
+        return train_prefixes, valid_prefixes, test_prefixes
+
+    def determine_labels(self, label_dir=self.LABEL_DIR):
+        """ Returns a set of phonemes found in the corpus. """
+        phonemes = set()
+        for fn in os.listdir(label_dir):
+            with open(join(label_dir, fn)) as f:
+                line_phonemes = set(f.readline().split())
+                phonemes = phonemes.union(line_phonemes)
+        return phonemes
+
 class ReadyCorpus(corpus.AbstractCorpus):
     """ Interface to a corpus that has WAV files and label files split into
     utterances and segregated in a directory with a "feat" and "label" dir. """
 
-    def __init__(self, path, feat_type="fbank", label_type="phonemes"):
+    def __init__(self, tgt_dir, feat_type="fbank", label_type="phonemes"):
         super().__init__(feat_type, label_type)
 
-        self.FEAT_DIR = os.path.join(path, "feat")
-        self.LABEL_DIR = os.path.join(path, "label")
+        self.TGT_DIR = tgt_dir
+        self.FEAT_DIR = os.path.join(tgt_dir, "feat")
+        self.LABEL_DIR = os.path.join(tgt_dir, "label")
 
         if not os.path.isdir(self.FEAT_DIR):
             raise Exception("The supplied path requires a 'feat' subdirectory.")
         if not os.path.isdir(self.LABEL_DIR):
             raise Exception("The supplied path requires a 'label' subdirectory.")
 
-        train, valid, test = 
+        self.labels = determine_labels(self.LABEL_DIR)
+        train, valid, test = self.make_data_splits()
+
+        # Sort the training prefixes by size for more efficient training
+        self.train_prefixes = utils.sort_by_size(
+            self.FEAT_DIR, self.train_prefixes, feat_type)
+
+        # TODO Should be in the abstract corpus. It's common to all corpora but
+        # it needs to be set after self.labels. Perhaps I should use a label
+        # setter which creates this, then indices_to_phonemes/indices_to_labels
+        # will automatically call it.
+        self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
+                                 ["pad"] + sorted(list(self.labels)))}
+        self.INDEX_TO_LABEL = {index: phn for index, phn in enumerate(
+                                 ["pad"] + sorted(list(self.labels)))}
+        self.vocab_size = len(self.labels)
