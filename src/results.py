@@ -283,7 +283,7 @@ def error_types(exp_path, labels=None):
 def chatino_tone_confusion(exp_path):
     """ Outputs a confusion matrix for Chatino tones."""
 
-    tones = datasets.chatino.TONES
+    tones = list(datasets.chatino.TONES)
     alignments = ed_alignments(exp_path)
 
     d = defaultdict(int)
@@ -294,12 +294,19 @@ def chatino_tone_confusion(exp_path):
 
     import pprint; pprint.pprint(d)
 
-    for hyp in tones:
-        print(hyp + ",", end="")
-    print("\\\\")
+    total = defaultdict(int)
     for ref in tones:
-        print(ref + ",", end="")
         for hyp in tones:
-            print(str(d[(ref, hyp)]) + ",", end="")
-        print("\\\\")
+            total[ref] += d[(ref, hyp)]
+
+    nonzero_tones = [item[0] for item in total.items() if item[1] > 4]
+
+    for hyp in nonzero_tones[:-1]:
+        print(hyp + ",", end="")
+    print("%s\\\\" % nonzero_tones[-1])
+    for ref in nonzero_tones:
+        print(ref + ",", end="")
+        for hyp in nonzero_tones[:-1]:
+            print("%0.3f," % (d[(ref, hyp)]*100/total[ref]), end="")
+        print("%0.3f\\\\" % (d[(ref, nonzero_tones[-1])]*100/total[ref]))
 
