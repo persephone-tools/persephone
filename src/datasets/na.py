@@ -75,6 +75,11 @@ def preprocess_na(sent, label_type):
     if label_type == "phonemes_and_tones":
         phonemes = True
         tones = True
+        tgm = True
+    elif label_type == "phonemes_and_tones_no_tgm":
+        phonemes = True
+        tones = True
+        tgm = False
     elif label_type == "phonemes":
         phonemes = True
         tones = False
@@ -154,7 +159,7 @@ def preprocess_na(sent, label_type):
             # processing.
             return " ", sentence[1:]
         if sentence[0] == "|" or sentence[0] == "ǀ":
-            if tones:
+            if tgm:
                 return "|", sentence[1:]
             else:
                 return None, sentence[1:]
@@ -464,6 +469,8 @@ class Corpus(corpus.AbstractCorpus):
 
         if label_type == "phonemes_and_tones":
             self.labels = PHONEMES.union(set(TONES)).union(SYMBOLS_TO_PREDICT)
+        elif label_type == "phonemes_and_tones_no_tgm":
+            self.labels = PHONEMES.union(set(TONES))
         elif label_type == "phonemes":
             self.labels = PHONEMES
         elif label_type == "tones":
