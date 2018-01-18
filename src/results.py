@@ -2,7 +2,9 @@
 
 import config
 import datasets.na
+import datasets.chatino
 
+from collections import defaultdict
 import os
 import utils
 
@@ -277,3 +279,27 @@ def error_types(exp_path, labels=None):
     print(subs)
     print(inss)
     print(dels)
+
+def chatino_tone_confusion(exp_path):
+    """ Outputs a confusion matrix for Chatino tones."""
+
+    tones = datasets.chatino.TONES
+    alignments = ed_alignments(exp_path)
+
+    d = defaultdict(int)
+    for alignment in alignments:
+        for arrow in alignment:
+            if arrow[0] in tones:
+                d[arrow] += 1
+
+    import pprint; pprint.pprint(d)
+
+    for hyp in tones:
+        print(hyp + ",", end="")
+    print("\\\\")
+    for ref in tones:
+        print(ref + ",", end="")
+        for hyp in tones:
+            print(str(d[(ref, hyp)]) + ",", end="")
+        print("\\\\")
+
