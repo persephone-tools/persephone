@@ -300,6 +300,7 @@ def chatino_tone_confusion(exp_path):
             total[ref] += d[(ref, hyp)]
 
     nonzero_tones = [item[0] for item in total.items() if item[1] > 4]
+    print(sorted(total.items(), key=lambda x: x[1]))
 
     for hyp in nonzero_tones[:-1]:
         print(hyp + ",", end="")
