@@ -207,7 +207,7 @@ class ReadyCorpus(AbstractCorpus):
         if not os.path.isdir(self.LABEL_DIR):
             raise Exception("The supplied path requires a 'label' subdirectory.")
 
-        #self.prepare_feats(self.FEAT_DIR) # In this case the feat_dir is the same as the org_dir
+        self.prepare_feats(self.FEAT_DIR) # In this case the feat_dir is the same as the org_dir
         self.labels = self.determine_labels()
         train, valid, test = self.make_data_splits()
 
