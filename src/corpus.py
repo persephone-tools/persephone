@@ -161,7 +161,8 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         prefixes = utils.filter_by_size(
             self.FEAT_DIR, prefixes, "fbank", max_samples)
         Ratios = namedtuple("Ratios", ["train", "valid", "test"])
-        ratios = Ratios(.80, .10, .10)
+        # TODO These ratios can't be hardcoded
+        ratios = Ratios(.90, .10, .10)
         train_end = int(ratios.train*len(prefixes))
         valid_end = int(train_end + ratios.valid*len(prefixes))
         random.shuffle(prefixes)
@@ -211,8 +212,8 @@ class ReadyCorpus(AbstractCorpus):
         train, valid, test = self.make_data_splits()
 
         self.train_prefixes = train
-        self.valid_prefixes = train
-        self.test_prefixes = train
+        self.valid_prefixes = valid
+        self.test_prefixes = test
 
         # Sort the training prefixes by size for more efficient training
         self.train_prefixes = utils.sort_by_size(
