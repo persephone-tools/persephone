@@ -201,20 +201,24 @@ def symbol_f1(exp_num, symbol):
 
     return f1
 
-def latex_output(refs_path, hyps_path, utter_ids_fn):
+def latex_output(refs_paths, hyps_paths, utter_ids_fn):
     """ Pretty print the hypotheses and references. """
 
-    with open(hyps_path) as hyps_f:
-        lines = hyps_f.readlines()
-        hyps = [line.split() for line in lines]
-    with open(refs_path) as refs_f:
-        lines = refs_f.readlines()
-        refs = [line.split() for line in lines]
+    alignment_matrix = []
+    for refs_path, hyps_path in zip(refs_paths, hyps_paths):
+        with open(refs_path) as refs_f:
+            lines = refs_f.readlines()
+            refs = [line.split() for line in lines]
 
-    alignments = []
-    for ref, hyp in zip(refs, hyps):
-        alignment = min_edit_distance_align(ref, hyp)
-        alignments.append(alignment)
+        with open(hyps_path) as hyps_f:
+            lines = hyps_f.readlines()
+            hyps = [line.split() for line in lines]
+
+        alignments = []
+        for ref, hyp in zip(refs, hyps):
+            alignment = min_edit_distance_align(ref, hyp)
+            alignments.append(alignment)
+        alignment_matrix.append(alignments)
 
     with open(utter_ids_fn) as f:
         prefixes = [line.replace("_", "\_") for line in f]
@@ -241,21 +245,24 @@ def latex_output(refs_path, hyps_path, utter_ids_fn):
               "\\begin{longtable}{ll}", file=out_f)
 
         print("\\toprule", file=out_f)
-        for prefix, alignment in zip(prefixes, alignments):
-            ref_list = []
-            hyp_list = []
-            for arrow in alignment:
-                if arrow[0] == arrow[1]:
-                    # Then don't highlight it; it's correct.
-                    ref_list.append(arrow[0])
-                    hyp_list.append(arrow[1])
-                else:
-                    # Then highlight the errors.
-                    ref_list.append("\hl{%s}" % arrow[0])
-                    hyp_list.append("\hl{%s}" % arrow[1])
+        for sent in zip(prefixes, *alignment_matrix):
+            prefix = sent[0]
+            alignments = sent[1:]
             print("Utterance ID: &", prefix.strip(), "\\\\", file=out_f)
-            print("Ref: &", "".join(ref_list), "\\\\", file=out_f)
-            print("Hyp: &", "".join(hyp_list), "\\\\", file=out_f)
+            for i, alignment in enumerate(alignments):
+                ref_list = []
+                hyp_list = []
+                for arrow in alignment:
+                    if arrow[0] == arrow[1]:
+                        # Then don't highlight it; it's correct.
+                        ref_list.append(arrow[0])
+                        hyp_list.append(arrow[1])
+                    else:
+                        # Then highlight the errors.
+                        ref_list.append("\hl{%s}" % arrow[0])
+                        hyp_list.append("\hl{%s}" % arrow[1])
+                print("Ref: &", "".join(ref_list), "\\\\", file=out_f)
+                print("{}: &".format(hyps_paths[i].replace("_", "\_")), "".join(hyp_list), "\\\\", file=out_f)
             print("\\midrule", file=out_f)
 
         print("\end{longtable}", file=out_f)
