@@ -20,19 +20,22 @@ def average(exp_nums, phones=datasets.na.PHONEMES, tones=datasets.na.TONES):
     ler_total = 0
     per_total = 0
     ter_total = 0
+    tgm_f1_total = 0
     for i, exp_num in enumerate(exp_nums):
         path = os.path.join(config.EXP_DIR, str(exp_num))
         ler, per, ter = test_results(path, phones, tones)
+        tgm_f1 = symbol_f1(exp_num, "|")
         print("Exp #{}:".format(i))
-        print("\tPER & TER & LER")
-        print("\t{} & {} & {}".format(per, ter, ler))
+        print("\tPER & TER & LER & TGM-F1")
+        print("\t{} & {} & {} & {}".format(per, ter, ler, tgm_f1))
         ler_total += ler
         per_total += per
         ter_total += ter
+        tgm_f1_total +=  tgm_f1
     print("Average:")
-    print("\tPER & TER & LER")
-    print("\t{} & {} & {}".format(
-        per_total/(i+1), ter_total/(i+1), ler_total/(i+1)))
+    print("\tPER & TER & LER & TGM-F1")
+    print("\t{} & {} & {} & {}\\\\".format(
+        per_total/(i+1), ter_total/(i+1), ler_total/(i+1), tgm_f1_total/(i+1)))
 
 def format(exp_paths,
                    phones=datasets.na.PHONEMES,
@@ -135,8 +138,9 @@ def ed_alignments(exp_path):
 
     return alignments
 
-def symbol_errors(exp_path, symbol):
+def symbol_f1(exp_num, symbol):
 
+    exp_path = os.path.join(config.EXP_DIR, str(exp_num))
     alignments = ed_alignments(exp_path)
 
     correct = 0
@@ -146,37 +150,41 @@ def symbol_errors(exp_path, symbol):
     ins_sub = 0
     total_hyp = 0
     total_ref = 0
+
+    tp = 0
+    fp = 0
+    fn = 0
+    tn = 0
     for alignment in alignments:
         for arrow in alignment:
-            if arrow[0] == symbol and arrow[1] == symbol:
-                correct += 1
-            elif arrow[0] == symbol and arrow[1] == "":
-                del_ += 1
-            elif arrow[0] == "" and arrow[1] == symbol:
-                ins += 1
-            elif arrow[1] == symbol:
-                ins_sub += 1
-            elif arrow[0] == symbol:
-                del_sub += 1
-            if arrow[1] == symbol:
-                total_hyp += 1
             if arrow[0] == symbol:
-                total_ref += 1
+                if arrow[1] == symbol:
+                    tp +=1
+                else:
+                    fn += 1
+            elif arrow[0] != symbol:
+                if arrow[1] == symbol:
+                    fp += 1
+                else:
+                    tn += 1
 
-    print(correct)
-    print(del_)
-    print(ins)
-    print(del_sub)
-    print(ins_sub)
-    print(total_hyp)
-    print(total_ref)
-
-    error_rate = (del_ + ins + del_sub + ins_sub) / (correct + del_ + ins + del_sub + ins_sub)
-    print(error_rate)
-    del_rate = (del_ + del_sub) / (correct + del_ + del_sub)
-    print(del_rate)
-    ins_rate = (ins + ins_sub) / (correct + ins + ins_sub)
-    print(ins_rate)
+    sensitivity = tp/(tp+fn)
+    specificity = tn/(tn+fp)
+    accuracy = (tp + tn)/(tp + tn + fp + fn)
+    precision = tp/(tp+fp)
+    fdr = fp/(tp+fp)
+    f1 = 2*tp/(2*tp + fp + fn) # precision and sensitivity harmonic mean.
+    #print("Sensitivity: {}".format(sensitivity))
+    #print("(False negative rate: {})".format(1-sensitivity))
+    #print("Specificity: {}".format(specificity))
+    #print("(False positive rate: {})".format(1-specificity))
+    #print("Accuracy: {}".format(accuracy))
+    #print("(Error rate: {})".format(1-accuracy))
+    #print("Precision: {}".format(precision))
+    #print("(False discovery rate: {})".format(fdr))
+    #print("F1: {}".format(f1))
+    #print("TP: {}, FN: {}".format(tp, fn))
+    #print("TN: {}, FP: {}".format(tn, fp))
 
     errors = []
     for alignment in alignments:
@@ -190,6 +198,8 @@ def symbol_errors(exp_path, symbol):
             err_hist[error] += 1
         else:
             err_hist[error] = 1
+
+    return f1
 
 def latex_output(refs_path, hyps_path, utter_ids_fn):
     """ Pretty print the hypotheses and references. """
