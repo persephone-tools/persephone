@@ -1,5 +1,6 @@
 """ Interface to Steven's Kunwinjku data. """
 
+from collections import namedtuple
 import glob
 import os
 from os.path import join
@@ -52,6 +53,32 @@ def explore_elan_files(elan_paths):
                 continue
 
         input()
+
+def elan_utterances():
+    """ Collects utterances from various ELAN tiers. This is based on analysis
+    of hte 'good' ELAN files, and may not generalize."""
+
+    elan_tiers = {"rf", "rf@RN", "rf@MARK",
+                  "xv", "xv@RN", "xv@MN", "xv@JN", "xv@EN", "xv@MARK", "xv@GN",
+                  "nt@RN", "nt@JN",
+                  "PRN_free", "PRN_Pfx", "NmCl_Gen", "ng_DROP",
+                  "Other",
+                 }
+
+    Utterance = namedtuple("Utterance", ["start_time", "end_time", "text"])
+
+    utterances = []
+    for elan_path in good_elan_paths():
+        eafob = pympi.Elan.Eaf(elan_path)
+        tier_names = eafob.get_tier_names()
+        for tier in tier_names:
+            if tier.startswith("rf") or tier.startswith("xv") or tier in elan_tiers:
+                for annotation in eafob.get_annotation_data_for_tier(tier):
+                    utterance = Utterance(*annotation[:3])
+                    if not utterance.text.strip() == "":
+                        utterances.append(utterance)
+
+    return utterances
 
 """
 rf
