@@ -65,16 +65,27 @@ def elan_utterances():
                   "Other",
                  }
 
-    Utterance = namedtuple("Utterance", ["start_time", "end_time", "text"])
+    Utterance = namedtuple("Utterance", ["file", "start_time", "end_time", "text"])
 
     utterances = []
     for elan_path in good_elan_paths():
         eafob = pympi.Elan.Eaf(elan_path)
+        #import pprint; pprint.pprint(dir(eafob))
+        for md in eafob.media_descriptors:
+            try:
+                media_path = os.path.join(os.path.dirname(elan_path),
+                                          md["RELATIVE_MEDIA_URL"])
+            except KeyError:
+                # Then it might be hard to find the MEDIA URL if its not
+                # relative. Ignore for now.
+            if os.path.exists(media_path):
+                # Only one media_path file is needed, as long as it exists.
+                break
         tier_names = eafob.get_tier_names()
         for tier in tier_names:
             if tier.startswith("rf") or tier.startswith("xv") or tier in elan_tiers:
                 for annotation in eafob.get_annotation_data_for_tier(tier):
-                    utterance = Utterance(*annotation[:3])
+                    utterance = Utterance(media_path, *annotation[:3])
                     if not utterance.text.strip() == "":
                         utterances.append(utterance)
 
