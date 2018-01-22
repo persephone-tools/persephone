@@ -103,3 +103,40 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
                     for fn in os.listdir(self.UNTRAN_FEAT_DIR)
                     if fn.endswith(".wav")]
         return feat_fns
+
+    def calc_time(self):
+        """
+        Prints statistics about the the total duration of recordings in the
+        corpus.
+        """
+
+        def get_number_of_frames(feat_fns):
+            """ fns: A list of numpy files which contain a number of feature
+            frames. """
+
+            total = 0
+            for feat_fn in feat_fns:
+                num_frames = len(np.load(feat_fn))
+                total += num_frames
+
+            return total
+
+        def numframes_to_minutes(num_frames):
+            # TODO Assumes 10ms strides for the frames. This should generalize to
+            # different frame stride widths, as should feature preparation.
+            minutes = ((num_frames*10)/1000)/60
+            return minutes
+
+        total_frames = 0
+
+        num_train_frames = get_number_of_frames(self.get_train_fns()[0])
+        total_frames += num_train_frames
+        num_valid_frames = get_number_of_frames(self.get_valid_fns()[0])
+        total_frames += num_valid_frames
+        num_test_frames = get_number_of_frames(self.get_test_fns()[0])
+        total_frames += num_test_frames
+
+        print("Train duration: %0.3f" % numframes_to_minutes(num_train_frames))
+        print("Validation duration: %0.3f" % numframes_to_minutes(num_valid_frames))
+        print("Test duration: %0.3f" % numframes_to_minutes(num_test_frames))
+        print("Total duration: %0.3f" % numframes_to_minutes(total_frames))
