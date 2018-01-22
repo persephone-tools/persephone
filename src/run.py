@@ -3,6 +3,7 @@
 import logging
 import os
 import shutil
+import sys
 
 from git import Repo
 
@@ -19,10 +20,25 @@ from corpus_reader import CorpusReader
 
 EXP_DIR = config.EXP_DIR
 
-def get_exp_dir_num():
+def get_exp_dir_num(parent_dir):
     """ Gets the number of the current experiment directory."""
     return max([int(fn.split(".")[0])
-                for fn in os.listdir(EXP_DIR) if fn.split(".")[0].isdigit()])
+                for fn in os.listdir(parent_dir) if fn.split(".")[0].isdigit()]
+                    + [-1])
+
+def prep_sub_exp_dir(parent_dir):
+    """ Prepares an experiment directory by copying the code in this directory
+    to it as is, and setting the logger to write to files in that
+    directory.
+    """
+
+    exp_num = get_exp_dir_num(parent_dir)
+    exp_num = exp_num + 1
+    exp_dir = os.path.join(parent_dir, str(exp_num))
+    if not os.path.isdir(exp_dir):
+        os.makedirs(exp_dir)
+
+    return exp_dir
 
 def prep_exp_dir():
     """ Prepares an experiment directory by copying the code in this directory
@@ -30,7 +46,7 @@ def prep_exp_dir():
     directory.
     """
 
-    exp_num = get_exp_dir_num()
+    exp_num = get_exp_dir_num(EXP_DIR)
     exp_num = exp_num + 1
     exp_dir = os.path.join(EXP_DIR, str(exp_num))
     if not os.path.isdir(exp_dir):
@@ -59,14 +75,31 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
 
-    for i in range(2):
-        train("na", "fbank_and_pitch", "phonemes_and_tones_no_tgm", 3, 400,
-              train_rec_type="text")
-    #for i in range(3):
-    #    train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
-    #          train_rec_type="text_and_wordlist")
+    # Prepares a new experiment dir for all logging.
+    exp_dir = prep_exp_dir()
 
-def story_fold_cross_validation():
+    feats = ["fbank", "fbank_and_pitch"]
+    labels = ["phonemes", "tones", "phonemes_and_tones_no_tgm"]
+    num_runs = 3
+    for feat_type in feats:
+        for label_type in labels:
+            for i in range(num_runs):
+                train(exp_dir, "na", feat_type, label_type,
+                        3, 250, train_rec_type="text")
+
+    feat_type = "pitch"
+    label_type = "tones"
+    for i in range(num_runs):
+        train(exp_dir, "na", feat_type, label_type,
+                3, 250, train_rec_type="text")
+
+    feat_type = "phonemes"
+    label_type = "tones"
+    for i in range(num_runs):
+        train(exp_dir, "na", feat_type, label_type,
+                3, 250, train_rec_type="text")
+
+def story_fold_cross_validation(exp_dir):
 
     texts = list(datasets.na.get_texts())
     for i, test_text in enumerate(texts):
@@ -74,31 +107,29 @@ def story_fold_cross_validation():
         print("Test text: %s" % test_text)
         print("Valid text: %s" % valid_text)
         print()
-        train("na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
+        train(exp_dir, "na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
                valid_story=valid_text, test_story=test_text)
 
-def train(language, feat_type, label_type,
+def train(exp_dir, language, feat_type, label_type,
           num_layers, hidden_size,
           num_train=None, batch_size=64,
           train_rec_type="text_and_wordlist",
           valid_story=None, test_story=None):
     """ Run an experiment. """
 
-    # Prepares a new experiment dir for all logging.
-    exp_dir = prep_exp_dir()
+    sub_exp_dir = prep_sub_exp_dir(exp_dir)
+    print(sub_exp_dir)
 
-    # get TF logger
-    log = logging.getLogger('tensorflow')
-    log.setLevel(logging.DEBUG)
-
-    # create formatter and add it to the handlers
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-    # create file handler which logs even debug messages
-    fh = logging.FileHandler(os.path.join(exp_dir, 'tensorflow.log'))
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(formatter)
-    log.addHandler(fh)
+    ## get TF logger
+    #log = logging.getLogger('tensorflow')
+    #log.setLevel(logging.DEBUG)
+    ## create formatter and add it to the handlers
+    #formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ## create file handler which logs even debug messages
+    #fh = logging.FileHandler(os.path.join(sub_exp_dir, 'tensorflow.log'))
+    #fh.setLevel(logging.DEBUG)
+    #fh.setFormatter(formatter)
+    #log.addHandler(fh)
 
     if language == "chatino":
         corpus = datasets.chatino.Corpus(feat_type, label_type)
@@ -114,7 +145,8 @@ def train(language, feat_type, label_type,
         corpus_reader = CorpusReader(corpus, num_train=num_train, batch_size=batch_size)
     else:
         corpus_reader = CorpusReader(corpus, batch_size=batch_size)
-    model = rnn_ctc.Model(exp_dir, corpus_reader,
+    print(corpus_reader)
+    model = rnn_ctc.Model(sub_exp_dir, corpus_reader,
                           num_layers=num_layers,
                           hidden_size=hidden_size,
                           decoding_merge_repeated=(False if
@@ -122,16 +154,21 @@ def train(language, feat_type, label_type,
                                                    else True))
     model.train()
 
-    print("language: %s" % language)
-    print("feat_type: %s" % feat_type)
-    print("label_type: %s" % label_type)
-    print("train_rec_type: %s" % train_rec_type)
-    print("num_layers: %d" % num_layers)
-    print("hidden_size: %d" % hidden_size)
-    if num_train:
-        print("num_train: %d" % num_train)
-    print("batch_size: %d" % batch_size)
-    print("Exp dir:", exp_dir)
+    try:
+        with open(os.path.join(sub_exp_dir, "train_desc2.txt"), "w") as desc_f:
+            for f in [desc_f, sys.stdout]:
+                print("language: %s" % language, file=f)
+                print("feat_type: %s" % feat_type, file=f)
+                print("label_type: %s" % label_type, file=f)
+                print("train_rec_type: %s" % train_rec_type, file=f)
+                print("num_layers: %d" % num_layers, file=f)
+                print("hidden_size: %d" % hidden_size, file=f)
+                if num_train:
+                    print("num_train: %d" % num_train, file=f)
+                print("batch_size: %d" % batch_size, file=f)
+                print("Exp dir:", sub_exp_dir, file=f)
+    except:
+        print("Issues with my printing train_desc2")
 
 def train_babel():
     # Prepares a new experiment dir for all logging.

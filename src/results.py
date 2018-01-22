@@ -24,8 +24,8 @@ def average(exp_nums, phones=datasets.na.PHONEMES, tones=datasets.na.TONES):
     for i, exp_num in enumerate(exp_nums):
         path = os.path.join(config.EXP_DIR, str(exp_num))
         ler, per, ter = test_results(path, phones, tones)
-        tgm_f1 = symbol_f1(exp_num, "|")
-        #tgm_f1 = 0
+        #tgm_f1 = symbol_f1(exp_num, "|")
+        tgm_f1 = 0
         print("Exp #{}:".format(i))
         print("\tPER & TER & LER & TGM-F1")
         print("\t{} & {} & {} & {}".format(per, ter, ler, tgm_f1))

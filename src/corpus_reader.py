@@ -151,3 +151,11 @@ class CorpusReader:
             transcripts.append(transcript)
 
         return transcripts
+
+    #def __init__(self, corpus, num_train=None, batch_size=None, max_samples=None, rand_seed=0):
+
+    def __repr__(self):
+        return ("%s(" % self.__class__.__name__ +
+                "num_train=%s,\n" % repr(self.num_train) +
+                "\tbatch_size=%s,\n" % repr(self.batch_size) +
+                "\tcorpus=\n%s)" % repr(self.corpus))

@@ -467,6 +467,9 @@ class Corpus(corpus.AbstractCorpus):
                  valid_story=None, test_story=None):
         super().__init__(feat_type, label_type)
 
+        self.max_samples = max_samples
+        self.train_rec_type = train_rec_type
+
         if label_type == "phonemes_and_tones":
             self.labels = PHONEMES.union(set(TONES)).union(SYMBOLS_TO_PREDICT)
         elif label_type == "phonemes_and_tones_no_tgm":
@@ -527,3 +530,13 @@ class Corpus(corpus.AbstractCorpus):
         return [(self.INDEX_TO_LABEL[index]) for index in indices]
     def phonemes_to_indices(self, labels):
         return [self.LABEL_TO_INDEX[label] for label in labels]
+
+    def __repr__(self):
+        return ("%s(" % self.__class__.__name__ +
+                "feat_type=\"%s\",\n" % self.feat_type +
+                "\tlabel_type=\"%s\",\n" % self.label_type +
+                "\ttrain_rec_type=\"%s\",\n" % self.train_rec_type +
+                "\tmax_samples=%s,\n" % self.max_samples +
+                "\tvalid_story=%s,\n" % repr(self.valid_story) +
+                "\ttest_story=%s)\n" % repr(self.test_story))
+
