@@ -399,7 +399,7 @@ def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000, seed=
     prefixes = get_story_prefixes()
     prefixes = list(set(prefixes) - set(valid_prefixes))
     prefixes = list(set(prefixes) - set(test_prefixes))
-    prefixes = utils.sort_and_filter_by_size(
+    prefixes = utils.filter_by_size(
         FEAT_DIR, prefixes, "fbank", max_samples)
 
     if train_rec_type == "text":
@@ -409,7 +409,7 @@ def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000, seed=
                              if prefix.endswith("phonemes")]
         wordlist_prefixes = [os.path.splitext(os.path.join("WORDLIST", prefix))[0]
                              for prefix in wordlist_prefixes]
-        wordlist_prefixes = utils.sort_and_filter_by_size(
+        wordlist_prefixes = utils.filter_by_size(
                 FEAT_DIR, wordlist_prefixes, "fbank", max_samples)
         if train_rec_type == "wordlist":
             prefixes = wordlist_prefixes
