@@ -12,6 +12,7 @@ import rnn_ctc
 import datasets.na
 #import datasets.griko
 import datasets.chatino
+import datasets.kunwinjku
 #import datasets.timit
 #import datasets.japhug
 import datasets.babel
@@ -75,30 +76,6 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
 
-    # Prepares a new experiment dir for all logging.
-    exp_dir = prep_exp_dir()
-
-    feats = ["fbank", "fbank_and_pitch"]
-    labels = ["phonemes", "tones", "phonemes_and_tones_no_tgm"]
-    num_runs = 3
-    for feat_type in feats:
-        for label_type in labels:
-            for i in range(num_runs):
-                train(exp_dir, "na", feat_type, label_type,
-                        3, 250, train_rec_type="text")
-
-    feat_type = "pitch"
-    label_type = "tones"
-    for i in range(num_runs):
-        train(exp_dir, "na", feat_type, label_type,
-                3, 250, train_rec_type="text")
-
-    feat_type = "phonemes"
-    label_type = "tones"
-    for i in range(num_runs):
-        train(exp_dir, "na", feat_type, label_type,
-                3, 250, train_rec_type="text")
-
 def story_fold_cross_validation(exp_dir):
 
     texts = list(datasets.na.get_texts())
@@ -138,6 +115,9 @@ def train(exp_dir, language, feat_type, label_type,
                                     train_rec_type=train_rec_type,
                                     valid_story=valid_story,
                                     test_story=test_story)
+    elif language == "kunwinjku":
+        # TODO How to choose between the Bird and Butcher corpora?
+        corpus = datasets.kunwinjku.Corpus(feat_type, label_type)
     else:
         raise Exception("Language '%s' not supported." % language)
 
@@ -152,7 +132,7 @@ def train(exp_dir, language, feat_type, label_type,
                           decoding_merge_repeated=(False if
                                                    label_type=="tones"
                                                    else True))
-    model.train()
+    model.train(min_epochs=min_epochs)
 
     try:
         with open(os.path.join(sub_exp_dir, "train_desc2.txt"), "w") as desc_f:
@@ -177,7 +157,6 @@ def train_babel():
     corpus_reader = CorpusReader(corpus, num_train=len(corpus.get_train_fns()), batch_size=128)
     model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
     model.train()
-
 
 def calc_time():
     """ Calculates the total spoken time a given number of utterances
@@ -207,20 +186,6 @@ def calc_time():
         total_time = ((total_frames*10)/1000)/60
         print(total_time)
         print("%0.3f minutes." % total_time)
-
-def train_japhug():
-    """ Run an experiment. """
-
-    #for i in [128,256,512,1024, 2048]:
-    for i in [800]:
-        # Prepares a new experiment dir for all logging.
-        exp_dir = prep_exp_dir()
-
-        corpus = datasets.japhug.Corpus(feat_type="log_mel_filterbank",
-                                    target_type="phn", normalize=True)
-        corpus_reader = CorpusReader(corpus, num_train=i)
-        model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
-        model.train()
 
 def test():
     """ Apply a previously trained model to some test data. """
@@ -272,26 +237,3 @@ def transcribe():
 
     #model.eval(restore_model_path, corpus_reader.)
     model.transcribe(restore_model_path)
-
-def train_griko():
-
-    # Prepares a new experiment dir for all logging.
-    exp_dir = prep_exp_dir()
-
-    corpus = datasets.griko.Corpus(feat_type="log_mel_filterbank",
-                                   target_type="char")
-    corpus_reader = CorpusReader(corpus, num_train=256)
-    model = rnn_ctc.Model(exp_dir, corpus_reader)
-    model.train()
-
-def test_griko():
-    # Prepares a new experiment dir for all logging.
-    exp_dir = prep_exp_dir()
-
-    corpus = datasets.griko.Corpus(feat_type="log_mel_filterbank",
-                                   target_type="char")
-    corpus_reader = CorpusReader(corpus, num_train=2048)
-    model = rnn_ctc.Model(exp_dir, corpus_reader)
-    restore_model_path = os.path.join(
-        EXP_DIR, "164", "model", "model_best.ckpt")
-    model.eval(restore_model_path)

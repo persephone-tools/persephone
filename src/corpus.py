@@ -40,18 +40,23 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         """
         self.feat_type = feat_type
         self.target_type = target_type
+        self.label_type = target_type
 
+    def indices_to_labels(self, indices):
+        """ Converts a sequence of indices into their corresponding labels."""
+
+        return [(self.INDEX_TO_LABEL[index]) for index in indices]
+
+    def labels_to_indices(self, labels):
+        """ Converts a sequence of labels into their corresponding indices."""
+
+        return [self.LABEL_TO_INDEX[label] for label in labels]
+
+    # TODO Remove all calls to these methods:
     def indices_to_phonemes(self, indices):
-        """ Converts a sequence of indices representing labels into their
-        corresponding (possibly collapsed) phonemes.
-        """
-
-        return [(self.INDEX_TO_PHONEME[index]) for index in indices]
-
+        return self.indices_to_labels(indices)
     def phonemes_to_indices(self, phonemes):
-        """ Converts a sequence of phonemes their corresponding labels. """
-
-        return [self.PHONEME_TO_INDEX[phoneme] for phoneme in phonemes]
+        return self.labels_to_indices(phonemes)
 
     @property
     def num_feats(self):

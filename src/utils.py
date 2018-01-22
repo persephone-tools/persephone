@@ -106,7 +106,15 @@ def make_parent(file_path):
     if not os.path.isdir(parent_dir):
         os.makedirs(parent_dir)
 
-def sort_and_filter_by_size(feat_dir, prefixes, feat_type, max_samples):
+def get_prefix_lens(feat_dir, prefixes, feat_type):
+    prefix_lens = []
+    for prefix in prefixes:
+        path = os.path.join(feat_dir, "%s.%s.npy" % (prefix, feat_type))
+        _, batch_x_lens = load_batch_x([path], flatten=False)
+        prefix_lens.append((prefix, batch_x_lens[0]))
+    return prefix_lens
+
+def filter_by_size(feat_dir, prefixes, feat_type, max_samples):
     """ Sorts the files by their length and returns those with less
     than or equal to max_samples length. Returns the filename prefixes of
     those files. The main job of the method is to filter, but the sorting
@@ -114,14 +122,16 @@ def sort_and_filter_by_size(feat_dir, prefixes, feat_type, max_samples):
     shuffled downstream.
     """
 
-    prefix_lens = []
-    for prefix in prefixes:
-        path = os.path.join(feat_dir, "%s.%s.npy" % (prefix, feat_type))
-        _, batch_x_lens = load_batch_x([path], flatten=False)
-        prefix_lens.append((prefix, batch_x_lens[0]))
-    prefix_lens.sort(key=lambda prefix_len: prefix_len[1])
+    # TODO Tell the user what utterances we are removing.
+    prefix_lens = get_prefix_lens(feat_dir, prefixes, feat_type)
     prefixes = [prefix for prefix, length in prefix_lens
                 if length <= max_samples]
+    return prefixes
+
+def sort_by_size(feat_dir, prefixes, feat_type):
+    prefix_lens = get_prefix_lens(feat_dir, prefixes, feat_type)
+    prefix_lens.sort(key=lambda prefix_len: prefix_len[1])
+    prefixes = [prefix for prefix, _ in prefix_lens]
     return prefixes
 
 def is_number(string):
