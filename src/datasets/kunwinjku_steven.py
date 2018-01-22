@@ -71,23 +71,36 @@ def elan_utterances():
     for elan_path in good_elan_paths():
         eafob = pympi.Elan.Eaf(elan_path)
         #import pprint; pprint.pprint(dir(eafob))
+        can_find_path = False
         for md in eafob.media_descriptors:
             try:
                 media_path = os.path.join(os.path.dirname(elan_path),
                                           md["RELATIVE_MEDIA_URL"])
+                if os.path.exists(media_path):
+                    # Only one media_path file is needed, as long as it exists.
+                    can_find_path = True
+                    break
+                # Try just looking for the basename specified in the
+                # RELATIVE_MEDIA_URL
+                media_path = os.path.join(os.path.dirname(elan_path),
+                                          os.path.basename(md["RELATIVE_MEDIA_URL"]))
+                if os.path.exists(media_path):
+                    can_find_path = True
+                    break
             except KeyError:
                 # Then it might be hard to find the MEDIA URL if its not
-                # relative. Ignore for now.
-            if os.path.exists(media_path):
-                # Only one media_path file is needed, as long as it exists.
-                break
-        tier_names = eafob.get_tier_names()
-        for tier in tier_names:
-            if tier.startswith("rf") or tier.startswith("xv") or tier in elan_tiers:
-                for annotation in eafob.get_annotation_data_for_tier(tier):
-                    utterance = Utterance(media_path, *annotation[:3])
-                    if not utterance.text.strip() == "":
-                        utterances.append(utterance)
+                # relative. Keep trying.
+                continue
+        if can_find_path:
+            tier_names = eafob.get_tier_names()
+            for tier in tier_names:
+                if tier.startswith("rf") or tier.startswith("xv") or tier in elan_tiers:
+                    for annotation in eafob.get_annotation_data_for_tier(tier):
+                        utterance = Utterance(media_path, *annotation[:3])
+                        if not utterance.text.strip() == "":
+                            utterances.append(utterance)
+        else:
+            print("Warning: Can't find the media file for {}".format(elan_path))
 
     return utterances
 
