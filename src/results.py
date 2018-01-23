@@ -14,7 +14,7 @@ from distance import cluster_alignment_errors
 def round_items(floats):
     return ["%0.3f" % fl for fl in floats]
 
-def average(exp_nums, phones=datasets.na.PHONEMES, tones=datasets.na.TONES):
+def average(exp_nums, show_tgm_f1=False, phones=datasets.na.PHONEMES, tones=datasets.na.TONES):
     """ Averages the results across a few experimental runs. """
 
     ler_total = 0
@@ -24,7 +24,8 @@ def average(exp_nums, phones=datasets.na.PHONEMES, tones=datasets.na.TONES):
     for i, exp_num in enumerate(exp_nums):
         path = os.path.join(config.EXP_DIR, str(exp_num))
         ler, per, ter = test_results(path, phones, tones)
-        #tgm_f1 = symbol_f1(exp_num, "|")
+        if show_tgm_f1:
+            tgm_f1 = symbol_f1(exp_num, "|")
         tgm_f1 = 0
         print("Exp #{}:".format(i))
         print("\tPER & TER & LER & TGM-F1")

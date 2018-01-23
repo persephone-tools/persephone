@@ -82,19 +82,13 @@ def scaling_graph_full(exp_dir):
 
     num_runs = 3
 
-    feat_type = "fbank_and_pitch"
-    labels = ["phonemes", "tones", "phonemes_and_tones"]
-    for label_type in labels:
-        for i in range(num_runs):
-            train(exp_dir, "na", feat_type, label_type, 3, 250,
-                  train_rec_type="text")
-
-    feat_type = "fbank"
+    feat_types = ["fbank_and_pitch", "fbank"]
     labels = ["tones", "phonemes_and_tones"]
-    for label_type in labels:
-        for i in range(num_runs):
-            train(exp_dir, "na", feat_type, label_type, 3, 250,
-                  train_rec_type="text")
+    for feat_type in feat_types:
+        for label_type in labels:
+            for i in range(num_runs):
+                train(exp_dir, "na", feat_type, label_type, 3, 250,
+                      train_rec_type="text")
 
     feat_type = "phonemes_onehot"
     label_type = "tones"

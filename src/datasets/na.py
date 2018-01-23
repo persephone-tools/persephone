@@ -95,6 +95,7 @@ def preprocess_na(sent, label_type):
         raise Exception("Unrecognized label type: %s" % label_type)
 
     def pop_phoneme(sentence):
+        # TODO desperately needs refactoring
 
         # Treating fillers as single tokens; normalizing to əəə and mmm
         if phonemes:
@@ -109,9 +110,15 @@ def preprocess_na(sent, label_type):
 
         # Normalizing some stuff
         if sentence[:3] == "wæ̃":
-            return "w̃æ", sentence[3:]
+            if phonemes:
+                return "w̃æ", sentence[3:]
+            else:
+                return None, sentence[3:]
         if sentence[:3] == "ṽ̩":
-            return "ṽ̩", sentence[3:]
+            if phonemes:
+                return "ṽ̩", sentence[3:]
+            else:
+                return None, sentence[3:]
 
         if sentence[:3] in TRI_PHNS:
             if phonemes:
