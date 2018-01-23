@@ -75,6 +75,40 @@ def run():
     if repo.is_dirty():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
+    exp_dir = prep_exp_dir()
+    scaling_graph_full(exp_dir)
+
+def scaling_graph_full(exp_dir):
+
+    num_runs = 3
+
+    feat_type = "fbank_and_pitch"
+    labels = ["phonemes", "tones", "phonemes_and_tones"]
+    for label_type in labels:
+        for i in range(num_runs):
+            train(exp_dir, "na", feat_type, label_type, 3, 250,
+                  train_rec_type="text")
+
+    feat_type = "fbank"
+    labels = ["tones", "phonemes_and_tones"]
+    for label_type in labels:
+        for i in range(num_runs):
+            train(exp_dir, "na", feat_type, label_type, 3, 250,
+                  train_rec_type="text")
+
+    feat_type = "phonemes_onehot"
+    label_type = "tones"
+    for label_type in labels:
+        for i in range(num_runs):
+            train(exp_dir, "na", feat_type, label_type, 3, 250,
+                  train_rec_type="text")
+
+    feat_type = "pitch"
+    label_type = "tones"
+    for label_type in labels:
+        for i in range(num_runs):
+            train(exp_dir, "na", feat_type, label_type, 3, 250,
+                  train_rec_type="text")
 
 def story_fold_cross_validation(exp_dir):
 
@@ -91,7 +125,8 @@ def train(exp_dir, language, feat_type, label_type,
           num_layers, hidden_size,
           num_train=None, batch_size=64,
           train_rec_type="text_and_wordlist",
-          valid_story=None, test_story=None):
+          valid_story=None, test_story=None,
+          min_epochs=30):
     """ Run an experiment. """
 
     sub_exp_dir = prep_sub_exp_dir(exp_dir)

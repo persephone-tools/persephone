@@ -86,6 +86,11 @@ def preprocess_na(sent, label_type):
     elif label_type == "tones":
         phonemes = False
         tones = True
+        tgm = True
+    elif label_type == "tones_notgm":
+        phonemes = False
+        tones = True
+        tgm = False
     else:
         raise Exception("Unrecognized label type: %s" % label_type)
 
@@ -471,12 +476,14 @@ class Corpus(corpus.AbstractCorpus):
         self.train_rec_type = train_rec_type
 
         if label_type == "phonemes_and_tones":
-            self.labels = PHONEMES.union(set(TONES)).union(SYMBOLS_TO_PREDICT)
+            self.labels = PHONEMES.union(TONES).union(SYMBOLS_TO_PREDICT)
         elif label_type == "phonemes_and_tones_no_tgm":
-            self.labels = PHONEMES.union(set(TONES))
+            self.labels = PHONEMES.union(TONES)
         elif label_type == "phonemes":
             self.labels = PHONEMES
         elif label_type == "tones":
+            self.labels = TONES.union(SYMBOLS_TO_PREDICT)
+        elif label_type == "tones_notgm":
             self.labels = TONES
         else:
             raise Exception("label_type %s not implemented." % label_type)
