@@ -12,6 +12,19 @@ import config
 ORG_DIR = config.KUNWINJKU_STEVEN_DIR
 TGT_DIR = join(config.TGT_DIR, "kunwinjku-steven")
 
+with open(config.EN_WORDS_PATH) as words_f:
+    EN_WORDS = words_f.readlines()
+    EN_WORDS = set([word.strip() for word in EN_WORDS])
+    NA_WORDS_IN_EN_DICT = set(["Kore", "Nani", "karri", "imi", "o", "yaw", "i-",
+                           "bi-", "aye", "imi", "ane", "kubba", "kab", "a-",
+                           "ad", "a", "Mak", "Selim", "ngai", "en", "yo",
+                           "wud", "Mani", "yak", "Manu", "ka-", "mong",
+                           "manga", "ka-", "mane", "Kala", "name", "kayo",
+                           "Kare", "laik", "Bale"])
+    EN_WORDS = EN_WORDS.difference(NA_WORDS_IN_EN_DICT)
+
+print("imi" in EN_WORDS)
+
 def good_elan_paths():
     """
     Returns a list of ELAN files for recordings with good quality audio, as
@@ -68,6 +81,7 @@ def elan_utterances():
     Utterance = namedtuple("Utterance", ["file", "start_time", "end_time", "text"])
 
     utterances = []
+    all_utts = []
     for elan_path in good_elan_paths():
         eafob = pympi.Elan.Eaf(elan_path)
         #import pprint; pprint.pprint(dir(eafob))
@@ -103,6 +117,32 @@ def elan_utterances():
             print("Warning: Can't find the media file for {}".format(elan_path))
 
     return utterances
+
+def segment_gup_phonemes(utterance):
+    """
+    Takes as input a string in Kunwinjku and segments it into phoneme-like
+    units based on the standard orthographic rules specified at
+    http://bininjgunwok.org.au/
+    """
+
+    utterance = utterance.lower()
+    print(utterance)
+
+def explore_code_switching():
+
+    utters = elan_utterances()
+
+    en_count = 0
+    for utter in utters:
+        for word in utter.text.split():
+            if word in EN_WORDS:
+                en_count += 1
+                print(utter.text)
+                print("\t" + repr(word))
+                #input()
+                break
+    print(en_count)
+    print(len(utters))
 
 """
 rf
