@@ -445,16 +445,16 @@ def get_stories():
 def make_story_splits(valid_story, test_story, max_samples):
 
     prefixes = get_story_prefixes()
-    prefixes = utils.sort_and_filter_by_size(
+    prefixes = utils.filter_by_size(
         FEAT_DIR, prefixes, "fbank", max_samples)
 
     train = []
     valid = []
     test = []
     for prefix in prefixes:
-        if valid_story in prefix:
+        if valid_story == os.path.basename(prefix).split(".")[0]:
             valid.append(prefix)
-        elif test_story in prefix:
+        elif test_story == os.path.basename(prefix).split(".")[0]:
             test.append(prefix)
         else:
             train.append(prefix)

@@ -2,6 +2,7 @@
 
 import logging
 import os
+from os.path import join
 import shutil
 import sys
 
@@ -76,7 +77,7 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
     exp_dir = prep_exp_dir()
-    scaling_graph_full(exp_dir)
+    story_fold_cross_validation(exp_dir)
 
 def scaling_graph_full(exp_dir):
 
@@ -106,14 +107,18 @@ def scaling_graph_full(exp_dir):
 
 def story_fold_cross_validation(exp_dir):
 
-    texts = list(datasets.na.get_texts())
-    for i, test_text in enumerate(texts):
-        valid_text = texts[(i+1) % len(texts)]
-        print("Test text: %s" % test_text)
-        print("Valid text: %s" % valid_text)
-        print()
-        train(exp_dir, "na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
-               valid_story=valid_text, test_story=test_text)
+    with open(join(exp_dir, "storyfold_crossvalidation.txt"), "w") as f:
+        texts = list(datasets.na.get_stories())
+        for i, test_text in enumerate(texts):
+            valid_text = texts[(i+1) % len(texts)]
+            for out_f in [f, sys.stdout]:
+                print(i, file=out_f)
+                print("Test text: %s" % test_text, file=out_f)
+                print("Valid text: %s" % valid_text, file=out_f)
+                print("", file=out_f, flush=True)
+
+            train(exp_dir, "na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
+                   valid_story=valid_text, test_story=test_text)
 
 def train(exp_dir, language, feat_type, label_type,
           num_layers, hidden_size,
