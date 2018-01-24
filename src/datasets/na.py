@@ -475,7 +475,7 @@ class Corpus(corpus.AbstractCorpus):
     def __init__(self,
                  feat_type="fbank_and_pitch",
                  label_type="phonemes_and_tones",
-                 train_rec_type="text_and_wordlist", max_samples=1000,
+                 train_rec_type="text", max_samples=1000,
                  valid_story=None, test_story=None):
         super().__init__(feat_type, label_type)
 
