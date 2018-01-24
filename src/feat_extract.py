@@ -102,8 +102,10 @@ def from_dir(dirname, feat_type):
     if feat_type == "pitch" or feat_type == "fbank_and_pitch":
         kaldi_pitch(dirname, dirname)
 
+
     # Then apply file-wise feature extraction
     for filename in os.listdir(dirname):
+        print("Preparing %s features for %s" % (feat_type, filename))
         path = os.path.join(dirname, filename)
         if path.endswith(".wav"):
             if feat_type == "fbank":
