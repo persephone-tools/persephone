@@ -76,7 +76,7 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
     exp_dir = prep_exp_dir()
-    scaling_graph(exp_dir, num_train=1024)
+    scaling_graph(exp_dir, num_train=512)
 
 def scaling_graph(exp_dir, num_train=None):
 
