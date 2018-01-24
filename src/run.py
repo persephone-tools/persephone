@@ -13,7 +13,6 @@ import rnn_ctc
 import datasets.na
 #import datasets.griko
 import datasets.chatino
-import datasets.kunwinjku
 #import datasets.timit
 #import datasets.japhug
 import datasets.babel
