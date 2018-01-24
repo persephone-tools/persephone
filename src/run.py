@@ -76,33 +76,33 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
     exp_dir = prep_exp_dir()
-    story_fold_cross_validation(exp_dir)
+    scaling_graph(exp_dir, num_train=1024)
 
-def scaling_graph_full(exp_dir):
+def scaling_graph(exp_dir, num_train=None):
 
     num_runs = 3
 
     feat_types = ["fbank_and_pitch", "fbank"]
-    labels = ["tones", "phonemes_and_tones"]
+    labels = ["phonemes", "tones", "phonemes_and_tones"]
     for feat_type in feat_types:
         for label_type in labels:
             for i in range(num_runs):
                 train(exp_dir, "na", feat_type, label_type, 3, 250,
-                      train_rec_type="text")
+                      train_rec_type="text", num_train=num_train)
 
     feat_type = "phonemes_onehot"
     label_type = "tones"
     for label_type in labels:
         for i in range(num_runs):
             train(exp_dir, "na", feat_type, label_type, 3, 250,
-                  train_rec_type="text")
+                  train_rec_type="text", num_train=num_train)
 
     feat_type = "pitch"
     label_type = "tones"
     for label_type in labels:
         for i in range(num_runs):
             train(exp_dir, "na", feat_type, label_type, 3, 250,
-                  train_rec_type="text")
+                  train_rec_type="text", num_train=num_train)
 
 def story_fold_cross_validation(exp_dir):
 
