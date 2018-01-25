@@ -39,7 +39,7 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         """ feat_type: A string describing the input features. For
                        example, 'log_mel_filterbank'.
             target_type: A string describing the targets. For example,
-                         'phonemes' or 'syllables'.
+                         'phonemes' or 'tones'.
             max_samples: The maximum length in samples of a train, valid, or
                          test utterance. Used to save memory in exchange for
                          reducing the number of effective training examples.

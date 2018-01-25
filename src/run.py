@@ -199,61 +199,10 @@ def train_ready(corpus):
 
     model.train(min_epochs=min_epochs)
 
-def train_babel():
-    # Prepares a new experiment dir for all logging.
-    exp_dir = prep_exp_dir()
-    corpus = datasets.babel.Corpus(["turkish"])
-    corpus_reader = CorpusReader(corpus, num_train=len(corpus.get_train_fns()), batch_size=128)
-    model = rnn_ctc.Model(exp_dir, corpus_reader, num_layers=3)
-    model.train()
+def transcribe(model_path, corpus):
+    """ Applies a trained model to untranscribed data in a Corpus. """
 
-def test():
-    """ Apply a previously trained model to some test data. """
     exp_dir = prep_exp_dir()
-    corpus = datasets.na.Corpus(feat_type="log_mel_filterbank",
-                                target_type="phn", tones=True)
-    corpus_reader = CorpusReader(corpus, num_train=2048)
+    corpus_reader = CorpusReader(corpus)
     model = rnn_ctc.Model(exp_dir, corpus_reader)
-    restore_model_path = os.path.join(
-        EXP_DIR, "131", "model", "model_best.ckpt")
-    model.eval(restore_model_path)
-
-def produce_chatino_lattices():
-    """ Apply a previously trained model to some test data. """
-    exp_dir = prep_exp_dir()
-    corpus = datasets.chatino.Corpus(feat_type="log_mel_filterbank",
-                                target_type="phn", tones=False)
-    corpus_reader = CorpusReader(corpus, num_train=2048)
-    model = rnn_ctc.Model(exp_dir, corpus_reader)
-    restore_model_path = os.path.join(
-        EXP_DIR, "194", "model", "model_best.ckpt")
-    model.output_lattices(corpus_reader.valid_batch(), restore_model_path)
-
-def produce_na_lattices():
-    """ Apply a previously trained model to some test data. """
-    exp_dir = prep_exp_dir()
-    corpus = datasets.na.Corpus(feat_type="log_mel_filterbank",
-                                target_type="phn", tones=True)
-    corpus_reader = CorpusReader(corpus, num_train=2048)
-    model = rnn_ctc.Model(exp_dir, corpus_reader)
-    restore_model_path = os.path.join(
-        EXP_DIR, "131", "model", "model_best.ckpt")
-    model.output_lattices(corpus_reader.valid_batch(), restore_model_path)
-
-def transcribe():
-    """ Applies a trained model to the untranscribed Na data for Alexis. """
-
-    exp_dir = prep_exp_dir()
-    corpus = datasets.na.Corpus(feat_type="fbank_and_pitch",
-                                label_type="phonemes_and_tones")
-    corpus_reader = CorpusReader(corpus, num_train=2048)
-    model = rnn_ctc.Model(exp_dir, corpus_reader)
-    #print(corpus_reader.untranscribed_batch())
-
-    # Model 155 is the first Na ASR model used to give transcriptions to
-    # Alexis Michaud
-    restore_model_path = os.path.join(
-        EXP_DIR, "552", "model", "model_best.ckpt")
-
-    #model.eval(restore_model_path, corpus_reader.)
     model.transcribe(restore_model_path)
