@@ -82,27 +82,25 @@ def scaling_graph(exp_dir, num_train=None):
 
     num_runs = 3
 
-    feat_types = ["fbank_and_pitch", "fbank"]
-    labels = ["phonemes", "tones", "phonemes_and_tones"]
-    for feat_type in feat_types:
-        for label_type in labels:
-            for i in range(num_runs):
-                train(exp_dir, "na", feat_type, label_type, 3, 250,
-                      train_rec_type="text", num_train=num_train)
+    #feat_types = ["fbank_and_pitch", "fbank"]
+    #labels = ["phonemes", "tones", "phonemes_and_tones"]
+    #for feat_type in feat_types:
+    #    for label_type in labels:
+    #        for i in range(num_runs):
+    #            train(exp_dir, "na", feat_type, label_type, 3, 250,
+    #                  train_rec_type="text", num_train=num_train)
 
-    feat_type = "phonemes_onehot"
-    label_type = "tones"
-    for label_type in labels:
-        for i in range(num_runs):
-            train(exp_dir, "na", feat_type, label_type, 3, 250,
-                  train_rec_type="text", num_train=num_train)
+    #feat_type = "phonemes_onehot"
+    #label_type = "tones"
+    #for i in range(num_runs):
+    #    train(exp_dir, "na", feat_type, label_type, 3, 250,
+    #          train_rec_type="text", num_train=num_train)
 
     feat_type = "pitch"
     label_type = "tones"
-    for label_type in labels:
-        for i in range(num_runs):
-            train(exp_dir, "na", feat_type, label_type, 3, 250,
-                  train_rec_type="text", num_train=num_train)
+    for i in range(num_runs):
+        train(exp_dir, "na", feat_type, label_type, 3, 250,
+              train_rec_type="text", num_train=num_train)
 
 def story_fold_cross_validation(exp_dir):
 
