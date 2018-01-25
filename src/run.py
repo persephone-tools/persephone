@@ -48,6 +48,8 @@ def prep_exp_dir():
     directory.
     """
 
+    if not os.path.isdir(EXP_DIR):
+        os.makedirs(EXP_DIR)
     exp_num = get_exp_dir_num(EXP_DIR)
     exp_num = exp_num + 1
     exp_dir = os.path.join(EXP_DIR, str(exp_num))

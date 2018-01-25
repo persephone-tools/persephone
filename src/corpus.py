@@ -149,8 +149,6 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
 
     def prepare_feats(self, org_dir):
         """ Prepares input features"""
-        # TODO Could probably be factored out; there's nothing so corpus-specific
-        # here.
 
         if not os.path.isdir(self.FEAT_DIR):
             os.makedirs(self.FEAT_DIR)
