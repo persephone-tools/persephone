@@ -186,25 +186,29 @@ def train(exp_dir, language, feat_type, label_type,
     except:
         print("Issues with my printing train_desc2")
 
-def train_ready(corpus):
+def get_simple_model(exp_dir, corpus):
     batch_size = 16
     min_epochs = 30
     num_layers = 2
     hidden_size= 250
 
-    exp_dir = prep_exp_dir()
     corpus_reader = CorpusReader(corpus, batch_size=batch_size)
     model = rnn_ctc.Model(exp_dir, corpus_reader,
                           num_layers=num_layers,
                           hidden_size=hidden_size,
                           decoding_merge_repeated=True)
 
+    return model
+
+def train_ready(corpus):
+
+    exp_dir = prep_exp_dir()
+    model = get_simple_model(exp_dir, corpus)
     model.train(min_epochs=min_epochs)
 
 def transcribe(model_path, corpus):
     """ Applies a trained model to untranscribed data in a Corpus. """
 
     exp_dir = prep_exp_dir()
-    corpus_reader = CorpusReader(corpus)
-    model = rnn_ctc.Model(exp_dir, corpus_reader)
-    model.transcribe(restore_model_path)
+    model = get_simple_model(exp_dir, corpus)
+    model.transcribe(model_path)

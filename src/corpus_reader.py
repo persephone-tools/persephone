@@ -3,7 +3,6 @@
 import random
 
 from nltk.metrics import distance
-
 import utils
 
 class CorpusReader:
@@ -106,7 +105,7 @@ class CorpusReader:
         """ Returns a generator that outputs batches in the training data."""
 
         # Create batches of batch_size and shuffle them.
-        train_batches = make_batches(self.train_fns)
+        fn_batches = self.make_batches(self.train_fns)
 
         if self.rand:
             random.shuffle(fn_batches)
@@ -130,10 +129,10 @@ class CorpusReader:
         """ A batch generator for all the untranscribed data. """
 
         feat_fns = self.corpus.get_untranscribed_fns()
-        fn_batches = make_batches(feat_fns)
+        fn_batches = self.make_batches(feat_fns)
 
         for fn_batch in fn_batches:
-            batch_inputs, batch_inputs_lens = utils.load_batch_x(feat_fn_batch,
+            batch_inputs, batch_inputs_lens = utils.load_batch_x(fn_batch,
                                                              flatten=False)
             yield batch_inputs, batch_inputs_lens, fn_batch
 

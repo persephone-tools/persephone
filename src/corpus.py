@@ -104,6 +104,10 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         return feat_fns, label_fns
 
     def get_untranscribed_fns(self):
+        # TODO Figure out how to interface with untranscribed files.
+        # Temporarily just using the validation set for testing
+        return self.get_valid_fns()[0]
+
         feat_fns = [os.path.join(self.UNTRAN_FEAT_DIR, "%s.%s.npy" % (
                     os.path.splitext(fn)[0], self.feat_type))
                     for fn in os.listdir(self.UNTRAN_FEAT_DIR)
@@ -249,6 +253,9 @@ class ReadyCorpus(AbstractCorpus):
         self.train_prefixes = train
         self.valid_prefixes = valid
         self.test_prefixes = test
+
+        # TODO just testing model.transcribe() by using the test set here
+        self.untranscribed_prefixes = valid
 
         # Sort the training prefixes by size for more efficient training
         self.train_prefixes = utils.sort_by_size(

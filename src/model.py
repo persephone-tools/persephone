@@ -51,9 +51,10 @@ class Model:
 
             batch_gen = self.corpus_reader.untranscribed_batch_gen()
 
+            hyp_batches = []
             for batch_i, batch in enumerate(batch_gen):
 
-                batch_x, batch_x_lens, feat_fn_batch = self.corpus_reader.untranscribed_batch()
+                batch_x, batch_x_lens, feat_fn_batch = batch
 
                 feed_dict = {self.batch_x: batch_x,
                              self.batch_x_lens: batch_x_lens}
@@ -66,8 +67,14 @@ class Model:
                 if not os.path.isdir(hyps_dir):
                     os.mkdir(hyps_dir)
 
-                with open(os.path.join(hyps_dir, "hyps"), "w") as hyps_f:
-                        print(hyps, file=hyps_f)
+                hyp_batches.append((hyps,feat_fn_batch))
+
+            with open(os.path.join(hyps_dir, "hyps.txt"), "w") as hyps_f:
+                for hyp_batch, fn_batch in hyp_batches:
+                    for hyp, fn in zip(hyp_batch, fn_batch):
+                        print(fn, file=hyps_f)
+                        print(" ".join(hyp), file=hyps_f)
+                        print("", file=hyps_f)
 
             """
             # TODO This sorting is Na-corpus centric and won't generalize. It
