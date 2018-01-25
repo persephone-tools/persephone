@@ -216,7 +216,7 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
             self.FEAT_DIR, prefixes, "fbank", max_samples)
         Ratios = namedtuple("Ratios", ["train", "valid", "test"])
         # TODO These ratios can't be hardcoded
-        ratios = Ratios(.90, .10, .10)
+        ratios = Ratios(.90, .05, .05)
         train_end = int(ratios.train*len(prefixes))
         valid_end = int(train_end + ratios.valid*len(prefixes))
         random.shuffle(prefixes)
