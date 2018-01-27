@@ -97,7 +97,7 @@ def scaling_graph(exp_dir, num_train=None):
     #          train_rec_type="text", num_train=num_train)
 
     feat_type = "pitch"
-    label_type = "tones"
+    label_type = "tones_notgm"
     for i in range(num_runs):
         train(exp_dir, "na", feat_type, label_type, 3, 250,
               train_rec_type="text", num_train=num_train)
