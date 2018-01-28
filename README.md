@@ -10,7 +10,7 @@ We are happy to offer direct help to anyone who wants to use it. If you're havin
 
 ## Quickstart
 
-This guide is written to help you get the tool working on your machine. We will use a small example setup that involves training a phoneme transcription tool for [Yongning Na](http://lacito.vjf.cnrs.fr/pangloss/languages/Na_en.php). The example that we will run can be run on most personal computers without a graphics processing unit (GPU), since I've made the settings less computationally demanding than is optimal. Ideally you'd have access to a server with more memory and a GPU, but this isn't necessary.
+This guide is written to help you get the tool working on your machine. We will use a small example setup that involves training a phoneme transcription tool for [Yongning Na](http://lacito.vjf.cnrs.fr/pangloss/languages/Na_en.php). The example that we will run can be run on most personal computers without a graphics processing unit (GPU), since I've made the settings less computationally demanding than it would be for optimal transcription quality. Ideally you'd have access to a server with more memory and a GPU, but this isn't necessary.
 
 ### 1. Installation
 
