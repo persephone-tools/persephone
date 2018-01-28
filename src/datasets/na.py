@@ -59,7 +59,9 @@ TONES = UNI_TONES.union(BI_TONES)
 SYMBOLS_TO_PREDICT = {"|"}
 
 PHONEMES = UNI_PHNS.union(BI_PHNS).union(TRI_PHNS).union(FILLERS)
-NUM_PHONEMES = len(PHONEMES)
+
+# TODO Get rid of these variables, as they're not used in the class, only for
+# preparing phonemes_onehot feats.
 PHONEMES_TO_INDICES = {phn: index for index, phn in enumerate(PHONEMES)}
 INDICES_TO_PHONEMES = {index: phn for index, phn in enumerate(PHONEMES)}
 
