@@ -1,28 +1,22 @@
-# Persephone
+# Persephone v0.0.0
 
-Persephone (/pərˈsɛfəni/) is an automatic phoneme transcription tool for
-low-resource languages. It is designed for situations where the traditional
-speech recognition pipeline, which depends on a large pronunciation lexicon and
-substantial training data, is inapplicable because of the lack of such a
-lexicon.
+Persephone (/pərˈsɛfəni/) is an automatic phoneme transcription tool. Traditional speech recognition tools require a large pronunciation lexicon (describing how words are pronounced) and much training data so that the system can learn to output orthographic transcriptions. In contrast, Persephone is designed for situations where training data is limited, perhaps as little as 30 minutes of transcribed speech. Such limitations on data are common in the documentation of low-resource languages. It is possible to use such small amounts of data to train a transcription model that can help aid transcription, yet such technology has not been widely adopted.
 
-The goal is to make state-of-the-art phonemic transcription accessible.
+The goal of Persephone is to make state-of-the-art phonemic transcription accessible to people involved in language documentation. Creating an easy-to-use user interface is central to this. The user interface and APIs are currently a work in progress.
 
-The tool is implemented in Python/Tensorflow. Currently implemented is a
-CTC-based model.
+The tool is implemented in Python/Tensorflow with extensibility in mind. Currently just one model is implemented, which uses bidirectional LSTMs and the connectionist temporal classification (CTC) loss function.
 
-The user interface and APIs are a work in progress. I'm happy to offer direct
-help to anyone who wants to use it. Contact me at oliver.adams@gmail.com.
+We are happy to offer direct help to anyone who wants to use it. If you're having trouble, contact Oliver Adams at oliver.adams@gmail.com. We are also very welcome to thoughts, constructive criticism, help and pull requests.
 
 ## Quickstart
 
-This tutorial will ensure the code is working on your machine. The code be run on computers without GPUs since I've made the settings less computationally demanding than they normally would be. Ideally you'd have access to a server with more memory and a GPU.
+This guide is written to help you get the tool working on your machine. We will use a small example setup that involves training a phoneme transcription tool for [Yongning Na](http://lacito.vjf.cnrs.fr/pangloss/languages/Na_en.php). The example that we will run can be run on most personal computers without a graphics processing unit (GPU), since I've made the settings less computationally demanding than is optimal. Ideally you'd have access to a server with more memory and a GPU, but this isn't necessary.
 
 ### 1. Installation
 
-The code has been tested on Mac and Linux systems. It should work on Windows too, but that hasn't yet been tested.
+The code has been tested on Mac and Linux systems. It hasn't yet been tested on Windows.
 
-From here on I assume Python 3, ffmpeg and git have been installed. These should be available for your operating system.
+Ensure Python 3, ffmpeg and git have been installed. These should be available for your operating system and can be installed via your package manager.
 
 For now you must open up a terminal to enter commands at the command line. (The commands below are prefixed with a "$". Don't enter the "$", just whatever comes afterwards).
 
@@ -33,7 +27,7 @@ $ git clone git@github.com:oadams/mam.git
 $ cd mam
 ```
 
-We now need to set up some dependencies in a virtual environment. Run:
+We now need to set up some dependencies in a virtual environment.
 ```
 $ virtualenv -p python3 venv3
 $ source ~/venv3/bin/activate
@@ -42,7 +36,7 @@ $ pip install -r requirements.txt
 
 ### 2. Get the example data
 
-Currently the tool assumes each utterance is in its own audio file, and that there is a corresponding transcription file where each token is a phoneme or tone. I've uploaded an example dataset that includes some Na data that has already been preprocessed. We'll use this example dataset in this tutorial. Once we confirm that the software itself is working on your computer, we can discuss preprocessing of your own data.
+Currently the tool assumes each utterance is in its own audio file, and that for each utterance in the training set there is a corresponding transcription file with phonemes (or perhaps characters) delimited by spaces. I've uploaded an example dataset that includes some Yongning Na data that has already been preprocessed. We'll use this example dataset in this tutorial. Once we confirm that the software itself is working on your computer, we can discuss preprocessing of your own data.
 
 Get the data [here](https://cloudstor.aarnet.edu.au/sender/?s=download&token=b6789ee3-bbcb-7f92-2f38-18ffc1086817)
 
@@ -72,8 +66,8 @@ You'll should now see something like:
         ...
 ```
  
-The message may vary a bit depending on your CPU, but if it says "Batch 0" at the bottom without an error, then training is very likely working. Contact me if you have any trouble getting to this point.
+The message may vary a bit depending on your CPU, but if it says "Batch 0" at the bottom without an error, then training is very likely working. Contact me if you have any trouble getting to this point, or if you had to deviate from the above instructions to get to this point.
 
-On the current settings it will train through batches 1...205 for at least 30 "epochs", potentially more. If you don't have a GPU then this will take quite a while, though you should notice it converging in performance within a couple hours on most personal computers.
+On the current settings it will train through batches 1 to 200 or so for at least 30 "epochs", potentially more. If you don't have a GPU then this will take quite a while, though you should notice it converging in performance within a couple hours on most personal computers.
 
 After a few epochs you can see how its going by going to opening up `mam/exp/<experiment_number>/train_log.txt`. This will show you the error rates on the training set and the held-out validation set. In the `mam/exp/<experiment_number>/decoded` subdirectory, you'll see the validation set reference in `refs` and the model hypotheses for each epoch in `epoch<epoch_num>_hyps`.
