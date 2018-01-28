@@ -6,7 +6,7 @@ The goal of Persephone is to make state-of-the-art phonemic transcription access
 
 The tool is implemented in Python/Tensorflow with extensibility in mind. Currently just one model is implemented, which uses bidirectional LSTMs and the connectionist temporal classification (CTC) loss function.
 
-We are happy to offer direct help to anyone who wants to use it. If you're having trouble, contact Oliver Adams at oliver.adams@gmail.com. We are also very welcome to thoughts, constructive criticism, help and pull requests.
+We are happy to offer direct help to anyone who wants to use it. If you're having trouble, contact Oliver Adams at oliver.adams@gmail.com. We are also very welcome to thoughts, constructive criticism, help with design and devlopment and any pull requests you may have.
 
 ## Quickstart
 
