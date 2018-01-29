@@ -23,8 +23,8 @@ For now you must open up a terminal to enter commands at the command line. (The 
 Fetch the latest code:
 
 ```
-$ git clone git@github.com:oadams/mam.git
-$ cd mam
+$ git clone git@github.com:oadams/persephone.git
+$ cd persephone
 ```
 
 We now need to set up some dependencies in a virtual environment.
@@ -40,7 +40,7 @@ Currently the tool assumes each utterance is in its own audio file, and that for
 
 Get the data [here](https://cloudstor.aarnet.edu.au/sender/?s=download&token=b6789ee3-bbcb-7f92-2f38-18ffc1086817)
 
-Unzip `na_example.zip`. There should now be a directory `na_example/`, with subdirectories `feat/` and `label/`. You can put `na_example` anywhere, but for the rest of this tutorial I assume it is in `mam/data/na_example/`.
+Unzip `na_example.zip`. There should now be a directory `na_example/`, with subdirfectories `feat/` and `label/`. You can put `na_example` anywhere, but for the rest of this tutorial I assume it is in `persephone/data/na_example/`.
 
 ### 3. Running an experiment
 
@@ -70,4 +70,4 @@ The message may vary a bit depending on your CPU, but if it says "Batch 0" at th
 
 On the current settings it will train through batches 1 to 200 or so for at least 30 "epochs", potentially more. If you don't have a GPU then this will take quite a while, though you should notice it converging in performance within a couple hours on most personal computers.
 
-After a few epochs you can see how its going by going to opening up `mam/exp/<experiment_number>/train_log.txt`. This will show you the error rates on the training set and the held-out validation set. In the `mam/exp/<experiment_number>/decoded` subdirectory, you'll see the validation set reference in `refs` and the model hypotheses for each epoch in `epoch<epoch_num>_hyps`.
+After a few epochs you can see how its going by going to opening up `persephone/exp/<experiment_number>/train_log.txt`. This will show you the error rates on the training set and the held-out validation set. In the `persephone/exp/<experiment_number>/decoded` subdirectory, you'll see the validation set reference in `refs` and the model hypotheses for each epoch in `epoch<epoch_num>_hyps`.
