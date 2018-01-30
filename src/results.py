@@ -24,9 +24,9 @@ def average(exp_nums, show_tgm_f1=False, phones=datasets.na.PHONEMES, tones=data
     for i, exp_num in enumerate(exp_nums):
         path = os.path.join(config.EXP_DIR, str(exp_num))
         ler, per, ter = test_results(path, phones, tones)
+        tgm_f1 = 0
         if show_tgm_f1:
             tgm_f1 = symbol_f1(exp_num, "|")
-        tgm_f1 = 0
         print("Exp #{}:".format(i))
         print("\tPER & TER & LER & TGM-F1")
         print("\t{} & {} & {} & {}".format(per, ter, ler, tgm_f1))
@@ -243,6 +243,7 @@ def latex_output(refs_paths, hyps_paths, utter_ids_fn):
               "\\usepackage{longtable}\n"
               "\setmainfont[Mapping=tex-text,Ligatures=Common,Scale=MatchLowercase]{Doulos SIL}\n"
               "\DeclareRobustCommand{\hl}[1]{{\\textcolor{red}{#1}}}\n"
+              "% Hyps path: " + hyps_path
               "\\begin{document}\n"
               "\\begin{longtable}{ll}", file=out_f)
 
