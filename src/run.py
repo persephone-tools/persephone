@@ -176,6 +176,7 @@ def train(exp_dir, language, feat_type, label_type,
                 print("hidden_size: %d" % hidden_size, file=f)
                 if num_train:
                     print("num_train: %d" % num_train, file=f)
+                print("train duration: %f" % corpus_reader.calc_time(), file=f)
                 print("batch_size: %d" % batch_size, file=f)
                 print("Exp dir:", sub_exp_dir, file=f)
     except:
