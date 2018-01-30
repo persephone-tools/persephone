@@ -314,6 +314,11 @@ class Model:
                 saver.save(sess, path)
                 self.saved_model_path = path
 
+                # Output best hyps
+                with open(os.path.join(hyps_dir, "best_hyps"), "w") as hyps_f:
+                    for hyp in hyps:
+                        print(" ".join(hyp), file=hyps_f)
+
             else:
                 print("Steps since last best valid_ler: %d" % (steps_since_last_record), file=out_file)
                 steps_since_last_record += 1
