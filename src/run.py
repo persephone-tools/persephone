@@ -10,7 +10,7 @@ from git import Repo
 
 import config
 import rnn_ctc
-import datasets.na
+#import datasets.na
 #import datasets.griko
 #import datasets.chatino
 #import datasets.kunwinjku
