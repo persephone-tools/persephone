@@ -76,7 +76,8 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
     exp_dir = prep_exp_dir()
-    scaling_graph(exp_dir, num_train=512)
+    #scaling_graph(exp_dir, num_train=512)
+    rerun_storyfoldxv(exp_dir)
 
 def scaling_graph(exp_dir, num_train=None):
 
@@ -102,10 +103,27 @@ def scaling_graph(exp_dir, num_train=None):
         train(exp_dir, "na", feat_type, label_type, 3, 250,
               train_rec_type="text", num_train=num_train)
 
+def rerun_storyfoldxv(exp_dir):
+
+    valid_test = [('crdo-NRU_F4_RENAMING', 'crdo-NRU_F4_HOUSEBUILDING'),
+                  ('crdo-NRU_F4_TRADER_AND_HIS_SON', 'crdo-NRU_F4_RENAMING'),
+                  ('crdo-NRU_F4_ELDERS3', 'crdo-NRU_F4_BURIEDALIVE3'),
+                  ('crdo-NRU_F4_BURIEDALIVE2', 'crdo-NRU_F4_CARAVANS')]
+
+    for valid_text, test_text in enumerate(texts):
+        for out_f in [f, sys.stdout]:
+            print(i, file=out_f)
+            print("Test text: %s" % test_text, file=out_f)
+            print("Valid text: %s" % valid_text, file=out_f)
+            print("", file=out_f, flush=True)
+
+        train(exp_dir, "na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
+               valid_story=valid_text, test_story=test_text, max_ler=0.5)
+
 def story_fold_cross_validation(exp_dir):
 
     with open(join(exp_dir, "storyfold_crossvalidation.txt"), "w") as f:
-        texts = list(datasets.na.get_stories())
+        texts = datasets.na.get_stories()
         for i, test_text in enumerate(texts):
             valid_text = texts[(i+1) % len(texts)]
             for out_f in [f, sys.stdout]:
@@ -122,7 +140,7 @@ def train(exp_dir, language, feat_type, label_type,
           num_train=None, batch_size=64,
           train_rec_type="text_and_wordlist",
           valid_story=None, test_story=None,
-          min_epochs=30):
+          min_epochs=30, max_ler=1.0):
     """ Run an experiment. """
 
     sub_exp_dir = prep_sub_exp_dir(exp_dir)
@@ -163,7 +181,7 @@ def train(exp_dir, language, feat_type, label_type,
                           decoding_merge_repeated=(False if
                                                    label_type=="tones"
                                                    else True))
-    model.train(min_epochs=min_epochs)
+    model.train(min_epochs=min_epochs, max_ler=max_ler)
 
     try:
         with open(os.path.join(sub_exp_dir, "train_desc2.txt"), "w") as desc_f:
