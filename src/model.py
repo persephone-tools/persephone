@@ -325,12 +325,13 @@ class Model:
                 if steps_since_last_record >= early_stopping_steps:
                     if epoch >= min_epochs:
                         # Then we've done the minimum number of epochs.
-                        if ler < max_ler:
+                        if valid_ler < max_ler:
                             # Then training error has moved sufficiently
                             # towards convergence.
                             print("""Stopping since best validation score hasn't been
                                   beaten in %d epochs and at least %d have been
-                                  done""" % (early_stopping_steps, min_epochs),
+                                  done, and the valid ler (%d) is below %d""" %
+                                  (early_stopping_steps, min_epochs, valid_ler, max_ler),
                                   file=out_file, flush=True)
                             with open(os.path.join(self.exp_dir, "best_scores.txt"), "w") as best_f:
                                 print(best_epoch_str, file=best_f, flush=True)
