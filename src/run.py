@@ -204,7 +204,7 @@ def train_ready(corpus):
 
     exp_dir = prep_exp_dir()
     model = get_simple_model(exp_dir, corpus)
-    model.train(min_epochs=min_epochs)
+    model.train(min_epochs=10)
 
 def transcribe(model_path, corpus):
     """ Applies a trained model to untranscribed data in a Corpus. """
