@@ -110,15 +110,15 @@ def rerun_storyfoldxv(exp_dir):
                   ('crdo-NRU_F4_ELDERS3', 'crdo-NRU_F4_BURIEDALIVE3'),
                   ('crdo-NRU_F4_BURIEDALIVE2', 'crdo-NRU_F4_CARAVANS')]
 
-    for valid_text, test_text in enumerate(texts):
-        for out_f in [f, sys.stdout]:
-            print(i, file=out_f)
-            print("Test text: %s" % test_text, file=out_f)
-            print("Valid text: %s" % valid_text, file=out_f)
-            print("", file=out_f, flush=True)
+    with open(join(exp_dir, "storyfold_crossvalidation.txt"), "w") as f:
+        for valid_text, test_text in valid_test:
+            for out_f in [f, sys.stdout]:
+                print("Test text: %s" % test_text, file=out_f)
+                print("Valid text: %s" % valid_text, file=out_f)
+                print("", file=out_f, flush=True)
 
-        train(exp_dir, "na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
-               valid_story=valid_text, test_story=test_text, max_ler=0.5)
+            train(exp_dir, "na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
+                   valid_story=valid_text, test_story=test_text, max_ler=0.5)
 
 def story_fold_cross_validation(exp_dir):
 

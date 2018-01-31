@@ -243,7 +243,7 @@ def latex_output(refs_paths, hyps_paths, utter_ids_fn):
               "\\usepackage{longtable}\n"
               "\setmainfont[Mapping=tex-text,Ligatures=Common,Scale=MatchLowercase]{Doulos SIL}\n"
               "\DeclareRobustCommand{\hl}[1]{{\\textcolor{red}{#1}}}\n"
-              "% Hyps path: " + hyps_path
+              "% Hyps path: " + hyps_path +
               "\\begin{document}\n"
               "\\begin{longtable}{ll}", file=out_f)
 
