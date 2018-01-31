@@ -77,31 +77,25 @@ def run():
                                  "Commit them first .")
     exp_dir = prep_exp_dir()
     #scaling_graph(exp_dir, num_train=512)
-    rerun_storyfoldxv(exp_dir)
+    scaling_graph(exp_dir)
 
-def scaling_graph(exp_dir, num_train=None):
+def scaling_graph(exp_dir):
 
     num_runs = 3
+    num_trains = [128,256,512,1024,2048]
+    feat_types = ["fbank_and_pitch", "fbank"]
+    labels = ["phonemes", "phonemes_and_tones"]
 
-    #feat_types = ["fbank_and_pitch", "fbank"]
-    #labels = ["phonemes", "tones", "phonemes_and_tones"]
-    #for feat_type in feat_types:
-    #    for label_type in labels:
-    #        for i in range(num_runs):
-    #            train(exp_dir, "na", feat_type, label_type, 3, 250,
-    #                  train_rec_type="text", num_train=num_train)
-
-    #feat_type = "phonemes_onehot"
-    #label_type = "tones"
-    #for i in range(num_runs):
-    #    train(exp_dir, "na", feat_type, label_type, 3, 250,
-    #          train_rec_type="text", num_train=num_train)
-
-    feat_type = "pitch"
-    label_type = "tones_notgm"
-    for i in range(num_runs):
-        train(exp_dir, "na", feat_type, label_type, 3, 250,
-              train_rec_type="text", num_train=num_train)
+    for feat_type in feat_types:
+        for label_type in labels:
+            for num_train in num_trains:
+                long_exp_dir = os.path.join(exp_dir, feat_type, label_type,
+                                            str(num_train))
+                os.makedirs(long_exp_dir)
+                for i in range(num_runs):
+                    train(long_exp_dir, "na", feat_type, label_type, 3, 250,
+                          train_rec_type="text", num_train=num_train,
+                          max_ler=0.6)
 
 def rerun_storyfoldxv(exp_dir):
 
@@ -137,7 +131,7 @@ def story_fold_cross_validation(exp_dir):
 
 def train(exp_dir, language, feat_type, label_type,
           num_layers, hidden_size,
-          num_train=None, batch_size=64,
+          num_train=None,
           train_rec_type="text_and_wordlist",
           valid_story=None, test_story=None,
           min_epochs=30, max_ler=1.0):
@@ -170,10 +164,11 @@ def train(exp_dir, language, feat_type, label_type,
     else:
         raise Exception("Language '%s' not supported." % language)
 
+
     if num_train:
-        corpus_reader = CorpusReader(corpus, num_train=num_train, batch_size=batch_size)
+        corpus_reader = CorpusReader(corpus, num_train=num_train)
     else:
-        corpus_reader = CorpusReader(corpus, batch_size=batch_size)
+        corpus_reader = CorpusReader(corpus)
     print(corpus_reader)
     model = rnn_ctc.Model(sub_exp_dir, corpus_reader,
                           num_layers=num_layers,
@@ -195,7 +190,7 @@ def train(exp_dir, language, feat_type, label_type,
                 if num_train:
                     print("num_train: %d" % num_train, file=f)
                 print("train duration: %f" % corpus_reader.calc_time(), file=f)
-                print("batch_size: %d" % batch_size, file=f)
+                print("batch_size: %d" % corpus_reader.batch_size, file=f)
                 print("Exp dir:", sub_exp_dir, file=f)
     except:
         print("Issues with my printing train_desc2")
