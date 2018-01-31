@@ -16,7 +16,7 @@ import rnn_ctc
 #import datasets.kunwinjku
 #import datasets.timit
 #import datasets.japhug
-import datasets.babel
+#import datasets.babel
 from corpus_reader import CorpusReader
 
 
