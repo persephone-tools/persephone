@@ -7,7 +7,7 @@ CHATINO_DIR = "/lt/work/oadams/chatino/CTP/"
 JAPHUG_DIR = "/lt/work/oadams/japhug/"
 NA_DIR = "/lt/work/oadams/Na/"
 # The directory where the preprocessed data will be held.
-TGT_DIR = "/home/oadams/mam/data/"
+TGT_DIR = "../data"
 # The path for experiments
 EXP_DIR = "../exp"
 

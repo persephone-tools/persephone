@@ -10,13 +10,13 @@ from git import Repo
 
 import config
 import rnn_ctc
-import datasets.na
+#import datasets.na
 #import datasets.griko
 #import datasets.chatino
 #import datasets.kunwinjku
 #import datasets.timit
 #import datasets.japhug
-import datasets.babel
+#import datasets.babel
 from corpus_reader import CorpusReader
 
 
@@ -218,7 +218,7 @@ def train_ready(corpus):
 
     exp_dir = prep_exp_dir()
     model = get_simple_model(exp_dir, corpus)
-    model.train(min_epochs=min_epochs)
+    model.train(min_epochs=10)
 
 def transcribe(model_path, corpus):
     """ Applies a trained model to untranscribed data in a Corpus. """
