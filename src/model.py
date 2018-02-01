@@ -43,7 +43,7 @@ class Model:
         """
 
         saver = tf.train.Saver()
-        with tf.Session() as sess:
+        with tf.Session(config=allow_growth_config) as sess:
             if restore_model_path:
                 saver.restore(sess, restore_model_path)
             else:
@@ -100,7 +100,7 @@ class Model:
             lattices can ultimately be extracted."""
 
         saver = tf.train.Saver()
-        with tf.Session() as sess:
+        with tf.Session(config=allow_growth_config) as sess:
             if restore_model_path:
                 saver.restore(sess, restore_model_path)
             else:
@@ -184,7 +184,7 @@ class Model:
         """ Evaluates the model on a test set."""
 
         saver = tf.train.Saver()
-        with tf.Session() as sess:
+        with tf.Session(config=allow_growth_config) as sess:
             if restore_model_path:
                 saver.restore(sess, restore_model_path)
             else:
