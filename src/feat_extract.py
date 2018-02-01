@@ -98,12 +98,34 @@ def combine_fbank_and_pitch(feat_dir, prefix):
 # specific wav format, so that should be coupled together with pitch extraction
 # here.
 def from_dir(dirname, feat_type):
+    """ Performs feature extraction from the WAV files in a directory. """
+
+    def all_wavs_processed():
+        """
+        True if all wavs in the directory have corresponding numpy feature
+        file; False otherwise.
+        """
+
+        for fn in os.listdir(dirname):
+            prefix, ext = os.path.splitext(fn)
+            if ext == ".wav":
+                if not os.path.exists(
+                        os.path.join(dirname, "%s.%s.npy" % (prefix, feat_type))):
+                    return False
+        return True
+
+    if all_wavs_processed():
+        # Then nothing needs to be done here
+        return
+    # Otherwise, go on and process everything...
+
     # If pitch features are needed as part of this, extract them
     if feat_type == "pitch" or feat_type == "fbank_and_pitch":
         kaldi_pitch(dirname, dirname)
 
     # Then apply file-wise feature extraction
     for filename in os.listdir(dirname):
+        print("Preparing %s features for %s" % (feat_type, filename))
         path = os.path.join(dirname, filename)
         if path.endswith(".wav"):
             if feat_type == "fbank":
@@ -123,10 +145,17 @@ def from_dir(dirname, feat_type):
 
 def convert_wav(org_wav_fn, tgt_wav_fn):
     """ Converts the wav into a 16bit mono 16000Hz wav."""
+
     home = os.path.expanduser("~")
-    args = [config.FFMPEG_PATH,
-            "-i", org_wav_fn, "-ac", "1", "-ar", "16000", tgt_wav_fn]
-    subprocess.run(args)
+    try:
+        args = ["ffmpeg",
+                "-i", org_wav_fn, "-ac", "1", "-ar", "16000", tgt_wav_fn]
+        subprocess.run(args)
+    except FileNotFoundError:
+        args = [config.FFMPEG_PATH,
+                "-i", org_wav_fn, "-ac", "1", "-ar", "16000", tgt_wav_fn]
+        subprocess.run(args)
+
 
 def kaldi_pitch(wav_dir, feat_dir):
     """ Extract Kaldi pitch features. Assumes 16k mono wav files."""

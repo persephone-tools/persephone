@@ -8,4 +8,5 @@ data/butcher/
 exp/
 *.swp
 *.pyc
-venv3
+venv3/
+data/

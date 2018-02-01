@@ -49,18 +49,34 @@ class Model:
                 else:
                     raise Exception("No model to use for transcription.")
 
-            test_x, test_x_lens, feat_fn_batch = self.corpus_reader.untranscribed_batch()
+            batch_gen = self.corpus_reader.untranscribed_batch_gen()
 
-            feed_dict = {self.batch_x: test_x,
-                         self.batch_x_lens: test_x_lens}
+            hyp_batches = []
+            for batch_i, batch in enumerate(batch_gen):
 
-            [dense_decoded] = sess.run([self.dense_decoded], feed_dict=feed_dict)
-            hyps = self.corpus_reader.human_readable(dense_decoded)
-            # Log hypotheses
-            hyps_dir = os.path.join(self.exp_dir, "auto_transcripts")
-            if not os.path.isdir(hyps_dir):
-                os.mkdir(hyps_dir)
+                batch_x, batch_x_lens, feat_fn_batch = batch
 
+                feed_dict = {self.batch_x: batch_x,
+                             self.batch_x_lens: batch_x_lens}
+
+                [dense_decoded] = sess.run([self.dense_decoded], feed_dict=feed_dict)
+                hyps = self.corpus_reader.human_readable(dense_decoded)
+
+                # Prepare dir for transcription
+                hyps_dir = os.path.join(self.exp_dir, "transcriptions")
+                if not os.path.isdir(hyps_dir):
+                    os.mkdir(hyps_dir)
+
+                hyp_batches.append((hyps,feat_fn_batch))
+
+            with open(os.path.join(hyps_dir, "hyps.txt"), "w") as hyps_f:
+                for hyp_batch, fn_batch in hyp_batches:
+                    for hyp, fn in zip(hyp_batch, fn_batch):
+                        print(fn, file=hyps_f)
+                        print(" ".join(hyp), file=hyps_f)
+                        print("", file=hyps_f)
+
+            """
             # TODO This sorting is Na-corpus centric and won't generalize. It
             # is to sort by recording name (ie. Benevolence) then by utterance
             # id within that (Benevolence.0, benevolence.1, ...)
@@ -74,6 +90,7 @@ class Model:
                     fn = "_".join(os.path.basename(fn).split(".")[:2])
                     print(fn + ": ", file=hyps_f)
                     print(" ".join(hyp), file=hyps_f)
+            """
 
     def output_lattices(self, batch, restore_model_path=None):
         """ Outputs the logits from the model, given an input batch, so that
@@ -258,6 +275,7 @@ class Model:
             train_ler_total = 0
             batch_i = None
             for batch_i, batch in enumerate(batch_gen):
+                print("\tBatch %d" % batch_i)
                 batch_x, batch_x_lens, batch_y = batch
 
                 feed_dict = {self.batch_x: batch_x,

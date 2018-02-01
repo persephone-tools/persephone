@@ -74,6 +74,10 @@ class CorpusReader:
         training example minus the extension.
         """
 
+        # TODO Assumes targets are available, which is how its distinct from
+        # utils.load_batch_x(). These functions need to change names to be
+        # clearer.
+
         inverse = list(zip(*fn_batch))
         feat_fn_batch = inverse[0]
         target_fn_batch = inverse[1]
@@ -89,13 +93,21 @@ class CorpusReader:
 
         return batch_inputs, batch_inputs_lens, batch_targets
 
+    def make_batches(self, utterance_fns):
+        """ Group utterances into batches for decoding.  """
+
+        # Create batches of batch_size and shuffle them.
+        fn_batches = [utterance_fns[i:i+self.batch_size]
+                          for i in range(0, len(utterance_fns),
+                                         self.batch_size)]
+
+        return fn_batches
+
     def train_batch_gen(self):
         """ Returns a generator that outputs batches in the training data."""
 
         # Create batches of batch_size and shuffle them.
-        fn_batches = [self.train_fns[i:i+self.batch_size]
-                          for i in range(0, len(self.train_fns),
-                                         self.batch_size)]
+        fn_batches = self.make_batches(self.train_fns)
 
         if self.rand:
             random.shuffle(fn_batches)
@@ -115,13 +127,16 @@ class CorpusReader:
         test_fns = list(zip(*self.corpus.get_test_fns()))
         return self.load_batch(test_fns)
 
-    def untranscribed_batch(self):
-        """ Returns a batch with all the untranscribed data. """
+    def untranscribed_batch_gen(self):
+        """ A batch generator for all the untranscribed data. """
 
-        feat_fn_batch = self.corpus.get_untranscribed_fns()
-        batch_inputs, batch_inputs_lens = utils.load_batch_x(feat_fn_batch,
+        feat_fns = self.corpus.get_untranscribed_fns()
+        fn_batches = self.make_batches(feat_fns)
+
+        for fn_batch in fn_batches:
+            batch_inputs, batch_inputs_lens = utils.load_batch_x(fn_batch,
                                                              flatten=False)
-        return batch_inputs, batch_inputs_lens, feat_fn_batch
+            yield batch_inputs, batch_inputs_lens, fn_batch
 
     def human_readable_hyp_ref(self, dense_decoded, dense_y):
         """ Returns a human readable version of the hypothesis for manual
