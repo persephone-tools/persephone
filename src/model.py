@@ -197,8 +197,8 @@ class Model:
             with open(os.path.join(hyps_dir, "test_per"), "w") as per_f:
                 print("Test PER: %f, tf LER: %f" % (test_per, test_ler), file=per_f)
 
-    def train(self, early_stopping_steps=10, min_epochs=30, max_ler=1.0,
-              restore_model_path=None):
+    def train(self, early_stopping_steps=10, min_epochs=30, max_valid_ler=1.0,
+              max_train_ler=0.3, restore_model_path=None):
         """ Train the model.
 
             batch_size: The number of utterances in each batch.
@@ -325,13 +325,15 @@ class Model:
                 if steps_since_last_record >= early_stopping_steps:
                     if epoch >= min_epochs:
                         # Then we've done the minimum number of epochs.
-                        if valid_ler < max_ler:
+                        if valid_ler <= max_valid_ler and ler <= max_train_ler:
                             # Then training error has moved sufficiently
                             # towards convergence.
                             print("""Stopping since best validation score hasn't been
                                   beaten in %d epochs and at least %d have been
-                                  done, and the valid ler (%d) is below %d""" %
-                                  (early_stopping_steps, min_epochs, valid_ler, max_ler),
+                                  done. The valid ler (%d) is below %d and 
+                                  the train ler (%d) is below %d.""" %
+                                  (early_stopping_steps, min_epochs, valid_ler,
+                                  max_valid_ler, ler, max_train_ler),
                                   file=out_file, flush=True)
                             with open(os.path.join(self.exp_dir, "best_scores.txt"), "w") as best_f:
                                 print(best_epoch_str, file=best_f, flush=True)

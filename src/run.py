@@ -95,7 +95,7 @@ def scaling_graph(exp_dir):
                 for i in range(num_runs):
                     train(long_exp_dir, "na", feat_type, label_type, 3, 250,
                           train_rec_type="text", num_train=num_train,
-                          max_ler=0.6)
+                          max_train_ler=0.1, max_valid_ler=0.7)
 
 def rerun_storyfoldxv(exp_dir):
 
@@ -112,7 +112,7 @@ def rerun_storyfoldxv(exp_dir):
                 print("", file=out_f, flush=True)
 
             train(exp_dir, "na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
-                   valid_story=valid_text, test_story=test_text, max_ler=0.5)
+                   valid_story=valid_text, test_story=test_text, max_valid_ler=0.5)
 
 def story_fold_cross_validation(exp_dir):
 
@@ -134,7 +134,7 @@ def train(exp_dir, language, feat_type, label_type,
           num_train=None,
           train_rec_type="text_and_wordlist",
           valid_story=None, test_story=None,
-          min_epochs=30, max_ler=1.0):
+          min_epochs=30, max_valid_ler=1.0, max_train_ler=0.2):
     """ Run an experiment. """
 
     sub_exp_dir = prep_sub_exp_dir(exp_dir)
@@ -176,7 +176,9 @@ def train(exp_dir, language, feat_type, label_type,
                           decoding_merge_repeated=(False if
                                                    label_type=="tones"
                                                    else True))
-    model.train(min_epochs=min_epochs, max_ler=max_ler)
+    model.train(min_epochs=min_epochs,
+                max_valid_ler=max_valid_ler,
+                max_train_ler=max_train_ler)
 
     try:
         with open(os.path.join(sub_exp_dir, "train_desc2.txt"), "w") as desc_f:
