@@ -79,18 +79,21 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
     exp_dir = prep_exp_dir()
-    #scaling_graph(exp_dir)
-    rerun_storyfoldxv(exp_dir)
+    scaling_graph(exp_dir)
+    #rerun_storyfoldxv(exp_dir)
 
 def scaling_graph(exp_dir):
 
     num_runs = 3
     num_trains = [128,256,512,1024,2048]
-    feat_types = ["fbank_and_pitch", "fbank"]
-    labels = ["phonemes", "phonemes_and_tones"]
+    #feat_types = ["fbank_and_pitch", "fbank"]
+    #label_types = ["phonemes", "phonemes_and_tones"]
+
+    feat_types = ["fbank", "pitch", "fbank_and_pitch", "phonemes_onehot"]
+    label_types = ["tones"]
 
     for feat_type in feat_types:
-        for label_type in labels:
+        for label_type in label_types:
             for num_train in num_trains:
                 long_exp_dir = os.path.join(exp_dir, feat_type, label_type,
                                             str(num_train))
@@ -98,7 +101,7 @@ def scaling_graph(exp_dir):
                 for i in range(num_runs):
                     train(long_exp_dir, "na", feat_type, label_type, 3, 250,
                           train_rec_type="text", num_train=num_train,
-                          max_train_ler=0.1, max_valid_ler=0.7)
+                          max_train_ler=0.2, max_valid_ler=0.7)
 
 def rerun_storyfoldxv(exp_dir):
 
