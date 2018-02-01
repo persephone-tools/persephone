@@ -15,6 +15,9 @@ import config
 
 OPENFST_PATH = config.OPENFST_BIN_PATH
 
+allow_growth_config = tf.ConfigProto()
+allow_growth_config.gpu_options.allow_growth=True
+
 class Model:
     """ Generic model for our ASR tasks. """
 
@@ -256,7 +259,7 @@ class Model:
 
         saver = tf.train.Saver()
 
-        sess = tf.Session()
+        sess = tf.Session(config=allow_growth_config)
 
         if restore_model_path:
             saver.restore(sess, restore_model_path)
