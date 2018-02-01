@@ -10,7 +10,7 @@ from git import Repo
 
 import config
 import rnn_ctc
-#import datasets.na
+import datasets.na
 #import datasets.griko
 #import datasets.chatino
 #import datasets.kunwinjku
@@ -79,8 +79,8 @@ def run():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
     exp_dir = prep_exp_dir()
-    #scaling_graph(exp_dir, num_train=512)
-    scaling_graph(exp_dir)
+    #scaling_graph(exp_dir)
+    rerun_storyfoldxv(exp_dir)
 
 def scaling_graph(exp_dir):
 
@@ -102,10 +102,10 @@ def scaling_graph(exp_dir):
 
 def rerun_storyfoldxv(exp_dir):
 
-    valid_test = [('crdo-NRU_F4_RENAMING', 'crdo-NRU_F4_HOUSEBUILDING'),
-                  ('crdo-NRU_F4_TRADER_AND_HIS_SON', 'crdo-NRU_F4_RENAMING'),
-                  ('crdo-NRU_F4_ELDERS3', 'crdo-NRU_F4_BURIEDALIVE3'),
-                  ('crdo-NRU_F4_BURIEDALIVE2', 'crdo-NRU_F4_CARAVANS')]
+    valid_test = [('crdo-NRU_F4_RENAMING', 'crdo-NRU_F4_HOUSEBUILDING')]#,
+    #              ('crdo-NRU_F4_TRADER_AND_HIS_SON', 'crdo-NRU_F4_RENAMING'),
+    #              ('crdo-NRU_F4_ELDERS3', 'crdo-NRU_F4_BURIEDALIVE3'),
+    #              ('crdo-NRU_F4_BURIEDALIVE2', 'crdo-NRU_F4_CARAVANS')]
 
     with open(join(exp_dir, "storyfold_crossvalidation.txt"), "w") as f:
         for valid_text, test_text in valid_test:
@@ -115,7 +115,8 @@ def rerun_storyfoldxv(exp_dir):
                 print("", file=out_f, flush=True)
 
             train(exp_dir, "na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
-                   valid_story=valid_text, test_story=test_text, max_valid_ler=0.5)
+                   valid_story=valid_text, test_story=test_text,
+                   max_valid_ler=0.5, max_train_ler=0.1)
 
 def story_fold_cross_validation(exp_dir):
 

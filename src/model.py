@@ -275,7 +275,7 @@ class Model:
             train_ler_total = 0
             batch_i = None
             for batch_i, batch in enumerate(batch_gen):
-                print("\tBatch %d" % batch_i)
+                #print("\tBatch %d" % batch_i)
                 batch_x, batch_x_lens, batch_y = batch
 
                 feed_dict = {self.batch_x: batch_x,
