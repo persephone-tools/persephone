@@ -23,6 +23,6 @@ setup(name='persephone',
            'numpy',
            'python-speech-features',
            'scipy',
-           'tensorflow-gpu',
+           'tensorflow',
       ],
 )
