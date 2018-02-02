@@ -19,6 +19,7 @@ setup(name='persephone',
       ],
       keywords='',
       install_requires=[
+           'ipython',
            'GitPython',
            'nltk',
            'numpy',
