@@ -18,7 +18,7 @@ The code has been tested on Mac and Linux systems. It hasn't yet been tested on 
 
 Ensure Python 3 is installed. You will also need to install ffmpeg, for your convienence we have an install script for Ubuntu.
 
-To install the Ubuntu binaries, run `./bootstrap_ubuntu.sh` to install ffmpeg pacakges.
+To install the Ubuntu binaries, run `./bootstrap_ubuntu.sh` to install ffmpeg packages.
 
 On MacOS we suggest installing via Homebrew with `brew install ffmpeg`
 
@@ -29,16 +29,15 @@ We now need to set up a virtual environment and install the library.
 $ python3 -m virtualenv -p python3 persephone-venv
 $ source persephone-venv/bin/activate
 $ pip install -U pip
-$ pip install git@github.com:oadams/persephone.git
+$ pip install git+git://github.com/oadams/persephone.git
 ```
-
 (This library can be installed system-wide but it is recommended to install in a virtualenv.)
 
 ### 2. Get the example data
 
 Currently the tool assumes each utterance is in its own audio file, and that for each utterance in the training set there is a corresponding transcription file with phonemes (or perhaps characters) delimited by spaces. I've uploaded an example dataset that includes some Yongning Na data that has already been preprocessed. We'll use this example dataset in this tutorial. Once we confirm that the software itself is working on your computer, we can discuss preprocessing of your own data.
 
-Create a working directory (for storage of the data and running experiments):
+Create a working directory for storage of the data and running experiments:
 
 ```
 mkdir persephone-tutorial/
@@ -50,7 +49,7 @@ Get the data [here](https://cloudstor.aarnet.edu.au/sender/?s=download&token=b67
 
 Unzip `na_example.zip`. There should now be a directory `na_example/`, with
 subdirfectories `feat/` and `label/`. You can put `na_example` anywhere, but
-for the rest of this tutorial I assume it is in `persephone-tutorial/data/na_example/`.
+for the rest of this tutorial I assume it is in the working directory: `persephone-tutorial/data/na_example/`.
 
 ### 3. Running an experiment
 
