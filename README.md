@@ -29,7 +29,7 @@ $ cd persephone
 
 We now need to set up some dependencies in a virtual environment.
 ```
-$ virtualenv -p python3 venv3
+$ python3 -m virtualenv -p python3 venv3
 $ source venv3/bin/activate
 $ pip install -r requirements.txt
 ```
