@@ -16,23 +16,22 @@ This guide is written to help you get the tool working on your machine. We will 
 
 The code has been tested on Mac and Linux systems. It hasn't yet been tested on Windows.
 
-Ensure Python 3, ffmpeg and git have been installed. These should be available for your operating system and can be installed via your package manager.
+Ensure Python 3 is installed. You will also need to install ffmpeg, for your convienence we have an install script for Ubuntu.
+
+To install the Ubuntu binaries, run `./bootstrap_ubuntu.sh` to install ffmpeg pacakges.
+
+On MacOS we suggest installing via Homebrew with `brew install ffmpeg`
 
 For now you must open up a terminal to enter commands at the command line. (The commands below are prefixed with a "$". Don't enter the "$", just whatever comes afterwards).
 
-Fetch the latest code:
-
-```
-$ git clone git@github.com:oadams/persephone.git
-$ cd persephone
-```
-
-We now need to set up some dependencies in a virtual environment.
+We now need to set up a virtual environment and install the library.
 ```
 $ python3 -m virtualenv -p python3 venv3
 $ source venv3/bin/activate
-$ pip install -r requirements.txt
+$ pip install git@github.com:oadams/persephone.git
 ```
+
+(This library can be installed system-wide but it is recommended to install in a virtualenv.)
 
 ### 2. Get the example data
 

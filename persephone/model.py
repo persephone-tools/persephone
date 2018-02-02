@@ -9,9 +9,9 @@ from operator import itemgetter
 import numpy as np
 import tensorflow as tf
 
-import utils
-import lattice
-import config
+from . import utils
+from . import lattice
+from . import config
 
 OPENFST_PATH = config.OPENFST_BIN_PATH
 

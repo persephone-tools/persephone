@@ -8,8 +8,9 @@ import subprocess
 
 import tensorflow as tf
 
-from corpus_reader import CorpusReader
-import config
+from .corpus_reader import CorpusReader
+
+from . import config
 
 def test_sampling():
     """ As a proof of concept, first we want to sample paths from a trained CTC
