@@ -4,7 +4,7 @@ import os
 import numpy as np
 import tensorflow as tf
 
-import model
+from . import model
 
 def lstm_cell(hidden_size):
     """ Wrapper function to create an LSTM cell. """

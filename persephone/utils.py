@@ -6,9 +6,10 @@ import numpy as np
 
 from nltk.metrics import distance
 
-import config
 import subprocess
 from subprocess import PIPE
+
+from . import config
 
 def target_list_to_sparse_tensor(target_list):
     """ Make tensorflow SparseTensor from list of targets, with each element in

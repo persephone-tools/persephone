@@ -8,17 +8,16 @@ import sys
 
 from git import Repo
 
-import config
-import rnn_ctc
-#import datasets.na
-#import datasets.griko
-#import datasets.chatino
-#import datasets.kunwinjku
-#import datasets.timit
-#import datasets.japhug
-#import datasets.babel
-from corpus_reader import CorpusReader
-
+from . import config
+from . import rnn_ctc
+#from .import datasets.na
+#from .import datasets.griko
+#from .import datasets.chatino
+#from .import datasets.kunwinjku
+#from .import datasets.timit
+#from .import datasets.japhug
+#from .import datasets.babel
+from .corpus_reader import CorpusReader
 
 EXP_DIR = config.EXP_DIR
 

@@ -7,7 +7,7 @@ import numpy as np
 import python_speech_features
 import scipy.io.wavfile as wav
 
-import config
+from . import config
 
 def extract_energy(rate, sig):
     """ Extracts the energy of frames. """
