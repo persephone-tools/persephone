@@ -90,7 +90,7 @@ def scaling_graph(exp_dir):
     #label_types = ["phonemes", "phonemes_and_tones"]
 
     feat_types = ["fbank", "pitch", "fbank_and_pitch", "phonemes_onehot"]
-    label_types = ["tones"]
+    label_types = ["tones_notgm"]
 
     for feat_type in feat_types:
         for label_type in label_types:
@@ -101,7 +101,7 @@ def scaling_graph(exp_dir):
                 for i in range(num_runs):
                     train(long_exp_dir, "na", feat_type, label_type, 3, 250,
                           train_rec_type="text", num_train=num_train,
-                          max_train_ler=0.2, max_valid_ler=0.7)
+                          max_train_ler=0.7, max_valid_ler=0.7)
 
 def rerun_storyfoldxv(exp_dir):
 
