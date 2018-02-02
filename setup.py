@@ -18,5 +18,11 @@ setup(name='persephone',
           'Programming Language :: Python :: 3.6',
       ],
       keywords='',
-      install_requires=[''],
+      install_requires=[
+           'nltk',
+           'numpy',
+           'python-speech-features',
+           'scipy',
+           'tensorflow-gpu',
+      ],
 )
