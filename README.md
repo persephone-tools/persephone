@@ -58,9 +58,9 @@ One way to conduct experiments is to run the code from the iPython interpreter. 
 
 ```
 $ ipython
-> import corpus
+> from persephone import corpus
 > corp = corpus.ReadyCorpus("data/na_example")
-> import run
+> from persephone import run
 > run.train_ready(corp)
 ```
 
