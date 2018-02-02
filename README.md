@@ -26,8 +26,9 @@ For now you must open up a terminal to enter commands at the command line. (The 
 
 We now need to set up a virtual environment and install the library.
 ```
-$ python3 -m virtualenv -p python3 venv3
-$ source venv3/bin/activate
+$ python3 -m virtualenv -p python3 persephone-venv
+$ source persephone-venv/bin/activate
+$ pip install -U pip
 $ pip install git@github.com:oadams/persephone.git
 ```
 
@@ -37,19 +38,28 @@ $ pip install git@github.com:oadams/persephone.git
 
 Currently the tool assumes each utterance is in its own audio file, and that for each utterance in the training set there is a corresponding transcription file with phonemes (or perhaps characters) delimited by spaces. I've uploaded an example dataset that includes some Yongning Na data that has already been preprocessed. We'll use this example dataset in this tutorial. Once we confirm that the software itself is working on your computer, we can discuss preprocessing of your own data.
 
+Create a working directory (for storage of the data and running experiments):
+
+```
+mkdir persephone-tutorial/
+cd persephone-tutorial/
+mkdir data
+```
+
 Get the data [here](https://cloudstor.aarnet.edu.au/sender/?s=download&token=b6789ee3-bbcb-7f92-2f38-18ffc1086817)
 
-Unzip `na_example.zip`. There should now be a directory `na_example/`, with subdirfectories `feat/` and `label/`. You can put `na_example` anywhere, but for the rest of this tutorial I assume it is in `persephone/data/na_example/`.
+Unzip `na_example.zip`. There should now be a directory `na_example/`, with
+subdirfectories `feat/` and `label/`. You can put `na_example` anywhere, but
+for the rest of this tutorial I assume it is in `persephone-tutorial/data/na_example/`.
 
 ### 3. Running an experiment
 
 One way to conduct experiments is to run the code from the iPython interpreter. Back to the terminal:
 
 ```
-$ cd src
 $ ipython
 > import corpus
-> corp = corpus.ReadyCorpus("../data/na_example")
+> corp = corpus.ReadyCorpus("data/na_example")
 > import run
 > run.train_ready(corp)
 ```
@@ -69,4 +79,7 @@ The message may vary a bit depending on your CPU, but if it says "Batch 0" at th
 
 On the current settings it will train through batches 1 to 200 or so for at least 10 "epochs", potentially more. If you don't have a GPU then this will take quite a while, though you should notice it converging in performance within a couple hours on most personal computers.
 
-After a few epochs you can see how its going by going to opening up `persephone/exp/<experiment_number>/train_log.txt`. This will show you the error rates on the training set and the held-out validation set. In the `persephone/exp/<experiment_number>/decoded` subdirectory, you'll see the validation set reference in `refs` and the model hypotheses for each epoch in `epoch<epoch_num>_hyps`.
+After a few epochs you can see how its going by going to opening up
+`persephone-tutorial/exp/<experiment_number>/train_log.txt`. This will show you
+the error rates on the training set and the held-out validation set. In the
+`persephone-tutorial/exp/<experiment_number>/decoded` subdirectory, you'll see the validation set reference in `refs` and the model hypotheses for each epoch in `epoch<epoch_num>_hyps`.

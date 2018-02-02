@@ -19,7 +19,6 @@ from . import rnn_ctc
 #from .import datasets.babel
 from .corpus_reader import CorpusReader
 
-
 EXP_DIR = config.EXP_DIR
 
 def get_exp_dir_num(parent_dir):
