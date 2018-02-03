@@ -21,3 +21,7 @@ SOX_PATH = "/home/oadams/tools/sox-14.4.2/src/sox"
 OPENFST_BIN_PATH = "/home/oadams/tools/openfst-1.6.2/src/bin"
 FFMPEG_PATH = "/home/oadams/tools/ffmpeg-3.3/ffmpeg"
 KALDI_ROOT = "/home/oadams/tools/kaldi"
+
+# TODO: fix these stubs
+KUNWINJKU_STEVEN_DIR = ""
+EN_WORDS_PATH = ""
