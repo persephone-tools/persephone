@@ -5,8 +5,8 @@ from os.path import join
 import shutil
 import subprocess
 
-import config
-import feat_extract
+from .. import config
+from .. import feat_extract
 
 TIMIT_TGT_DIR = os.path.join(config.TGT_DIR, "timit")
 

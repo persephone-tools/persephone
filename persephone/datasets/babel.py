@@ -4,10 +4,10 @@ import os
 import shutil
 import subprocess
 
-from context_manager import cd
-import corpus
-import feat_extract
-import utils
+from ..context_manager import cd
+from .. import corpus
+from .. import feat_extract
+from .. import utils
 
 ORG_BABEL_DIR = ("/scratch/ariel/data/IARPA-BABEL-unpacked/oasis/projects/"
                  "nsf/cmu131/fmetze/babel-corpus/")

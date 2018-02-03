@@ -9,11 +9,11 @@ from xml.etree import ElementTree
 import numpy as np
 from sklearn import preprocessing
 
-import config
-import corpus
-import datasets.pangloss
-import feat_extract
-import utils
+from .. import config
+from .. import corpus
+from .. import feat_extract
+from .. import utils
+from . import pangloss
 
 ORG_DIR = config.JAPHUG_DIR
 TGT_DIR = os.path.join(config.TGT_DIR, "japhug")

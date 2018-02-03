@@ -5,9 +5,9 @@ import random
 
 from nltk.metrics import distance
 
-import corpus
-import utils
-import config
+from .. import corpus
+from .. import utils
+from .. import config
 
 random.seed(0)
 

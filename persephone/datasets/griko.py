@@ -4,9 +4,9 @@ import os
 import random
 from shutil import copyfile
 
-import config
-import corpus
-import feat_extract
+from .. import config
+from .. import corpus
+from .. import feat_extract
 
 ORG_DIR = config.GRIKO_DIR
 TGT_DIR = "../data/griko"

@@ -8,11 +8,11 @@ from subprocess import PIPE
 import numpy as np
 import xml.etree.ElementTree as ET
 
-import config
-import corpus
-import feat_extract
-import datasets.pangloss
-import utils
+from .. import config
+from .. import corpus
+from .. import feat_extract
+from . import pangloss
+from .. import utils
 
 ORG_DIR = config.NA_DIR
 # TODO eventually remove "new" when ALTA experiments are finished.

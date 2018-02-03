@@ -7,7 +7,7 @@ from os.path import join
 
 import pympi
 
-import config
+from .. import config
 
 ORG_DIR = config.KUNWINJKU_STEVEN_DIR
 TGT_DIR = join(config.TGT_DIR, "kunwinjku-steven")

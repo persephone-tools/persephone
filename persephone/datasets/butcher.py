@@ -10,10 +10,10 @@ import random
 
 from nltk_contrib.textgrid import TextGrid
 
-import config
-import corpus
-import feat_extract
-import utils
+from .. import config
+from .. import corpus
+from .. import feat_extract
+from .. import utils
 
 TGT_DIR = join(config.TGT_DIR, "butcher/kun")
 LABEL_DIR = join(TGT_DIR, "labels")

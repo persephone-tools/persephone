@@ -5,10 +5,10 @@ import os
 import random
 from shutil import copyfile
 
-import config
-import corpus
-import feat_extract
-import utils
+from .. import config
+from .. import corpus
+from .. import feat_extract
+from .. import utils
 
 ### Initialize path variables.###
 # Path to unpreprocessed Chatino data from GORILLA.
