@@ -10,32 +10,67 @@ We are happy to offer direct help to anyone who wants to use it. If you're havin
 
 ## Quickstart
 
-This guide is written to help you get the tool working on your machine. We will use a small example setup that involves training a phoneme transcription tool for [Yongning Na](http://lacito.vjf.cnrs.fr/pangloss/languages/Na_en.php). The example that we will run can be run on most personal computers without a graphics processing unit (GPU), since I've made the settings less computationally demanding than it would be for optimal transcription quality. Ideally you'd have access to a server with more memory and a GPU, but this isn't necessary.
+This guide is written to help you get the tool working on your machine. We will
+use a example setup that involves training a phoneme transcription tool
+for [Yongning Na](http://lacito.vjf.cnrs.fr/pangloss/languages/Na_en.php). For
+this we use a small (even by language
+documentation standards) sub-sampling of elicited speech of
+Yongning Na, a language of Southwestern China.
 
-### 1. Installation
+The example that we will run can be run on most personal computers without a
+graphics processing unit (GPU), since I've made the settings less
+computationally demanding than it would be for optimal transcription quality.
+Ideally you'd have access to a server with more memory and a GPU, but this
+isn't necessary.
 
 The code has been tested on Mac and Linux systems. It hasn't yet been tested on Windows.
 
-Ensure Python 3 is installed. You will also need to install ffmpeg, for your convienence we have an install script for Ubuntu.
+For now you must open up a terminal to enter commands at the command line. (The
+commands below are prefixed with a "$". Don't enter the "$", just whatever
+comes afterwards).
 
-To install the Ubuntu binaries, run `./bootstrap_ubuntu.sh` to install ffmpeg packages.
+### 1. Installation
 
-On MacOS we suggest installing via Homebrew with `brew install ffmpeg`
+#### Installation option 1: Using the Docker container
 
-For now you must open up a terminal to enter commands at the command line. (The commands below are prefixed with a "$". Don't enter the "$", just whatever comes afterwards).
+To simplify setup and system dependencies, a Docker container has been created.
+This just requires [Docker to be installed](https://docs.docker.com/install/).
+Once you have installed docker you can fetch our container with:
+
+```
+$ docker pull oadams/persephone
+```
+
+Then run it in interactive mode:
+
+```
+$ docker run -it oadams/persephone
+```
+
+This will place you in an environment where Persephone and its
+dependencies have been installed, along with the example Na data.
+
+#### Installation option 2: A "native" install
+
+Ensure Python 3 is installed.
+
+You will also need to install some system dependencies. For your convienence we
+have an install script for dependencies for Ubuntu. To install the Ubuntu
+binaries, run `./bootstrap_ubuntu.sh` to install ffmpeg packages. On MacOS we
+suggest installing via Homebrew with `brew install ffmpeg`.
 
 We now need to set up a virtual environment and install the library.
+
 ```
 $ python3 -m virtualenv -p python3 persephone-venv
 $ source persephone-venv/bin/activate
 $ pip install -U pip
 $ pip install git+git://github.com/oadams/persephone.git
 ```
+
 (This library can be installed system-wide but it is recommended to install in a virtualenv.)
 
-### 2. Get the example data
-
-Currently the tool assumes each utterance is in its own audio file, and that for each utterance in the training set there is a corresponding transcription file with phonemes (or perhaps characters) delimited by spaces. I've uploaded an example dataset that includes some Yongning Na data that has already been preprocessed. We'll use this example dataset in this tutorial. Once we confirm that the software itself is working on your computer, we can discuss preprocessing of your own data.
+I've uploaded an example dataset that includes some Yongning Na data that has already been preprocessed. We'll use this example dataset in this tutorial. Once we confirm that the software itself is working on your computer, we can discuss preprocessing of your own data.
 
 Create a working directory for storage of the data and running experiments:
 
@@ -51,7 +86,7 @@ Unzip `na_example.zip`. There should now be a directory `na_example/`, with
 subdirfectories `feat/` and `label/`. You can put `na_example` anywhere, but
 for the rest of this tutorial I assume it is in the working directory: `persephone-tutorial/data/na_example/`.
 
-### 3. Running an experiment
+### 2. Running an experiment
 
 One way to conduct experiments is to run the code from the iPython interpreter. Back to the terminal:
 
@@ -82,3 +117,5 @@ After a few epochs you can see how its going by going to opening up
 `persephone-tutorial/exp/<experiment_number>/train_log.txt`. This will show you
 the error rates on the training set and the held-out validation set. In the
 `persephone-tutorial/exp/<experiment_number>/decoded` subdirectory, you'll see the validation set reference in `refs` and the model hypotheses for each epoch in `epoch<epoch_num>_hyps`.
+
+Currently the tool assumes each utterance is in its own audio file, and that for each utterance in the training set there is a corresponding transcription file with phonemes (or perhaps characters) delimited by spaces.
