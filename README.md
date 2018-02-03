@@ -6,7 +6,10 @@ The goal of Persephone is to make state-of-the-art phonemic transcription access
 
 The tool is implemented in Python/Tensorflow with extensibility in mind. Currently just one model is implemented, which uses bidirectional LSTMs and the connectionist temporal classification (CTC) loss function.
 
-We are happy to offer direct help to anyone who wants to use it. If you're having trouble, contact Oliver Adams at oliver.adams@gmail.com. We are also very welcome to thoughts, constructive criticism, help with design and development and any pull requests you may have.
+We are happy to offer direct help to anyone who wants to use it. If you're
+having trouble, contact Oliver Adams at oliver.adams@gmail.com. We are also
+very welcome to thoughts, constructive criticism, help with design, development
+and documentation, along with any pull requests you may have.
 
 ## Quickstart
 
@@ -172,6 +175,37 @@ Current data formatting requirements:
   and unigraphs as long as they're tokenized in this format, demarcated with
   spaces.
 
+If your data observes this format then you can load it via the `ReadyCorpus` class.
+If your data does not observe this format, you have two options:
+
+1. Do your own separate preprocessing to get the data in this format. If you're
+not a programmer this is probably the best option for you. If you have ELAN
+files, this probably means using `persephone/scripts/split_eaf.py`.
+2. Create a Python class that inherits from `persephone.corpus.Corpus` (as does
+`ReadyCorpus`) and does all your preprocessing. The API (and thus
+documentation) for this is work in progress, but the key point is that
+`<corpusobject>.train_prefixes`, `<corpusobject>.valid_prefixes`, and
+`<corpusobject>.test_prefixes` are lists of prefixes for the relevant subset of
+the data. For now, look at `ReadyCorpus` in `persephone/corpus.py` for an
+example. For an example on a full dataset, see at `persephone/datasets/na.py`
+(beware: here be dragons).
+
+#### Creating validation and test sets
+
+Currently `ReadyCorpus` splits the supplied data into three sets (training,
+validation and test) in a 95:5:5 ratio. The training set is what your model is
+exposed to during training. Validation is a held-out set that is used to gauge
+during training how well the model is performing. Testing is what is used to
+quantitatively assess model performance after training is complete.
+
+When you first load your corpus, `ReadyCorpus` randomly allocates files to each
+of these subsets. If you'd like to do change the prefixes of which utterances
+are in in each set, modify `yourcorpus/valid_prefixes.txt` and
+`yourcorpus/test_prefixes.txt`. The training set consists of all the available
+utterances in neither of these text files.
+
+### 4. Miscellaneous Considerations
+
 #### On choosing an appropriate label granularity
 
 Question: Suprasegmentals like tone, glottalizzation, nasalization, and length are all
@@ -188,7 +222,7 @@ both approaches:
 1. Having features as part of the phoneme token. For example, a nasalized /o/
 becomes /õ/.
 2. Having a separate token that follows the phoneme. For example, a high
-tone /o˥/ becomes two tokens: o ˥.
+tone /o˥/ becomes two tokens: /o ˥/.
 
 Since there are many ways you can mix and match these, one
 consideration to keep in mind is how much larger the label vocabulary
@@ -202,5 +236,3 @@ different tones though, you might make that vowel vocabulary about 5
 times bigger by combining them into one token, so its less likely to
 be good (though who knows, it might still yield performance
 improvements).
-
-#### On creating validation and test sets.
