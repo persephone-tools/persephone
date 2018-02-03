@@ -1,4 +1,4 @@
-# Persephone v0.1.3
+# Persephone v0.1.4
 
 Persephone (/pərˈsɛfəni/) is an automatic phoneme transcription tool.
 Traditional speech recognition tools require a large pronunciation lexicon
