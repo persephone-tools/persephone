@@ -86,7 +86,7 @@ Unzip `na_example.zip`. There should now be a directory `na_example/`, with
 subdirfectories `feat/` and `label/`. You can put `na_example` anywhere, but
 for the rest of this tutorial I assume it is in the working directory: `persephone-tutorial/data/na_example/`.
 
-### 2. Running an experiment
+### 2. Training a toy Na model
 
 One way to conduct experiments is to run the code from the iPython interpreter. Back to the terminal:
 
@@ -114,8 +114,59 @@ The message may vary a bit depending on your CPU, but if it says "Batch 0" at th
 On the current settings it will train through batches 1 to 200 or so for at least 10 "epochs", potentially more. If you don't have a GPU then this will take quite a while, though you should notice it converging in performance within a couple hours on most personal computers.
 
 After a few epochs you can see how its going by going to opening up
-`persephone-tutorial/exp/<experiment_number>/train_log.txt`. This will show you
+`exp/<experiment_number>/train_log.txt`. This will show you
 the error rates on the training set and the held-out validation set. In the
-`persephone-tutorial/exp/<experiment_number>/decoded` subdirectory, you'll see the validation set reference in `refs` and the model hypotheses for each epoch in `epoch<epoch_num>_hyps`.
+`exp/<experiment_number>/decoded` subdirectory, you'll see the validation set reference in `refs` and the model hypotheses for each epoch in `epoch<epoch_num>_hyps`.
 
 Currently the tool assumes each utterance is in its own audio file, and that for each utterance in the training set there is a corresponding transcription file with phonemes (or perhaps characters) delimited by spaces.
+
+### 3. Using your own data.
+
+If you have gotten this far, congratulations! You're now ready to start using
+your own data. The example setup we created with the Na data illustrates a
+couple key points, including how your data should be formatted, and how you
+make the system read that data. In fact, if you format your data in the same
+way, you can create your own Persephone `Corpus` object with:
+
+```
+corp = corpus.ReadyCorpus("<your-corpus-directory>")
+```
+
+We describe the specifics below.
+
+#### Formatting your data
+
+Interfacing with data is a key bottleneck in useability for speech recognition
+systems. Providing a simple and flexible interface to your data is currently the
+most important priority for Persephone at the moment. This is a work in
+progress.
+
+Current data formatting requirements:
+	* Audio files are stored in `your-corpus/feat/`. A wide variety of audio
+	formats are supported.
+	* Transcriptions are stored in text files in `your-corpus/label/`
+	* Each audio file is short (ideally no longer than 10 seconds). There is a
+	script (`persephone/scripts/split_eafs.py`) added by Ben Foley to split
+	audio files into utterance-length units based on ELAN input files.
+	* Each audio file in `feat/` has a corresponding transcription file in
+	`label/` with the same *prefix* (the bit of the filename before the
+	extension). For
+	example, if there is `feat/utterance_one.wav` then there should be
+	`label/utterance_one.<extension>`. `<extension>` can be whatever you want,
+	but it should describe how the labelling is done. For example, if it is
+	phonemic then `feat/utterance_one.phonemes` is a meaningful filename.
+	* Each transcript file includes a space-delimited list of *labels* to
+	the model should learn to transcribe. For example, in
+	`data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.phonemes` contains
+		* l e dz ɯ z e l e dz ɯ z e
+	while data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.**phonemes_and_tones**
+	might contain:
+		* l e ˧ dz ɯ ˥ z e ˩ | l e ˧ dz ɯ ˥ z e ˩
+	Persephone is agnostic to what your chosen labels are. It simply tries to
+	figure out how to map speech to that labelling. These labels can be
+	multiple characters long: the spaces demarcate labels. They can be any
+	unicode characters.
+
+#### On choosing an appropriate label granularity.
+
+#### On creating validation and test sets.
