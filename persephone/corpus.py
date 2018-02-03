@@ -9,8 +9,8 @@ import random
 
 import numpy as np
 
-import feat_extract
-import utils
+from . import feat_extract
+from . import utils
 
 class AbstractCorpus(metaclass=abc.ABCMeta):
     "All interfaces to corpora are subclasses of this class."""

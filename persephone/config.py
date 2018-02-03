@@ -7,9 +7,9 @@ CHATINO_DIR = "/lt/work/oadams/chatino/CTP/"
 JAPHUG_DIR = "/lt/work/oadams/japhug/"
 NA_DIR = "/lt/work/oadams/Na/"
 # The directory where the preprocessed data will be held.
-TGT_DIR = "../data"
+TGT_DIR = "./data"
 # The path for experiments
-EXP_DIR = "../exp"
+EXP_DIR = "./exp"
 
 # The path to the sox tool for converting NIST format to WAVs.
 SOX_PATH = "/home/oadams/tools/sox-14.4.2/src/sox"

@@ -5,7 +5,7 @@ import random
 from nltk.metrics import distance
 import numpy as np
 
-import utils
+from . import utils
 
 class CorpusReader:
     """ Interfaces to the preprocessed corpora to read in train, valid, and
