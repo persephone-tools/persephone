@@ -1,4 +1,13 @@
-""" Configuration for some variables that may be system dependent. """
+""" Configuration for some variables that may be system dependent.
+
+Supply a settings.ini file to override values. The format of the file will
+have the following sections
+
+[PATHS]
+CORPORA_BASE_PATH = /my/path/to/corpora
+TARGET = /path/to/preprocessed/data
+EXPERIMENTS = /path/to/experiment/output
+"""
 import configparser
 import os
 
