@@ -8,7 +8,7 @@ setup(name='persephone',
       author='Oliver Adams',
       author_email='oliver.adams@gmail.com',
       license='GPLv3',
-      packages=['persephone'],
+      packages=['persephone', 'persephone.datasets'],
       classifiers = [
           'Development Status :: 4 - Beta',
           'Intended Audience :: Developers',
