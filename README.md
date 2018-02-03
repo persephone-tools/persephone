@@ -21,7 +21,9 @@ accessible to people involved in language documentation. Creating an
 easy-to-use user interface is central to this. The user interface and APIs are
 currently a work in progress. 
 
-The tool is implemented in Python/Tensorflow with extensibility in mind. Currently just one model is implemented, which uses bidirectional LSTMs and the connectionist temporal classification (CTC) loss function.
+The tool is implemented in Python/Tensorflow with extensibility in mind.
+Currently just one model is implemented, which uses bidirectional long
+short-term memory (LSTMs) and the connectionist temporal classification (CTC) loss function.
 
 We are happy to offer direct help to anyone who wants to use it. If you're
 having trouble, contact Oliver Adams at oliver.adams@gmail.com. We are also
