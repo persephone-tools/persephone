@@ -145,9 +145,9 @@ most important priority for Persephone at the moment. This is a work in
 progress.
 
 Current data formatting requirements:
-* Audio files are stored in `your-corpus/feat/`. A wide variety of audio
+* Audio files are stored in `<your-corpus>/feat/`. A wide variety of audio
   formats are supported.
-* Transcriptions are stored in text files in `your-corpus/label/`
+* Transcriptions are stored in text files in `<your-corpus>/label/`
 * Each audio file is short (ideally no longer than 10 seconds). There is a
   script (`persephone/scripts/split_eafs.py`) added by Ben Foley to split
   audio files into utterance-length units based on ELAN input files.
@@ -200,8 +200,8 @@ quantitatively assess model performance after training is complete.
 
 When you first load your corpus, `ReadyCorpus` randomly allocates files to each
 of these subsets. If you'd like to do change the prefixes of which utterances
-are in in each set, modify `yourcorpus/valid_prefixes.txt` and
-`yourcorpus/test_prefixes.txt`. The training set consists of all the available
+are in in each set, modify `<your-corpus>/valid_prefixes.txt` and
+`<your-corpus>/test_prefixes.txt`. The training set consists of all the available
 utterances in neither of these text files.
 
 ### 4. Miscellaneous Considerations
