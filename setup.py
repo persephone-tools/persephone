@@ -26,5 +26,7 @@ setup(name='persephone',
            'python-speech-features==0.6',
            'scipy==1.0.0',
            'tensorflow==1.4.1',
+           'scikit-learn==0.19.1',
+           'pympi-ling==1.69',
       ],
 )
