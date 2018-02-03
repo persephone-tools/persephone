@@ -8,7 +8,6 @@ import os
 from os.path import join
 import random
 
-from nltk_contrib.textgrid import TextGrid
 
 from .. import config
 from .. import corpus
@@ -25,6 +24,10 @@ def prepare_butcher_labels(label_dir=LABEL_DIR):
     """ Prepares target labels as phonemes """
     # TODO offer label format that is consistent with Steven's
     # data; perhaps by using the orthographic form and lowercasing.
+
+    from nltk_contrib.textgrid import TextGrid
+    ## TODO: change import to use
+    # from pympi.praat import TextGrid
 
     if not os.path.isdir(label_dir):
         os.makedirs(label_dir)
