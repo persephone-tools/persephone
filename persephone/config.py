@@ -1,6 +1,12 @@
-""" Some variables that may be system dependent. """
+""" Configuration for some variables that may be system dependent. """
+import configparser
 import os
-PERSONAL_CORPORA_BASE_DIR = "/lt/work/oadams/"
+
+
+config_file = configparser.ConfigParser()
+config_file.read('settings.ini')
+
+PERSONAL_CORPORA_BASE_DIR = config_file.get(CORPORA_BASE_PATH, "/lt/work/oadams/")
 
 # The directory of the original source corpora, un-preprocessed.
 # Shared across research group
