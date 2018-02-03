@@ -6,16 +6,17 @@ import os
 config_file = configparser.ConfigParser()
 config_file.read('settings.ini')
 
-PERSONAL_CORPORA_BASE_DIR = config_file.get(CORPORA_BASE_PATH, "/lt/work/oadams/")
+CORPORA_BASE_PATH = config_file.get("PATHS", "CORPORA_BASE_PATH",
+                                    fallback="/lt/work/oadams/")
 
 # The directory of the original source corpora, un-preprocessed.
 # Shared across research group
 TIMIT_ORG_DIR = "/lt/data/timit/timit/"
 # Personal corpora files
-GRIKO_DIR = os.path.join(PERSONAL_CORPORA_BASE_DIR, "griko-data")
-CHATINO_DIR = os.path.join(PERSONAL_CORPORA_BASE_DIR, "chatino", "CTP")
-JAPHUG_DIR = os.path.join(PERSONAL_CORPORA_BASE_DIR, "japhug")
-NA_DIR = os.path.join(PERSONAL_CORPORA_BASE_DIR, "Na")
+GRIKO_DIR = os.path.join(CORPORA_BASE_PATH, "griko-data")
+CHATINO_DIR = os.path.join(CORPORA_BASE_PATH, "chatino", "CTP")
+JAPHUG_DIR = os.path.join(CORPORA_BASE_PATH, "japhug")
+NA_DIR = os.path.join(CORPORA_BASE_PATH, "Na")
 
 # The directory where the preprocessed data will be held.
 TGT_DIR = "./data"
