@@ -145,16 +145,9 @@ def from_dir(dirname, feat_type):
 
 def convert_wav(org_wav_fn, tgt_wav_fn):
     """ Converts the wav into a 16bit mono 16000Hz wav."""
-
-    home = os.path.expanduser("~")
-    try:
-        args = ["ffmpeg",
-                "-i", org_wav_fn, "-ac", "1", "-ar", "16000", tgt_wav_fn]
-        subprocess.run(args)
-    except FileNotFoundError:
-        args = [config.FFMPEG_PATH,
-                "-i", org_wav_fn, "-ac", "1", "-ar", "16000", tgt_wav_fn]
-        subprocess.run(args)
+    args = ["ffmpeg",
+            "-i", org_wav_fn, "-ac", "1", "-ar", "16000", tgt_wav_fn]
+    subprocess.run(args)
 
 
 def kaldi_pitch(wav_dir, feat_dir):
@@ -178,7 +171,7 @@ def kaldi_pitch(wav_dir, feat_dir):
             print(prefix, os.path.join(feat_dir, prefix + ".pitch.txt"), file=pitch_scp)
 
     # Call Kaldi pitch feat extraction
-    args = [os.path.join(config.KALDI_ROOT, "src/featbin/compute-kaldi-pitch-feats"),
+    args = ["compute-kaldi-pitch-feats",
             "scp:%s" % (wav_scp_path), "scp,t:%s" % pitch_scp_path]
     subprocess.run(args)
 
