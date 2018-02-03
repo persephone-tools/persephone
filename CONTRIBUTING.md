@@ -38,9 +38,10 @@ main repository on GitHub, clone, and develop on a branch. Steps:
    $ git push -u origin my-feature
    ```
 
-5. Go to the GitHub web page of your fork of the Persephone repo.
-Click the 'Pull request' button to send your changes to the project's maintainers for
-review. This will send an email to the maintainers.
+5. Go to the GitHub web page of your fork of the Persephone repo.  Click the
+'Pull request' button to send your changes to the project's maintainers for
+review. Please send pull requests to development branch. This will send an
+email to the maintainers. 
 
 (If you are unfamiliar with Git, please look up the
 [Git documentation](https://git-scm.com/documentation) on the web, or ask a friend or another contributor for help.)
