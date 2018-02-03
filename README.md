@@ -120,7 +120,7 @@ the error rates on the training set and the held-out validation set. In the
 
 Currently the tool assumes each utterance is in its own audio file, and that for each utterance in the training set there is a corresponding transcription file with phonemes (or perhaps characters) delimited by spaces.
 
-### 3. Using your own data.
+### 3. Using your own data
 
 If you have gotten this far, congratulations! You're now ready to start using
 your own data. The example setup we created with the Na data illustrates a
@@ -142,31 +142,65 @@ most important priority for Persephone at the moment. This is a work in
 progress.
 
 Current data formatting requirements:
-	* Audio files are stored in `your-corpus/feat/`. A wide variety of audio
-	formats are supported.
-	* Transcriptions are stored in text files in `your-corpus/label/`
-	* Each audio file is short (ideally no longer than 10 seconds). There is a
-	script (`persephone/scripts/split_eafs.py`) added by Ben Foley to split
-	audio files into utterance-length units based on ELAN input files.
-	* Each audio file in `feat/` has a corresponding transcription file in
-	`label/` with the same *prefix* (the bit of the filename before the
-	extension). For
-	example, if there is `feat/utterance_one.wav` then there should be
-	`label/utterance_one.<extension>`. `<extension>` can be whatever you want,
-	but it should describe how the labelling is done. For example, if it is
-	phonemic then `feat/utterance_one.phonemes` is a meaningful filename.
-	* Each transcript file includes a space-delimited list of *labels* to
-	the model should learn to transcribe. For example, in
-	`data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.phonemes` contains
-		* l e dz ɯ z e l e dz ɯ z e
-	while data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.**phonemes_and_tones**
-	might contain:
-		* l e ˧ dz ɯ ˥ z e ˩ | l e ˧ dz ɯ ˥ z e ˩
-	Persephone is agnostic to what your chosen labels are. It simply tries to
-	figure out how to map speech to that labelling. These labels can be
-	multiple characters long: the spaces demarcate labels. They can be any
-	unicode characters.
+* Audio files are stored in `your-corpus/feat/`. A wide variety of audio
+  formats are supported.
+* Transcriptions are stored in text files in `your-corpus/label/`
+* Each audio file is short (ideally no longer than 10 seconds). There is a
+  script (`persephone/scripts/split_eafs.py`) added by Ben Foley to split
+  audio files into utterance-length units based on ELAN input files.
+* Each audio file in `feat/` has a corresponding transcription file in
+  `label/` with the same *prefix* (the bit of the filename before the
+  extension). For
+  example, if there is `feat/utterance_one.wav` then there should be
+  `label/utterance_one.<extension>`. `<extension>` can be whatever you want,
+  but it should describe how the labelling is done. For example, if it is
+  phonemic then `feat/utterance_one.phonemes` is a meaningful filename.
+* Each transcript file includes a space-delimited list of *labels* to
+  the model should learn to transcribe. For example:
+  * `data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.phonemes` contains
+    `l e dz ɯ z e l e dz ɯ z e`
+  * `data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.phonemes_and_tones`
+    might contain: `l e ˧ dz ɯ ˥ z e ˩ | l e ˧ dz ɯ ˥ z e ˩`
+* Persephone is agnostic to what your chosen labels are. It simply tries to
+  figure out how to map speech to that labelling. These labels can be
+  multiple characters long: the spaces demarcate labels. Labels can be any
+  unicode character(s).
+* Spaces are used to delimit the units that the tool predicts. Typically these
+  units are phonemes or tones, however they could also just be orthographic
+  characters (though performance is likely to be a bit lower: consider trying
+  to transcribe "$100"). The model can't tell the difference between digraphs
+  and unigraphs as long as they're tokenized in this format, demarcated with
+  spaces.
 
-#### On choosing an appropriate label granularity.
+#### On choosing an appropriate label granularity
+
+Question: Suprasegmentals like tone, glottalizzation, nasalization, and length are all
+phonemic in the language I am using. Do they belong in one grouping or
+separately?
+
+Answer: I'm wary of making sweeping claims about the best approach to handle all these
+sorts of phenomena that will realise themselves differently between languages,
+since I'm neither a linguist nor do I have strong understanding for what
+features the model will learn each situation. (Regarding tones, the literature
+on this is also inconclusive in general). The best thing is to empirically test
+both approaches:
+
+1. Having features as part of the phoneme token. For example, a nasalized /o/
+becomes /õ/.
+2. Having a separate token that follows the phoneme. For example, a high
+tone /o˥/ becomes two tokens: o ˥.
+
+Since there are many ways you can mix and match these, one
+consideration to keep in mind is how much larger the label vocabulary
+becomes by merging two tokens into one. You don't want this
+vocabulary to become too big because then its harder to learn
+features common to different tokens, and the model is less likely to
+pick the right one even if it's on the right track. In the case of
+vowel nasalization, maybe you only double the number of vowels, so it
+might be worth having merged tokens for that. If there are 5
+different tones though, you might make that vowel vocabulary about 5
+times bigger by combining them into one token, so its less likely to
+be good (though who knows, it might still yield performance
+improvements).
 
 #### On creating validation and test sets.
