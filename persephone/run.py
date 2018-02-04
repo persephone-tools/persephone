@@ -19,6 +19,7 @@ from .import datasets.na
 #from .import datasets.babel
 from .corpus_reader import CorpusReader
 from .exceptions import PersephoneException, DirtyRepoException
+from .utils import is_git_directory_clean
 
 EXP_DIR = config.EXP_DIR
 
@@ -64,21 +65,6 @@ def prep_exp_dir():
         print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
 
     return exp_dir
-
-
-def is_git_directory_clean(path_to_repo, search_parent_dirs):
-    """
-    Check that the git working directory is in a clean state
-    and raise exceptions if not.
-    :path_to_repo: The path of the git repo
-    """
-    repo = Repo(path_to_repo, search_parent_dirs)
-    if repo.untracked_files:
-        raise DirtyRepoException("Untracked files. Commit them first.")
-    # If there are changes to already tracked files
-    if repo.is_dirty():
-        raise DirtyRepoException("Changes to the index or working tree."
-                                 "Commit them first .")
 
 
 def run():
