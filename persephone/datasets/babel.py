@@ -8,6 +8,7 @@ from ..context_manager import cd
 from .. import corpus
 from .. import feat_extract
 from .. import utils
+from ..exceptions import PersephoneException
 
 ORG_BABEL_DIR = ("/scratch/ariel/data/IARPA-BABEL-unpacked/oasis/projects/"
                  "nsf/cmu131/fmetze/babel-corpus/")
@@ -166,7 +167,7 @@ def feat_extraction(langs, feat_type):
     """ Extracts features from all the utterances. """
 
     if feat_type != "log_mel_filterbank":
-        raise Exception("Feature type %s not implemented." % feat_type)
+        raise PersephoneException("Feature type %s not implemented." % feat_type)
 
     count = 0
     utters_dir = os.path.join(WORK_BABEL_DIR, "utters")
@@ -217,7 +218,7 @@ class Corpus(corpus.AbstractCorpus):
                  max_samples=1000, scripted=False):
 
         if tgt_type != "phn":
-            raise Exception("Target type %s not implemented." % tgt_type)
+            raise PersephoneException("Target type %s not implemented." % tgt_type)
 
         dev_utters = []
         eval_utters = []

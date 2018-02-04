@@ -8,6 +8,7 @@ import python_speech_features
 import scipy.io.wavfile as wav
 
 from . import config
+from .exceptions import PersephoneException
 
 def extract_energy(rate, sig):
     """ Extracts the energy of frames. """
@@ -72,7 +73,7 @@ def combine_fbank_and_pitch(feat_dir, prefix):
     elif len(fbanks.shape) == 2:
         pass
     else:
-        raise Exception("Invalid fbank array shape %s" % (str(fbanks.shape)))
+        raise PersephoneException("Invalid fbank array shape %s" % (str(fbanks.shape)))
 
     diff = len(fbanks) - len(pitches)
 
@@ -84,7 +85,7 @@ def combine_fbank_and_pitch(feat_dir, prefix):
     # features goes anyway). But I'm currently keeping it this way for
     # experimental consistency.
     if diff > 2:
-        raise Exception("Excessive difference in number of frames. %d" % diff)
+        raise PersephoneException("Excessive difference in number of frames. %d" % diff)
     elif diff > 0:
         pitches = np.concatenate((np.array([[0,0]]*(len(fbanks) - len(pitches))), pitches))
     fbank_pitch_feats = np.concatenate((fbanks, pitches), axis=1)
@@ -141,7 +142,7 @@ def from_dir(dirname, feat_type):
             elif feat_type == "mfcc13_d":
                 feature_extraction(wav)
             else:
-                raise Exception("Feature type not found: %s" % feat_type)
+                raise PersephoneException("Feature type not found: %s" % feat_type)
 
 def convert_wav(org_wav_fn, tgt_wav_fn):
     """ Converts the wav into a 16bit mono 16000Hz wav."""

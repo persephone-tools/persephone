@@ -8,8 +8,8 @@ from typing import Iterable
 def segment_into_chars(utterance: str) -> str:
     """ Segments an utterance into space delimited characters. """
 
-    if type(utterance) != str:
-        raise TypeError("Input type must be a string.")
+    if not isinstance(utterance, str):
+        raise TypeError("Input type must be a string. Got {}.".format(type(utterance)))
 
     utterance.strip()
     utterance = utterance.replace(" ", "")
@@ -29,8 +29,8 @@ def segment_into_tokens(utterance: str, token_inventory: Iterable[str]):
     on characters with segment_into_chars()
     """
 
-    if type(utterance) != str:
-        raise TypeError("Input type must be a string.")
+    if not isinstance(utterance, str):
+        raise TypeError("Input type must be a string. Got {}.".format(type(utterance)))
 
     # Token inventory needs to be hashable for speed
     token_inventory = set(token_inventory)

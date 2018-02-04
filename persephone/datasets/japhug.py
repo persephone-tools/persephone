@@ -13,6 +13,8 @@ from .. import config
 from .. import corpus
 from .. import feat_extract
 from .. import utils
+from ..exceptions import PersephoneException
+
 from . import pangloss
 
 ORG_DIR = config.JAPHUG_DIR
@@ -87,7 +89,7 @@ def extract_phonemes(sent, tgt_fn):
                     print("original sentence:\n\t", org_sent)
                     print("Preprocessed sentence:\n\t", sent)
                     print("Word remainder:\n\t", word[i:])
-                    raise Exception("Failed to segment word: %s" % word)
+                    raise PersephoneException("Failed to segment word: %s" % word)
     with open(tgt_fn, "w") as out_f:
         print(" ".join(phonemes), file=out_f)
 

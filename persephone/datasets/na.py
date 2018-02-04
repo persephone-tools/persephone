@@ -11,8 +11,9 @@ import xml.etree.ElementTree as ET
 from .. import config
 from .. import corpus
 from .. import feat_extract
-from . import pangloss
 from .. import utils
+from ..exceptions import PersephoneException
+from . import pangloss
 
 ORG_DIR = config.NA_DIR
 # TODO eventually remove "new" when ALTA experiments are finished.
@@ -94,7 +95,7 @@ def preprocess_na(sent, label_type):
         tones = True
         tgm = False
     else:
-        raise Exception("Unrecognized label type: %s" % label_type)
+        raise ValueError("Unrecognized label type: %s" % label_type)
 
     def pop_phoneme(sentence):
         # TODO desperately needs refactoring
@@ -178,7 +179,7 @@ def preprocess_na(sent, label_type):
             else:
                 return None, sentence[1:]
         print("***" + sentence)
-        raise Exception("Next character not recognized: " + sentence[:1])
+        raise ValueError("Next character not recognized: " + sentence[:1])
 
     def filter_for_phonemes(sentence):
         """ Returns a sequence of phonemes and pipes (word delimiters). Tones,
@@ -430,7 +431,7 @@ def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000, seed=
         elif train_rec_type == "text_and_wordlist":
             prefixes.extend(wordlist_prefixes)
         else:
-            raise Exception("train_rec_type='%s' not supported." % train_rec_type)
+            raise PersephoneException("train_rec_type='%s' not supported." % train_rec_type)
         train_prefixes = prefixes
     random.seed(0)
     random.shuffle(train_prefixes)
@@ -495,7 +496,7 @@ class Corpus(corpus.AbstractCorpus):
         elif label_type == "tones_notgm":
             self.labels = TONES
         else:
-            raise Exception("label_type %s not implemented." % label_type)
+            raise PersephoneException("label_type %s not implemented." % label_type)
 
         self.feat_type = feat_type
         self.label_type = label_type
@@ -506,7 +507,7 @@ class Corpus(corpus.AbstractCorpus):
         # TODO Make this also work with wordlists.
         if valid_story or test_story:
             if not (valid_story and test_story):
-                raise Exception(
+                raise PersephoneException(
                     "We need a valid story if we specify a test story "
                     "and vice versa. This shouldn't be required but for "
                     "now it is.")

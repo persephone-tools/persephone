@@ -8,6 +8,7 @@ from nltk.metrics import distance
 from .. import corpus
 from .. import utils
 from .. import config
+from ..exceptions import PersephoneException
 
 random.seed(0)
 
@@ -161,13 +162,13 @@ class Corpus(corpus.AbstractCorpus):
     def __init__(self, feat_type, target_type):
         super().__init__(feat_type, target_type)
         if target_type != "phn":
-            raise Exception("target_type %s not implemented." % target_type)
+            raise PersephoneException("target_type %s not implemented." % target_type)
 
     def prepare(self):
         """ Preprocesses the TIMIT data. """
 
-        raise Exception("""Not implemented. Refactor preprocess_timit.py into
-                        this module""")
+        raise NotImplementedError("Not implemented. Refactor preprocess_timit.py"
+                                  " into this module")
 
         #tgt_dir = os.path.join(
         #    timit_dir, "feat_type=%s-target_type=%s" % (self.feat_type, self.target_type))
@@ -212,4 +213,4 @@ class Corpus(corpus.AbstractCorpus):
         return feat_fns, target_fns
 
     def get_test_fns(self):
-        raise Exception("Not implemented.")
+        raise NotImplementedError

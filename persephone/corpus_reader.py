@@ -6,6 +6,7 @@ from nltk.metrics import distance
 import numpy as np
 
 from . import utils
+from .exceptions import PersephoneException
 
 class CorpusReader:
     """ Interfaces to the preprocessed corpora to read in train, valid, and
@@ -30,7 +31,7 @@ class CorpusReader:
         self.corpus = corpus
 
         if max_samples:
-            raise Exception("Not yet implemented.")
+            raise NotImplementedError("Not yet implemented.")
 
         if not num_train:
             if not batch_size:
@@ -44,7 +45,7 @@ class CorpusReader:
         if batch_size:
             self.batch_size = batch_size
             if num_train % batch_size != 0:
-                raise Exception("""Number of training examples %d not divisible
+                raise PersephoneException("""Number of training examples %d not divisible
                                    by batch size %d.""" % (num_train, batch_size))
         else:
             # Dynamically change batch size based on number of training
