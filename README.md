@@ -132,7 +132,6 @@ You'll should now see something like:
 3280
 2018-01-18 10:30:22.290964: I tensorflow/core/platform/cpu_feature_guard.cc:137] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
     exp_dir ../exp/1, epoch 0
-        ...
 ```
  
 The message may vary a bit depending on your CPU but if it says something like this then training is very likely working. Contact me if you have any trouble getting to this point, or if you had to deviate from the above instructions to get to this point.
