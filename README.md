@@ -135,7 +135,7 @@ You'll should now see something like:
         ...
 ```
  
-The message may vary a bit depending on your CPU if it says something like this then training is very likely working. Contact me if you have any trouble getting to this point, or if you had to deviate from the above instructions to get to this point.
+The message may vary a bit depending on your CPU but if it says something like this then training is very likely working. Contact me if you have any trouble getting to this point, or if you had to deviate from the above instructions to get to this point.
 
 On the current settings it will train through at least 10 "epochs", potentially more. If you don't have a GPU then this will take quite a while, though you should notice it converging in performance within a couple hours on most personal computers.
 
