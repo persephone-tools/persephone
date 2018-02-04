@@ -54,9 +54,9 @@ def prep_exp_dir():
     exp_dir = os.path.join(EXP_DIR, str(exp_num))
     if not os.path.isdir(exp_dir):
         os.makedirs(exp_dir)
-    repo = Repo(".", search_parent_directories=True)
-    with open(os.path.join(exp_dir, "git_hash.txt"), "w") as f:
-        print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
+    #repo = Repo(".", search_parent_directories=True)
+    #with open(os.path.join(exp_dir, "git_hash.txt"), "w") as f:
+    #    print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
 
     return exp_dir
 
