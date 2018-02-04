@@ -11,12 +11,12 @@ from git import Repo
 from . import config
 from . import rnn_ctc
 #from . import datasets.na
-#from .import datasets.griko
-#from .import datasets.chatino
-#from .import datasets.kunwinjku
-#from .import datasets.timit
-#from .import datasets.japhug
-#from .import datasets.babel
+#from . import datasets.griko
+#from . import datasets.chatino
+#from . import datasets.kunwinjku
+#from . import datasets.timit
+#from . import datasets.japhug
+#from . import datasets.babel
 from .corpus_reader import CorpusReader
 
 EXP_DIR = config.EXP_DIR
