@@ -15,7 +15,7 @@ def segment_into_chars(utterance: str) -> str:
     utterance = utterance.replace(" ", "")
     return " ".join(utterance)
 
-def segment_into_labels(utterance: str, token_inventory: Iterable[str]):
+def segment_into_tokens(utterance: str, token_inventory: Iterable[str]):
     """
     Segments an utterance (a string) into tokens based on an inventory of
     tokens (a list or set of strings).
@@ -29,13 +29,31 @@ def segment_into_labels(utterance: str, token_inventory: Iterable[str]):
     on characters with segment_into_chars()
     """
 
-    def pop_label(utterance):
-        for i in range(maxlen, 0, -1):
-            if line[:i] in token_inventory:
-                return line[:i], line[i:]
+    if type(utterance) != str:
+        raise TypeError("Input type must be a string.")
 
-        return
-
+    # Token inventory needs to be hashable for speed
     token_inventory = set(token_inventory)
     # Get the size of the longest token in the inventory
     max_len = len(sorted(list(token_inventory), key=lambda x: len(x))[-1])
+
+    def segment_token(utterance):
+        if utterance == "":
+            return "", ""
+
+        for i in range(max_len, 0, -1):
+            if utterance[:i] in token_inventory:
+                return utterance[:i], utterance[i:]
+        # If the next character is preventing segmentation, move on.
+        return "", utterance[1:]
+
+    tokens = []
+    head, tail = segment_token(utterance)
+    tokens.append(head)
+    while tail != "":
+        head, tail = segment_token(tail)
+        tokens.append(head)
+    tokens = [tok for tok in tokens if tok != ""]
+
+    return " ".join(tokens)
+
