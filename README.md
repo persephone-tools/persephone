@@ -132,14 +132,12 @@ You'll should now see something like:
 3280
 2018-01-18 10:30:22.290964: I tensorflow/core/platform/cpu_feature_guard.cc:137] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
     exp_dir ../exp/1, epoch 0
-        Batch 0
-        Batch 1
         ...
 ```
  
-The message may vary a bit depending on your CPU, but if it says "Batch 0" at the bottom without an error, then training is very likely working. Contact me if you have any trouble getting to this point, or if you had to deviate from the above instructions to get to this point.
+The message may vary a bit depending on your CPU if it says something like this then training is very likely working. Contact me if you have any trouble getting to this point, or if you had to deviate from the above instructions to get to this point.
 
-On the current settings it will train through batches 1 to 200 or so for at least 10 "epochs", potentially more. If you don't have a GPU then this will take quite a while, though you should notice it converging in performance within a couple hours on most personal computers.
+On the current settings it will train through at least 10 "epochs", potentially more. If you don't have a GPU then this will take quite a while, though you should notice it converging in performance within a couple hours on most personal computers.
 
 After a few epochs you can see how its going by going to opening up
 `exp/<experiment_number>/train_log.txt`. This will show you
