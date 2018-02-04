@@ -48,18 +48,18 @@ def prep_sub_exp_dir(parent_dir):
     """
     return _prepare_directory(parent_dir)
 
-def prep_exp_dir():
+def prep_exp_dir(directory=EXP_DIR):
     """ Prepares an experiment directory by copying the code in this directory
-    to it as is, and setting the logger to write to files in that
-    directory.
+    to it as is, and setting the logger to write to files in that directory.
     Copies a git hash of the most changes at git HEAD into the directory to
     keep the experiment results in sync with the version control system.
+    :directory: The path to directory we are preparing for the experiment,
+                which will be created if it does not currently exist.
     :returns: The name of the newly created experiment directory.
     """
-
-    if not os.path.isdir(EXP_DIR):
-        os.makedirs(EXP_DIR)
-    exp_dir = _prepare_directory(EXP_DIR)
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+    exp_dir = _prepare_directory(directory)
     repo = Repo(".", search_parent_directories=True)
     with open(os.path.join(exp_dir, "git_hash.txt"), "w") as f:
         print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
