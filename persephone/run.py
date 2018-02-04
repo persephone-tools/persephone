@@ -65,20 +65,29 @@ def prep_exp_dir():
 
     return exp_dir
 
+
+def is_git_directory_clean(path_to_repo, search_parent_dirs):
+    """
+    Check that the git working directory is in a clean state
+    and raise exceptions if not.
+    :path_to_repo: The path of the git repo
+    """
+    repo = Repo(path_to_repo, search_parent_dirs)
+    if repo.untracked_files:
+        raise DirtyRepoException("Untracked files. Commit them first.")
+    # If there are changes to already tracked files
+    if repo.is_dirty():
+        raise DirtyRepoException("Changes to the index or working tree."
+                                 "Commit them first .")
+
+
 def run():
     """
     The only function that should be called from this module. Ensures
     experiments are documented in their own dir with a reference to the hash
     of the commit used to run the experiment.
     """
-
-    repo = Repo(".", search_parent_directories=True)
-    if repo.untracked_files != []:
-        raise DirtyRepoException("Untracked files. Commit them first.")
-    # If there are changes to already tracked files
-    if repo.is_dirty():
-        raise DirtyRepoException("Changes to the index or working tree."
-                                 "Commit them first .")
+    is_git_directory_clean(".", search_parent_directories=True)
     exp_dir = prep_exp_dir()
     scaling_graph(exp_dir)
     #rerun_storyfoldxv(exp_dir)
