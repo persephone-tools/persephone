@@ -28,33 +28,37 @@ def get_exp_dir_num(parent_dir):
                 for fn in os.listdir(parent_dir) if fn.split(".")[0].isdigit()]
                     + [-1])
 
-def prep_sub_exp_dir(parent_dir):
-    """ Prepares an experiment directory by copying the code in this directory
-    to it as is, and setting the logger to write to files in that
-    directory.
+def _prepare_directory(directory_path):
     """
-
-    exp_num = get_exp_dir_num(parent_dir)
+    Prepare the directory structure required for the experiement
+    :returns: returns the name of the newly created directory
+    """
+    exp_num = get_exp_dir_num(directory_path)
     exp_num = exp_num + 1
-    exp_dir = os.path.join(parent_dir, str(exp_num))
+    exp_dir = os.path.join(directory_path, str(exp_num))
     if not os.path.isdir(exp_dir):
         os.makedirs(exp_dir)
-
     return exp_dir
+
+def prep_sub_exp_dir(parent_dir):
+    """ Prepares an experiment subdirectory
+    :parent_dir: the parent directory
+    :returns: returns the name of the newly created subdirectory
+    """
+    return _prepare_directory(parent_dir)
 
 def prep_exp_dir():
     """ Prepares an experiment directory by copying the code in this directory
     to it as is, and setting the logger to write to files in that
     directory.
+    Copies a git hash of the most changes at git HEAD into the directory to
+    keep the experiment results in sync with the version control system.
+    :returns: The name of the newly created experiment directory.
     """
 
     if not os.path.isdir(EXP_DIR):
         os.makedirs(EXP_DIR)
-    exp_num = get_exp_dir_num(EXP_DIR)
-    exp_num = exp_num + 1
-    exp_dir = os.path.join(EXP_DIR, str(exp_num))
-    if not os.path.isdir(exp_dir):
-        os.makedirs(exp_dir)
+    exp_dir = _prepare_directory(EXP_DIR)
     repo = Repo(".", search_parent_directories=True)
     with open(os.path.join(exp_dir, "git_hash.txt"), "w") as f:
         print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
