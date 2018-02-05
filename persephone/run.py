@@ -205,10 +205,9 @@ def train(exp_dir, language, feat_type, label_type,
 
 def get_simple_model(exp_dir, corpus):
     batch_size = 16
-    min_epochs = 10
     num_layers = 2
     hidden_size= 250
-    num_train=1024
+    num_train=2048
 
     corpus_reader = CorpusReader(corpus, num_train=num_train, batch_size=batch_size)
     model = rnn_ctc.Model(exp_dir, corpus_reader,
