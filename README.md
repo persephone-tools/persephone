@@ -22,6 +22,14 @@ having trouble, contact Oliver Adams at oliver.adams@gmail.com. We are also
 very welcome to thoughts, constructive criticism, help with design, development
 and documentation, along with any pull requests you may have.
 
+#### Contributors
+
+Persephone has been built based on the code contributions of:
+* Oliver Adams
+* [Janis Lesinskis](https://www.customprogrammingsolutions.com/)
+* Ben Foley
+* Nay San
+
 If you use this code in a publication, please cite the [workshop
 paper](https://halshs.archives-ouvertes.fr/halshs-01656683/document) (which is
 currently being refined into a conference paper):
