@@ -234,7 +234,7 @@ class Corpus(corpus.AbstractCorpus):
         elif label_type == "phonemes_and_tones":
             self.labels = PHONEMES.union(TONES)
         else:
-            raise Exception("label_type=%s not supported." % (label_type))
+            raise ValueError("label_type=%s not supported." % (label_type))
 
         self.feat_type = feat_type
         self.label_type = label_type

@@ -11,6 +11,7 @@ import numpy as np
 
 from . import feat_extract
 from . import utils
+from .exceptions import PersephoneException
 
 class AbstractCorpus(metaclass=abc.ABCMeta):
     "All interfaces to corpora are subclasses of this class."""
@@ -78,7 +79,7 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
                 # Otherwise it is just of shape time x feats
                 self._num_feats = feats.shape[1]
             else:
-                raise Exception(
+                raise ValueError(
                     "Feature matrix of shape %s unexpected" % str(feats.shape))
         return self._num_feats
 
@@ -210,9 +211,9 @@ class ReadyCorpus(AbstractCorpus):
         self.LABEL_DIR = os.path.join(tgt_dir, "label")
 
         if not os.path.isdir(self.FEAT_DIR):
-            raise Exception("The supplied path requires a 'feat' subdirectory.")
+            raise PersephoneException("The supplied path requires a 'feat' subdirectory.")
         if not os.path.isdir(self.LABEL_DIR):
-            raise Exception("The supplied path requires a 'label' subdirectory.")
+            raise PersephoneException("The supplied path requires a 'label' subdirectory.")
 
         self.prepare_feats(self.FEAT_DIR) # In this case the feat_dir is the same as the org_dir
         self.labels = self.determine_labels()

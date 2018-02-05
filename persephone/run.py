@@ -18,6 +18,7 @@ from .import datasets.na
 #from .import datasets.japhug
 #from .import datasets.babel
 from .corpus_reader import CorpusReader
+from .exceptions import PersephoneException, DirtyRepoException
 
 EXP_DIR = config.EXP_DIR
 
@@ -59,9 +60,6 @@ def prep_exp_dir():
         print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
 
     return exp_dir
-
-class DirtyRepoException(Exception):
-    pass
 
 def run():
     """
@@ -168,7 +166,7 @@ def train(exp_dir, language, feat_type, label_type,
         # TODO How to choose between the Bird and Butcher corpora?
         corpus = datasets.kunwinjku.Corpus(feat_type, label_type)
     else:
-        raise Exception("Language '%s' not supported." % language)
+        raise PersephoneException("Language '%s' not supported." % language)
 
 
     if num_train:

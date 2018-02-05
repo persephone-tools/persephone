@@ -91,7 +91,7 @@ def load_timit(path="/home/oadams/mam/data/timit/train", rand=True,
                 with open(phn_path) as phn_f:
                     batch_y.append(phn_f.readline().split())
     else:
-        raise Exception("Not implemented.")
+        raise NotImplementedError
 
     batch_x = np.array(feats)
     return batch_x, batch_y

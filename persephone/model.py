@@ -12,6 +12,7 @@ import tensorflow as tf
 from . import utils
 from . import lattice
 from . import config
+from .exceptions import PersephoneException
 
 OPENFST_PATH = config.OPENFST_BIN_PATH
 
@@ -50,7 +51,7 @@ class Model:
                 if self.saved_model_path:
                     saver.restore(sess, self.saved_model_path)
                 else:
-                    raise Exception("No model to use for transcription.")
+                    raise PersephoneException("No model to use for transcription.")
 
             batch_gen = self.corpus_reader.untranscribed_batch_gen()
 

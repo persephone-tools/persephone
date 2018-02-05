@@ -1,4 +1,5 @@
 """ Preprocesses the TIMIT data into a format for end-to-end phoneme recognition."""
+from .exceptions import PersephoneException
 
 import os
 from os.path import join
@@ -7,6 +8,7 @@ import subprocess
 
 from .. import config
 from .. import feat_extract
+from ..exceptions import PersephoneException
 
 TIMIT_TGT_DIR = os.path.join(config.TGT_DIR, "timit")
 
@@ -22,7 +24,7 @@ def all_feature_extraction(feat_type):
                 elif feat_type == "mfcc13_d":
                     feat_extract.feature_extraction(join(root, filename))
                 else:
-                    raise Exception("Invalid feature type selection.")
+                    raise PersephoneException("Invalid feature type selection.")
 
 def create_raw_data():
     """ Copies the original TIMIT data to a working directory and does basic

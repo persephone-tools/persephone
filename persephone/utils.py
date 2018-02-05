@@ -10,6 +10,7 @@ import subprocess
 from subprocess import PIPE
 
 from . import config
+from .exceptions import DirtyRepoException
 
 def target_list_to_sparse_tensor(target_list):
     """ Make tensorflow SparseTensor from list of targets, with each element in
