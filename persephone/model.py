@@ -3,8 +3,9 @@
 import inspect
 import itertools
 import os
-import subprocess
 from operator import itemgetter
+import subprocess
+import sys
 
 import numpy as np
 import tensorflow as tf
@@ -277,8 +278,10 @@ class Model:
 
             train_ler_total = 0
             batch_i = None
+            print("\tBatch...", end="")
             for batch_i, batch in enumerate(batch_gen):
-                #print("\tBatch %d" % batch_i)
+                print("%d..." % batch_i, end="")
+                sys.stdout.flush()
                 batch_x, batch_x_lens, batch_y = batch
 
                 feed_dict = {self.batch_x: batch_x,

@@ -39,7 +39,9 @@ class CorpusReader:
             num_batches = int(num_train / batch_size)
             num_train = num_batches * batch_size
         self.num_train = num_train
-        print(num_train)
+        print("Number of training utterances: {}".format(num_train))
+        print("Batch size: {}".format(batch_size))
+        print("Batches per epoch: {}".format(int(num_train/batch_size)))
 
         if batch_size:
             self.batch_size = batch_size

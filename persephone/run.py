@@ -205,11 +205,12 @@ def train(exp_dir, language, feat_type, label_type,
 
 def get_simple_model(exp_dir, corpus):
     batch_size = 16
-    min_epochs = 30
+    min_epochs = 10
     num_layers = 2
     hidden_size= 250
+    num_train=1024
 
-    corpus_reader = CorpusReader(corpus, batch_size=batch_size)
+    corpus_reader = CorpusReader(corpus, num_train=num_train, batch_size=batch_size)
     model = rnn_ctc.Model(exp_dir, corpus_reader,
                           num_layers=num_layers,
                           hidden_size=hidden_size,
@@ -221,7 +222,7 @@ def train_ready(corpus):
 
     exp_dir = prep_exp_dir()
     model = get_simple_model(exp_dir, corpus)
-    model.train(min_epochs=10)
+    model.train(min_epochs=10, early_stopping_steps=3)
 
 def transcribe(model_path, corpus):
     """ Applies a trained model to untranscribed data in a Corpus. """

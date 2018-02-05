@@ -1,4 +1,4 @@
-# Persephone v0.1.4
+# Persephone v0.1.5
 
 Persephone (/pərˈsɛfəni/) is an automatic phoneme transcription tool.
 Traditional speech recognition tools require a large pronunciation lexicon
@@ -116,7 +116,7 @@ cd persephone-tutorial/
 mkdir data
 ```
 
-Get the data [here](https://cloudstor.aarnet.edu.au/sender/?s=download&token=b6789ee3-bbcb-7f92-2f38-18ffc1086817)
+Get the data [here](https://cloudstor.aarnet.edu.au/plus/s/rZz4XCX5gdIs7nr)
 
 Unzip `na_example.zip`. There should now be a directory `na_example/`, with
 subdirfectories `feat/` and `label/`. You can put `na_example` anywhere, but
@@ -137,14 +137,17 @@ $ ipython
 You'll should now see something like:
 
 ```
-3280
+Number of training utterances: 1024
+Batch size: 16
+Batches per epoch: 64
 2018-01-18 10:30:22.290964: I tensorflow/core/platform/cpu_feature_guard.cc:137] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
-    exp_dir ../exp/1, epoch 0
+exp_dir ./exp/0, epoch 0
+	Batch...0...1...2...3...
 ```
  
 The message may vary a bit depending on your CPU but if it says something like this then training is very likely working. Contact me if you have any trouble getting to this point, or if you had to deviate from the above instructions to get to this point.
 
-On the current settings it will train through at least 10 "epochs", potentially more. If you don't have a GPU then this will take quite a while, though you should notice it converging in performance within a couple hours on most personal computers.
+On the current settings it will train through at least 10 "epochs", very likely more. If you don't have a GPU then this will take quite a while, though you should notice it converging in performance within a couple hours on most personal computers.
 
 After a few epochs you can see how its going by going to opening up
 `exp/<experiment_number>/train_log.txt`. This will show you
