@@ -140,7 +140,7 @@ def train(exp_dir, language, feat_type, label_type,
           num_train=None,
           train_rec_type="text_and_wordlist",
           valid_story=None, test_story=None,
-          min_epochs=30, max_valid_ler=1.0, max_train_ler=0.2):
+          min_epochs=30, max_valid_ler=1.0, max_train_ler=0.8):
     """ Run an experiment. """
 
     sub_exp_dir = prep_sub_exp_dir(exp_dir)
