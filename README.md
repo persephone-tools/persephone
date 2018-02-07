@@ -59,7 +59,7 @@ computationally demanding than it would be for optimal transcription quality.
 Ideally you'd have access to a server with more memory and a GPU, but this
 isn't necessary.
 
-The code has been tested on Mac and Linux systems. It hasn't yet been tested on Windows.
+The code has been tested on Mac and Linux systems. It can be run on Windows using the Docker container described below.
 
 For now you must open up a terminal to enter commands at the command line. (The
 commands below are prefixed with a "$". Don't enter the "$", just whatever
