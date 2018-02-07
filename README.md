@@ -13,7 +13,7 @@ yet such technology has not been widely adopted.
 The goal of Persephone is to make state-of-the-art phonemic transcription
 accessible to people involved in language documentation. Creating an
 easy-to-use user interface is central to this. The user interface and APIs are
-currently a work in progress. 
+currently a work in progress and currently Persephone must be run via a command line.
 
 The tool is implemented in Python/Tensorflow with extensibility in mind. Currently just one model is implemented, which uses bidirectional LSTMs and the connectionist temporal classification (CTC) loss function.
 
