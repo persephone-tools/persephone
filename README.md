@@ -168,7 +168,7 @@ way, you can create your own Persephone `Corpus` object with:
 corp = corpus.ReadyCorpus("<your-corpus-directory>")
 ```
 
-If you are using the Docker container, to get data in and out of the container, you need to create a "volume" that shares data you currently have on your computer (the host machine) with what is in the container. If your data is stored in `/home/username/mydata`, and in the container you want to store it in `/persephone/mydata` then run:
+If you are using the Docker container then to get data in and out of the container you need to create a "volume" that shares data between your computer (the host) and the container. If your data is stored in `/home/username/mydata` on your machine and in the container you want to store it in `/persephone/mydata` then run:
 ```
 docker run -it -v /home/username/mydata:/persephone/mydata oadams/persephone
 ```
