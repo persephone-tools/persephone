@@ -198,6 +198,11 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
                 phonemes = phonemes.union(line_phonemes)
         return phonemes
 
+def check_data(path):
+    """ Checks that the data exists and is in the correct directory so that a
+    ReadyCorpus can be made out of it."""
+    pass
+
 class ReadyCorpus(AbstractCorpus):
     """ Interface to a corpus that has WAV files and label files split into
     utterances and segregated in a directory with a "feat" and "label" dir. """
@@ -217,6 +222,12 @@ class ReadyCorpus(AbstractCorpus):
         self.prepare_feats(self.FEAT_DIR) # In this case the feat_dir is the same as the org_dir
         self.labels = self.determine_labels()
         train, valid, test = self.make_data_splits()
+
+        if train == []:
+            print("""WARNING: Corpus object has no training data. Are you sure
+            it's in the correct directories? WAVs should be in {} and
+            transcriptions in {} with the extension .{}""".format(
+                self.FEAT_DIR, self.LABEL_DIR, label_type))
 
         self.train_prefixes = train
         self.valid_prefixes = valid
