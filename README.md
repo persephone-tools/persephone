@@ -168,7 +168,11 @@ way, you can create your own Persephone `Corpus` object with:
 corp = corpus.ReadyCorpus("<your-corpus-directory>")
 ```
 
-We describe the specifics below.
+If you are using the Docker container, to get data in and out of the container, you need to create a "volume" that shares data you currently have on your computer (the host machine) with what is in the container. If your data is stored in `/home/username/mydata`, and in the container you want to store it in `/persephone/mydata` then run:
+```
+docker run -it -v /home/username/mydata:/persephone/mydata oadams/persephone
+```
+This is simply an extension of the earlier command to run docker, which additionally specifies the portal with which data is transferred to and from the container. If Persephone—abducted by Hades—is the queen of the underworld, then you might consider this volume to be the gates of hell.
 
 #### Formatting your data
 
@@ -179,7 +183,7 @@ progress.
 
 Current data formatting requirements:
 * Audio files are stored in `<your-corpus>/feat/`. The WAV format is supported.
-  Persephone will normalize these WAVs to be 16bit mono 16000Hz.
+  Persephone will automatically normalize these WAVs to be 16bit mono 16000Hz.
 * Transcriptions are stored in text files in `<your-corpus>/label/`
 * Each audio file is short (ideally no longer than 10 seconds). There is a
   script added by Ben Foley, `persephone/scripts/split_eafs.py`, to split
