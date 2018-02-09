@@ -220,6 +220,8 @@ def get_simple_model(exp_dir, corpus):
         else:
             batch_size = num_train / 32
 
+        return batch_size
+
     batch_size = decide_batch_size(len(corpus.train_prefixes))
 
     corpus_reader = CorpusReader(corpus, batch_size=batch_size)
