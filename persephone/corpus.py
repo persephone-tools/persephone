@@ -203,7 +203,11 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         phonemes = set()
         for fn in os.listdir(self.LABEL_DIR):
             with open(join(self.LABEL_DIR, fn)) as f:
-                line_phonemes = set(f.readline().split())
+                try:
+                    line_phonemes = set(f.readline().split())
+                except UnicodeDecodeError:
+                    print("Unicode decode error on file {}".format(fn))
+                    raise
                 phonemes = phonemes.union(line_phonemes)
         return phonemes
 
