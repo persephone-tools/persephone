@@ -177,15 +177,24 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         valid_prefixes = prefixes[train_end:valid_end]
         test_prefixes = prefixes[valid_end:]
 
-        with open(train_prefix_fn, "w") as train_f:
-            for prefix in train_prefixes:
-                print(prefix, file=train_f)
-        with open(valid_prefix_fn, "w") as dev_f:
-            for prefix in valid_prefixes:
-                print(prefix, file=dev_f)
-        with open(test_prefix_fn, "w") as test_f:
-            for prefix in test_prefixes:
-                print(prefix, file=test_f)
+        # TODO Perhaps the ReadyCorpus train_prefixes variable should be a
+        # property that writes this file when it is changed, then we can remove
+        # the code from here. The thing is, the point of those files is that
+        # they don't change, so they should be written once only, unless you
+        # explicitly delete them. This isn't very clear from the perspective of
+        # the user though, so it's a design decision to think about.
+        if train_prefixes:
+            with open(train_prefix_fn, "w") as train_f:
+                for prefix in train_prefixes:
+                    print(prefix, file=train_f)
+        if valid_prefixes:
+            with open(valid_prefix_fn, "w") as dev_f:
+                for prefix in valid_prefixes:
+                    print(prefix, file=dev_f)
+        if test_prefixes:
+            with open(test_prefix_fn, "w") as test_f:
+                for prefix in test_prefixes:
+                    print(prefix, file=test_f)
 
         return train_prefixes, valid_prefixes, test_prefixes
 
