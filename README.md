@@ -165,8 +165,9 @@ make the system read that data. In fact, if you format your data in the same
 way, you can create your own Persephone `Corpus` object with:
 
 ```
-corp = corpus.ReadyCorpus("<your-corpus-directory>")
+corp = corpus.ReadyCorpus("<your-corpus-directory>", label_type="extension")
 ```
+where extension is "txt", "phonemes", "tones", or whatever your file has after the dot.
 
 If you are using the Docker container then to get data in and out of the container you need to create a "volume" that shares data between your computer (the host) and the container. If your data is stored in `/home/username/mydata` on your machine and in the container you want to store it in `/persephone/mydata` then run:
 ```
