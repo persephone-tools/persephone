@@ -101,7 +101,7 @@ We now need to set up a virtual environment and install the library.
 $ python3 -m virtualenv -p python3 persephone-venv
 $ source persephone-venv/bin/activate
 $ pip install -U pip
-$ pip install git+git://github.com/oadams/persephone.git
+$ pip install persephone
 ```
 
 (This library can be installed system-wide but it is recommended to install in a virtualenv.)
