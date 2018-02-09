@@ -1,4 +1,4 @@
-# Persephone v0.1.6
+# Persephone v0.1.7 (Beta version)
 
 Persephone (/pərˈsɛfəni/) is an automatic phoneme transcription tool.
 Traditional speech recognition tools require a large pronunciation lexicon
@@ -127,7 +127,7 @@ mkdir data
 Get the data [here](https://cloudstor.aarnet.edu.au/plus/s/rZz4XCX5gdIs7nr/download)
 
 Unzip `na_example.zip`. There should now be a directory `na_example/`, with
-subdirfectories `feat/` and `label/`. You can put `na_example` anywhere, but
+subdirfectories `wav/` and `label/`. You can put `na_example` anywhere, but
 for the rest of this tutorial I assume it is in the working directory: `persephone-tutorial/data/na_example/`.
 
 ### 2. Training a toy Na model
@@ -173,8 +173,9 @@ make the system read that data. In fact, if you format your data in the same
 way, you can create your own Persephone `Corpus` object with:
 
 ```
-corp = corpus.ReadyCorpus("<your-corpus-directory>")
+corp = corpus.ReadyCorpus("<your-corpus-directory>", label_type="extension")
 ```
+where extension is "txt", "phonemes", "tones", or whatever your file has after the dot.
 
 If you are using the Docker container then to get data in and out of the container you need to create a "volume" that shares data between your computer (the host) and the container. If your data is stored in `/home/username/mydata` on your machine and in the container you want to store it in `/persephone/mydata` then run:
 ```
@@ -190,19 +191,19 @@ most important priority for Persephone at the moment. This is a work in
 progress.
 
 Current data formatting requirements:
-* Audio files are stored in `<your-corpus>/feat/`. The WAV format is supported.
-  Persephone will automatically normalize these WAVs to be 16bit mono 16000Hz.
+* Audio files are stored in `<your-corpus>/wav/`. The WAV format is supported.
+  Persephone will automatically convert wavs to be 16bit mono 16000Hz.
 * Transcriptions are stored in text files in `<your-corpus>/label/`
 * Each audio file is short (ideally no longer than 10 seconds). There is a
   script added by Ben Foley, `persephone/scripts/split_eafs.py`, to split
   audio files into utterance-length units based on ELAN input files.
-* Each audio file in `feat/` has a corresponding transcription file in
+* Each audio file in `wav/` has a corresponding transcription file in
   `label/` with the same *prefix* (the bit of the filename before the
   extension). For
-  example, if there is `feat/utterance_one.wav` then there should be
+  example, if there is `wav/utterance_one.wav` then there should be
   `label/utterance_one.<extension>`. `<extension>` can be whatever you want,
   but it should describe how the labelling is done. For example, if it is
-  phonemic then `feat/utterance_one.phonemes` is a meaningful filename.
+  phonemic then `wav/utterance_one.phonemes` is a meaningful filename.
 * Each transcript file includes a space-delimited list of *labels* to
   the model should learn to transcribe. For example:
   * `data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.phonemes` contains

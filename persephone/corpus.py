@@ -203,9 +203,14 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         """ Returns a set of phonemes found in the corpus. """
         phonemes = set()
         for fn in os.listdir(self.LABEL_DIR):
-            with open(join(self.LABEL_DIR, fn)) as f:
-                line_phonemes = set(f.readline().split())
-                phonemes = phonemes.union(line_phonemes)
+            if fn.endswith(self.label_type):
+                with open(join(self.LABEL_DIR, fn)) as f:
+                    try:
+                        line_phonemes = set(f.readline().split())
+                    except UnicodeDecodeError:
+                        print("Unicode decode error on file {}".format(fn))
+                        raise
+                    phonemes = phonemes.union(line_phonemes)
         return phonemes
 
 def check_data(path):
@@ -222,14 +227,18 @@ class ReadyCorpus(AbstractCorpus):
 
         self.TGT_DIR = tgt_dir
         self.FEAT_DIR = os.path.join(tgt_dir, "feat")
+        self.WAV_DIR = os.path.join(tgt_dir, "wav")
         self.LABEL_DIR = os.path.join(tgt_dir, "label")
 
+        if not os.path.isdir(self.WAV_DIR):
+            print(self.WAV_DIR)
+            raise Exception("The supplied path requires a 'wav' subdirectory.")
         if not os.path.isdir(self.FEAT_DIR):
-            raise PersephoneException("The supplied path requires a 'feat' subdirectory.")
+            os.makedirs(self.FEAT_DIR)
         if not os.path.isdir(self.LABEL_DIR):
             raise PersephoneException("The supplied path requires a 'label' subdirectory.")
 
-        self.prepare_feats(self.FEAT_DIR) # In this case the feat_dir is the same as the org_dir
+        self.prepare_feats(self.WAV_DIR) # In this case the feat_dir is the same as the org_dir
         self.labels = self.determine_labels()
         train, valid, test = self.make_data_splits()
 
@@ -237,7 +246,7 @@ class ReadyCorpus(AbstractCorpus):
             print("""WARNING: Corpus object has no training data. Are you sure
             it's in the correct directories? WAVs should be in {} and
             transcriptions in {} with the extension .{}""".format(
-                self.FEAT_DIR, self.LABEL_DIR, label_type))
+                self.WAV_DIR, self.LABEL_DIR, label_type))
 
         self.train_prefixes = train
         self.valid_prefixes = valid
