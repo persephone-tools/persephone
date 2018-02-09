@@ -231,7 +231,7 @@ class ReadyCorpus(AbstractCorpus):
 
         if not os.path.isdir(self.WAV_DIR):
             print(self.WAV_DIR)
-            raise PersephoneException("The supplied path requires a 'wav' subdirectory.")
+            raise Exception("The supplied path requires a 'wav' subdirectory.")
         if not os.path.isdir(self.FEAT_DIR):
             os.makedirs(self.FEAT_DIR)
         if not os.path.isdir(self.LABEL_DIR):
@@ -245,7 +245,7 @@ class ReadyCorpus(AbstractCorpus):
             print("""WARNING: Corpus object has no training data. Are you sure
             it's in the correct directories? WAVs should be in {} and
             transcriptions in {} with the extension .{}""".format(
-                self.FEAT_DIR, self.LABEL_DIR, label_type))
+                self.WAV_DIR, self.LABEL_DIR, label_type))
 
         self.train_prefixes = train
         self.valid_prefixes = valid
