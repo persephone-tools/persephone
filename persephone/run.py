@@ -19,6 +19,7 @@ from . import rnn_ctc
 #from . import datasets.babel
 from .corpus_reader import CorpusReader
 from .exceptions import PersephoneException, DirtyRepoException
+from .utils import is_git_directory_clean
 
 EXP_DIR = config.EXP_DIR
 
@@ -28,38 +29,43 @@ def get_exp_dir_num(parent_dir):
                 for fn in os.listdir(parent_dir) if fn.split(".")[0].isdigit()]
                     + [-1])
 
+def _prepare_directory(directory_path):
+    """
+    Prepare the directory structure required for the experiement
+    :returns: returns the name of the newly created directory
+    """
+    exp_num = get_exp_dir_num(directory_path)
+    exp_num = exp_num + 1
+    exp_dir = os.path.join(directory_path, str(exp_num))
+    if not os.path.isdir(exp_dir):
+        os.makedirs(exp_dir)
+    return exp_dir
+
 def prep_sub_exp_dir(parent_dir):
-    """ Prepares an experiment directory by copying the code in this directory
-    to it as is, and setting the logger to write to files in that
-    directory.
+    """ Prepares an experiment subdirectory
+    :parent_dir: the parent directory
+    :returns: returns the name of the newly created subdirectory
     """
+    return _prepare_directory(parent_dir)
 
-    exp_num = get_exp_dir_num(parent_dir)
-    exp_num = exp_num + 1
-    exp_dir = os.path.join(parent_dir, str(exp_num))
-    if not os.path.isdir(exp_dir):
-        os.makedirs(exp_dir)
+def prep_exp_dir(directory=EXP_DIR):
+    """ Prepares an experiment directory by copying the code in this directory
+    to it as is, and setting the logger to write to files in that directory.
+    Copies a git hash of the most changes at git HEAD into the directory to
+    keep the experiment results in sync with the version control system.
+    :directory: The path to directory we are preparing for the experiment,
+                which will be created if it does not currently exist.
+    :returns: The name of the newly created experiment directory.
+    """
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+    exp_dir = _prepare_directory(directory)
+    repo = Repo(".", search_parent_directories=True)
+    with open(os.path.join(exp_dir, "git_hash.txt"), "w") as f:
+        print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
 
     return exp_dir
 
-def prep_exp_dir():
-    """ Prepares an experiment directory by copying the code in this directory
-    to it as is, and setting the logger to write to files in that
-    directory.
-    """
-
-    if not os.path.isdir(EXP_DIR):
-        os.makedirs(EXP_DIR)
-    exp_num = get_exp_dir_num(EXP_DIR)
-    exp_num = exp_num + 1
-    exp_dir = os.path.join(EXP_DIR, str(exp_num))
-    if not os.path.isdir(exp_dir):
-        os.makedirs(exp_dir)
-    #repo = Repo(".", search_parent_directories=True)
-    #with open(os.path.join(exp_dir, "git_hash.txt"), "w") as f:
-    #    print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
-
-    return exp_dir
 
 def run():
     """
@@ -67,14 +73,7 @@ def run():
     experiments are documented in their own dir with a reference to the hash
     of the commit used to run the experiment.
     """
-
-    repo = Repo(".", search_parent_directories=True)
-    if repo.untracked_files != []:
-        raise DirtyRepoException("Untracked files. Commit them first.")
-    # If there are changes to already tracked files
-    if repo.is_dirty():
-        raise DirtyRepoException("Changes to the index or working tree."
-                                 "Commit them first .")
+    is_git_directory_clean(".", search_parent_directories=True)
     exp_dir = prep_exp_dir()
     scaling_graph(exp_dir)
     #rerun_storyfoldxv(exp_dir)
