@@ -8,6 +8,7 @@ import numpy as np
 from nltk.metrics import distance
 
 from . import config
+from .exceptions import DirtyRepoException
 
 def is_git_directory_clean(path_to_repo, search_parent_dirs):
     """
