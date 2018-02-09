@@ -184,7 +184,7 @@ progress.
 
 Current data formatting requirements:
 * Audio files are stored in `<your-corpus>/wav/`. The WAV format is supported.
-  Persephone will automatically convert wavs to be 16bit mono 16000Hz. (Auto-normalization in the next release).
+  Persephone will automatically convert wavs to be 16bit mono 16000Hz.
 * Transcriptions are stored in text files in `<your-corpus>/label/`
 * Each audio file is short (ideally no longer than 10 seconds). There is a
   script added by Ben Foley, `persephone/scripts/split_eafs.py`, to split
