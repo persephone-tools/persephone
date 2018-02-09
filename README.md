@@ -1,4 +1,4 @@
-# Persephone v0.1.4
+# Persephone v0.1.6
 
 Persephone (/pərˈsɛfəni/) is an automatic phoneme transcription tool.
 Traditional speech recognition tools require a large pronunciation lexicon
@@ -19,7 +19,7 @@ yet such technology has not been widely adopted.
 The goal of Persephone is to make state-of-the-art phonemic transcription
 accessible to people involved in language documentation. Creating an
 easy-to-use user interface is central to this. The user interface and APIs are
-currently a work in progress. 
+currently a work in progress and currently Persephone must be run via a command line.
 
 The tool is implemented in Python/Tensorflow with extensibility in mind.
 Currently just one model is implemented, which uses bidirectional long
@@ -29,6 +29,14 @@ We are happy to offer direct help to anyone who wants to use it. If you're
 having trouble, contact Oliver Adams at oliver.adams@gmail.com. We are also
 very welcome to thoughts, constructive criticism, help with design, development
 and documentation, along with any pull requests you may have.
+
+#### Contributors
+
+Persephone has been built based on the code contributions of:
+* Oliver Adams
+* [Janis Lesinskis](https://www.customprogrammingsolutions.com/)
+* Ben Foley
+* Nay San
 
 If you use this code in a publication, please cite the [workshop
 paper](https://halshs.archives-ouvertes.fr/halshs-01656683/document) (which is
@@ -59,7 +67,7 @@ computationally demanding than it would be for optimal transcription quality.
 Ideally you'd have access to a server with more memory and a GPU, but this
 isn't necessary.
 
-The code has been tested on Mac and Linux systems. It hasn't yet been tested on Windows.
+The code has been tested on Mac and Linux systems. It can be run on Windows using the Docker container described below.
 
 For now you must open up a terminal to enter commands at the command line. (The
 commands below are prefixed with a "$". Don't enter the "$", just whatever
@@ -137,17 +145,17 @@ $ ipython
 You'll should now see something like:
 
 ```
-3280
+Number of training utterances: 1024
+Batch size: 16
+Batches per epoch: 64
 2018-01-18 10:30:22.290964: I tensorflow/core/platform/cpu_feature_guard.cc:137] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
-    exp_dir ../exp/1, epoch 0
-        Batch 0
-        Batch 1
-        ...
+exp_dir ./exp/0, epoch 0
+	Batch...0...1...2...3...
 ```
  
-The message may vary a bit depending on your CPU, but if it says "Batch 0" at the bottom without an error, then training is very likely working. Contact me if you have any trouble getting to this point, or if you had to deviate from the above instructions to get to this point.
+The message may vary a bit depending on your CPU but if it says something like this then training is very likely working. Contact me if you have any trouble getting to this point, or if you had to deviate from the above instructions to get to this point.
 
-On the current settings it will train through batches 1 to 200 or so for at least 10 "epochs", potentially more. If you don't have a GPU then this will take quite a while, though you should notice it converging in performance within a couple hours on most personal computers.
+On the current settings it will train through at least 10 "epochs", very likely more. If you don't have a GPU then this will take quite a while, though you should notice it converging in performance within a couple hours on most personal computers.
 
 After a few epochs you can see how its going by going to opening up
 `exp/<experiment_number>/train_log.txt`. This will show you
@@ -168,7 +176,11 @@ way, you can create your own Persephone `Corpus` object with:
 corp = corpus.ReadyCorpus("<your-corpus-directory>")
 ```
 
-We describe the specifics below.
+If you are using the Docker container then to get data in and out of the container you need to create a "volume" that shares data between your computer (the host) and the container. If your data is stored in `/home/username/mydata` on your machine and in the container you want to store it in `/persephone/mydata` then run:
+```
+docker run -it -v /home/username/mydata:/persephone/mydata oadams/persephone
+```
+This is simply an extension of the earlier command to run docker, which additionally specifies the portal with which data is transferred to and from the container. If Persephone—abducted by Hades—is the queen of the underworld, then you might consider this volume to be the gates of hell.
 
 #### Formatting your data
 
@@ -178,8 +190,8 @@ most important priority for Persephone at the moment. This is a work in
 progress.
 
 Current data formatting requirements:
-* Audio files are stored in `<your-corpus>/feat/`. A wide variety of audio
-  formats are supported.
+* Audio files are stored in `<your-corpus>/feat/`. The WAV format is supported.
+  Persephone will automatically normalize these WAVs to be 16bit mono 16000Hz.
 * Transcriptions are stored in text files in `<your-corpus>/label/`
 * Each audio file is short (ideally no longer than 10 seconds). There is a
   script added by Ben Foley, `persephone/scripts/split_eafs.py`, to split

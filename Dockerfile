@@ -5,7 +5,8 @@ RUN apt-get update && apt-get -y install \
 	python3-pip \
 	ffmpeg \
 	wget \
-	unzip
+	unzip \
+	vim
 
 RUN pip3 install -U pip
 RUN pip3 install git+git://github.com/oadams/persephone.git
