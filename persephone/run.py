@@ -203,13 +203,26 @@ def train(exp_dir, language, feat_type, label_type,
     except:
         print("Issues with my printing train_desc2")
 
+
 def get_simple_model(exp_dir, corpus):
-    batch_size = 16
     num_layers = 2
     hidden_size= 250
-    num_train=2048
 
-    corpus_reader = CorpusReader(corpus, num_train=num_train, batch_size=batch_size)
+    def decide_batch_size(num_train):
+
+        if num_train >= 512:
+            batch_size = 16
+        elif num_train < 128:
+            if num_train < 4:
+                batch_size = 1
+            else:
+                batch_size = 4
+        else:
+            batch_size = num_train / 32
+
+    batch_size = decide_batch_size(len(corpus.train_prefixes))
+
+    corpus_reader = CorpusReader(corpus, batch_size=batch_size)
     model = rnn_ctc.Model(exp_dir, corpus_reader,
                           num_layers=num_layers,
                           hidden_size=hidden_size,
