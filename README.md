@@ -274,3 +274,79 @@ different tones though, you might make that vowel vocabulary about 5
 times bigger by combining them into one token, so its less likely to
 be good (though who knows, it might still yield performance
 improvements).
+
+### 5. Saving and loading models; transcribing untranscribed data
+
+So far, the tutorial described how to load a `Corpus` object, and perform
+training and testing with a single function `run.train_ready(corpus)`, which
+hid some details. This section exposes more of the interface so that you can
+describe models more fully, save and load models, and apply it to untranscribed
+data. I'd like to hear people's thoughts on this interface.
+
+#### CorpusReaders and Models
+
+The `Corpus` object (of which `ReadyCorpus` is a subclass), is an object that
+exposes the files in the corpus (among several other things). Of relevance here
+is the `.get_train_fns()`, `.get_valid_fns()`, `.get_test_fns()` methods, which
+provide lists of files in the training, validation and test sets respectively.
+There is additionally a `.get_untranscribed_fns()` method which returns a list
+of files representing speech that has not been transcribed.
+`.get_untranscribed_fns()` fetches prefixes of utterances from
+`untranscribed_prefixes.txt`, which you can put in the corpus data directory
+(at the same level as the `feat/` and `label/` subdirectories).
+
+To fetch data from your `Corpus`, a `CorpusReader` is used. The `CorpusReader`
+regulates how much data is to be read from the corpus, as well as the size of
+the "batches" that are fed to the model during training. You create a
+CorpusReader by feeding it a corpus (here the example na_corpus):
+
+```
+from persephone import corpus
+na_corpus = corpus.ReadyCorpus("data/na_example/")
+from persephone import corpus_reader
+na_reader = corpus_reader.CorpusReader(na_corpus, num_train=512, batch_size=16)
+```
+
+Here, `na_reader` is an interface to the corpus which will read from the
+corpus files 512 training utterances, in batches of 16 utterances. We can now
+feed data to a `Model`:
+
+```
+from persephone import rnn_ctc
+model = rnn_ctc.Model(exp_dir, na_reader, num_layers=2, hidden_size=250)
+```
+
+where `exp_dir` is a directory in which experimental results and logging will
+be stored. In creating an `rnn_ctc.Model` (recurrent neural network with a
+connectionist temporal classification loss function) we have also specified
+what corpus to read from, how many layers there are in the neural network, and
+the amount of "neurons" in those layers.  We can now train the model with:
+
+```
+model.train()
+```
+
+After training, we can transcribe untranscribed data with:
+
+```
+model.transcribe()
+```
+
+which depends on `untranscribed_prefixes.txt`
+existing before corpus creation (though there's no reason why this can't be
+changed to simply transcribe the utterances with feature files in
+`<data-dir>/feat/` that don't have corresponding transcriptions in
+`<data-dir>/label/`).
+
+During training, the model will store the model that performs best on the
+validation set in `<exp_dir>/model`, across a few different files prefixed with
+`model_best.ckpt`. If you later want to load this model to transcribe
+untranscribed data, you create a model with the same hyperparameters and call
+`model.transcribe()` with the `restore_model_path` keyword argument:
+
+```
+model = rnn_ctc.Model(<new-exp-dir>, na_reader, num_layers=2, hidden_size=250)
+model.transcribe(restore_model_path="<old-exp-dir>/model/model_best.ckpt")
+```
+
+This will load a previous model and perform transcription with it.
