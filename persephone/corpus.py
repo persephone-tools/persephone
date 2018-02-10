@@ -227,17 +227,22 @@ class ReadyCorpus(AbstractCorpus):
         super().__init__(feat_type, label_type)
 
         self.TGT_DIR = tgt_dir
+
+        if not os.path.isdir(self.TGT_DIR):
+            raise FileNotFoundError("The directory {} does not
+                                    exist.".format(self.TGT_DIR))
+
         self.FEAT_DIR = os.path.join(tgt_dir, "feat")
         self.WAV_DIR = os.path.join(tgt_dir, "wav")
         self.LABEL_DIR = os.path.join(tgt_dir, "label")
 
         if not os.path.isdir(self.WAV_DIR):
             print(self.WAV_DIR)
-            raise Exception("The supplied path requires a 'wav' subdirectory.")
+            raise FileNotFoundError("The supplied path requires a 'wav' subdirectory.")
         if not os.path.isdir(self.FEAT_DIR):
             os.makedirs(self.FEAT_DIR)
         if not os.path.isdir(self.LABEL_DIR):
-            raise Exception("The supplied path requires a 'label' subdirectory.")
+            raise FileNotFoundError("The supplied path requires a 'label' subdirectory.")
 
         self.prepare_feats(self.WAV_DIR) # In this case the feat_dir is the same as the org_dir
         self.labels = self.determine_labels()

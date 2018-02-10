@@ -15,4 +15,5 @@ WORKDIR /persephone
 
 ADD https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download data/
 
-RUN unzip data/na_example.zip -d data/ && rm data/na_example.zip
+RUN mv data/download data/na_example_small.zip
+RUN unzip data/na_example_small.zip -d data/ && rm data/na_example_small.zip
