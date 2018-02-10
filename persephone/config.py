@@ -28,9 +28,9 @@ JAPHUG_DIR = os.path.join(CORPORA_BASE_PATH, "japhug")
 NA_DIR = os.path.join(CORPORA_BASE_PATH, "Na")
 
 # The directory where the preprocessed data will be held.
-TGT_DIR = "./data"
+TGT_DIR = config_file.get("PATHS", "TARGET", fallback="./data")
 # The path for experiments
-EXP_DIR = "./exp"
+EXP_DIR = config_file.get("PATHS", "EXPERIMENTS", fallback="./exp")
 
 # The path to the sox tool for converting NIST format to WAVs.
 SOX_PATH = "/home/oadams/tools/sox-14.4.2/src/sox"
