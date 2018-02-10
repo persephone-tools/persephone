@@ -9,10 +9,11 @@ RUN apt-get update && apt-get -y install \
 	vim
 
 RUN pip3 install -U pip
-RUN pip3 install git+git://github.com/oadams/persephone.git
+RUN pip3 install persephone
 
 WORKDIR /persephone
 
-ADD https://cloudstor.aarnet.edu.au/plus/s/rZz4XCX5gdIs7nr data/
+ADD https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download data/
 
-RUN unzip data/na_example.zip -d data/ && rm data/na_example.zip
+RUN mv data/download data/na_example_small.zip
+RUN unzip data/na_example_small.zip -d data/ && rm data/na_example_small.zip

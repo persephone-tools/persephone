@@ -166,6 +166,8 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         prefixes = self.get_prefixes()
         # TODO Note that I'm shuffling after sorting; this could be better.
         # TODO Remove explicit reference to "fbank"
+        # TODO Surely filtering by size should be done by the corpus reader?
+        # How best to keep reads of the corpus consistent?
         prefixes = utils.filter_by_size(
             self.FEAT_DIR, prefixes, "fbank", max_samples)
         Ratios = namedtuple("Ratios", ["train", "valid", "test"])
@@ -226,13 +228,18 @@ class ReadyCorpus(AbstractCorpus):
         super().__init__(feat_type, label_type)
 
         self.TGT_DIR = tgt_dir
+
+        if not os.path.isdir(self.TGT_DIR):
+            raise FileNotFoundError("The directory {} does not exist.".format(
+                                    self.TGT_DIR))
+
         self.FEAT_DIR = os.path.join(tgt_dir, "feat")
         self.WAV_DIR = os.path.join(tgt_dir, "wav")
         self.LABEL_DIR = os.path.join(tgt_dir, "label")
 
         if not os.path.isdir(self.WAV_DIR):
             print(self.WAV_DIR)
-            raise Exception("The supplied path requires a 'wav' subdirectory.")
+            raise PersephoneException("The supplied path requires a 'wav' subdirectory.")
         if not os.path.isdir(self.FEAT_DIR):
             os.makedirs(self.FEAT_DIR)
         if not os.path.isdir(self.LABEL_DIR):

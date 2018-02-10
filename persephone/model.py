@@ -274,7 +274,7 @@ class Model:
             os.mkdir(hyps_dir)
 
         for epoch in itertools.count():
-            print("exp_dir %s, epoch %d" % (self.exp_dir, epoch))
+            print("\nexp_dir %s, epoch %d" % (self.exp_dir, epoch))
             batch_gen = self.corpus_reader.train_batch_gen()
 
             train_ler_total = 0

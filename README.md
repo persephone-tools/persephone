@@ -1,4 +1,4 @@
-# Persephone v0.1.7 (Beta version)
+# Persephone v0.1.8 (Beta version)
 
 Persephone (/pərˈsɛfəni/) is an automatic phoneme transcription tool.
 Traditional speech recognition tools require a large pronunciation lexicon
@@ -18,8 +18,8 @@ yet such technology has not been widely adopted.
 
 The goal of Persephone is to make state-of-the-art phonemic transcription
 accessible to people involved in language documentation. Creating an
-easy-to-use user interface is central to this. The user interface and APIs are
-currently a work in progress and currently Persephone must be run via a command line.
+easy-to-use user interface is central to this. The user interface and APIs are a
+work in progress and currently Persephone must be run via a command line.
 
 The tool is implemented in Python/Tensorflow with extensibility in mind.
 Currently just one model is implemented, which uses bidirectional long
@@ -28,7 +28,7 @@ short-term memory (LSTMs) and the connectionist temporal classification (CTC) lo
 We are happy to offer direct help to anyone who wants to use it. If you're
 having trouble, contact Oliver Adams at oliver.adams@gmail.com. We are also
 very welcome to thoughts, constructive criticism, help with design, development
-and documentation, along with any pull requests you may have.
+and documentation, along with any bug reports or pull requests you may have.
 
 #### Contributors
 
@@ -109,7 +109,7 @@ We now need to set up a virtual environment and install the library.
 $ python3 -m virtualenv -p python3 persephone-venv
 $ source persephone-venv/bin/activate
 $ pip install -U pip
-$ pip install git+git://github.com/oadams/persephone.git
+$ pip install persephone
 ```
 
 (This library can be installed system-wide but it is recommended to install in a virtualenv.)
@@ -124,9 +124,9 @@ cd persephone-tutorial/
 mkdir data
 ```
 
-Get the data [here](https://cloudstor.aarnet.edu.au/plus/s/rZz4XCX5gdIs7nr/download)
+Get the data [here](https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download)
 
-Unzip `na_example.zip`. There should now be a directory `na_example/`, with
+Unzip `na_example_small.zip`. There should now be a directory `na_example/`, with
 subdirfectories `wav/` and `label/`. You can put `na_example` anywhere, but
 for the rest of this tutorial I assume it is in the working directory: `persephone-tutorial/data/na_example/`.
 
