@@ -97,7 +97,7 @@ def trim_wav(in_fn, out_fn, start_time, end_time):
     """
 
     if not os.path.isfile(out_fn):
-        args = ["sox", in_fn, out_fn, "trim", str(start_time), "=" + str(end_time)]
+        args = [config.SOX_PATH, in_fn, out_fn, "trim", str(start_time), "=" + str(end_time)]
         print(args[1:])
         subprocess.run(args)
 
@@ -150,9 +150,9 @@ def remove_multi(to_remove, target_list):
 def wav_length(fn):
     """ Returns the length of the WAV file in seconds."""
 
-    args = ["sox", fn, "-n", "stat"]
+    args = [config.SOX_PATH, fn, "-n", "stat"]
     p = subprocess.Popen(
-        ["sox", fn, "-n", "stat"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        [config.SOX_PATH, fn, "-n", "stat"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     length_line = str(p.communicate()[1]).split("\\n")[1].split()
     print(length_line)
     assert length_line[0] == "Length"

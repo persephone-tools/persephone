@@ -13,6 +13,8 @@ from . import utils
 from . import lattice
 from . import config
 
+OPENFST_PATH = config.OPENFST_BIN_PATH
+
 allow_growth_config = tf.ConfigProto()
 allow_growth_config.gpu_options.allow_growth=True
 
@@ -147,41 +149,36 @@ class Model:
 
             prefix = os.path.join(out_dir, "utterance_%d" % i)
 
-            try:
-                run_args = ["fstarcsort",
-                            prefix + ".confusion.bin",
-                            prefix + ".confusion.sort.bin"]
-                subprocess.run(run_args)
+            run_args = [os.path.join(OPENFST_PATH, "fstarcsort"),
+                        prefix + ".confusion.bin",
+                        prefix + ".confusion.sort.bin"]
+            subprocess.run(run_args)
 
-                # Compose the confusion network with the FST that removes blanks
-                # and repetitions, expanding to a larger lattice-like FST.
-                run_args = ["fstcompose",
-                            prefix + ".confusion.sort.bin",
-                            os.path.join(out_dir, "collapse_fst.bin"),
-                            prefix + ".collapsed.bin"]
-                subprocess.run(run_args)
+            # Compose the confusion network with the FST that removes blanks
+            # and repetitions, expanding to a larger lattice-like FST.
+            run_args = [os.path.join(OPENFST_PATH, "fstcompose"),
+                        prefix + ".confusion.sort.bin",
+                        os.path.join(out_dir, "collapse_fst.bin"),
+                        prefix + ".collapsed.bin"]
+            subprocess.run(run_args)
 
-                # Take the output projection of the FST.
-                run_args = ["fstproject",
-                            "--project_output",
-                            prefix + ".collapsed.bin", prefix + ".projection.bin"]
-                subprocess.run(run_args)
+            # Take the output projection of the FST.
+            run_args = [os.path.join(OPENFST_PATH, "fstproject"),
+                        "--project_output",
+                        prefix + ".collapsed.bin", prefix + ".projection.bin"]
+            subprocess.run(run_args)
 
-                # Push weights
-    #            run_args = ["fstpush",
-    #                        "--push_weights",
-    #                        prefix + ".projection.bin", prefix + ".pushed.bin"]
-    #            subprocess.run(run_args)
+            # Push weights
+#            run_args = [os.path.join(OPENFST_PATH, "fstpush"),
+#                        "--push_weights",
+#                        prefix + ".projection.bin", prefix + ".pushed.bin"]
+#            subprocess.run(run_args)
 
-                # Remove epsilons
-                run_args = ["fstrmepsilon",
-                            "--reverse=true",
-                            prefix + ".projection.bin", prefix + ".rmepsilon.bin"]
-                subprocess.run(run_args)
-            except FileNotFoundError:
-                print("Make sure you have OpenFST binaries installed and "
-                      "available on the path")
-                raise
+            # Remove epsilons
+            run_args = [os.path.join(OPENFST_PATH, "fstrmepsilon"),
+                        "--reverse=true",
+                        prefix + ".projection.bin", prefix + ".rmepsilon.bin"]
+            subprocess.run(run_args)
 
     def eval(self, restore_model_path=None):
         """ Evaluates the model on a test set."""

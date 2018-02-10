@@ -125,7 +125,7 @@ def prepare(feat_type="log_mel_filterbank"):
         pre, ext = os.path.splitext(fn)
         if ext == ".mp3":
             if not os.path.exists(os.path.join(audio_path, pre + ".wav")):
-                args = ["ffmpeg",
+                args = [config.FFMPEG_PATH,
                         "-i", os.path.join(audio_path, fn),
                         "-ar", str(16000), "-ac", str(1),
                         os.path.join(audio_path, pre + ".wav")]

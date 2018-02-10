@@ -22,7 +22,7 @@ def compile_fst(prefix, syms_fn):
     """ Compiles the given text-based FST into a binary using OpenFST."""
 
     # Compile the fst
-    args = ["fstcompile",
+    args = [os.path.join(config.OPENFST_BIN_PATH, "fstcompile"),
             "--arc_type=log",
             "--isymbols=%s" % syms_fn,
             "--osymbols=%s" % syms_fn,
