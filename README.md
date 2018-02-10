@@ -118,7 +118,7 @@ mkdir data
 
 Get the data [here](https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download)
 
-Unzip `na_example.zip`. There should now be a directory `na_example/`, with
+Unzip `na_example_small.zip`. There should now be a directory `na_example/`, with
 subdirfectories `wav/` and `label/`. You can put `na_example` anywhere, but
 for the rest of this tutorial I assume it is in the working directory: `persephone-tutorial/data/na_example/`.
 
