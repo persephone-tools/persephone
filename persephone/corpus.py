@@ -229,8 +229,8 @@ class ReadyCorpus(AbstractCorpus):
         self.TGT_DIR = tgt_dir
 
         if not os.path.isdir(self.TGT_DIR):
-            raise FileNotFoundError("The directory {} does not
-                                    exist.".format(self.TGT_DIR))
+            raise FileNotFoundError("The directory {} does not exist.".format(
+                                    self.TGT_DIR))
 
         self.FEAT_DIR = os.path.join(tgt_dir, "feat")
         self.WAV_DIR = os.path.join(tgt_dir, "wav")
