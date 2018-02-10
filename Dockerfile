@@ -13,6 +13,6 @@ RUN pip3 install persephone
 
 WORKDIR /persephone
 
-ADD https://www.dropbox.com/s/d0vvgv0b762ck9q/na_example.zip?dl=1 data/
+ADD https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download data/
 
 RUN unzip data/na_example.zip -d data/ && rm data/na_example.zip

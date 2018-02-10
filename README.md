@@ -116,7 +116,7 @@ cd persephone-tutorial/
 mkdir data
 ```
 
-Get the data [here](https://cloudstor.aarnet.edu.au/plus/s/rZz4XCX5gdIs7nr)
+Get the data [here](https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download)
 
 Unzip `na_example.zip`. There should now be a directory `na_example/`, with
 subdirfectories `wav/` and `label/`. You can put `na_example` anywhere, but
