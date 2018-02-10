@@ -9,7 +9,7 @@ RUN apt-get update && apt-get -y install \
 	vim
 
 RUN pip3 install -U pip
-RUN pip3 install git+git://github.com/oadams/persephone.git
+RUN pip3 install persephone
 
 WORKDIR /persephone
 

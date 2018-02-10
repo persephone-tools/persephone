@@ -165,6 +165,8 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         prefixes = self.get_prefixes()
         # TODO Note that I'm shuffling after sorting; this could be better.
         # TODO Remove explicit reference to "fbank"
+        # TODO Surely filtering by size should be done by the corpus reader?
+        # How best to keep reads of the corpus consistent?
         prefixes = utils.filter_by_size(
             self.FEAT_DIR, prefixes, "fbank", max_samples)
         Ratios = namedtuple("Ratios", ["train", "valid", "test"])

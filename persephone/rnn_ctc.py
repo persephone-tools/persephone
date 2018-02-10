@@ -27,6 +27,9 @@ class Model(model.Model):
                  hidden_size=250, beam_width=100, decoding_merge_repeated=True):
         super().__init__(exp_dir, corpus_reader)
 
+        if not os.path.isdir(exp_dir):
+            os.makedirs(exp_dir)
+
         # Increase vocab size by 2 since we need an extra for CTC blank labels
         # and another extra for dynamic padding with zeros.
         vocab_size = corpus_reader.corpus.vocab_size+2
