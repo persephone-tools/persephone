@@ -1,11 +1,13 @@
 import os
 from os.path import join
+import pytest
 
 from persephone import corpus
 from persephone import run
 
 NA_EXAMPLE_LINK = "https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download"
 
+@pytest.mark.slow
 def test_ready_train():
     """ Pull the corpus from the link in the README. """
 
