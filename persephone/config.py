@@ -26,6 +26,7 @@ GRIKO_DIR = os.path.join(CORPORA_BASE_PATH, "griko-data")
 CHATINO_DIR = os.path.join(CORPORA_BASE_PATH, "chatino", "CTP")
 JAPHUG_DIR = os.path.join(CORPORA_BASE_PATH, "japhug")
 NA_DIR = os.path.join(CORPORA_BASE_PATH, "Na")
+BUTCHER_DIR = os.path.join(CORPORA_BASE_PATH, "OA_Data")
 
 # The directory where the preprocessed data will be held.
 TGT_DIR = config_file.get("PATHS", "TARGET", fallback="./data")

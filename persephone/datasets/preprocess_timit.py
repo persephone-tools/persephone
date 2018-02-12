@@ -1,5 +1,5 @@
 """ Preprocesses the TIMIT data into a format for end-to-end phoneme recognition."""
-from .exceptions import PersephoneException
+from ..exceptions import PersephoneException
 
 import os
 from os.path import join
@@ -20,9 +20,9 @@ def all_feature_extraction(feat_type):
         for filename in fns:
             if filename.endswith(".wav"):
                 if feat_type == "log_mel_filterbank":
-                    feat_extract.logfbank_feature_extraction(join(root, filename))
+                    feat_extract.fbank(join(root, filename))
                 elif feat_type == "mfcc13_d":
-                    feat_extract.feature_extraction(join(root, filename))
+                    feat_extract.mfcc(join(root, filename))
                 else:
                     raise PersephoneException("Invalid feature type selection.")
 

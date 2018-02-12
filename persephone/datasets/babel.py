@@ -180,7 +180,7 @@ def feat_extraction(langs, feat_type):
                     count += 1
                     input_path = os.path.join(input_dir, input_fn)
                     print(count, input_path)
-                    feat_extract.logfbank_feature_extraction(input_path)
+                    feat_extract.fbank(input_path)
 
 def load_phns(lang):
     """ Loads the phone lexicon for the given language."""
@@ -246,13 +246,13 @@ class Corpus(corpus.AbstractCorpus):
         print(len(feat_paths))
 
         txt_paths = [get_txt_path(feat_path) for feat_path in feat_paths]
-        train_feat_paths = [feat_path for feat_path in feat_paths
+        self.train_feat_paths = [feat_path for feat_path in feat_paths
                             if "/training/" in feat_path]
-        train_txt_paths = [txt_path for txt_path in txt_paths
+        self.train_txt_paths = [txt_path for txt_path in txt_paths
                            if "/training/" in txt_path]
-        dev_feat_paths = [feat_path for feat_path in feat_paths
+        self.dev_feat_paths = [feat_path for feat_path in feat_paths
                           if "/dev/" in feat_path]
-        dev_txt_paths = [txt_path for txt_path in txt_paths
+        self.dev_txt_paths = [txt_path for txt_path in txt_paths
                          if "/dev/" in txt_path]
 
         self.phonemes = load_phns(lang)
@@ -264,8 +264,8 @@ class Corpus(corpus.AbstractCorpus):
         self.vocab_size = len(self.phonemes)
 
     def get_valid_fns(self):
-        return dev_feat_paths, dev_txt_paths
+        return self.dev_feat_paths, self.dev_txt_paths
 
     def get_train_fns(self):
-        return train_feat_paths, train_txt_paths
+        return self.train_feat_paths, self.train_txt_paths
 

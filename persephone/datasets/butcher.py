@@ -25,9 +25,9 @@ def prepare_butcher_labels(label_dir=LABEL_DIR):
     # TODO offer label format that is consistent with Steven's
     # data; perhaps by using the orthographic form and lowercasing.
 
-    from nltk_contrib.textgrid import TextGrid
     ## TODO: change import to use
     # from pympi.praat import TextGrid
+    from nltk_contrib.textgrid import TextGrid # pylint: disable=import-error
 
     if not os.path.isdir(label_dir):
         os.makedirs(label_dir)
@@ -76,8 +76,9 @@ class Corpus(corpus.AbstractCorpus):
     def __init__(self, feat_type="fbank", label_type="phonemes"):
         super().__init__(feat_type, label_type)
 
-        self.labels = butcher_phonemes(LABEL_DIR)
-        train, valid, test = make_data_splits(LABEL_DIR)
+        # TODO This will break because of undefined variables.
+        self.labels = prepare_butcher_phonemes(LABEL_DIR) #pylint: disable=undefined-variable
+        train, valid, test = make_data_splits(LABEL_DIR) #pylint: disable=undefined-variable
 
         # Filter out prefixes that have no transcription. It's probably better
         # to have this after the splitting between train/valid/test sets,

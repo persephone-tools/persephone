@@ -38,7 +38,7 @@ PHONEMES_ONE_CHAR = set([phn for phn in PHONEMES if len(phn) == 1])
 def extract_phonemes(sent, tgt_fn):
 
     org_sent = sent
-    sent = datasets.pangloss.remove_content_in_brackets(sent, "()")
+    sent = pangloss.remove_content_in_brackets(sent, "()")
     sent = sent.replace(",", " ")
     sent = sent.replace("，", " ")
     sent = sent.replace("-", " ")
@@ -197,9 +197,8 @@ class Corpus(corpus.AbstractCorpus):
                          for fn in os.listdir(transcript_dir)]
 
         if max_samples:
-            self.prefixes = self.sort_and_filter_by_size(self.prefixes,
-                                                         max_samples)
-
+            # TODO This is going to break
+            self.prefixes = self.sort_and_filter_by_size(self.prefixes, max_samples) # pylint: disable=no-member
         random.seed(0)
         random.shuffle(self.prefixes)
         self.train_prefixes = self.prefixes[:self.TRAIN_VALID_SPLIT[0]]

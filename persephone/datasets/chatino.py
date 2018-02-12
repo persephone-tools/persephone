@@ -251,7 +251,7 @@ class Corpus(corpus.AbstractCorpus):
 
         # Remove prefixes whose feature files are too long.
         if max_samples:
-            self.prefixes = utils.sort_and_filter_by_size(
+            self.prefixes = utils.filter_by_size(
                 FEAT_DIR, self.prefixes, feat_type, max_samples)
 
         random.seed(0)
