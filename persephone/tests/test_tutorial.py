@@ -52,7 +52,6 @@ def test_ready_train():
     assert os.path.isdir(wav_dir)
     assert len(os.listdir(wav_dir)) == 1024
 
-    na_example_dir = join(DATA_BASE_DIR, "na_example/")
     assert os.path.exists(na_example_dir)
 
     # Test the first setup encouraged in the tutorial
@@ -61,7 +60,7 @@ def test_ready_train():
 
     # Get the experiment number and experiment directory and fetch
     # results. Probably should expect < 20% LER.
-    test_per_fn = join(exp_dir, "test/test_per")
+    test_per_fn = join(exp_dir, TEST_PER_FN)
     with open(test_per_fn) as f:
         ler = float(f.readlines()[0].split()[-1])
 

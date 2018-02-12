@@ -231,7 +231,9 @@ def get_simple_model(exp_dir, corpus):
 
 def train_ready(corpus, directory=EXP_DIR):
 
-    exp_dir = prep_exp_dir(directory=EXP_DIR)
+    print(directory)
+
+    exp_dir = prep_exp_dir(directory=directory)
     model = get_simple_model(exp_dir, corpus)
     model.train(min_epochs=20, early_stopping_steps=3)
     return exp_dir
