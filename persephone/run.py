@@ -229,11 +229,12 @@ def get_simple_model(exp_dir, corpus):
 
     return model
 
-def train_ready(corpus):
+def train_ready(corpus, directory=EXP_DIR):
 
-    exp_dir = prep_exp_dir()
+    exp_dir = prep_exp_dir(directory=EXP_DIR)
     model = get_simple_model(exp_dir, corpus)
     model.train(min_epochs=20, early_stopping_steps=3)
+    return exp_dir
 
 def transcribe(model_path, corpus):
     """ Applies a trained model to untranscribed data in a Corpus. """
