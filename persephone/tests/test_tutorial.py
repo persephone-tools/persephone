@@ -64,8 +64,8 @@ def test_ready_train():
     with open(test_per_fn) as f:
         ler = float(f.readlines()[0].split()[-1])
 
-    # Assert the convergence of the model at the end by reading the
-    assert ler < 0.2
+    # Assert the convergence of the model at the end by reading the test scores
+    assert ler < 0.3
 
 # Other tests:
     # TODO assert the contents of the prefix files
