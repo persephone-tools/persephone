@@ -5,3 +5,4 @@ python:
 install: pip install .
 script:
   - pytest
+  - pylint -E

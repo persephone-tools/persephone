@@ -13,7 +13,7 @@ def test_butcher():
 def test_kunwinjku_steven():
     import persephone.datasets.kunwinjku_steven
 
-@pytest.mark.skip(reason="Currently this is not functional. Needs fixes before it van be imported.")
+#@pytest.mark.skip(reason="Currently this is not functional. Needs fixes before it van be imported.")
 def test_chatino():
     import persephone.datasets.chatino
 
