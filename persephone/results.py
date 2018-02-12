@@ -1,12 +1,12 @@
 """ Script for formatting results of experiments """
 
-import config
-import datasets.na
-import datasets.chatino
+from . import config
+from .datasets import na
+from .datasets import chatino
 
 from collections import defaultdict
 import os
-import utils
+from . import utils
 
 from distance import min_edit_distance_align
 from distance import cluster_alignment_errors
@@ -14,7 +14,7 @@ from distance import cluster_alignment_errors
 def round_items(floats):
     return ["%0.3f" % fl for fl in floats]
 
-def average(exp_nums, show_tgm_f1=False, phones=datasets.na.PHONEMES, tones=datasets.na.TONES):
+def average(exp_nums, show_tgm_f1=False, phones=na.PHONEMES, tones=na.TONES):
     """ Averages the results across a few experimental runs. """
 
     ler_total = 0
@@ -40,8 +40,8 @@ def average(exp_nums, show_tgm_f1=False, phones=datasets.na.PHONEMES, tones=data
         per_total/(i+1), ter_total/(i+1), ler_total/(i+1), tgm_f1_total/(i+1)))
 
 def format(exp_paths,
-                   phones=datasets.na.PHONEMES,
-                   tones=datasets.na.TONES):
+                   phones=na.PHONEMES,
+                   tones=na.TONES):
     """ Takes a list of experimental paths such as mam/exp/<number> and outputs
     the results. """
 
@@ -323,7 +323,7 @@ def error_types(exp_path, labels=None):
 def chatino_tone_confusion(exp_path):
     """ Outputs a confusion matrix for Chatino tones."""
 
-    tones = list(datasets.chatino.TONES)
+    tones = list(chatino.TONES)
     alignments = ed_alignments(exp_path)
 
     d = defaultdict(int)

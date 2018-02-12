@@ -203,7 +203,7 @@ def preprocess_french(trans, fr_nlp, remove_brackets_content=True):
     """ Takes a list of sentences in french and preprocesses them."""
 
     if remove_brackets_content:
-        trans = datasets.pangloss.remove_content_in_brackets(trans, "[]")
+        trans = pangloss.remove_content_in_brackets(trans, "[]")
     # Not sure why I have to split and rejoin, but that fixes a Spacy token
     # error.
     trans = fr_nlp(" ".join(trans.split()[:]))
@@ -228,7 +228,7 @@ def trim_wavs():
         path = os.path.join(ORG_XML_DIR, fn)
         prefix, _ = os.path.splitext(fn)
 
-        rec_type, sents, times, transls = datasets.pangloss.get_sents_times_and_translations(path)
+        rec_type, sents, times, transls = pangloss.get_sents_times_and_translations(path)
 
         # Extract the wavs given the times.
         for i, (start_time, end_time) in enumerate(times):
@@ -244,31 +244,33 @@ def trim_wavs():
             assert os.path.isfile(in_wav_path)
             utils.trim_wav(in_wav_path, out_wav_path, start_time, end_time)
 
-def prepare_transls():
-    """ Prepares the French translations. """
-
-    import spacy
-    fr_nlp = spacy.load("fr")
-
-    if not os.path.exists(os.path.join(TRANSL_DIR, "TEXT")):
-        os.makedirs(os.path.join(TRANSL_DIR, "TEXT"))
-    if not os.path.exists(os.path.join(TRANSL_DIR, "WORDLIST")):
-        os.makedirs(os.path.join(TRANSL_DIR, "WORDLIST"))
-
-    for fn in os.listdir(ORG_XML_DIR):
-        print(fn)
-        path = os.path.join(ORG_XML_DIR, fn)
-        prefix, _ = os.path.splitext(fn)
-
-        rec_type, sents, times, transls = datasets.pangloss.get_sents_times_and_translations(path)
-
-        # Tokenize the French translations and write them to file.
-        transls = [preprocess_french(transl[0], fr_nlp) for transl in transls]
-        for i, transl in enumerate(transls):
-            out_prefix = "%s.%d" % (prefix, i)
-            transl_path = os.path.join(TRANSL_DIR, rec_type, out_prefix + ".fr.txt")
-            with open(transl_path, "w") as transl_f:
-                print(transl, file=transl_f)
+# Commenting out because of spacy requirement and working with the French
+# translations isn't very integral to persephone.
+#def prepare_transls():
+#    """ Prepares the French translations. """
+#
+#    import spacy
+#    fr_nlp = spacy.load("fr")
+#
+#    if not os.path.exists(os.path.join(TRANSL_DIR, "TEXT")):
+#        os.makedirs(os.path.join(TRANSL_DIR, "TEXT"))
+#    if not os.path.exists(os.path.join(TRANSL_DIR, "WORDLIST")):
+#        os.makedirs(os.path.join(TRANSL_DIR, "WORDLIST"))
+#
+#    for fn in os.listdir(ORG_XML_DIR):
+#        print(fn)
+#        path = os.path.join(ORG_XML_DIR, fn)
+#        prefix, _ = os.path.splitext(fn)
+#
+#        rec_type, sents, times, transls = pangloss.get_sents_times_and_translations(path)
+#
+#        # Tokenize the French translations and write them to file.
+#        transls = [preprocess_french(transl[0], fr_nlp) for transl in transls]
+#        for i, transl in enumerate(transls):
+#            out_prefix = "%s.%d" % (prefix, i)
+#            transl_path = os.path.join(TRANSL_DIR, rec_type, out_prefix + ".fr.txt")
+#            with open(transl_path, "w") as transl_f:
+#                print(transl, file=transl_f)
 
 def prepare_labels(label_type):
     """ Prepare the neural network output targets."""
@@ -283,7 +285,7 @@ def prepare_labels(label_type):
         path = os.path.join(ORG_XML_DIR, fn)
         prefix, _ = os.path.splitext(fn)
 
-        rec_type, sents, times, transls = datasets.pangloss.get_sents_times_and_translations(path)
+        rec_type, sents, times, transls = pangloss.get_sents_times_and_translations(path)
         # Write the sentence transcriptions to file
         sents = [preprocess_na(sent, label_type) for sent in sents]
         for i, sent in enumerate(sents):

@@ -25,10 +25,11 @@ LABEL_DIR = os.path.join(TGT_DIR, "label")
 # Obtain the filename prefixes that identify recordings and their
 # transcriptions
 # TODO Consider factoring out as non-Chatino specific
-
-PREFIXES = [os.path.splitext(fn)[0]
+def get_prefixes():
+    return [os.path.splitext(fn)[0]
             for fn in os.listdir(ORG_TRANSCRIPT_DIR)
             if fn.endswith(".txt")]
+
 
 # Hardcode the phoneme set
 ONE_CHAR_PHONEMES = set(["p", "t", "d", "k", "q", "s", "x", "j", "m", "n", "r", "l",
@@ -173,7 +174,7 @@ def prepare_labels(label_type):
     if not os.path.isdir(LABEL_DIR):
         os.makedirs(LABEL_DIR)
 
-    for prefix in PREFIXES:
+    for prefix in get_prefixes():
         org_fn = os.path.join(ORG_TRANSCRIPT_DIR, "%s.txt" % prefix)
         label_fn = os.path.join(
             LABEL_DIR, "%s.%s" % (prefix, label_type))
@@ -189,7 +190,7 @@ def prepare_feats(feat_type):
     if feat_type=="phonemes_onehot":
         import numpy as np
         prepare_labels("phonemes")
-        for prefix in PREFIXES:
+        for prefix in get_prefixes():
             label_fn = os.path.join(LABEL_DIR, "%s.phonemes" % prefix)
             try:
                 with open(label_fn) as label_f:
@@ -205,7 +206,7 @@ def prepare_feats(feat_type):
                         one_hots)
     else:
         # Otherwise, 
-        for prefix in PREFIXES:
+        for prefix in get_prefixes():
             # Convert the wave to 16k mono.
             org_wav_fn = os.path.join(ORG_WAV_DIR, "%s.wav" % prefix)
             mono16k_wav_fn = os.path.join(FEAT_DIR, "%s.wav" % prefix)
@@ -240,7 +241,7 @@ class Corpus(corpus.AbstractCorpus):
         self.label_type = label_type
 
         # Filter prefixes based on what we find in the feat/ dir.
-        self.prefixes = [prefix for prefix in PREFIXES
+        self.prefixes = [prefix for prefix in get_prefixes()
                          if os.path.isfile(os.path.join(
                              FEAT_DIR, "%s.%s.npy" % (prefix, feat_type)))]
         # Filter prefixes based on what we find in the label/ dir.

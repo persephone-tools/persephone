@@ -18,7 +18,7 @@ from .exceptions import PersephoneException
 OPENFST_PATH = config.OPENFST_BIN_PATH
 
 allow_growth_config = tf.ConfigProto()
-allow_growth_config.gpu_options.allow_growth=True
+allow_growth_config.gpu_options.allow_growth=True #pylint: disable=no-member
 
 class Model:
     """ Generic model for our ASR tasks. """
@@ -38,6 +38,7 @@ class Model:
     def __init__(self, exp_dir, corpus_reader):
         self.exp_dir = exp_dir
         self.corpus_reader = corpus_reader
+        self.log_softmax = None
 
     def transcribe(self, restore_model_path=None):
         """ Transcribes an untranscribed dataset. Similar to eval() except

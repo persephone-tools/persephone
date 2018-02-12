@@ -10,10 +10,10 @@ from git import Repo
 
 from . import config
 from . import rnn_ctc
-#from . import datasets.na
+from .datasets import na
 #from . import datasets.griko
-#from . import datasets.chatino
-#from . import datasets.kunwinjku
+from .datasets import chatino
+from .datasets import butcher
 #from . import datasets.timit
 #from . import datasets.japhug
 #from . import datasets.babel
@@ -73,7 +73,7 @@ def run():
     experiments are documented in their own dir with a reference to the hash
     of the commit used to run the experiment.
     """
-    is_git_directory_clean(".", search_parent_directories=True)
+    is_git_directory_clean(".")
     exp_dir = prep_exp_dir()
     scaling_graph(exp_dir)
     #rerun_storyfoldxv(exp_dir)
@@ -120,7 +120,7 @@ def rerun_storyfoldxv(exp_dir):
 def story_fold_cross_validation(exp_dir):
 
     with open(join(exp_dir, "storyfold_crossvalidation.txt"), "w") as f:
-        texts = datasets.na.get_stories()
+        texts = na.get_stories()
         for i, test_text in enumerate(texts):
             valid_text = texts[(i+1) % len(texts)]
             for out_f in [f, sys.stdout]:
@@ -155,15 +155,15 @@ def train(exp_dir, language, feat_type, label_type,
     #log.addHandler(fh)
 
     if language == "chatino":
-        corpus = datasets.chatino.Corpus(feat_type, label_type)
+        corpus = chatino.Corpus(feat_type, label_type)
     elif language == "na":
-        corpus = datasets.na.Corpus(feat_type, label_type,
+        corpus = na.Corpus(feat_type, label_type,
                                     train_rec_type=train_rec_type,
                                     valid_story=valid_story,
                                     test_story=test_story)
     elif language == "kunwinjku":
         # TODO How to choose between the Bird and Butcher corpora?
-        corpus = datasets.kunwinjku.Corpus(feat_type, label_type)
+        corpus = butcher.Corpus(feat_type, label_type)
     else:
         raise PersephoneException("Language '%s' not supported." % language)
 

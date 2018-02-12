@@ -10,7 +10,7 @@ from nltk.metrics import distance
 from . import config
 from .exceptions import DirtyRepoException
 
-def is_git_directory_clean(path_to_repo, search_parent_dirs):
+def is_git_directory_clean(path_to_repo, search_parent_dirs=True):
     """
     Check that the git working directory is in a clean state
     and raise exceptions if not.

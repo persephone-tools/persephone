@@ -16,20 +16,6 @@ from .exceptions import PersephoneException
 class AbstractCorpus(metaclass=abc.ABCMeta):
     "All interfaces to corpora are subclasses of this class."""
 
-    feat_type = None
-    target_type = None
-    vocab_size = None
-    _num_feats = None
-    TGT_DIR = None
-    INDEX_TO_PHONEME = None
-    PHONEME_TO_INDEX = None
-    train_prefixes = None
-    valid_prefixes = None
-    test_prefixes = None
-    normalized = False
-    FEAT_DIR = None
-    LABEL_DIR = None
-
     def get_target_prefix(self, prefix):
         """ Gets the target gfn given a prefix. """
 
@@ -48,6 +34,19 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         self.feat_type = feat_type
         self.target_type = target_type
         self.label_type = target_type
+        self.vocab_size = None
+        self._num_feats = None
+        self.TGT_DIR = None
+        self.INDEX_TO_LABEL = None
+        self.LABEL_TO_INDEX = None
+        self.train_prefixes = None
+        self.valid_prefixes = None
+        self.test_prefixes = None
+        self.untranscribed_prefixes = None
+        self.normalized = False
+        self.FEAT_DIR = None
+        self.LABEL_DIR = None
+
 
     def indices_to_labels(self, indices):
         """ Converts a sequence of indices into their corresponding labels."""

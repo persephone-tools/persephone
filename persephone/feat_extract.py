@@ -134,13 +134,12 @@ def from_dir(dirname, feat_type):
             elif feat_type == "fbank_and_pitch":
                 fbank(path)
                 prefix = os.path.splitext(filename)[0]
-                # TODO
                 combine_fbank_and_pitch(dirname, prefix)
             elif feat_type == "pitch":
                 # Already extracted pitch at the start of this function.
                 pass
             elif feat_type == "mfcc13_d":
-                feature_extraction(wav)
+                mfcc(path)
             else:
                 raise PersephoneException("Feature type not found: %s" % feat_type)
 
