@@ -7,7 +7,7 @@ from persephone import run
 
 NA_EXAMPLE_LINK = "https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download"
 EXP_BASE_DIR = "testing/exp/"
-DATA_DIR = "testing/data/"
+DATA_BASE_DIR = "testing/data/"
 
 # TODO This needs to be uniform throughout the package and have a single point
 # of control, otherwise the test will break when I change it elswhere. Perhaps
@@ -18,10 +18,10 @@ def set_up_testing_dir():
     """ Creates a directory to store corpora and experimental directories used
     in testing. """
 
-    if not os.path.isdir(EXP_DIR):
-        os.makedirs(EXP_DIR)
-    if not os.path.isdir(DATA_DIR):
-        os.makedirs(DATA_DIR)
+    if not os.path.isdir(EXP_BASE_DIR):
+        os.makedirs(EXP_BASE_DIR)
+    if not os.path.isdir(DATA_BASE_DIR):
+        os.makedirs(DATA_BASE_DIR)
 
 @pytest.mark.slow
 def test_ready_train():
@@ -30,8 +30,8 @@ def test_ready_train():
     set_up_testing_dir()
 
     # Prepare paths
-    zip_fn = join(data_dir, "na_example_small.zip")
-    na_example_dir = join(data_dir, "na_example/")
+    zip_fn = join(DATA_BASE_DIR, "na_example_small.zip")
+    na_example_dir = join(DATA_BASE_DIR, "na_example/")
 
     # Remove data previously collected
     import shutil
@@ -45,14 +45,14 @@ def test_ready_train():
 
     # Unzip the data
     import subprocess
-    args = ["unzip", zip_fn, "-d", data_dir]
+    args = ["unzip", zip_fn, "-d", DATA_BASE_DIR]
     subprocess.run(args)
 
-    wav_dir == join(na_example_dir, "wav/")
+    wav_dir = join(na_example_dir, "wav/")
     assert os.path.isdir(wav_dir)
     assert len(os.listdir(wav_dir)) == 1024
 
-    na_example_dir = join(data_dir, "na_example/")
+    na_example_dir = join(DATA_BASE_DIR, "na_example/")
     assert os.path.exists(na_example_dir)
 
     # Test the first setup encouraged in the tutorial
