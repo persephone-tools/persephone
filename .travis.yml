@@ -4,5 +4,5 @@ python:
   - "3.6"
 install: pip install .
 script:
-  - pytest
   - pylint -E persephone
+  - pytest
