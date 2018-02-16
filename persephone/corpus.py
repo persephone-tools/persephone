@@ -125,15 +125,22 @@ class AbstractCorpus(metaclass=abc.ABCMeta):
         if not os.path.isdir(self.FEAT_DIR):
             os.makedirs(self.FEAT_DIR)
 
+        should_extract_feats = False
         for fn in os.listdir(org_dir):
             path = join(org_dir, fn)
             if path.endswith(".wav"):
                 prefix = os.path.basename(os.path.splitext(path)[0])
-                mono16k_wav_path = join(self.FEAT_DIR, prefix+".wav")
-                if not os.path.isfile(mono16k_wav_path):
-                    feat_extract.convert_wav(path, mono16k_wav_path)
+                mono16k_wav_path = join(self.FEAT_DIR, "%s.wav" % prefix)
+                feat_path = join(self.FEAT_DIR,
+                                 "%s.%s.npy" % (prefix, self.feat_type))
+                if not os.path.isfile(feat_path):
+                    # Then we should extract feats
+                    should_extract_feats = True
+                    if not os.path.isfile(mono16k_wav_path):
+                        feat_extract.convert_wav(path, mono16k_wav_path)
 
-        feat_extract.from_dir(self.FEAT_DIR, self.feat_type)
+        if should_extract_feats:
+            feat_extract.from_dir(self.FEAT_DIR, self.feat_type)
 
     def get_prefixes(self):
         fns = [fn for fn in os.listdir(self.LABEL_DIR)
@@ -244,7 +251,7 @@ class ReadyCorpus(AbstractCorpus):
         if not os.path.isdir(self.LABEL_DIR):
             raise PersephoneException("The supplied path requires a 'label' subdirectory.")
 
-        self.prepare_feats(self.WAV_DIR) # In this case the feat_dir is the same as the org_dir
+        self.prepare_feats(self.WAV_DIR)
         self.labels = self.determine_labels()
         train, valid, test = self.make_data_splits()
 

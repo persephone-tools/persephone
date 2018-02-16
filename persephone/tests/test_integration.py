@@ -83,10 +83,12 @@ def test_tutorial():
 def test_fast():
     """
     A fast integration test that runs 1 training epoch over a tiny
-    dataset.
+    dataset. Note that this does not run ffmpeg to normalize the WAVs since
+    Travis doesn't have that installed. So the normalized wavs are included in
+    the feat/ directory so that the normalization isn't run.
     """
 
-    TINY_EXAMPLE_LINK = "https://cloudstor.aarnet.edu.au/plus/s/WIJW9uS713ZdUS8/download"
+    TINY_EXAMPLE_LINK = "https://cloudstor.aarnet.edu.au/plus/s/g2GreDNlDKUq9rz/download"
     NUM_UTTERS = 4
     tiny_example_dir = join(DATA_BASE_DIR, "tiny_example/")
 
