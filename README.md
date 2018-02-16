@@ -30,17 +30,14 @@ Persephone has been built based on the code contributions of:
 * Ben Foley
 * Nay San
 
-If you use this code in a publication, please cite the [workshop
-paper](https://halshs.archives-ouvertes.fr/halshs-01656683/document) (which is
-currently being refined into a conference paper):
+If you use this code in a publication, please cite [Evaluating Phonemic Transcription of Low-Resource Tonal Languages for Language Documentation](https://halshs.archives-ouvertes.fr/halshs-01709648/document):
 
 ```
-@inproceedings{adams17alta,
-title = {Phonemic transcription of low-resource tonal languages},
-author = {Oliver Adams, Trevor Cohn, Graham Neubig, Alexis Michaud},
-booktitle = {Australasian Language Technology Association Workshop 2017},
-month = {December},
-year = {2017}
+@inproceedings{adams18evaluating,
+title = {Evaluating phonemic transcription of low-resource tonal languages for language documentation},
+author = {Adams, Oliver and Cohn, Trevor and Neubig, Graham and Cruz, Hilaria and Bird, Steven and Michaud, Alexis},
+booktitle = {Proceedings of LREC 2018},
+year = {2018}
 }
 ```
 
