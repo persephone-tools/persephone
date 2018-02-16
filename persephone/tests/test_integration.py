@@ -94,7 +94,9 @@ def test_fast():
 
     corp = corpus.ReadyCorpus(tiny_example_dir)
 
-    exp_dir = run.train_ready(corp, directory=EXP_BASE_DIR)
+    exp_dir = run.prep_exp_dir(directory=EXP_BASE_DIR)
+    model = run.get_simple_model(exp_dir, corp)
+    model.train(min_epochs=2, max_epochs=5)
 
     # Assert the convergence of the model at the end by reading the test scores
     ler = get_test_ler(exp_dir)

@@ -226,7 +226,7 @@ class Model:
                 print("Test PER: %f, tf LER: %f" % (test_per, test_ler), file=per_f)
 
     def train(self, early_stopping_steps=10, min_epochs=30, max_valid_ler=1.0,
-              max_train_ler=0.3, restore_model_path=None):
+              max_train_ler=0.3, max_epochs=100, restore_model_path=None):
         """ Train the model.
 
             batch_size: The number of utterances in each batch.
@@ -353,6 +353,12 @@ class Model:
             else:
                 print("Steps since last best valid_ler: %d" % (steps_since_last_record), file=out_file)
                 steps_since_last_record += 1
+                if epoch >= max_epochs:
+                    with open(os.path.join(self.exp_dir, "best_scores.txt"), "w") as best_f:
+                        print(best_epoch_str, file=best_f, flush=True)
+                        sess.close()
+                        out_file.close()
+                        break
                 if steps_since_last_record >= early_stopping_steps:
                     if epoch >= min_epochs:
                         # Then we've done the minimum number of epochs.
