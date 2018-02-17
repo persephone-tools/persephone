@@ -22,7 +22,7 @@ def set_up_base_testing_dir():
     if not os.path.isdir(DATA_BASE_DIR):
         os.makedirs(DATA_BASE_DIR)
 
-def prepare_example_data(example_dir, example_link, num_utters):
+def download_example_data(example_dir, example_link):
     """
     Collects the zip archive from example_link and unpacks it into
     example_dir. It should contain num_utters WAV files.
@@ -30,7 +30,7 @@ def prepare_example_data(example_dir, example_link, num_utters):
 
     set_up_base_testing_dir()
 
-    zip_fn = join(DATA_BASE_DIR, "example_data.zip")
+    zip_fn = join(DATA_BASE_DIR, "data.zip")
 
     # Remove data previously collected
     import shutil
@@ -46,11 +46,7 @@ def prepare_example_data(example_dir, example_link, num_utters):
     # Unzip the data
     import subprocess
     args = ["unzip", zip_fn, "-d", DATA_BASE_DIR]
-    subprocess.run(args)
-
-    # Check we have the right number of utterances
-    wav_dir = join(example_dir, "wav/")
-    assert len(os.listdir(wav_dir)) == num_utters
+    subprocess.run(args, check=True)
 
 def get_test_ler(exp_dir):
     """ Gets the test LER from the experiment directory."""
@@ -65,12 +61,11 @@ def get_test_ler(exp_dir):
 def test_tutorial():
     """ Tests running the example described in the tutorial in README.md """
 
-    # Prepare paths
+    # 1024 utterance sample set.
     NA_EXAMPLE_LINK = "https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download"
-    NUM_UTTERS = 1024
     na_example_dir = join(DATA_BASE_DIR, "na_example/")
 
-    prepare_example_data(na_example_dir, NA_EXAMPLE_LINK, NUM_UTTERS)
+    download_example_data(na_example_dir, NA_EXAMPLE_LINK)
 
     # Test the first setup encouraged in the tutorial
     corp = corpus.ReadyCorpus(na_example_dir)
@@ -88,11 +83,11 @@ def test_fast():
     the feat/ directory so that the normalization isn't run.
     """
 
+    # 4 utterance toy set
     TINY_EXAMPLE_LINK = "https://cloudstor.aarnet.edu.au/plus/s/g2GreDNlDKUq9rz/download"
-    NUM_UTTERS = 4
     tiny_example_dir = join(DATA_BASE_DIR, "tiny_example/")
 
-    prepare_example_data(tiny_example_dir, TINY_EXAMPLE_LINK, NUM_UTTERS)
+    download_example_data(tiny_example_dir, TINY_EXAMPLE_LINK)
 
     corp = corpus.ReadyCorpus(tiny_example_dir)
 
@@ -109,18 +104,44 @@ def test_fast():
 def test_full_na():
     """ A full Na integration test. """
 
-    # Pulls Na transcriptions from HimalCo repo (a submodule)
-
-    # tox called from persephone base dir, so this is relative to that.
-    himalco_dir = "data/HimalCo"
-    na_transcription_dir = join(himalco_dir, "corpus/na")
-    for fn in os.listdir(join(na_transcription_dir, "TEXT/F4/")):
-        print(fn)
-    print("Hello")
-
     # Pulls Na wavs from cloudstor.
+    # TODO uncomment after test function is complete
+    NA_WAVS_LINK = "https://cloudstor.aarnet.edu.au/plus/s/5PGtGu3zN4vq4sB/download"
+    na_wav_dir = join(DATA_BASE_DIR, "na/wav/")
+    download_example_data(na_wav_dir, NA_WAVS_LINK)
+
+    return
+
+    # Pulls Na transcriptions from HimalCo repo (a submodule)
+    # I realise this currently requires my Github login/password, so it's
+    # commented out and we assume the data has been initialized previously.
+    # Also, calling this would technically taint a non-test directory.
+    #import subprocess
+    #subprocess.run(["git", "submodule", "init"])
+    #subprocess.run(["git", "submodule", "update"])
+
+    # Tox is called from persephone base dir, so this data directory is relative to that.
+    # Note also that this subdirectory only containts TEXTs, so this integration
+    # test will include only Na narratives, not wordlists.
+    na_xml_dir = "data/HimalCo/corpus/na/TEXT/F4"
 
     # Fbank+pitch feature extraction, which relies on Kaldi being installed.
+    from persephone.datasets import na
+
+    label_dir = join(DATA_BASE_DIR, "na/label")
+    na.prepare_labels("phonemes_and_tones",
+        org_xml_dir=na_xml_dir, label_dir=label_dir)
+
+    tgt_feat_dir = join(DATA_BASE_DIR, "na/feat")
+    na.trim_wavs(org_wav_dir=org_wav_dir,
+                                     tgt_wav_dir=tgt_feat_dir,
+                                     org_xml_dir=na_xml_dir)
+
+    na.prepare_feats("fbank_and_pitch",
+                                         feat_dir=tgt_feat_dir,
+                                         tgt_wav_dir=feat_dir,
+                                         label_dir=label_dir)
+    #persephone.datasets.na.make_data_splits(train_rec_type="text")
 
     # Training with texts
 
