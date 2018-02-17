@@ -105,6 +105,28 @@ def test_fast():
     # Can't expect a decent test score but just check that there's something.
     assert ler < 1.0
 
+@pytest.mark.slow
+def test_full_na():
+    """ A full Na integration test. """
+
+    # Pulls Na transcriptions from HimalCo repo (a submodule)
+
+    # tox called from persephone base dir, so this is relative to that.
+    himalco_dir = "data/HimalCo"
+    na_transcription_dir = join(himalco_dir, "corpus/na")
+    for fn in os.listdir(join(na_transcription_dir, "TEXT/F4/")):
+        print(fn)
+    print("Hello")
+
+    # Pulls Na wavs from cloudstor.
+
+    # Fbank+pitch feature extraction, which relies on Kaldi being installed.
+
+    # Training with texts
+
+    # Ensure LER < 0.20
+
+
 # Other tests:
     # TODO assert the contents of the prefix files
 
