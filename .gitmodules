@@ -1,0 +1,3 @@
+[submodule "data/HimalCo"]
+	path = data/HimalCo
+	url = https://github.com/CNRS/HimalCo.git
