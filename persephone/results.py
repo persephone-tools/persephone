@@ -8,8 +8,8 @@ from collections import defaultdict
 import os
 from . import utils
 
-from distance import min_edit_distance_align
-from distance import cluster_alignment_errors
+from .distance import min_edit_distance_align
+from .distance import cluster_alignment_errors
 
 def round_items(floats):
     return ["%0.3f" % fl for fl in floats]
