@@ -411,22 +411,21 @@ def prepare_feats(feat_type, org_wav_dir=ORG_WAV_DIR, feat_dir=FEAT_DIR, tgt_wav
         feat_extract.from_dir(os.path.join(feat_dir, "WORDLIST"), feat_type=feat_type)
         feat_extract.from_dir(os.path.join(feat_dir, "TEXT"), feat_type=feat_type)
 
-def get_story_prefixes(label_dir=LABEL_DIR):
-    print(label_dir)
-    return
+def get_story_prefixes(label_type, label_dir=LABEL_DIR):
     """ Gets the Na text prefixes. """
     prefixes = [prefix for prefix in os.listdir(os.path.join(label_dir, "TEXT"))
-                if prefix.endswith("phonemes")]
+                if prefix.endswith(".%s" % label_type)]
     prefixes = [os.path.splitext(os.path.join("TEXT", prefix))[0]
                 for prefix in prefixes]
     return prefixes
 
-def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000,
+def make_data_splits(label_type, train_rec_type="text_and_wordlist", max_samples=1000,
                      seed=0, tgt_dir=TGT_DIR):
     """ Creates a file with a list of prefixes (identifiers) of utterances to
     include in the test set. Test utterances must never be wordlists. Assumes
     preprocessing of label dir has already been done."""
 
+    feat_dir = os.path.join(tgt_dir, "feat")
     test_prefix_fn=os.path.join(tgt_dir, "test_prefixes.txt")
     valid_prefix_fn=os.path.join(tgt_dir, "valid_prefixes.txt")
     with open(test_prefix_fn) as f:
@@ -437,11 +436,11 @@ def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000,
         valid_prefixes = [("TEXT/" + prefix).strip() for prefix in prefixes]
 
     label_dir = os.path.join(tgt_dir, "label")
-    prefixes = get_story_prefixes(label_dir=label_dir)
+    prefixes = get_story_prefixes(label_type, label_dir=label_dir)
     prefixes = list(set(prefixes) - set(valid_prefixes))
     prefixes = list(set(prefixes) - set(test_prefixes))
     prefixes = utils.filter_by_size(
-        FEAT_DIR, prefixes, "fbank", max_samples)
+        feat_dir, prefixes, "fbank", max_samples)
 
     if train_rec_type == "text":
         train_prefixes = prefixes
@@ -451,7 +450,7 @@ def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000,
         wordlist_prefixes = [os.path.splitext(os.path.join("WORDLIST", prefix))[0]
                              for prefix in wordlist_prefixes]
         wordlist_prefixes = utils.filter_by_size(
-                FEAT_DIR, wordlist_prefixes, "fbank", max_samples)
+                feat_dir, wordlist_prefixes, "fbank", max_samples)
         if train_rec_type == "wordlist":
             prefixes = wordlist_prefixes
         elif train_rec_type == "text_and_wordlist":
@@ -467,13 +466,13 @@ def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000,
 def get_stories():
     """ Returns a list of the stories in the Na corpus. """
 
-    prefixes = get_story_prefixes()
+    prefixes = get_story_prefixes(label_type)
     texts = list(set([prefix.split(".")[0].split("/")[1] for prefix in prefixes]))
     return texts
 
 def make_story_splits(valid_story, test_story, max_samples):
 
-    prefixes = get_story_prefixes()
+    prefixes = get_story_prefixes(label_type)
     prefixes = utils.filter_by_size(
         FEAT_DIR, prefixes, "fbank", max_samples)
 
@@ -540,10 +539,13 @@ class Corpus(corpus.AbstractCorpus):
                     "now it is.")
 
             train, valid, test = make_story_splits(valid_story, test_story,
-                                                   max_samples)
+                                                   max_samples,
+                                                   tgt_dir=tgt_dir)
         else:
-            train, valid, test = make_data_splits(train_rec_type=train_rec_type,
-                                                  max_samples=max_samples)
+            train, valid, test = make_data_splits(self.label_type,
+                                                  train_rec_type=train_rec_type,
+                                                  max_samples=max_samples,
+                                                  tgt_dir=tgt_dir)
         self.train_prefixes = train
         self.valid_prefixes = valid
         self.test_prefixes = test
@@ -569,7 +571,7 @@ class Corpus(corpus.AbstractCorpus):
                 print(utter_id.split("/")[1], file=f)
 
     # TODO Use 'labels' instead of 'phonemes' here and in corpus.py
-    # Also, factor out as non-Chatino-specific.
+    # Also, factor out as non-Na-specific.
     def indices_to_phonemes(self, indices):
         return [(self.INDEX_TO_LABEL[index]) for index in indices]
     def phonemes_to_indices(self, labels):

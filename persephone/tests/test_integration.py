@@ -108,17 +108,17 @@ def test_full_na():
 
     # Pulls Na wavs from cloudstor.
     NA_WAVS_LINK = "https://cloudstor.aarnet.edu.au/plus/s/LnNyNa20GQ8qsPC/download"
-    #download_example_data(NA_WAVS_LINK)
+    download_example_data(NA_WAVS_LINK)
 
     na_dir = join(DATA_BASE_DIR, "na/")
-    #os.makedirs(na_dir)
+    os.makedirs(na_dir)
     org_wav_dir = join(na_dir, "org_wav/")
-    #os.rename(join(DATA_BASE_DIR, "na_wav/"), org_wav_dir)
+    os.rename(join(DATA_BASE_DIR, "na_wav/"), org_wav_dir)
     tgt_wav_dir = join(na_dir, "wav/")
 
     NA_REPO_URL = "https://github.com/alexis-michaud/na-data.git"
-    #with cd(DATA_BASE_DIR):
-    #    subprocess.run(["git", "clone", NA_REPO_URL, "na/xml/"], check=True)
+    with cd(DATA_BASE_DIR):
+        subprocess.run(["git", "clone", NA_REPO_URL, "na/xml/"], check=True)
     # Note also that this subdirectory only containts TEXTs, so this integration
     # test will include only Na narratives, not wordlists.
     na_xml_dir = join(DATA_BASE_DIR, "na/xml/TEXT/F4")
@@ -127,26 +127,26 @@ def test_full_na():
 
     label_dir = join(DATA_BASE_DIR, "na/label")
     label_type = "phonemes_and_tones"
-    #na.prepare_labels(label_type,
-    #    org_xml_dir=na_xml_dir, label_dir=label_dir)
+    na.prepare_labels(label_type,
+        org_xml_dir=na_xml_dir, label_dir=label_dir)
 
     tgt_feat_dir = join(DATA_BASE_DIR, "na/feat")
     # TODO Make this fbank_and_pitch, but then I need to install kaldi on ray
     # or run the tests on GPUs on slug or doe.
     feat_type = "fbank"
-    #na.prepare_feats(feat_type,
-    #                 org_wav_dir=org_wav_dir,
-    #                 tgt_wav_dir=tgt_wav_dir,
-    #                 feat_dir=tgt_feat_dir,
-    #                 org_xml_dir=na_xml_dir,
-    #                 label_dir=label_dir)
+    na.prepare_feats(feat_type,
+                     org_wav_dir=org_wav_dir,
+                     tgt_wav_dir=tgt_wav_dir,
+                     feat_dir=tgt_feat_dir,
+                     org_xml_dir=na_xml_dir,
+                     label_dir=label_dir)
 
     from shutil import copyfile
     copyfile("persephone/tests/test_sets/valid_prefixes.txt",
              join(na_dir, "valid_prefixes.txt"))
     copyfile("persephone/tests/test_sets/test_prefixes.txt",
-             join(na_dir, "test_prefixes"))
-    na.make_data_splits(train_rec_type="text", tgt_dir=na_dir)
+             join(na_dir, "test_prefixes.txt"))
+    na.make_data_splits(label_type, train_rec_type="text", tgt_dir=na_dir)
 
     # Training with texts
     exp_dir = run.prep_exp_dir(directory=EXP_BASE_DIR)
@@ -160,6 +160,8 @@ def test_full_na():
     model.train(min_epochs=30)
 
     # Ensure LER < 0.20
+    ler = get_test_ler(exp_dir)
+    assert ler < 0.2
 
 # Other tests:
     # TODO assert the contents of the prefix files
