@@ -134,7 +134,8 @@ def segment_gup_phonemes(utterance: str) -> str:
     print(len(phoneme_inventory))
 
     utterance = utterance.lower()
-    #utterance = segment_into_tokens()
+    utterance = segment_into_tokens(utterance, phoneme_inventory)
+    return utterance
 
 def explore_code_switching():
 
