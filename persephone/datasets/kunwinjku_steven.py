@@ -8,6 +8,7 @@ from os.path import join
 import pympi
 
 from .. import config
+from ..transcription_preprocessing import segment_into_tokens
 
 ORG_DIR = config.KUNWINJKU_STEVEN_DIR
 TGT_DIR = join(config.TGT_DIR, "kunwinjku-steven")
@@ -116,15 +117,24 @@ def elan_utterances():
 
     return utterances
 
-def segment_gup_phonemes(utterance):
+def segment_gup_phonemes(utterance: str) -> str:
     """
     Takes as input a string in Kunwinjku and segments it into phoneme-like
     units based on the standard orthographic rules specified at
     http://bininjgunwok.org.au/
     """
 
+    basic_phonemes = set(["a", "b", "d", "dj", "rd", "e", "h", "i", "k", "l",
+                "rl", "m", "n", "ng", "nj", "rn", "o", "r", "rr", "u",
+                "w", "y",])
+    double_stops = set(["bb", "dd", "djdj", "rdd", "kk"])
+    diphthongs = set(["ay", "aw", "ey", "ew", "iw", "oy", "ow", "uy"])
+    phoneme_inventory = basic_phonemes | double_stops | diphthongs
+    print(phoneme_inventory)
+    print(len(phoneme_inventory))
+
     utterance = utterance.lower()
-    print(utterance)
+    #utterance = segment_into_tokens()
 
 def explore_code_switching():
 
