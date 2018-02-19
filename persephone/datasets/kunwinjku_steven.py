@@ -23,8 +23,6 @@ with open(config.EN_WORDS_PATH) as words_f:
                            "Kare", "laik", "Bale"])
     EN_WORDS = EN_WORDS.difference(NA_WORDS_IN_EN_DICT)
 
-print("imi" in EN_WORDS)
-
 def good_elan_paths():
     """
     Returns a list of ELAN files for recordings with good quality audio, as

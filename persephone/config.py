@@ -23,8 +23,10 @@ CHATINO_DIR = os.path.join(CORPORA_BASE_PATH, "chatino", "CTP")
 NA_DIR = os.path.join(CORPORA_BASE_PATH, "Na")
 # Personal corpora files
 # TODO: fix these stubs
-KUNWINJKU_STEVEN_DIR = config_file.get("PATHS", "KUNWINJKU_STEVEN_PATH", fallback="")
-EN_WORDS_PATH = config_file.get("PATHS", "EN_WORDS_PATH", fallback="")
+KUNWINJKU_STEVEN_DIR = config_file.get("PATHS", "KUNWINJKU_STEVEN_PATH",
+    fallback=os.path.join(CORPORA_BASE_PATH, "kunwinjku-steven/BKW_files_for_TAP"))
+EN_WORDS_PATH = config_file.get("PATHS", "EN_WORDS_PATH",
+    fallback=os.path.join(CORPORA_BASE_PATH, "english-words/words.txt"))
 BUTCHER_DIR = os.path.join(CORPORA_BASE_PATH, "OA_Data")
 
 # The directory where the preprocessed data will be held.
