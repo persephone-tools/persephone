@@ -463,18 +463,21 @@ def make_data_splits(label_type, train_rec_type="text_and_wordlist", max_samples
 
     return train_prefixes, valid_prefixes, test_prefixes
 
-def get_stories():
+def get_stories(label_type):
     """ Returns a list of the stories in the Na corpus. """
 
     prefixes = get_story_prefixes(label_type)
     texts = list(set([prefix.split(".")[0].split("/")[1] for prefix in prefixes]))
     return texts
 
-def make_story_splits(valid_story, test_story, max_samples):
+def make_story_splits(valid_story, test_story, max_samples, label_type, tgt_dir=TGT_DIR):
+
+    feat_dir=os.path.join(tgt_dir, "feat/")
 
     prefixes = get_story_prefixes(label_type)
+    # TODO Remove assumption of fbank features
     prefixes = utils.filter_by_size(
-        FEAT_DIR, prefixes, "fbank", max_samples)
+        feat_dir, prefixes, "fbank", max_samples)
 
     train = []
     valid = []
@@ -540,6 +543,7 @@ class Corpus(corpus.AbstractCorpus):
 
             train, valid, test = make_story_splits(valid_story, test_story,
                                                    max_samples,
+                                                   self.label_type,
                                                    tgt_dir=tgt_dir)
         else:
             train, valid, test = make_data_splits(self.label_type,
