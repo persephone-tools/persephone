@@ -5,6 +5,8 @@ import subprocess
 
 from persephone import corpus
 from persephone import run
+from persephone import corpus_reader
+from persephone import rnn_ctc
 from persephone.context_manager import cd
 
 EXP_BASE_DIR = "testing/exp/"
@@ -106,17 +108,17 @@ def test_full_na():
 
     # Pulls Na wavs from cloudstor.
     NA_WAVS_LINK = "https://cloudstor.aarnet.edu.au/plus/s/LnNyNa20GQ8qsPC/download"
-    download_example_data(NA_WAVS_LINK)
+    #download_example_data(NA_WAVS_LINK)
 
     na_dir = join(DATA_BASE_DIR, "na/")
-    os.makedirs(na_dir)
+    #os.makedirs(na_dir)
     org_wav_dir = join(na_dir, "org_wav/")
-    os.rename(join(DATA_BASE_DIR, "na_wav/"), org_wav_dir)
+    #os.rename(join(DATA_BASE_DIR, "na_wav/"), org_wav_dir)
     tgt_wav_dir = join(na_dir, "wav/")
 
     NA_REPO_URL = "https://github.com/alexis-michaud/na-data.git"
-    with cd(DATA_BASE_DIR):
-        subprocess.run(["git", "clone", NA_REPO_URL, "na/xml/"], check=True)
+    #with cd(DATA_BASE_DIR):
+    #    subprocess.run(["git", "clone", NA_REPO_URL, "na/xml/"], check=True)
     # Note also that this subdirectory only containts TEXTs, so this integration
     # test will include only Na narratives, not wordlists.
     na_xml_dir = join(DATA_BASE_DIR, "na/xml/TEXT/F4")
@@ -124,29 +126,30 @@ def test_full_na():
     from persephone.datasets import na
 
     label_dir = join(DATA_BASE_DIR, "na/label")
-    na.prepare_labels("phonemes_and_tones",
-        org_xml_dir=na_xml_dir, label_dir=label_dir)
+    label_type = "phonemes_and_tones"
+    #na.prepare_labels(label_type,
+    #    org_xml_dir=na_xml_dir, label_dir=label_dir)
 
     tgt_feat_dir = join(DATA_BASE_DIR, "na/feat")
     # TODO Make this fbank_and_pitch, but then I need to install kaldi on ray
     # or run the tests on GPUs on slug or doe.
     feat_type = "fbank"
-    na.prepare_feats(feat_type,
-                     org_wav_dir=org_wav_dir,
-                     tgt_wav_dir=tgt_wav_dir,
-                     feat_dir=tgt_feat_dir,
-                     org_xml_dir=na_xml_dir,
-                     label_dir=label_dir)
+    #na.prepare_feats(feat_type,
+    #                 org_wav_dir=org_wav_dir,
+    #                 tgt_wav_dir=tgt_wav_dir,
+    #                 feat_dir=tgt_feat_dir,
+    #                 org_xml_dir=na_xml_dir,
+    #                 label_dir=label_dir)
 
-    persephone.datasets.na.make_data_splits(train_rec_type="text")
+    na.make_data_splits(train_rec_type="text", tgt_dir=na_dir)
 
     # Training with texts
-    from persephone import run
     exp_dir = run.prep_exp_dir(directory=EXP_BASE_DIR)
-    na_corpus = na.Corpus(feat_type, "phonemes_and_tones",
-                          train_rec_type="text")
-    na_corpus_reader = persephone.corpus_reader.CorpusReader(na_corpus)
-    model = persephone.rnn_ctc.Model(exp_dir, na_corpus_reader,
+    na_corpus = na.Corpus(feat_type, label_type,
+                          train_rec_type="text",
+                          tgt_dir=na_dir)
+    na_corpus_reader = corpus_reader.CorpusReader(na_corpus)
+    model = rnn_ctc.Model(exp_dir, na_corpus_reader,
                                      num_layers=3, hidden_size=400)
 
     model.train(min_epochs=30)

@@ -411,21 +411,24 @@ def prepare_feats(feat_type, org_wav_dir=ORG_WAV_DIR, feat_dir=FEAT_DIR, tgt_wav
         feat_extract.from_dir(os.path.join(feat_dir, "WORDLIST"), feat_type=feat_type)
         feat_extract.from_dir(os.path.join(feat_dir, "TEXT"), feat_type=feat_type)
 
-def get_story_prefixes():
+def get_story_prefixes(label_dir=LABEL_DIR):
+    print(label_dir)
+    return
     """ Gets the Na text prefixes. """
-    prefixes = [prefix for prefix in os.listdir(os.path.join(LABEL_DIR, "TEXT"))
+    prefixes = [prefix for prefix in os.listdir(os.path.join(label_dir, "TEXT"))
                 if prefix.endswith("phonemes")]
     prefixes = [os.path.splitext(os.path.join("TEXT", prefix))[0]
                 for prefix in prefixes]
     return prefixes
 
-def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000, seed=0, label_dir=LABEL_DIR):
+def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000,
+                     seed=0, tgt_dir=TGT_DIR):
     """ Creates a file with a list of prefixes (identifiers) of utterances to
     include in the test set. Test utterances must never be wordlists. Assumes
     preprocessing of label dir has already been done."""
 
-    test_prefix_fn = os.path.join(TGT_DIR, "test_prefixes.txt")
-    valid_prefix_fn = os.path.join(TGT_DIR, "valid_prefixes.txt")
+    test_prefix_fn = os.path.join(tgt_dir, "test_prefixes.txt")
+    valid_prefix_fn = os.path.join(tgt_dir, "valid_prefixes.txt")
     with open(test_prefix_fn) as f:
         prefixes = f.readlines()
         test_prefixes = [("TEXT/" + prefix).strip() for prefix in prefixes]
@@ -433,7 +436,8 @@ def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000, seed=
         prefixes = f.readlines()
         valid_prefixes = [("TEXT/" + prefix).strip() for prefix in prefixes]
 
-    prefixes = get_story_prefixes()
+    label_dir = os.path.join(tgt_dir, "label")
+    prefixes = get_story_prefixes(label_dir=label_dir)
     prefixes = list(set(prefixes) - set(valid_prefixes))
     prefixes = list(set(prefixes) - set(test_prefixes))
     prefixes = utils.filter_by_size(
@@ -493,16 +497,17 @@ def make_story_splits(valid_story, test_story, max_samples):
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
 
-    FEAT_DIR = FEAT_DIR
-    LABEL_DIR = LABEL_DIR
-    UNTRAN_FEAT_DIR = os.path.join(UNTRAN_DIR, "feat")
-
     def __init__(self,
                  feat_type="fbank_and_pitch",
                  label_type="phonemes_and_tones",
                  train_rec_type="text", max_samples=1000,
-                 valid_story=None, test_story=None):
+                 valid_story=None, test_story=None,
+                 tgt_dir=TGT_DIR):
         super().__init__(feat_type, label_type)
+
+        self.FEAT_DIR = os.path.join(tgt_dir, "feat")
+        self.LABEL_DIR = os.path.join(tgt_dir, "label")
+        self.UNTRAN_FEAT_DIR = os.path.join(UNTRAN_DIR, "feat")
 
         self.max_samples = max_samples
         self.train_rec_type = train_rec_type
