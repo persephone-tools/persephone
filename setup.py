@@ -3,7 +3,7 @@ from setuptools import setup
 setup(name='persephone',
       version='0.1.9',
       description='A tool for developing automatic phoneme transcription models',
-      long_description=open('README.md').read(),
+      long_description=open('README.rst').read(),
       url='https://github.com/oadams/persephone',
       author='Oliver Adams',
       author_email='oliver.adams@gmail.com',
