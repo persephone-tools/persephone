@@ -67,7 +67,7 @@ def test_tutorial():
     NA_EXAMPLE_LINK = "https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download"
     na_example_dir = join(DATA_BASE_DIR, "na_example/")
 
-    download_example_data(na_example_dir, NA_EXAMPLE_LINK)
+    download_example_data(NA_EXAMPLE_LINK)
 
     # Test the first setup encouraged in the tutorial
     corp = corpus.ReadyCorpus(na_example_dir)
