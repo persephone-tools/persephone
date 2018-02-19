@@ -1,20 +1,28 @@
 """ Interface to Steven's Kunwinjku data. """
 
-from collections import namedtuple
 import glob
 import os
 from os.path import join
+from typing import List, NamedTuple, Set
 
-import pympi
+from pympi.Elan import Eaf
 
 from .. import config
 from ..transcription_preprocessing import segment_into_tokens
 
-ORG_DIR = config.KUNWINJKU_STEVEN_DIR
-TGT_DIR = join(config.TGT_DIR, "kunwinjku-steven")
+Utterance = NamedTuple("Utterance", [("file", str),
+                                     ("start_time", int),
+                                     ("end_time", int),
+                                     ("text", str)])
 
-with open(config.EN_WORDS_PATH) as words_f:
-    raw_words = words_f.readlines()
+def get_en_words() -> Set[str]:
+    """
+    Returns a list of English words which can be used to filter out
+    code-switched sentences.
+    """
+
+    with open(config.EN_WORDS_PATH) as words_f:
+        raw_words = words_f.readlines()
     en_words = set([word.strip() for word in raw_words])
     NA_WORDS_IN_EN_DICT = set(["Kore", "Nani", "karri", "imi", "o", "yaw", "i-",
                            "bi-", "aye", "imi", "ane", "kubba", "kab", "a-",
@@ -23,23 +31,26 @@ with open(config.EN_WORDS_PATH) as words_f:
                            "manga", "ka-", "mane", "Kala", "name", "kayo",
                            "Kare", "laik", "Bale"])
     en_words = en_words.difference(NA_WORDS_IN_EN_DICT)
+    return en_words
 
-def good_elan_paths():
+EN_WORDS = get_en_words()
+
+def good_elan_paths(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[str]:
     """
     Returns a list of ELAN files for recordings with good quality audio, as
     designated by Steven.
     """
 
-    with open(join(ORG_DIR, "good-files.txt")) as path_list:
+    with open(join(org_dir, "good-files.txt")) as path_list:
         good_paths = [path.strip() for path in path_list]
 
     elan_paths = []
     for path in good_paths:
         _, ext = os.path.splitext(path)
         if ext == ".eaf":
-            elan_paths.append(join(ORG_DIR, path))
+            elan_paths.append(join(org_dir, path))
         else:
-            full_path = join(ORG_DIR, path)
+            full_path = join(org_dir, path)
             if os.path.isdir(full_path):
                 for elan_path in glob.glob('{}/**/*.eaf'.format(full_path),
                                            recursive=True):
@@ -54,7 +65,7 @@ def explore_elan_files(elan_paths):
 
     for elan_path in elan_paths:
         print(elan_path)
-        eafob = pympi.Elan.Eaf(elan_path)
+        eafob = Eaf(elan_path)
         tier_names = eafob.get_tier_names()
         for tier in tier_names:
             print("\t", tier)
@@ -66,7 +77,7 @@ def explore_elan_files(elan_paths):
 
         input()
 
-def elan_utterances():
+def elan_utterances(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[Utterance]:
     """ Collects utterances from various ELAN tiers. This is based on analysis
     of hte 'good' ELAN files, and may not generalize."""
 
@@ -77,12 +88,9 @@ def elan_utterances():
                   "Other",
                  }
 
-    Utterance = namedtuple("Utterance", ["file", "start_time", "end_time", "text"])
-
     utterances = []
-    all_utts = []
-    for elan_path in good_elan_paths():
-        eafob = pympi.Elan.Eaf(elan_path)
+    for elan_path in good_elan_paths(org_dir=org_dir):
+        eafob = Eaf(elan_path)
         #import pprint; pprint.pprint(dir(eafob))
         can_find_path = False
         for md in eafob.media_descriptors:
