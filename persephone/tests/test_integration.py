@@ -1,9 +1,11 @@
 import os
 from os.path import join
 import pytest
+import subprocess
 
 from persephone import corpus
 from persephone import run
+from persephone.context_manager import cd
 
 EXP_BASE_DIR = "testing/exp/"
 DATA_BASE_DIR = "testing/data/"
@@ -45,7 +47,7 @@ def download_example_data(example_dir, example_link):
 
     # Unzip the data
     import subprocess
-    args = ["unzip", zip_fn, "-d", DATA_BASE_DIR]
+    args = ["unzip", zip_fn, "-d", example_dir]
     subprocess.run(args, check=True)
 
 def get_test_ler(exp_dir):
@@ -106,24 +108,18 @@ def test_full_na():
 
     # Pulls Na wavs from cloudstor.
     # TODO uncomment after test function is complete
-    NA_WAVS_LINK = "https://cloudstor.aarnet.edu.au/plus/s/5PGtGu3zN4vq4sB/download"
+    NA_WAVS_LINK = "https://cloudstor.aarnet.edu.au/plus/s/LnNyNa20GQ8qsPC/download"
     na_wav_dir = join(DATA_BASE_DIR, "na/wav/")
-    download_example_data(na_wav_dir, NA_WAVS_LINK)
+    #download_example_data(na_wav_dir, NA_WAVS_LINK)
 
-    return
-
-    # Pulls Na transcriptions from HimalCo repo (a submodule)
-    # I realise this currently requires my Github login/password, so it's
-    # commented out and we assume the data has been initialized previously.
-    # Also, calling this would technically taint a non-test directory.
-    #import subprocess
-    #subprocess.run(["git", "submodule", "init"])
-    #subprocess.run(["git", "submodule", "update"])
+    #NA_REPO_URL = "https://github.com/alexis-michaud/na-data.git"
+    #with cd(DATA_BASE_DIR):
+    #    subprocess.run(["git", "clone", NA_REPO_URL, "na/xml/"], check=True)
+    na_xml_dir = join(DATA_BASE_DIR, "na/xml/TEXT/F4")
 
     # Tox is called from persephone base dir, so this data directory is relative to that.
     # Note also that this subdirectory only containts TEXTs, so this integration
     # test will include only Na narratives, not wordlists.
-    na_xml_dir = "data/HimalCo/corpus/na/TEXT/F4"
 
     # Fbank+pitch feature extraction, which relies on Kaldi being installed.
     from persephone.datasets import na
@@ -133,7 +129,7 @@ def test_full_na():
         org_xml_dir=na_xml_dir, label_dir=label_dir)
 
     tgt_feat_dir = join(DATA_BASE_DIR, "na/feat")
-    na.trim_wavs(org_wav_dir=org_wav_dir,
+    na.trim_wavs(org_wav_dir=na_wav_dir,
                                      tgt_wav_dir=tgt_feat_dir,
                                      org_xml_dir=na_xml_dir)
 

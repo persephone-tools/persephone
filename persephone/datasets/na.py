@@ -173,11 +173,16 @@ def preprocess_na(sent, label_type):
             # Return a space char so that it can be identified in word segmentation
             # processing.
             return " ", sentence[1:]
-        if sentence[0] == "|" or sentence[0] == "ǀ":
+        if sentence[0] == "|" or sentence[0] == "ǀ" or sentence[0] == "◊":
+            # TODO Address extrametrical span symbol ◊ differently. For now,
+            # treating it as a tone group boundary marker for consistency with
+            # previous work.
             if tgm:
                 return "|", sentence[1:]
             else:
                 return None, sentence[1:]
+        if sentence[0] in "()":
+            return None, sentence[1:]
         print("***" + sentence)
         raise ValueError("Next character not recognized: " + sentence[:1])
 
@@ -243,6 +248,7 @@ def trim_wavs(org_wav_dir=ORG_WAV_DIR,
                 in_wav_path = headmic_path
 
             out_wav_path = os.path.join(tgt_wav_dir, rec_type, "%s.%d.wav" % (prefix, i))
+            print(in_wav_path)
             assert os.path.isfile(in_wav_path)
             utils.trim_wav(in_wav_path, out_wav_path, start_time, end_time)
 
@@ -284,8 +290,13 @@ def prepare_labels(label_type, org_xml_dir=ORG_XML_DIR, label_dir=LABEL_DIR):
 
     for fn in os.listdir(org_xml_dir):
         print(fn)
+
         path = os.path.join(org_xml_dir, fn)
         prefix, _ = os.path.splitext(fn)
+        if os.path.isdir(path):
+            continue
+        if not path.endswith(".xml"):
+            continue
 
         rec_type, sents, times, transls = pangloss.get_sents_times_and_translations(path)
         # Write the sentence transcriptions to file
