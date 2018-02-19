@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='persephone',
-      version='0.1.8',
+      version='0.1.9',
       description='A tool for developing automatic phoneme transcription models',
       long_description=open('README.md').read(),
       url='https://github.com/oadams/persephone',
