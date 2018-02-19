@@ -14,15 +14,15 @@ ORG_DIR = config.KUNWINJKU_STEVEN_DIR
 TGT_DIR = join(config.TGT_DIR, "kunwinjku-steven")
 
 with open(config.EN_WORDS_PATH) as words_f:
-    EN_WORDS = words_f.readlines()
-    EN_WORDS = set([word.strip() for word in EN_WORDS])
+    raw_words = words_f.readlines()
+    en_words = set([word.strip() for word in raw_words])
     NA_WORDS_IN_EN_DICT = set(["Kore", "Nani", "karri", "imi", "o", "yaw", "i-",
                            "bi-", "aye", "imi", "ane", "kubba", "kab", "a-",
                            "ad", "a", "Mak", "Selim", "ngai", "en", "yo",
                            "wud", "Mani", "yak", "Manu", "ka-", "mong",
                            "manga", "ka-", "mane", "Kala", "name", "kayo",
                            "Kare", "laik", "Bale"])
-    EN_WORDS = EN_WORDS.difference(NA_WORDS_IN_EN_DICT)
+    en_words = en_words.difference(NA_WORDS_IN_EN_DICT)
 
 def good_elan_paths():
     """
@@ -144,7 +144,7 @@ def explore_code_switching():
     en_count = 0
     for utter in utters:
         for word in utter.text.split():
-            if word in EN_WORDS:
+            if word in en_words:
                 en_count += 1
                 print(utter.text)
                 print("\t" + repr(word))

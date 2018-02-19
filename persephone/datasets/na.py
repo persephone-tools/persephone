@@ -173,11 +173,16 @@ def preprocess_na(sent, label_type):
             # Return a space char so that it can be identified in word segmentation
             # processing.
             return " ", sentence[1:]
-        if sentence[0] == "|" or sentence[0] == "ǀ":
+        if sentence[0] == "|" or sentence[0] == "ǀ" or sentence[0] == "◊":
+            # TODO Address extrametrical span symbol ◊ differently. For now,
+            # treating it as a tone group boundary marker for consistency with
+            # previous work.
             if tgm:
                 return "|", sentence[1:]
             else:
                 return None, sentence[1:]
+        if sentence[0] in "()":
+            return None, sentence[1:]
         print("***" + sentence)
         raise ValueError("Next character not recognized: " + sentence[:1])
 
@@ -212,35 +217,42 @@ def preprocess_french(trans, fr_nlp, remove_brackets_content=True):
 
     return trans
 
-def trim_wavs():
+def trim_wavs(org_wav_dir=ORG_WAV_DIR,
+              tgt_wav_dir=TGT_WAV_DIR,
+              org_xml_dir=ORG_XML_DIR):
     """ Extracts sentence-level transcriptions, translations and wavs from the
     Na Pangloss XML and WAV files. But otherwise doesn't preprocess them."""
 
     print("Trimming wavs...")
 
-    if not os.path.exists(os.path.join(TGT_WAV_DIR, "TEXT")):
-        os.makedirs(os.path.join(TGT_WAV_DIR, "TEXT"))
-    if not os.path.exists(os.path.join(TGT_WAV_DIR, "WORDLIST")):
-        os.makedirs(os.path.join(TGT_WAV_DIR, "WORDLIST"))
+    if not os.path.exists(os.path.join(tgt_wav_dir, "TEXT")):
+        os.makedirs(os.path.join(tgt_wav_dir, "TEXT"))
+    if not os.path.exists(os.path.join(tgt_wav_dir, "WORDLIST")):
+        os.makedirs(os.path.join(tgt_wav_dir, "WORDLIST"))
 
-    for fn in os.listdir(ORG_XML_DIR):
+    for fn in os.listdir(org_xml_dir):
         print(fn)
-        path = os.path.join(ORG_XML_DIR, fn)
+        path = os.path.join(org_xml_dir, fn)
         prefix, _ = os.path.splitext(fn)
+
+        if os.path.isdir(path):
+            continue
+        if not path.endswith(".xml"):
+            continue
 
         rec_type, sents, times, transls = pangloss.get_sents_times_and_translations(path)
 
         # Extract the wavs given the times.
         for i, (start_time, end_time) in enumerate(times):
             if prefix.endswith("PLUSEGG"):
-                in_wav_path = os.path.join(ORG_WAV_DIR, prefix.upper()[:-len("PLUSEGG")]) + ".wav"
+                in_wav_path = os.path.join(org_wav_dir, prefix.upper()[:-len("PLUSEGG")]) + ".wav"
             else:
-                in_wav_path = os.path.join(ORG_WAV_DIR, prefix.upper()) + ".wav"
-            headmic_path = os.path.join(ORG_WAV_DIR, prefix.upper()) + "_HEADMIC.wav"
+                in_wav_path = os.path.join(org_wav_dir, prefix.upper()) + ".wav"
+            headmic_path = os.path.join(org_wav_dir, prefix.upper()) + "_HEADMIC.wav"
             if os.path.isfile(headmic_path):
                 in_wav_path = headmic_path
 
-            out_wav_path = os.path.join(TGT_WAV_DIR, rec_type, "%s.%d.wav" % (prefix, i))
+            out_wav_path = os.path.join(tgt_wav_dir, rec_type, "%s.%d.wav" % (prefix, i))
             assert os.path.isfile(in_wav_path)
             utils.trim_wav(in_wav_path, out_wav_path, start_time, end_time)
 
@@ -272,18 +284,23 @@ def trim_wavs():
 #            with open(transl_path, "w") as transl_f:
 #                print(transl, file=transl_f)
 
-def prepare_labels(label_type):
+def prepare_labels(label_type, org_xml_dir=ORG_XML_DIR, label_dir=LABEL_DIR):
     """ Prepare the neural network output targets."""
 
-    if not os.path.exists(os.path.join(LABEL_DIR, "TEXT")):
-        os.makedirs(os.path.join(LABEL_DIR, "TEXT"))
-    if not os.path.exists(os.path.join(LABEL_DIR, "WORDLIST")):
-        os.makedirs(os.path.join(LABEL_DIR, "WORDLIST"))
+    if not os.path.exists(os.path.join(label_dir, "TEXT")):
+        os.makedirs(os.path.join(label_dir, "TEXT"))
+    if not os.path.exists(os.path.join(label_dir, "WORDLIST")):
+        os.makedirs(os.path.join(label_dir, "WORDLIST"))
 
-    for fn in os.listdir(ORG_XML_DIR):
+    for fn in os.listdir(org_xml_dir):
         print(fn)
-        path = os.path.join(ORG_XML_DIR, fn)
+
+        path = os.path.join(org_xml_dir, fn)
         prefix, _ = os.path.splitext(fn)
+        if os.path.isdir(path):
+            continue
+        if not path.endswith(".xml"):
+            continue
 
         rec_type, sents, times, transls = pangloss.get_sents_times_and_translations(path)
         # Write the sentence transcriptions to file
@@ -293,7 +310,7 @@ def prepare_labels(label_type):
                 # Then there's no transcription, so ignore this.
                 continue
             out_fn = "%s.%d.%s" % (prefix, i, label_type)
-            sent_path = os.path.join(LABEL_DIR, rec_type, out_fn)
+            sent_path = os.path.join(label_dir, rec_type, out_fn)
             with open(sent_path, "w") as sent_f:
                 print(sent, file=sent_f)
 
@@ -338,35 +355,38 @@ def prepare_untran(feat_type="fbank_and_pitch"):
     feat_extract.from_dir(os.path.join(feat_dir), feat_type=feat_type)
 
 # TODO Consider factoring out as non-Na specific
-def prepare_feats(feat_type):
+def prepare_feats(feat_type, org_wav_dir=ORG_WAV_DIR, feat_dir=FEAT_DIR, tgt_wav_dir=TGT_WAV_DIR,
+                  org_xml_dir=ORG_XML_DIR, label_dir=LABEL_DIR):
     """ Prepare the input features."""
 
-    if not os.path.isdir(os.path.join(FEAT_DIR, "WORDLIST")):
-        os.makedirs(os.path.join(FEAT_DIR, "WORDLIST"))
-    if not os.path.isdir(os.path.join(FEAT_DIR, "TEXT")):
-        os.makedirs(os.path.join(FEAT_DIR, "TEXT"))
+    if not os.path.isdir(os.path.join(feat_dir, "WORDLIST")):
+        os.makedirs(os.path.join(feat_dir, "WORDLIST"))
+    if not os.path.isdir(os.path.join(feat_dir, "TEXT")):
+        os.makedirs(os.path.join(feat_dir, "TEXT"))
 
     # Extract utterances from WAVS.
-    trim_wavs()
+    trim_wavs(org_wav_dir=org_wav_dir,
+              tgt_wav_dir=tgt_wav_dir,
+              org_xml_dir=org_xml_dir)
 
     # TODO Currently assumes that the wav trimming from XML has already been
     # done.
-    PREFIXES = []
-    for fn in os.listdir(os.path.join(TGT_WAV_DIR, "WORDLIST")):
+    prefixes = []
+    for fn in os.listdir(os.path.join(tgt_wav_dir, "WORDLIST")):
         if fn.endswith(".wav"):
             pre, _ = os.path.splitext(fn)
-            PREFIXES.append(os.path.join("WORDLIST", pre))
-    for fn in os.listdir(os.path.join(TGT_WAV_DIR, "TEXT")):
+            prefixes.append(os.path.join("WORDLIST", pre))
+    for fn in os.listdir(os.path.join(tgt_wav_dir, "TEXT")):
         if fn.endswith(".wav"):
             pre, _ = os.path.splitext(fn)
-            PREFIXES.append(os.path.join("TEXT", pre))
+            prefixes.append(os.path.join("TEXT", pre))
 
     if feat_type=="phonemes_onehot":
         import numpy as np
         #prepare_labels("phonemes")
-        for prefix in PREFIXES:
-            label_fn = os.path.join(LABEL_DIR, "%s.phonemes" % prefix)
-            out_fn = os.path.join(FEAT_DIR, "%s.phonemes_onehot" %  prefix)
+        for prefix in prefixes:
+            label_fn = os.path.join(label_dir, "%s.phonemes" % prefix)
+            out_fn = os.path.join(feat_dir, "%s.phonemes_onehot" %  prefix)
             try:
                 with open(label_fn) as label_f:
                     labels = label_f.readlines()[0].split()
@@ -380,32 +400,34 @@ def prepare_feats(feat_type):
                 np.save(out_fn, one_hots)
     else:
         # Otherwise, 
-        for prefix in PREFIXES:
+        for prefix in prefixes:
             # Convert the wave to 16k mono.
-            wav_fn = os.path.join(TGT_WAV_DIR, "%s.wav" % prefix)
-            mono16k_wav_fn = os.path.join(FEAT_DIR, "%s.wav" % prefix)
+            wav_fn = os.path.join(tgt_wav_dir, "%s.wav" % prefix)
+            mono16k_wav_fn = os.path.join(feat_dir, "%s.wav" % prefix)
             if not os.path.isfile(mono16k_wav_fn):
                 feat_extract.convert_wav(wav_fn, mono16k_wav_fn)
 
         # Extract features from the wavs.
-        feat_extract.from_dir(os.path.join(FEAT_DIR, "WORDLIST"), feat_type=feat_type)
-        feat_extract.from_dir(os.path.join(FEAT_DIR, "TEXT"), feat_type=feat_type)
+        feat_extract.from_dir(os.path.join(feat_dir, "WORDLIST"), feat_type=feat_type)
+        feat_extract.from_dir(os.path.join(feat_dir, "TEXT"), feat_type=feat_type)
 
-def get_story_prefixes():
+def get_story_prefixes(label_type, label_dir=LABEL_DIR):
     """ Gets the Na text prefixes. """
-    prefixes = [prefix for prefix in os.listdir(os.path.join(LABEL_DIR, "TEXT"))
-                if prefix.endswith("phonemes")]
+    prefixes = [prefix for prefix in os.listdir(os.path.join(label_dir, "TEXT"))
+                if prefix.endswith(".%s" % label_type)]
     prefixes = [os.path.splitext(os.path.join("TEXT", prefix))[0]
                 for prefix in prefixes]
     return prefixes
 
-def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000, seed=0):
+def make_data_splits(label_type, train_rec_type="text_and_wordlist", max_samples=1000,
+                     seed=0, tgt_dir=TGT_DIR):
     """ Creates a file with a list of prefixes (identifiers) of utterances to
     include in the test set. Test utterances must never be wordlists. Assumes
     preprocessing of label dir has already been done."""
 
-    test_prefix_fn = os.path.join(TGT_DIR, "test_prefixes.txt")
-    valid_prefix_fn = os.path.join(TGT_DIR, "valid_prefixes.txt")
+    feat_dir = os.path.join(tgt_dir, "feat")
+    test_prefix_fn=os.path.join(tgt_dir, "test_prefixes.txt")
+    valid_prefix_fn=os.path.join(tgt_dir, "valid_prefixes.txt")
     with open(test_prefix_fn) as f:
         prefixes = f.readlines()
         test_prefixes = [("TEXT/" + prefix).strip() for prefix in prefixes]
@@ -413,21 +435,22 @@ def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000, seed=
         prefixes = f.readlines()
         valid_prefixes = [("TEXT/" + prefix).strip() for prefix in prefixes]
 
-    prefixes = get_story_prefixes()
+    label_dir = os.path.join(tgt_dir, "label")
+    prefixes = get_story_prefixes(label_type, label_dir=label_dir)
     prefixes = list(set(prefixes) - set(valid_prefixes))
     prefixes = list(set(prefixes) - set(test_prefixes))
     prefixes = utils.filter_by_size(
-        FEAT_DIR, prefixes, "fbank", max_samples)
+        feat_dir, prefixes, "fbank", max_samples)
 
     if train_rec_type == "text":
         train_prefixes = prefixes
     else:
-        wordlist_prefixes = [prefix for prefix in os.listdir(os.path.join(LABEL_DIR, "WORDLIST"))
+        wordlist_prefixes = [prefix for prefix in os.listdir(os.path.join(label_dir, "WORDLIST"))
                              if prefix.endswith("phonemes")]
         wordlist_prefixes = [os.path.splitext(os.path.join("WORDLIST", prefix))[0]
                              for prefix in wordlist_prefixes]
         wordlist_prefixes = utils.filter_by_size(
-                FEAT_DIR, wordlist_prefixes, "fbank", max_samples)
+                feat_dir, wordlist_prefixes, "fbank", max_samples)
         if train_rec_type == "wordlist":
             prefixes = wordlist_prefixes
         elif train_rec_type == "text_and_wordlist":
@@ -440,18 +463,21 @@ def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000, seed=
 
     return train_prefixes, valid_prefixes, test_prefixes
 
-def get_stories():
+def get_stories(label_type):
     """ Returns a list of the stories in the Na corpus. """
 
-    prefixes = get_story_prefixes()
+    prefixes = get_story_prefixes(label_type)
     texts = list(set([prefix.split(".")[0].split("/")[1] for prefix in prefixes]))
     return texts
 
-def make_story_splits(valid_story, test_story, max_samples):
+def make_story_splits(valid_story, test_story, max_samples, label_type, tgt_dir=TGT_DIR):
 
-    prefixes = get_story_prefixes()
+    feat_dir=os.path.join(tgt_dir, "feat/")
+
+    prefixes = get_story_prefixes(label_type)
+    # TODO Remove assumption of fbank features
     prefixes = utils.filter_by_size(
-        FEAT_DIR, prefixes, "fbank", max_samples)
+        feat_dir, prefixes, "fbank", max_samples)
 
     train = []
     valid = []
@@ -473,16 +499,17 @@ def make_story_splits(valid_story, test_story, max_samples):
 class Corpus(corpus.AbstractCorpus):
     """ Class to interface with the Na corpus. """
 
-    FEAT_DIR = FEAT_DIR
-    LABEL_DIR = LABEL_DIR
-    UNTRAN_FEAT_DIR = os.path.join(UNTRAN_DIR, "feat")
-
     def __init__(self,
                  feat_type="fbank_and_pitch",
                  label_type="phonemes_and_tones",
                  train_rec_type="text", max_samples=1000,
-                 valid_story=None, test_story=None):
+                 valid_story=None, test_story=None,
+                 tgt_dir=TGT_DIR):
         super().__init__(feat_type, label_type)
+
+        self.FEAT_DIR = os.path.join(tgt_dir, "feat")
+        self.LABEL_DIR = os.path.join(tgt_dir, "label")
+        self.UNTRAN_FEAT_DIR = os.path.join(UNTRAN_DIR, "feat")
 
         self.max_samples = max_samples
         self.train_rec_type = train_rec_type
@@ -515,10 +542,14 @@ class Corpus(corpus.AbstractCorpus):
                     "now it is.")
 
             train, valid, test = make_story_splits(valid_story, test_story,
-                                                   max_samples)
+                                                   max_samples,
+                                                   self.label_type,
+                                                   tgt_dir=tgt_dir)
         else:
-            train, valid, test = make_data_splits(train_rec_type=train_rec_type,
-                                                  max_samples=max_samples)
+            train, valid, test = make_data_splits(self.label_type,
+                                                  train_rec_type=train_rec_type,
+                                                  max_samples=max_samples,
+                                                  tgt_dir=tgt_dir)
         self.train_prefixes = train
         self.valid_prefixes = valid
         self.test_prefixes = test
@@ -544,7 +575,7 @@ class Corpus(corpus.AbstractCorpus):
                 print(utter_id.split("/")[1], file=f)
 
     # TODO Use 'labels' instead of 'phonemes' here and in corpus.py
-    # Also, factor out as non-Chatino-specific.
+    # Also, factor out as non-Na-specific.
     def indices_to_phonemes(self, indices):
         return [(self.INDEX_TO_LABEL[index]) for index in indices]
     def phonemes_to_indices(self, labels):

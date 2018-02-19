@@ -119,8 +119,9 @@ def rerun_storyfoldxv(exp_dir):
 
 def story_fold_cross_validation(exp_dir):
 
+    label_type = "phonemes_and_tones"
     with open(join(exp_dir, "storyfold_crossvalidation.txt"), "w") as f:
-        texts = na.get_stories()
+        texts = na.get_stories(label_type)
         for i, test_text in enumerate(texts):
             valid_text = texts[(i+1) % len(texts)]
             for out_f in [f, sys.stdout]:
@@ -129,7 +130,7 @@ def story_fold_cross_validation(exp_dir):
                 print("Valid text: %s" % valid_text, file=out_f)
                 print("", file=out_f, flush=True)
 
-            train(exp_dir, "na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
+            train(exp_dir, "na", "fbank_and_pitch", label_type, 3, 400,
                    valid_story=valid_text, test_story=test_text)
 
 def train(exp_dir, language, feat_type, label_type,
