@@ -235,6 +235,11 @@ def trim_wavs(org_wav_dir=ORG_WAV_DIR,
         path = os.path.join(org_xml_dir, fn)
         prefix, _ = os.path.splitext(fn)
 
+        if os.path.isdir(path):
+            continue
+        if not path.endswith(".xml"):
+            continue
+
         rec_type, sents, times, transls = pangloss.get_sents_times_and_translations(path)
 
         # Extract the wavs given the times.
@@ -248,7 +253,6 @@ def trim_wavs(org_wav_dir=ORG_WAV_DIR,
                 in_wav_path = headmic_path
 
             out_wav_path = os.path.join(tgt_wav_dir, rec_type, "%s.%d.wav" % (prefix, i))
-            print(in_wav_path)
             assert os.path.isfile(in_wav_path)
             utils.trim_wav(in_wav_path, out_wav_path, start_time, end_time)
 
@@ -351,7 +355,8 @@ def prepare_untran(feat_type="fbank_and_pitch"):
     feat_extract.from_dir(os.path.join(feat_dir), feat_type=feat_type)
 
 # TODO Consider factoring out as non-Na specific
-def prepare_feats(feat_type, feat_dir=FEAT_DIR, tgt_wav_dir=TGT_WAV_DIR, label_dir=LABEL_DIR):
+def prepare_feats(feat_type, org_wav_dir=ORG_WAV_DIR, feat_dir=FEAT_DIR, tgt_wav_dir=TGT_WAV_DIR,
+                  org_xml_dir=ORG_XML_DIR, label_dir=LABEL_DIR):
     """ Prepare the input features."""
 
     if not os.path.isdir(os.path.join(feat_dir, "WORDLIST")):
@@ -360,7 +365,9 @@ def prepare_feats(feat_type, feat_dir=FEAT_DIR, tgt_wav_dir=TGT_WAV_DIR, label_d
         os.makedirs(os.path.join(feat_dir, "TEXT"))
 
     # Extract utterances from WAVS.
-    trim_wavs()
+    trim_wavs(org_wav_dir=org_wav_dir,
+              tgt_wav_dir=tgt_wav_dir,
+              org_xml_dir=org_xml_dir)
 
     # TODO Currently assumes that the wav trimming from XML has already been
     # done.

@@ -24,22 +24,20 @@ def set_up_base_testing_dir():
     if not os.path.isdir(DATA_BASE_DIR):
         os.makedirs(DATA_BASE_DIR)
 
-def download_example_data(example_dir, example_link):
+def download_example_data(example_link):
     """
-    Collects the zip archive from example_link and unpacks it into
-    example_dir. It should contain num_utters WAV files.
+    Clears DATA_BASE_DIR, collects the zip archive from example_link and unpacks it into
+    DATA_BASE_DIR.
     """
 
-    set_up_base_testing_dir()
-
-    zip_fn = join(DATA_BASE_DIR, "data.zip")
-
-    # Remove data previously collected
+    # Remove old data
     import shutil
-    if os.path.isdir(example_dir):
-        shutil.rmtree(example_dir)
-    if os.path.isfile(zip_fn):
-        os.remove(zip_fn)
+    if os.path.isdir(DATA_BASE_DIR):
+        shutil.rmtree(DATA_BASE_DIR)
+
+    # Prepare data and exp dirs
+    set_up_base_testing_dir()
+    zip_fn = join(DATA_BASE_DIR, "data.zip")
 
     # Fetch the zip archive
     import urllib.request
@@ -47,7 +45,7 @@ def download_example_data(example_dir, example_link):
 
     # Unzip the data
     import subprocess
-    args = ["unzip", zip_fn, "-d", example_dir]
+    args = ["unzip", zip_fn, "-d", DATA_BASE_DIR]
     subprocess.run(args, check=True)
 
 def get_test_ler(exp_dir):
@@ -89,7 +87,7 @@ def test_fast():
     TINY_EXAMPLE_LINK = "https://cloudstor.aarnet.edu.au/plus/s/g2GreDNlDKUq9rz/download"
     tiny_example_dir = join(DATA_BASE_DIR, "tiny_example/")
 
-    download_example_data(tiny_example_dir, TINY_EXAMPLE_LINK)
+    download_example_data(TINY_EXAMPLE_LINK)
 
     corp = corpus.ReadyCorpus(tiny_example_dir)
 
@@ -107,21 +105,22 @@ def test_full_na():
     """ A full Na integration test. """
 
     # Pulls Na wavs from cloudstor.
-    # TODO uncomment after test function is complete
     NA_WAVS_LINK = "https://cloudstor.aarnet.edu.au/plus/s/LnNyNa20GQ8qsPC/download"
-    na_wav_dir = join(DATA_BASE_DIR, "na/wav/")
-    #download_example_data(na_wav_dir, NA_WAVS_LINK)
+    download_example_data(NA_WAVS_LINK)
 
-    #NA_REPO_URL = "https://github.com/alexis-michaud/na-data.git"
-    #with cd(DATA_BASE_DIR):
-    #    subprocess.run(["git", "clone", NA_REPO_URL, "na/xml/"], check=True)
-    na_xml_dir = join(DATA_BASE_DIR, "na/xml/TEXT/F4")
+    na_dir = join(DATA_BASE_DIR, "na/")
+    os.makedirs(na_dir)
+    org_wav_dir = join(na_dir, "org_wav/")
+    os.rename(join(DATA_BASE_DIR, "na_wav/"), org_wav_dir)
+    tgt_wav_dir = join(na_dir, "wav/")
 
-    # Tox is called from persephone base dir, so this data directory is relative to that.
+    NA_REPO_URL = "https://github.com/alexis-michaud/na-data.git"
+    with cd(DATA_BASE_DIR):
+        subprocess.run(["git", "clone", NA_REPO_URL, "na/xml/"], check=True)
     # Note also that this subdirectory only containts TEXTs, so this integration
     # test will include only Na narratives, not wordlists.
+    na_xml_dir = join(DATA_BASE_DIR, "na/xml/TEXT/F4")
 
-    # Fbank+pitch feature extraction, which relies on Kaldi being installed.
     from persephone.datasets import na
 
     label_dir = join(DATA_BASE_DIR, "na/label")
@@ -129,20 +128,30 @@ def test_full_na():
         org_xml_dir=na_xml_dir, label_dir=label_dir)
 
     tgt_feat_dir = join(DATA_BASE_DIR, "na/feat")
-    na.trim_wavs(org_wav_dir=na_wav_dir,
-                                     tgt_wav_dir=tgt_feat_dir,
-                                     org_xml_dir=na_xml_dir)
+    # TODO Make this fbank_and_pitch, but then I need to install kaldi on ray
+    # or run the tests on GPUs on slug or doe.
+    feat_type = "fbank"
+    na.prepare_feats(feat_type,
+                     org_wav_dir=org_wav_dir,
+                     tgt_wav_dir=tgt_wav_dir,
+                     feat_dir=tgt_feat_dir,
+                     org_xml_dir=na_xml_dir,
+                     label_dir=label_dir)
 
-    na.prepare_feats("fbank_and_pitch",
-                                         feat_dir=tgt_feat_dir,
-                                         tgt_wav_dir=feat_dir,
-                                         label_dir=label_dir)
-    #persephone.datasets.na.make_data_splits(train_rec_type="text")
+    persephone.datasets.na.make_data_splits(train_rec_type="text")
 
     # Training with texts
+    from persephone import run
+    exp_dir = run.prep_exp_dir(directory=EXP_BASE_DIR)
+    na_corpus = na.Corpus(feat_type, "phonemes_and_tones",
+                          train_rec_type="text")
+    na_corpus_reader = persephone.corpus_reader.CorpusReader(na_corpus)
+    model = persephone.rnn_ctc.Model(exp_dir, na_corpus_reader,
+                                     num_layers=3, hidden_size=400)
+
+    model.train(min_epochs=30)
 
     # Ensure LER < 0.20
-
 
 # Other tests:
     # TODO assert the contents of the prefix files
