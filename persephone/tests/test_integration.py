@@ -141,6 +141,11 @@ def test_full_na():
     #                 org_xml_dir=na_xml_dir,
     #                 label_dir=label_dir)
 
+    from shutil import copyfile
+    copyfile("persephone/tests/test_sets/valid_prefixes.txt",
+             join(na_dir, "valid_prefixes.txt"))
+    copyfile("persephone/tests/test_sets/test_prefixes.txt",
+             join(na_dir, "test_prefixes"))
     na.make_data_splits(train_rec_type="text", tgt_dir=na_dir)
 
     # Training with texts

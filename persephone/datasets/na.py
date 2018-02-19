@@ -427,8 +427,8 @@ def make_data_splits(train_rec_type="text_and_wordlist", max_samples=1000,
     include in the test set. Test utterances must never be wordlists. Assumes
     preprocessing of label dir has already been done."""
 
-    test_prefix_fn = os.path.join(tgt_dir, "test_prefixes.txt")
-    valid_prefix_fn = os.path.join(tgt_dir, "valid_prefixes.txt")
+    test_prefix_fn=os.path.join(tgt_dir, "test_prefixes.txt")
+    valid_prefix_fn=os.path.join(tgt_dir, "valid_prefixes.txt")
     with open(test_prefix_fn) as f:
         prefixes = f.readlines()
         test_prefixes = [("TEXT/" + prefix).strip() for prefix in prefixes]
