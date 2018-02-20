@@ -496,7 +496,7 @@ def make_story_splits(valid_story, test_story, max_samples, label_type, tgt_dir=
 
     return train, valid, test
 
-class Corpus(corpus.AbstractCorpus):
+class Corpus(corpus.Corpus):
     """ Class to interface with the Na corpus. """
 
     def __init__(self,
@@ -573,13 +573,6 @@ class Corpus(corpus.AbstractCorpus):
         with open(fn, "w") as f:
             for utter_id in self.test_prefixes:
                 print(utter_id.split("/")[1], file=f)
-
-    # TODO Use 'labels' instead of 'phonemes' here and in corpus.py
-    # Also, factor out as non-Na-specific.
-    def indices_to_phonemes(self, indices):
-        return [(self.INDEX_TO_LABEL[index]) for index in indices]
-    def phonemes_to_indices(self, labels):
-        return [self.LABEL_TO_INDEX[label] for label in labels]
 
     def __repr__(self):
         return ("%s(" % self.__class__.__name__ +

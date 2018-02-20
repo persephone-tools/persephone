@@ -13,11 +13,16 @@ from . import feat_extract
 from . import utils
 from .exceptions import PersephoneException
 
-# TODO Rename as Corpus
-class AbstractCorpus():
-    "All interfaces to corpora are subclasses of this class."""
+class Corpus:
+    """
+    All interfaces to corpora are subclasses of this class. A corpus assumes
+    that WAV files are already segmented and in the tgt_dir/wav, and that
+    labels are in tgt_dir/label. If additional preprocessing is required,
+    then subclass Corpus, do what you need to do in __init__(), and then call
+    the superclass constructor.
+    """
 
-    def __init__(self, feat_type, target_type, tgt_dir, labels,
+    def __init__(self, feat_type, label_type, tgt_dir, labels,
                  max_samples=1000):
         """ feat_type: A string describing the input features. For
                        example, 'log_mel_filterbank'.
@@ -28,23 +33,24 @@ class AbstractCorpus():
                          reducing the number of effective training examples.
         """
         self.feat_type = feat_type
-        self.target_type = target_type # TODO Remove target_type
-        self.label_type = target_type
+        self.label_type = label_type
 
         # Setting up directories
-        self.TGT_DIR = tgt_dir # TODO lowercase?
-        self.FEAT_DIR = os.path.join(tgt_dir, "feat") # TODO lowercase?
-        self.WAV_DIR = os.path.join(tgt_dir, "wav") # TODO lowercase?
-        self.LABEL_DIR = os.path.join(tgt_dir, "label") # TODO lowercase?
-        if not os.path.isdir(wav_dir):
-            print(wav_dir)
+        self.tgt_dir = tgt_dir
+        self.feat_dir = os.path.join(tgt_dir, "feat")
+        self.wav_dir = os.path.join(tgt_dir, "wav")
+        self.label_dir = os.path.join(tgt_dir, "label")
+        if not os.path.isdir(tgt_dir):
+            raise FileNotFoundError("The directory {} does not exist.".format(
+                                    tgt_dir))
+        if not os.path.isdir(self.wav_dir):
             raise PersephoneException("The supplied path requires a 'wav' subdirectory.")
-        if not os.path.isdir(feat_dir):
-            os.makedirs(feat_dir)
-        if not os.path.isdir(label_dir):
+        if not os.path.isdir(self.feat_dir):
+            os.makedirs(self.feat_dir)
+        if not os.path.isdir(self.label_dir):
             raise PersephoneException("The supplied path requires a 'label' subdirectory.")
 
-        # Label related stuff
+        # Label-related stuff
         self.labels = labels
         self.vocab_size = len(self.labels)
         self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
@@ -52,8 +58,9 @@ class AbstractCorpus():
         self.INDEX_TO_LABEL = {index: phn for index, phn in enumerate(
                                  ["pad"] + sorted(list(self.labels)))}
 
-        # This is a lazy function
-        self.prepare_feats(org_dir=self.WAV_DIR)
+        # This is a lazy function that assumes wavs are already in the WAV dir
+        # but only creates features if necessary
+        self.prepare_feats()
         self._num_feats = None
 
         # This is also lazy if the {train,valid,test}_prefixes.txt files exist.
@@ -62,13 +69,13 @@ class AbstractCorpus():
             print("""WARNING: Corpus object has no training data. Are you sure
             it's in the correct directories? WAVs should be in {} and
             transcriptions in {} with the extension .{}""".format(
-                wav_dir, label_dir, label_type))
+                self.wav_dir, self.label_dir, self.label_type))
         self.train_prefixes = train
         self.valid_prefixes = valid
         self.test_prefixes = test
         # Sort the training prefixes by size for more efficient training
         self.train_prefixes = utils.sort_by_size(
-            self.FEAT_DIR, self.train_prefixes, feat_type)
+            self.feat_dir, self.train_prefixes, feat_type)
 
         self.untranscribed_prefixes = self.get_untranscribed_prefixes()
 
@@ -86,12 +93,6 @@ class AbstractCorpus():
         """ Converts a sequence of labels into their corresponding indices."""
 
         return [self.LABEL_TO_INDEX[label] for label in labels]
-
-    # TODO Remove all calls to these methods:
-    def indices_to_phonemes(self, indices):
-        return self.indices_to_labels(indices)
-    def phonemes_to_indices(self, phonemes):
-        return self.labels_to_indices(phonemes)
 
     @property
     def num_feats(self):
@@ -112,29 +113,29 @@ class AbstractCorpus():
         return self._num_feats
 
     def get_train_fns(self):
-        feat_fns = [os.path.join(self.FEAT_DIR, "%s.%s.npy" % (prefix, self.feat_type))
+        feat_fns = [os.path.join(self.feat_dir, "%s.%s.npy" % (prefix, self.feat_type))
                     for prefix in self.train_prefixes]
-        label_fns = [os.path.join(self.LABEL_DIR, "%s.%s" % (prefix, self.label_type))
+        label_fns = [os.path.join(self.label_dir, "%s.%s" % (prefix, self.label_type))
                       for prefix in self.train_prefixes]
         return feat_fns, label_fns
 
     def get_valid_fns(self):
-        feat_fns = [os.path.join(self.FEAT_DIR, "%s.%s.npy" % (prefix, self.feat_type))
+        feat_fns = [os.path.join(self.feat_dir, "%s.%s.npy" % (prefix, self.feat_type))
                     for prefix in self.valid_prefixes]
-        label_fns = [os.path.join(self.LABEL_DIR, "%s.%s" % (prefix, self.label_type))
+        label_fns = [os.path.join(self.label_dir, "%s.%s" % (prefix, self.label_type))
                       for prefix in self.valid_prefixes]
         return feat_fns, label_fns
 
     def get_test_fns(self):
-        feat_fns = [os.path.join(self.FEAT_DIR, "%s.%s.npy" % (prefix, self.feat_type))
+        feat_fns = [os.path.join(self.feat_dir, "%s.%s.npy" % (prefix, self.feat_type))
                     for prefix in self.test_prefixes]
-        label_fns = [os.path.join(self.LABEL_DIR, "%s.%s" % (prefix, self.label_type))
+        label_fns = [os.path.join(self.label_dir, "%s.%s" % (prefix, self.label_type))
                       for prefix in self.test_prefixes]
         return feat_fns, label_fns
 
     def get_untranscribed_prefixes(self):
 
-        untranscribed_prefix_fn = join(self.TGT_DIR, "untranscribed_prefixes.txt")
+        untranscribed_prefix_fn = join(self.tgt_dir, "untranscribed_prefixes.txt")
         if os.path.exists(untranscribed_prefix_fn):
             with open(untranscribed_prefix_fn) as f:
                 prefixes = f.readlines()
@@ -144,35 +145,36 @@ class AbstractCorpus():
         return None
 
     def get_untranscribed_fns(self):
-        feat_fns = [os.path.join(self.FEAT_DIR, "%s.%s.npy" % (prefix, self.feat_type))
+        feat_fns = [os.path.join(self.feat_dir, "%s.%s.npy" % (prefix, self.feat_type))
                     for prefix in self.untranscribed_prefixes]
         return feat_fns
 
-    def prepare_feats(self, org_dir=self.WAV_DIR):
+    def prepare_feats(self):
         """ Prepares input features"""
 
-        if not os.path.isdir(self.FEAT_DIR):
-            os.makedirs(self.FEAT_DIR)
+        if not os.path.isdir(self.feat_dir):
+            os.makedirs(self.feat_dir)
 
         should_extract_feats = False
-        for fn in os.listdir(org_dir):
-            path = join(org_dir, fn)
-            if path.endswith(".wav"):
-                prefix = os.path.basename(os.path.splitext(path)[0])
-                mono16k_wav_path = join(self.FEAT_DIR, "%s.wav" % prefix)
-                feat_path = join(self.FEAT_DIR,
-                                 "%s.%s.npy" % (prefix, self.feat_type))
-                if not os.path.isfile(feat_path):
-                    # Then we should extract feats
-                    should_extract_feats = True
-                    if not os.path.isfile(mono16k_wav_path):
-                        feat_extract.convert_wav(path, mono16k_wav_path)
+        for fn in os.listdir(self.wav_dir):
+            path = join(self.wav_dir, fn)
+            if not path.endswith(".wav"):
+                continue
+            prefix = os.path.basename(os.path.splitext(path)[0])
+            mono16k_wav_path = join(self.feat_dir, "%s.wav" % prefix)
+            feat_path = join(self.feat_dir,
+                             "%s.%s.npy" % (prefix, self.feat_type))
+            if not os.path.isfile(feat_path):
+                # Then we should extract feats
+                should_extract_feats = True
+                if not os.path.isfile(mono16k_wav_path):
+                    feat_extract.convert_wav(path, mono16k_wav_path)
 
         if should_extract_feats:
-            feat_extract.from_dir(self.FEAT_DIR, self.feat_type)
+            feat_extract.from_dir(self.feat_dir, self.feat_type)
 
     def get_prefixes(self):
-        fns = [fn for fn in os.listdir(self.LABEL_DIR)
+        fns = [fn for fn in os.listdir(self.label_dir)
                if fn.endswith(self.label_type)]
         prefixes = [os.path.splitext(fn)[0] for fn in fns]
         return prefixes
@@ -180,9 +182,9 @@ class AbstractCorpus():
     def make_data_splits(self, max_samples=1000, seed=0):
         """ Splits the utterances into training, validation and test sets."""
 
-        train_prefix_fn = join(self.TGT_DIR, "train_prefixes.txt")
-        valid_prefix_fn = join(self.TGT_DIR, "valid_prefixes.txt")
-        test_prefix_fn = join(self.TGT_DIR, "test_prefixes.txt")
+        train_prefix_fn = join(self.tgt_dir, "train_prefixes.txt")
+        valid_prefix_fn = join(self.tgt_dir, "valid_prefixes.txt")
+        test_prefix_fn = join(self.tgt_dir, "test_prefixes.txt")
 
         train_f_exists = os.path.isfile(train_prefix_fn)
         valid_f_exists = os.path.isfile(valid_prefix_fn)
@@ -204,7 +206,7 @@ class AbstractCorpus():
         # TODO Surely filtering by size should be done by the corpus reader?
         # How best to keep reads of the corpus consistent?
         prefixes = utils.filter_by_size(
-            self.FEAT_DIR, prefixes, "fbank", max_samples)
+            self.feat_dir, prefixes, "fbank", max_samples)
         Ratios = namedtuple("Ratios", ["train", "valid", "test"])
         # TODO These ratios can't be hardcoded
         ratios = Ratios(.90, .05, .05)
@@ -236,12 +238,29 @@ class AbstractCorpus():
 
         return train_prefixes, valid_prefixes, test_prefixes
 
-    def determine_labels(self):
+class ReadyCorpus(Corpus):
+    """ Interface to a corpus that has WAV files and label files split into
+    utterances and segregated in a directory with a "wav" and "label" dir. """
+
+    def __init__(self, tgt_dir, feat_type="fbank", label_type="phonemes"):
+
+        labels = self.determine_labels(tgt_dir, label_type)
+
+        super().__init__(feat_type, label_type, tgt_dir, labels)
+
+    @staticmethod
+    def determine_labels(tgt_dir, label_type):
         """ Returns a set of phonemes found in the corpus. """
+
+        label_dir = os.path.join(tgt_dir, "label/")
+        if not os.path.isdir(label_dir):
+            raise FileNotFoundError(
+                "The directory {} does not exist.".format(tgt_dir))
+
         phonemes = set()
-        for fn in os.listdir(self.LABEL_DIR):
-            if fn.endswith(self.label_type):
-                with open(join(self.LABEL_DIR, fn)) as f:
+        for fn in os.listdir(label_dir):
+            if fn.endswith(label_type):
+                with open(join(label_dir, fn)) as f:
                     try:
                         line_phonemes = set(f.readline().split())
                     except UnicodeDecodeError:
@@ -249,23 +268,3 @@ class AbstractCorpus():
                         raise
                     phonemes = phonemes.union(line_phonemes)
         return phonemes
-
-def check_data(path):
-    """ Checks that the data exists and is in the correct directory so that a
-    ReadyCorpus can be made out of it."""
-    pass
-
-class ReadyCorpus(AbstractCorpus):
-    """ Interface to a corpus that has WAV files and label files split into
-    utterances and segregated in a directory with a "wav" and "label" dir. """
-
-    def __init__(self, tgt_dir, feat_type="fbank", label_type="phonemes"):
-
-        if not os.path.isdir(tgt_dir):
-            raise FileNotFoundError("The directory {} does not exist.".format(
-                                    tgt_dir))
-
-        labels = self.determine_labels()
-        super().__init__(feat_type, label_type, tgt_dir, labels,
-                         train_prefixes, valid_prefixes, test_prefixes,
-                         untranscribed_prefixes)

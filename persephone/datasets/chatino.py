@@ -216,7 +216,7 @@ def prepare_feats(feat_type):
         # Extract features from the wavs.
         feat_extract.from_dir(FEAT_DIR, feat_type=feat_type)
 
-class Corpus(corpus.AbstractCorpus):
+class Corpus(corpus.Corpus):
     """ Class to interface with the Chatino corpus."""
 
     # TODO Reconsider the place of these splits. Perhaps train/dev/test

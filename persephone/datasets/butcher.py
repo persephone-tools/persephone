@@ -66,7 +66,7 @@ def filter_unlabelled(prefixes, label_type):
                                                label_type=label_type))
     return filtered_prefixes
 
-class Corpus(corpus.AbstractCorpus):
+class Corpus(corpus.Corpus):
     """ Interface to the Kunwinjku data. """
 
     # TODO Do I make these attributes non-caps?

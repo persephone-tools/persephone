@@ -90,7 +90,7 @@ class CorpusReader:
         batch_targets_list = []
         for targets_path in target_fn_batch:
             with open(targets_path) as targets_f:
-                target_indices = self.corpus.phonemes_to_indices(targets_f.readline().split())
+                target_indices = self.corpus.labels_to_indices(targets_f.readline().split())
                 batch_targets_list.append(target_indices)
         batch_targets = utils.target_list_to_sparse_tensor(batch_targets_list)
 
@@ -151,8 +151,8 @@ class CorpusReader:
         for i in range(len(dense_decoded)):
             ref = [phn_i for phn_i in dense_y[i] if phn_i != 0]
             hyp = [phn_i for phn_i in dense_decoded[i] if phn_i != 0]
-            ref = self.corpus.indices_to_phonemes(ref)
-            hyp = self.corpus.indices_to_phonemes(hyp)
+            ref = self.corpus.indices_to_labels(ref)
+            hyp = self.corpus.indices_to_labels(hyp)
             refs.append(ref)
             hyps.append(hyp)
 
@@ -166,7 +166,7 @@ class CorpusReader:
         transcripts = []
         for i in range(len(dense_repr)):
             transcript = [phn_i for phn_i in dense_repr[i] if phn_i != 0]
-            transcript = self.corpus.indices_to_phonemes(transcript)
+            transcript = self.corpus.indices_to_labels(transcript)
             transcripts.append(transcript)
 
         return transcripts
