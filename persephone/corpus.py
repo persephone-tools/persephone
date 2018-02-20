@@ -51,10 +51,7 @@ class Corpus:
         self._num_feats = None
 
         # This is also lazy if the {train,valid,test}_prefixes.txt files exist.
-        print("ABOUT TO SPLIT")
         self.make_data_splits(max_samples=max_samples)
-        print("TRAIN PREFIXES", self.train_prefixes)
-        return
 
         # Sort the training prefixes by size for more efficient training
         self.train_prefixes = utils.sort_by_size(
@@ -184,8 +181,6 @@ class Corpus:
     def make_data_splits(self, max_samples=1000, seed=0):
         """ Splits the utterances into training, validation and test sets."""
 
-        print("IN F")
-
         train_prefix_fn = join(self.tgt_dir, "train_prefixes.txt")
         valid_prefix_fn = join(self.tgt_dir, "valid_prefixes.txt")
         test_prefix_fn = join(self.tgt_dir, "test_prefixes.txt")
@@ -243,8 +238,6 @@ class Corpus:
                 self.wav_dir, self.label_dir, self.label_type))
 
         self.train_prefixes = train_prefixes
-        print(train_prefixes)
-        print(self.train_prefixes)
         self.valid_prefixes = valid_prefixes
         self.test_prefixes = test_prefixes
 
