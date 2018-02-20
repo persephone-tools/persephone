@@ -1,5 +1,7 @@
-""" Describes the abstract Corpus class that all interfaces to corpora should
-    subclass. """
+"""
+Describes the abstract Corpus class that all interfaces to corpora should
+subclass.
+"""
 
 import abc
 from collections import namedtuple
@@ -28,6 +30,8 @@ class Corpus:
                        example, 'log_mel_filterbank'.
             target_type: A string describing the targets. For example,
                          'phonemes' or 'tones'.
+            labels: A set of tokens used in transcription. Typically units such
+                    as phonemes or characters.
             max_samples: The maximum length in samples of a train, valid, or
                          test utterance. Used to save memory in exchange for
                          reducing the number of effective training examples.
@@ -36,27 +40,10 @@ class Corpus:
         self.label_type = label_type
 
         # Setting up directories
-        self.tgt_dir = tgt_dir
-        self.feat_dir = os.path.join(tgt_dir, "feat")
-        self.wav_dir = os.path.join(tgt_dir, "wav")
-        self.label_dir = os.path.join(tgt_dir, "label")
-        if not os.path.isdir(tgt_dir):
-            raise FileNotFoundError("The directory {} does not exist.".format(
-                                    tgt_dir))
-        if not os.path.isdir(self.wav_dir):
-            raise PersephoneException("The supplied path requires a 'wav' subdirectory.")
-        if not os.path.isdir(self.feat_dir):
-            os.makedirs(self.feat_dir)
-        if not os.path.isdir(self.label_dir):
-            raise PersephoneException("The supplied path requires a 'label' subdirectory.")
+        self.set_and_check_directories(tgt_dir)
 
         # Label-related stuff
-        self.labels = labels
-        self.vocab_size = len(self.labels)
-        self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
-                                 ["pad"] + sorted(list(self.labels)))}
-        self.INDEX_TO_LABEL = {index: phn for index, phn in enumerate(
-                                 ["pad"] + sorted(list(self.labels)))}
+        self.initialize_labels(labels)
 
         # This is a lazy function that assumes wavs are already in the WAV dir
         # but only creates features if necessary
@@ -64,25 +51,45 @@ class Corpus:
         self._num_feats = None
 
         # This is also lazy if the {train,valid,test}_prefixes.txt files exist.
-        train, valid, test = self.make_data_splits(max_samples=max_samples)
-        if train == []:
-            print("""WARNING: Corpus object has no training data. Are you sure
-            it's in the correct directories? WAVs should be in {} and
-            transcriptions in {} with the extension .{}""".format(
-                self.wav_dir, self.label_dir, self.label_type))
-        self.train_prefixes = train
-        self.valid_prefixes = valid
-        self.test_prefixes = test
+        print("ABOUT TO SPLIT")
+        self.make_data_splits(max_samples=max_samples)
+        print("TRAIN PREFIXES", self.train_prefixes)
+        return
+
         # Sort the training prefixes by size for more efficient training
         self.train_prefixes = utils.sort_by_size(
             self.feat_dir, self.train_prefixes, feat_type)
 
         self.untranscribed_prefixes = self.get_untranscribed_prefixes()
 
-    def get_target_prefix(self, prefix):
-        """ Gets the target gfn given a prefix. """
+    def set_and_check_directories(self, tgt_dir):
 
-        prefix = os.path.basename(prefix)
+        # Set the directory names
+        self.tgt_dir = tgt_dir
+        self.feat_dir = os.path.join(tgt_dir, "feat")
+        self.wav_dir = os.path.join(tgt_dir, "wav")
+        self.label_dir = os.path.join(tgt_dir, "label")
+
+        # Check directories exist.
+        if not os.path.isdir(tgt_dir):
+            raise FileNotFoundError(
+                "The directory {} does not exist.".format(tgt_dir))
+        if not os.path.isdir(self.wav_dir):
+            raise PersephoneException(
+                "The supplied path requires a 'wav' subdirectory.")
+        if not os.path.isdir(self.feat_dir):
+            os.makedirs(self.feat_dir)
+        if not os.path.isdir(self.label_dir):
+            raise PersephoneException(
+                "The supplied path requires a 'label' subdirectory.")
+
+    def initialize_labels(self, labels):
+        self.labels = labels
+        self.vocab_size = len(self.labels)
+        self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
+                                 ["pad"] + sorted(list(self.labels)))}
+        self.INDEX_TO_LABEL = {index: phn for index, phn in enumerate(
+                                 ["pad"] + sorted(list(self.labels)))}
 
     def indices_to_labels(self, indices):
         """ Converts a sequence of indices into their corresponding labels."""
@@ -112,26 +119,21 @@ class Corpus:
                     "Feature matrix of shape %s unexpected" % str(feats.shape))
         return self._num_feats
 
-    def get_train_fns(self):
+    def prefixes_to_fns(self, prefixes):
         feat_fns = [os.path.join(self.feat_dir, "%s.%s.npy" % (prefix, self.feat_type))
-                    for prefix in self.train_prefixes]
+                    for prefix in prefixes]
         label_fns = [os.path.join(self.label_dir, "%s.%s" % (prefix, self.label_type))
-                      for prefix in self.train_prefixes]
+                      for prefix in prefixes]
         return feat_fns, label_fns
+
+    def get_train_fns(self):
+        return self.prefixes_to_fns(self.train_prefixes)
 
     def get_valid_fns(self):
-        feat_fns = [os.path.join(self.feat_dir, "%s.%s.npy" % (prefix, self.feat_type))
-                    for prefix in self.valid_prefixes]
-        label_fns = [os.path.join(self.label_dir, "%s.%s" % (prefix, self.label_type))
-                      for prefix in self.valid_prefixes]
-        return feat_fns, label_fns
+        return self.prefixes_to_fns(self.valid_prefixes)
 
     def get_test_fns(self):
-        feat_fns = [os.path.join(self.feat_dir, "%s.%s.npy" % (prefix, self.feat_type))
-                    for prefix in self.test_prefixes]
-        label_fns = [os.path.join(self.label_dir, "%s.%s" % (prefix, self.label_type))
-                      for prefix in self.test_prefixes]
-        return feat_fns, label_fns
+        return self.prefixes_to_fns(self.test_prefixes)
 
     def get_untranscribed_prefixes(self):
 
@@ -182,6 +184,8 @@ class Corpus:
     def make_data_splits(self, max_samples=1000, seed=0):
         """ Splits the utterances into training, validation and test sets."""
 
+        print("IN F")
+
         train_prefix_fn = join(self.tgt_dir, "train_prefixes.txt")
         valid_prefix_fn = join(self.tgt_dir, "valid_prefixes.txt")
         test_prefix_fn = join(self.tgt_dir, "test_prefixes.txt")
@@ -197,46 +201,52 @@ class Corpus:
                 valid_prefixes = [line.strip() for line in valid_f]
             with open(test_prefix_fn) as test_f:
                 test_prefixes = [line.strip() for line in test_f]
+        else:
+            prefixes = self.get_prefixes()
+            prefixes = utils.filter_by_size(
+                self.feat_dir, prefixes, self.feat_type, max_samples)
+            Ratios = namedtuple("Ratios", ["train", "valid", "test"])
+            # TODO These ratios can't be hardcoded
+            ratios = Ratios(.90, .05, .05)
+            train_end = int(ratios.train*len(prefixes))
+            valid_end = int(train_end + ratios.valid*len(prefixes))
+            random.shuffle(prefixes)
+            train_prefixes = prefixes[:train_end]
+            valid_prefixes = prefixes[train_end:valid_end]
+            test_prefixes = prefixes[valid_end:]
 
-            return train_prefixes, valid_prefixes, test_prefixes
+            # TODO Perhaps the ReadyCorpus train_prefixes variable should be a
+            # property that writes this file when it is changed, then we can
+            # remove the code from here. The thing is, the point of those files
+            # is that they don't change, so they should be written once only,
+            # unless you explicitly delete them. This isn't very clear from the
+            # perspective of the user though, so it's a design decision to
+            # think about.
+            if train_prefixes:
+                with open(train_prefix_fn, "w") as train_f:
+                    for prefix in train_prefixes:
+                        print(prefix, file=train_f)
+            if valid_prefixes:
+                with open(valid_prefix_fn, "w") as dev_f:
+                    for prefix in valid_prefixes:
+                        print(prefix, file=dev_f)
+            if test_prefixes:
+                with open(test_prefix_fn, "w") as test_f:
+                    for prefix in test_prefixes:
+                        print(prefix, file=test_f)
 
-        prefixes = self.get_prefixes()
-        # TODO Note that I'm shuffling after sorting; this could be better.
-        # TODO Remove explicit reference to "fbank"
-        # TODO Surely filtering by size should be done by the corpus reader?
-        # How best to keep reads of the corpus consistent?
-        prefixes = utils.filter_by_size(
-            self.feat_dir, prefixes, "fbank", max_samples)
-        Ratios = namedtuple("Ratios", ["train", "valid", "test"])
-        # TODO These ratios can't be hardcoded
-        ratios = Ratios(.90, .05, .05)
-        train_end = int(ratios.train*len(prefixes))
-        valid_end = int(train_end + ratios.valid*len(prefixes))
-        random.shuffle(prefixes)
-        train_prefixes = prefixes[:train_end]
-        valid_prefixes = prefixes[train_end:valid_end]
-        test_prefixes = prefixes[valid_end:]
+        if train_prefixes == []:
+            # TODO log this as a warning
+            print("""WARNING: Corpus object has no training data. Are you sure
+            it's in the correct directories? WAVs should be in {} and
+            transcriptions in {} with the extension .{}""".format(
+                self.wav_dir, self.label_dir, self.label_type))
 
-        # TODO Perhaps the ReadyCorpus train_prefixes variable should be a
-        # property that writes this file when it is changed, then we can remove
-        # the code from here. The thing is, the point of those files is that
-        # they don't change, so they should be written once only, unless you
-        # explicitly delete them. This isn't very clear from the perspective of
-        # the user though, so it's a design decision to think about.
-        if train_prefixes:
-            with open(train_prefix_fn, "w") as train_f:
-                for prefix in train_prefixes:
-                    print(prefix, file=train_f)
-        if valid_prefixes:
-            with open(valid_prefix_fn, "w") as dev_f:
-                for prefix in valid_prefixes:
-                    print(prefix, file=dev_f)
-        if test_prefixes:
-            with open(test_prefix_fn, "w") as test_f:
-                for prefix in test_prefixes:
-                    print(prefix, file=test_f)
-
-        return train_prefixes, valid_prefixes, test_prefixes
+        self.train_prefixes = train_prefixes
+        print(train_prefixes)
+        print(self.train_prefixes)
+        self.valid_prefixes = valid_prefixes
+        self.test_prefixes = test_prefixes
 
 class ReadyCorpus(Corpus):
     """ Interface to a corpus that has WAV files and label files split into
