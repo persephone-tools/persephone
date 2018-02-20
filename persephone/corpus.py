@@ -88,66 +88,6 @@ class Corpus:
         self.INDEX_TO_LABEL = {index: phn for index, phn in enumerate(
                                  ["pad"] + sorted(list(self.labels)))}
 
-    def indices_to_labels(self, indices):
-        """ Converts a sequence of indices into their corresponding labels."""
-
-        return [(self.INDEX_TO_LABEL[index]) for index in indices]
-
-    def labels_to_indices(self, labels):
-        """ Converts a sequence of labels into their corresponding indices."""
-
-        return [self.LABEL_TO_INDEX[label] for label in labels]
-
-    @property
-    def num_feats(self):
-        """ The number of features per time step in the corpus. """
-        if not self._num_feats:
-            filename = self.get_train_fns()[0][0]
-            feats = np.load(filename)
-            # pylint: disable=maybe-no-member
-            if len(feats.shape) == 3:
-                # Then there are multiple channels of multiple feats
-                self._num_feats = feats.shape[1] * feats.shape[2]
-            elif len(feats.shape) == 2:
-                # Otherwise it is just of shape time x feats
-                self._num_feats = feats.shape[1]
-            else:
-                raise ValueError(
-                    "Feature matrix of shape %s unexpected" % str(feats.shape))
-        return self._num_feats
-
-    def prefixes_to_fns(self, prefixes):
-        feat_fns = [os.path.join(self.feat_dir, "%s.%s.npy" % (prefix, self.feat_type))
-                    for prefix in prefixes]
-        label_fns = [os.path.join(self.label_dir, "%s.%s" % (prefix, self.label_type))
-                      for prefix in prefixes]
-        return feat_fns, label_fns
-
-    def get_train_fns(self):
-        return self.prefixes_to_fns(self.train_prefixes)
-
-    def get_valid_fns(self):
-        return self.prefixes_to_fns(self.valid_prefixes)
-
-    def get_test_fns(self):
-        return self.prefixes_to_fns(self.test_prefixes)
-
-    def get_untranscribed_prefixes(self):
-
-        untranscribed_prefix_fn = join(self.tgt_dir, "untranscribed_prefixes.txt")
-        if os.path.exists(untranscribed_prefix_fn):
-            with open(untranscribed_prefix_fn) as f:
-                prefixes = f.readlines()
-
-            return [prefix.strip() for prefix in prefixes]
-
-        return None
-
-    def get_untranscribed_fns(self):
-        feat_fns = [os.path.join(self.feat_dir, "%s.%s.npy" % (prefix, self.feat_type))
-                    for prefix in self.untranscribed_prefixes]
-        return feat_fns
-
     def prepare_feats(self):
         """ Prepares input features"""
 
@@ -172,11 +112,23 @@ class Corpus:
         if should_extract_feats:
             feat_extract.from_dir(self.feat_dir, self.feat_type)
 
-    def get_prefixes(self):
-        fns = [fn for fn in os.listdir(self.label_dir)
-               if fn.endswith(self.label_type)]
-        prefixes = [os.path.splitext(fn)[0] for fn in fns]
-        return prefixes
+    @staticmethod
+    def read_subset_prefixes(tgt_dir):
+
+        train_prefix_fn = join(tgt_dir, "train_prefixes.txt")
+        valid_prefix_fn = join(tgt_dir, "valid_prefixes.txt")
+        test_prefix_fn = join(tgt_dir, "test_prefixes.txt")
+
+        train_f_exists = os.path.isfile(train_prefix_fn)
+        valid_f_exists = os.path.isfile(valid_prefix_fn)
+        test_f_exists = os.path.isfile(test_prefix_fn)
+
+        if not train_f_exists:
+            raise NoPrefixFileException(
+                "No train_prefix_fn at {}".format(train_prefix_fn))
+        if not valid_f_exists:
+            raise NoPrefixFileException(
+                "No train_prefix_fn at {}".format(train_prefix_fn))
 
     def make_data_splits(self, max_samples=1000, seed=0):
         """ Splits the utterances into training, validation and test sets."""
@@ -240,6 +192,72 @@ class Corpus:
         self.train_prefixes = train_prefixes
         self.valid_prefixes = valid_prefixes
         self.test_prefixes = test_prefixes
+
+    def indices_to_labels(self, indices):
+        """ Converts a sequence of indices into their corresponding labels."""
+
+        return [(self.INDEX_TO_LABEL[index]) for index in indices]
+
+    def labels_to_indices(self, labels):
+        """ Converts a sequence of labels into their corresponding indices."""
+
+        return [self.LABEL_TO_INDEX[label] for label in labels]
+
+    @property
+    def num_feats(self):
+        """ The number of features per time step in the corpus. """
+        if not self._num_feats:
+            filename = self.get_train_fns()[0][0]
+            feats = np.load(filename)
+            # pylint: disable=maybe-no-member
+            if len(feats.shape) == 3:
+                # Then there are multiple channels of multiple feats
+                self._num_feats = feats.shape[1] * feats.shape[2]
+            elif len(feats.shape) == 2:
+                # Otherwise it is just of shape time x feats
+                self._num_feats = feats.shape[1]
+            else:
+                raise ValueError(
+                    "Feature matrix of shape %s unexpected" % str(feats.shape))
+        return self._num_feats
+
+    def prefixes_to_fns(self, prefixes):
+        feat_fns = [os.path.join(self.feat_dir, "%s.%s.npy" % (prefix, self.feat_type))
+                    for prefix in prefixes]
+        label_fns = [os.path.join(self.label_dir, "%s.%s" % (prefix, self.label_type))
+                      for prefix in prefixes]
+        return feat_fns, label_fns
+
+    def get_train_fns(self):
+        return self.prefixes_to_fns(self.train_prefixes)
+
+    def get_valid_fns(self):
+        return self.prefixes_to_fns(self.valid_prefixes)
+
+    def get_test_fns(self):
+        return self.prefixes_to_fns(self.test_prefixes)
+
+    def get_untranscribed_prefixes(self):
+
+        untranscribed_prefix_fn = join(self.tgt_dir, "untranscribed_prefixes.txt")
+        if os.path.exists(untranscribed_prefix_fn):
+            with open(untranscribed_prefix_fn) as f:
+                prefixes = f.readlines()
+
+            return [prefix.strip() for prefix in prefixes]
+
+        return None
+
+    def get_untranscribed_fns(self):
+        feat_fns = [os.path.join(self.feat_dir, "%s.%s.npy" % (prefix, self.feat_type))
+                    for prefix in self.untranscribed_prefixes]
+        return feat_fns
+
+    def get_prefixes(self):
+        fns = [fn for fn in os.listdir(self.label_dir)
+               if fn.endswith(self.label_type)]
+        prefixes = [os.path.splitext(fn)[0] for fn in fns]
+        return prefixes
 
 class ReadyCorpus(Corpus):
     """ Interface to a corpus that has WAV files and label files split into
