@@ -240,9 +240,7 @@ class Model:
             restore_model_path: The path to restore a model from.
         """
 
-        # Not technically the upper bound on a LER but we don't want to save if
-        # it's not below this.
-        best_valid_ler = 1.0
+        best_valid_ler = 2.0
         steps_since_last_record = 0
 
         #Get information about training for the names of output files.
