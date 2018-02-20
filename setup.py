@@ -29,5 +29,6 @@ setup(name='persephone',
            'pympi-ling==1.69',
            'pylint==1.8.2',
            'mypy==0.560',
+           'spacy==2.0.8',
       ],
 )
