@@ -23,14 +23,25 @@ def get_en_words() -> Set[str]:
 
     with open(config.EN_WORDS_PATH) as words_f:
         raw_words = words_f.readlines()
-    en_words = set([word.strip() for word in raw_words])
-    NA_WORDS_IN_EN_DICT = set(["Kore", "Nani", "karri", "imi", "o", "yaw", "i-",
-                           "bi-", "aye", "imi", "ane", "kubba", "kab", "a-",
-                           "ad", "a", "Mak", "Selim", "ngai", "en", "yo",
-                           "wud", "Mani", "yak", "Manu", "ka-", "mong",
-                           "manga", "ka-", "mane", "Kala", "name", "kayo",
-                           "Kare", "laik", "Bale"])
+    en_words = set([word.strip().lower() for word in raw_words])
+    NA_WORDS_IN_EN_DICT = set(["kore", "nani", "karri", "imi", "o", "yaw", "i-",
+                           "bi", "aye", "imi", "ane", "kubba", "kab", "a-",
+                           "ad", "a", "mak", "selim", "ngai", "en", "yo",
+                           "wud", "mani", "yak", "manu", "ka-", "mong",
+                           "manga", "ka-", "mane", "kala", "name", "kayo",
+                           "kare", "laik", "bale", "ni", "rey", "bu",
+                           "re", "real", "iman", "bom", "wam",
+                           "alu", "nan", "kure", "kuri", "wam", "ka", "ng",
+                           "yi", "na", "m", "arri", "e", "kele", "arri", "nga",
+                           "kakan", "ai", "ning", "mala", "ti", "wolk",
+                           "bo", "andi", "ken", "ba", "aa", "kun", "bini",
+                           "wo", "bim", "man", "bord", "al", "mah", "won",
+                           "ku", "ay", "belen", "dye", "wen", "yah", "muni",
+                           "bah", "di", "mm", "anu", "nane", "ma",
+                           ])
+    EN_WORDS_NOT_IN_EN_DICT = set(["screenprinting"])
     en_words = en_words.difference(NA_WORDS_IN_EN_DICT)
+    en_words = en_words | EN_WORDS_NOT_IN_EN_DICT
     return en_words
 
 EN_WORDS = get_en_words()
@@ -125,7 +136,7 @@ def elan_utterances(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[Utteranc
 
     return utterances
 
-def segment_gup_phonemes(utterance: str) -> str:
+def segment_phonemes(utterance: str) -> str:
     """
     Takes as input a string in Kunwinjku and segments it into phoneme-like
     units based on the standard orthographic rules specified at
@@ -138,8 +149,6 @@ def segment_gup_phonemes(utterance: str) -> str:
     double_stops = set(["bb", "dd", "djdj", "rdd", "kk"])
     diphthongs = set(["ay", "aw", "ey", "ew", "iw", "oy", "ow", "uy"])
     phoneme_inventory = basic_phonemes | double_stops | diphthongs
-    print(phoneme_inventory)
-    print(len(phoneme_inventory))
 
     utterance = utterance.lower()
     utterance = segment_into_tokens(utterance, phoneme_inventory)
@@ -147,16 +156,23 @@ def segment_gup_phonemes(utterance: str) -> str:
 
 def explore_code_switching():
 
+    import spacy
+    nlp = spacy.load("xx")
+
     utters = elan_utterances()
 
     en_count = 0
     for utter in utters:
-        for word in utter.text.split():
-            if word in en_words:
+        toks = nlp(utter.text)
+        words = [tok.lower_ for tok in toks if not tok.is_punct]
+        for word in words:
+            if word in EN_WORDS:
                 en_count += 1
+                print(words)
                 print(utter.text)
+                print(segment_phonemes(utter.text))
                 print("\t" + repr(word))
-                #input()
+                input()
                 break
     print(en_count)
     print(len(utters))
