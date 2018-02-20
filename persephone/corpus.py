@@ -14,6 +14,7 @@ import numpy as np
 from . import feat_extract
 from . import utils
 from .exceptions import PersephoneException
+from .exceptions import NoPrefixFileException
 
 class Corpus:
     """
@@ -112,25 +113,7 @@ class Corpus:
         if should_extract_feats:
             feat_extract.from_dir(self.feat_dir, self.feat_type)
 
-    @staticmethod
-    def read_subset_prefixes(tgt_dir):
-
-        train_prefix_fn = join(tgt_dir, "train_prefixes.txt")
-        valid_prefix_fn = join(tgt_dir, "valid_prefixes.txt")
-        test_prefix_fn = join(tgt_dir, "test_prefixes.txt")
-
-        train_f_exists = os.path.isfile(train_prefix_fn)
-        valid_f_exists = os.path.isfile(valid_prefix_fn)
-        test_f_exists = os.path.isfile(test_prefix_fn)
-
-        if not train_f_exists:
-            raise NoPrefixFileException(
-                "No train_prefix_fn at {}".format(train_prefix_fn))
-        if not valid_f_exists:
-            raise NoPrefixFileException(
-                "No train_prefix_fn at {}".format(train_prefix_fn))
-
-    def make_data_splits(self, max_samples=1000, seed=0):
+    def make_data_splits(self, max_samples):
         """ Splits the utterances into training, validation and test sets."""
 
         train_prefix_fn = join(self.tgt_dir, "train_prefixes.txt")
@@ -142,56 +125,80 @@ class Corpus:
         test_f_exists = os.path.isfile(test_prefix_fn)
 
         if train_f_exists and valid_f_exists and test_f_exists:
-            with open(train_prefix_fn) as train_f:
-                train_prefixes = [line.strip() for line in train_f]
-            with open(valid_prefix_fn) as valid_f:
-                valid_prefixes = [line.strip() for line in valid_f]
-            with open(test_prefix_fn) as test_f:
-                test_prefixes = [line.strip() for line in test_f]
+            self.train_prefixes = self.read_prefixes(train_prefix_fn)
+            self.valid_prefixes = self.read_prefixes(valid_prefix_fn)
+            self.test_prefixes = self.read_prefixes(test_prefix_fn)
+            return
+
+        # Otherwise we now need to load prefixes for other cases addressed
+        # below
+        prefixes = self.determine_prefixes()
+        prefixes = utils.filter_by_size(
+            self.feat_dir, prefixes, self.feat_type, max_samples)
+
+        if not train_f_exists and not valid_f_exists and not test_f_exists:
+            train_prefixes, valid_prefixes, test_prefixes = self.divide_prefixes(prefixes)
+            self.train_prefixes = train_prefixes
+            self.valid_prefixes = valid_prefixes
+            self.test_prefixes = test_prefixes
+            self.write_prefixes(train_prefixes, train_prefix_fn)
+            self.write_prefixes(valid_prefixes, valid_prefix_fn)
+            self.write_prefixes(test_prefixes, test_prefix_fn)
+        elif not train_f_exists and valid_f_exists and test_f_exists:
+            # Then we just make all other prefixes training prefixes.
+            self.valid_prefixes = self.read_prefixes(valid_prefix_fn)
+            self.test_prefixes = self.read_prefixes(test_prefix_fn)
+            train_prefixes = list(
+                set(prefixes) - set(self.valid_prefixes))
+            self.train_prefixes = list(
+                set(train_prefixes) - set(self.test_prefixes))
+            self.write_prefixes(prefixes, train_prefix_fn)
         else:
-            prefixes = self.get_prefixes()
-            prefixes = utils.filter_by_size(
-                self.feat_dir, prefixes, self.feat_type, max_samples)
-            Ratios = namedtuple("Ratios", ["train", "valid", "test"])
-            # TODO These ratios can't be hardcoded
-            ratios = Ratios(.90, .05, .05)
-            train_end = int(ratios.train*len(prefixes))
-            valid_end = int(train_end + ratios.valid*len(prefixes))
-            random.shuffle(prefixes)
-            train_prefixes = prefixes[:train_end]
-            valid_prefixes = prefixes[train_end:valid_end]
-            test_prefixes = prefixes[valid_end:]
+            raise NotImplementedError(
+                "The following case has not been implemented:" + 
+                "{} exists - {}\n".format(train_prefix_fn, train_f_exists) +
+                "{} exists - {}\n".format(valid_prefix_fn, valid_f_exists) +
+                "{} exists - {}\n".format(test_prefix_fn, test_f_exists))
 
-            # TODO Perhaps the ReadyCorpus train_prefixes variable should be a
-            # property that writes this file when it is changed, then we can
-            # remove the code from here. The thing is, the point of those files
-            # is that they don't change, so they should be written once only,
-            # unless you explicitly delete them. This isn't very clear from the
-            # perspective of the user though, so it's a design decision to
-            # think about.
-            if train_prefixes:
-                with open(train_prefix_fn, "w") as train_f:
-                    for prefix in train_prefixes:
-                        print(prefix, file=train_f)
-            if valid_prefixes:
-                with open(valid_prefix_fn, "w") as dev_f:
-                    for prefix in valid_prefixes:
-                        print(prefix, file=dev_f)
-            if test_prefixes:
-                with open(test_prefix_fn, "w") as test_f:
-                    for prefix in test_prefixes:
-                        print(prefix, file=test_f)
+    @staticmethod
+    def read_prefixes(prefix_fn):
+        with open(prefix_fn) as prefix_f:
+            prefixes = [line.strip() for line in prefix_f]
+        if prefixes == []:
+            raise PersephoneException(
+                "Empty prefix file {}. Either delete it\
+                or put something in it".format(prefix_fn))
+        return prefixes
 
-        if train_prefixes == []:
-            # TODO log this as a warning
-            print("""WARNING: Corpus object has no training data. Are you sure
-            it's in the correct directories? WAVs should be in {} and
-            transcriptions in {} with the extension .{}""".format(
-                self.wav_dir, self.label_dir, self.label_type))
+    @staticmethod
+    def write_prefixes(prefixes, prefix_fn):
+        if prefixes == []:
+            raise PersephoneException(
+                "No prefixes. Will not write {}".format(prefix_fn))
+        with open(prefix_fn, "w") as prefix_f:
+            for prefix in prefixes:
+                print(prefix, file=prefix_f)
 
-        self.train_prefixes = train_prefixes
-        self.valid_prefixes = valid_prefixes
-        self.test_prefixes = test_prefixes
+    @staticmethod
+    def divide_prefixes(prefixes, seed=0):
+        Ratios = namedtuple("Ratios", ["train", "valid", "test"])
+        ratios=Ratios(.90, .05, .05)
+        train_end = int(ratios.train*len(prefixes))
+        valid_end = int(train_end + ratios.valid*len(prefixes))
+        # TODO Add a context manager to govern randomness here.
+        random.shuffle(prefixes)
+
+        train_prefixes = prefixes[:train_end]
+        valid_prefixes = prefixes[train_end:valid_end]
+        test_prefixes = prefixes[valid_end:]
+
+        # TODO Adjust code to cope properly with toy datasets where these
+        # subsets might actually be empty.
+        assert train_prefixes
+        assert valid_prefixes
+        assert test_prefixes
+
+        return train_prefixes, valid_prefixes, test_prefixes
 
     def indices_to_labels(self, indices):
         """ Converts a sequence of indices into their corresponding labels."""
@@ -253,10 +260,16 @@ class Corpus:
                     for prefix in self.untranscribed_prefixes]
         return feat_fns
 
-    def get_prefixes(self):
+    def determine_prefixes(self):
         fns = [fn for fn in os.listdir(self.label_dir)
                if fn.endswith(self.label_type)]
         prefixes = [os.path.splitext(fn)[0] for fn in fns]
+        if prefixes == []:
+            raise PersephoneException("""WARNING: Corpus object has no data. Are you sure
+            it's in the correct directories? WAVs should be in {} and
+            transcriptions in {} with the extension .{}""".format(
+                self.wav_dir, self.label_dir, self.label_type))
+
         return prefixes
 
 class ReadyCorpus(Corpus):
