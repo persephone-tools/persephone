@@ -191,6 +191,12 @@ class Corpus(persephone.corpus.Corpus):
         label_dir = p / "label"
         print(label_dir)
 
+        if label_type == "phonemes":
+            labels = PHONEMES
+        else:
+            raise NotImplementedError(
+                "label_type {} not implemented.".format(label_type))
+
         # 0. Fetch the utterances from the ELAN files
 
         # 1. Preprocess transcriptions and put them in the label/ directory
