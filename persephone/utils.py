@@ -104,9 +104,23 @@ def get_prefixes(dirname, extension):
                 prefixes.append(os.path.join(root, filename.split(".")[0]))
     return sorted(prefixes)
 
+from pydub import AudioSegment
+def trim_wav_ms(in_fn, out_fn, start_time, end_time):
+    print("in_fn: {}".format(in_fn))
+    print("out_fn: {}".format(out_fn))
+    in_ext = in_fn.split(".")[-1]
+    out_ext = out_fn.split(".")[-1]
+    audio = AudioSegment.from_file(in_fn, in_ext)
+    trimmed = audio[start_time:end_time]
+    # pydub evidently doesn't actually use the parameters when outputting wavs,
+    # since it doesn't use FFMPEG to deal with outputtting WAVs. This is a bit
+    # of a leaky abstraction. No warning is given, so normalization to 16Khz
+    # mono wavs has to happen later.
+    trimmed.export(out_fn, format=out_ext, parameters=["-ac", "1", "-ar", "16000"])
+
 def trim_wav(in_fn, out_fn, start_time, end_time):
     """ Crops the wav file at in_fn so that the audio between start_time and
-    end_time is output to out_fn.
+    end_time is output to out_fn. Measured in seconds.
     """
 
     if not os.path.isfile(out_fn):

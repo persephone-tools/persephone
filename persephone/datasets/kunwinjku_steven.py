@@ -9,11 +9,14 @@ from typing import List, NamedTuple, Set
 
 from pympi.Elan import Eaf
 
-import persephone.corpus
+from .. import corpus
 from .. import config
 from ..transcription_preprocessing import segment_into_tokens
+from .. import utils
 
-Utterance = NamedTuple("Utterance", [("file", str),
+Utterance = NamedTuple("Utterance", [("wav_file", str),
+                                     ("transcription_file", str),
+                                     ("prefix", str),
                                      ("start_time", int),
                                      ("end_time", int),
                                      ("text", str)])
@@ -102,7 +105,7 @@ def explore_elan_files(elan_paths):
 
 def elan_utterances(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[Utterance]:
     """ Collects utterances from various ELAN tiers. This is based on analysis
-    of hte 'good' ELAN files, and may not generalize."""
+    of the 'good' ELAN files, and may not generalize."""
 
     elan_tiers = {"rf", "rf@RN", "rf@MARK",
                   "xv", "xv@RN", "xv@MN", "xv@JN", "xv@EN", "xv@MARK", "xv@GN",
@@ -139,8 +142,14 @@ def elan_utterances(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[Utteranc
             tier_names = eafob.get_tier_names()
             for tier in tier_names:
                 if tier.startswith("rf") or tier.startswith("xv") or tier in elan_tiers:
-                    for annotation in eafob.get_annotation_data_for_tier(tier):
-                        utterance = Utterance(media_path, *annotation[:3])
+                    for utterance_id, annotation in enumerate(
+                            eafob.get_annotation_data_for_tier(tier)):
+                        elan_prefix = os.path.splitext(
+                            os.path.basename(elan_path))[0]
+                        prefix = "{}.{}.{}".format(
+                            elan_prefix, tier, utterance_id)
+                        utterance = Utterance(media_path, elan_path,
+                                              prefix, *annotation[:3])
                         if not utterance.text.strip() == "":
                             utterances.append(utterance)
         else:
@@ -183,13 +192,14 @@ def explore_code_switching(f=sys.stdout):
     print(en_count)
     print(len(utters))
 
-class Corpus(persephone.corpus.Corpus):
+class Corpus(corpus.Corpus):
     def __init__(feat_type="fbank", label_type="phonemes"):
 
-        tgt_dir = Path(config.TGT_DIR)
-        wav_dir = p / "wav"
-        label_dir = p / "label"
-        print(label_dir)
+        tgt_dir = Path(config.TGT_DIR, "BKW")
+        wav_dir = tgt_dir / "wav"
+        label_dir = tgt_dir / "label"
+        wav_dir.mkdir(parents=True, exist_ok=True)
+        label_dir.mkdir(parents=True, exist_ok=True)
 
         if label_type == "phonemes":
             labels = PHONEMES
@@ -198,9 +208,25 @@ class Corpus(persephone.corpus.Corpus):
                 "label_type {} not implemented.".format(label_type))
 
         # 0. Fetch the utterances from the ELAN files
+        utterances = elan_utterances()
 
         # 1. Preprocess transcriptions and put them in the label/ directory
+        for utterance in utterances:
+            phoneme_str = segment_phonemes(utterance.text)
+            label_fn = "{}.{}".format(utterance.prefix, label_type)
+            label_path = Path(label_dir, label_fn)
+            if not label_path.is_file():
+                with label_path.open("w") as f:
+                    print(phoneme_str, file=f)
 
         # 2. Split the WAV files and put them in the wav/
+        for utterance in utterances:
+            start_time = utterance.start_time
+            end_time = utterance.end_time
+            wav_fn = "{}.{}".format(utterance.prefix, "wav")
+            out_wav_path = Path(wav_dir, wav_fn)
+            if not out_wav_path.is_file():
+                in_wav_path = utterance.wav_file
+                utils.trim_wav_ms(in_wav_path, str(out_wav_path), start_time, end_time)
 
-        super().__init__(feat_type, label_type, tgt_dir, labels)
+        super().__init__(feat_type, label_type, str(tgt_dir), labels)

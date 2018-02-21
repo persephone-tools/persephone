@@ -149,7 +149,6 @@ def convert_wav(org_wav_fn, tgt_wav_fn):
             "-i", org_wav_fn, "-ac", "1", "-ar", "16000", tgt_wav_fn]
     subprocess.run(args)
 
-
 def kaldi_pitch(wav_dir, feat_dir):
     """ Extract Kaldi pitch features. Assumes 16k mono wav files."""
 
