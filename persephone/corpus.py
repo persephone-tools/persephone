@@ -290,8 +290,7 @@ class Corpus:
             with open(label_fn) as f:
                 transcript = f.read().strip()
             print("Transcription: {}".format(transcript))
-            subprocess.run(["play", wav_fn], )
-            input("Press enter to continue...")
+            subprocess.run(["play", wav_fn])
 
 class ReadyCorpus(Corpus):
     """ Interface to a corpus that has WAV files and label files split into
