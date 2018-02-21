@@ -185,6 +185,8 @@ def segment_phonemes(text: str, phoneme_inventory: Set[str] = PHONEMES) -> str:
 
 def explore_code_switching(f=sys.stdout):
 
+    import spacy
+    nlp = spacy.load("xx")
 
     utters = elan_utterances()
 
@@ -211,8 +213,8 @@ class Corpus(corpus.Corpus):
         tgt_dir = Path(config.TGT_DIR, "BKW")
         wav_dir = tgt_dir / "wav"
         label_dir = tgt_dir / "label"
-        wav_dir.mkdir(parents=True, exist_ok=True)
-        label_dir.mkdir(parents=True, exist_ok=True)
+        wav_dir.mkdir(parents=True, exist_ok=True) # pylint: disable=no-member
+        label_dir.mkdir(parents=True, exist_ok=True) # pylint: disable=no-member
 
         if label_type == "phonemes":
             labels = PHONEMES
