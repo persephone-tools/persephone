@@ -3,11 +3,13 @@
 import glob
 import os
 from os.path import join
+from pathlib import Path
 import sys
 from typing import List, NamedTuple, Set
 
 from pympi.Elan import Eaf
 
+import persephone.corpus
 from .. import config
 from ..transcription_preprocessing import segment_into_tokens
 
@@ -181,26 +183,18 @@ def explore_code_switching(f=sys.stdout):
     print(en_count)
     print(len(utters))
 
-"""
-rf
-rf@RN
-xv (Esther_1.eaf, but has some English in it)
-PRN_free, PRN_Pfx, NmCl_Gen, ng_DROP (Esther_2.eaf. Code switching might be an
-	issue. Otherwise Esther files are promising for the finer granularity that
-	is additionally included.)
-xv@RN (Kabo.eaf, but its a duplicate of the xv tier. More pure in kunboy.eaf)
-xv@MN, LEX (manbarndarr.eaf)
-xv@JN, PRN_pfx, PRFX (Manbedgje.eaf)
-Other (Manbulu.eaf)
-nt@JN (Mandeb.eaf, but also has English in Mandjarduk_b.eaf)
-xv@EN (mandjimdjim.eaf)
-nt@RN (20161013_manmorlak.eaf)
-rf@MARK, xv@MARK (Mark on rock. Has a few different tiers, some of which have
-multiple text fields. A bit of code switching).
-xv@GN (Marys_Yirlinkirrkirr.eaf)
-A bunch more xv@s (Njanjma_Injalak_weaving.eaf)
-Topic Index (Terrah_ngalwarrngurru.eaf)
+class Corpus(persephone.corpus.Corpus):
+    def __init__(feat_type="fbank", label_type="phonemes"):
 
-Can just check across all these tiers and any that are empty or contain empty
-strings I can just ignore.
-"""
+        tgt_dir = Path(config.TGT_DIR)
+        wav_dir = p / "wav"
+        label_dir = p / "label"
+        print(label_dir)
+
+        # 0. Fetch the utterances from the ELAN files
+
+        # 1. Preprocess transcriptions and put them in the label/ directory
+
+        # 2. Split the WAV files and put them in the wav/
+
+        super().__init__(feat_type, label_type, tgt_dir, labels)
