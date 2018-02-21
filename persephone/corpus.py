@@ -8,6 +8,7 @@ from collections import namedtuple
 import os
 from os.path import join
 import random
+import subprocess
 
 import numpy as np
 
@@ -278,6 +279,18 @@ class Corpus:
                 self.wav_dir, self.label_dir, self.label_type))
 
         return prefixes
+
+    def review(self):
+        """ Used to play the WAV files and compare with the transcription. """
+        for prefix in self.determine_prefixes():
+            print("Utterance: {}".format(prefix))
+            wav_fn = os.path.join(self.feat_dir, prefix + ".wav")
+            label_fn = os.path.join(self.label_dir, prefix + ".phonemes")
+            with open(label_fn) as f:
+                transcript = f.read().strip()
+            print("Transcription: {}".format(transcript))
+            subprocess.run(["play", wav_fn], )
+            input("Press enter to continue...")
 
 class ReadyCorpus(Corpus):
     """ Interface to a corpus that has WAV files and label files split into

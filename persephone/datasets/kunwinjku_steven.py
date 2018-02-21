@@ -193,7 +193,7 @@ def explore_code_switching(f=sys.stdout):
     print(len(utters))
 
 class Corpus(corpus.Corpus):
-    def __init__(feat_type="fbank", label_type="phonemes"):
+    def __init__(self, feat_type="fbank", label_type="phonemes"):
 
         tgt_dir = Path(config.TGT_DIR, "BKW")
         wav_dir = tgt_dir / "wav"

@@ -104,7 +104,7 @@ def get_prefixes(dirname, extension):
                 prefixes.append(os.path.join(root, filename.split(".")[0]))
     return sorted(prefixes)
 
-from pydub import AudioSegment
+from pydub import AudioSegment # type: ignore
 def trim_wav_ms(in_fn, out_fn, start_time, end_time):
     print("in_fn: {}".format(in_fn))
     print("out_fn: {}".format(out_fn))
