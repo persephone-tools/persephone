@@ -261,9 +261,16 @@ class Corpus:
         return feat_fns
 
     def determine_prefixes(self):
-        fns = [fn for fn in os.listdir(self.label_dir)
+        label_fns = [fn for fn in os.listdir(self.label_dir)
                if fn.endswith(self.label_type)]
-        prefixes = [os.path.splitext(fn)[0] for fn in fns]
+        label_prefixes = set([os.path.splitext(fn)[0] for fn in label_fns])
+        wav_fns = [fn for fn in os.listdir(self.wav_dir)
+               if fn.endswith(".wav")]
+        wav_prefixes = set([os.path.splitext(fn)[0] for fn in wav_fns])
+
+        # Take the intersection
+        prefixes = list(label_prefixes & wav_prefixes)
+
         if prefixes == []:
             raise PersephoneException("""WARNING: Corpus object has no data. Are you sure
             it's in the correct directories? WAVs should be in {} and

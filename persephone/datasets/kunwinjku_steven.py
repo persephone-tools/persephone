@@ -229,4 +229,5 @@ class Corpus(corpus.Corpus):
                 in_wav_path = utterance.wav_file
                 utils.trim_wav_ms(in_wav_path, str(out_wav_path), start_time, end_time)
 
+        # super() will then do feature extraction and create train/valid/test
         super().__init__(feat_type, label_type, str(tgt_dir), labels)

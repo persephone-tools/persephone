@@ -115,7 +115,8 @@ def trim_wav_ms(in_fn, out_fn, start_time, end_time):
     # pydub evidently doesn't actually use the parameters when outputting wavs,
     # since it doesn't use FFMPEG to deal with outputtting WAVs. This is a bit
     # of a leaky abstraction. No warning is given, so normalization to 16Khz
-    # mono wavs has to happen later.
+    # mono wavs has to happen later. Leaving the parameters here in case it
+    # changes
     trimmed.export(out_fn, format=out_ext, parameters=["-ac", "1", "-ar", "16000"])
 
 def trim_wav(in_fn, out_fn, start_time, end_time):
