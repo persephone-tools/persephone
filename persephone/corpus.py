@@ -282,6 +282,7 @@ class Corpus:
 
     def review(self):
         """ Used to play the WAV files and compare with the transcription. """
+
         for prefix in self.determine_prefixes():
             print("Utterance: {}".format(prefix))
             wav_fn = os.path.join(self.feat_dir, prefix + ".wav")

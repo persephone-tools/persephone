@@ -157,6 +157,21 @@ def elan_utterances(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[Utteranc
 
     return utterances
 
+def filter_codeswitched(utterances):
+    import spacy
+    nlp = spacy.load("xx")
+
+    for utter in utterances:
+        toks = nlp(utter.text)
+        words = [tok.lower_ for tok in toks if not tok.is_punct]
+        codeswitched = False
+        for word in words:
+            if word in EN_WORDS:
+                codeswitched = True
+                break
+        if not codeswitched:
+            yield utter
+
 def segment_phonemes(text: str, phoneme_inventory: Set[str] = PHONEMES) -> str:
     """
     Takes as input a string in Kunwinjku and segments it into phoneme-like
@@ -170,8 +185,6 @@ def segment_phonemes(text: str, phoneme_inventory: Set[str] = PHONEMES) -> str:
 
 def explore_code_switching(f=sys.stdout):
 
-    import spacy
-    nlp = spacy.load("xx")
 
     utters = elan_utterances()
 
@@ -207,8 +220,8 @@ class Corpus(corpus.Corpus):
             raise NotImplementedError(
                 "label_type {} not implemented.".format(label_type))
 
-        # 0. Fetch the utterances from the ELAN files
-        utterances = elan_utterances()
+        # 0. Fetch the utterances from the ELAN files that aren't codeswitched.
+        utterances = list(filter_codeswitched(elan_utterances()))
 
         # 1. Preprocess transcriptions and put them in the label/ directory
         for utterance in utterances:
