@@ -4,9 +4,12 @@ import glob
 import os
 from os.path import join
 from pathlib import Path
+import string
 import sys
 from typing import List, NamedTuple, Set
 
+import nltk
+nltk.download("punkt")
 from pympi.Elan import Eaf
 
 from .. import corpus
@@ -158,12 +161,9 @@ def elan_utterances(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[Utteranc
     return utterances
 
 def filter_codeswitched(utterances):
-    import spacy
-    nlp = spacy.load("xx")
-
     for utter in utterances:
-        toks = nlp(utter.text)
-        words = [tok.lower_ for tok in toks if not tok.is_punct]
+        toks = nltk.word_tokenize(utter.text)
+        words = [tok.lower() for tok in toks]
         codeswitched = False
         for word in words:
             if word in EN_WORDS:
@@ -185,15 +185,12 @@ def segment_phonemes(text: str, phoneme_inventory: Set[str] = PHONEMES) -> str:
 
 def explore_code_switching(f=sys.stdout):
 
-    import spacy
-    nlp = spacy.load("xx")
-
     utters = elan_utterances()
 
     en_count = 0
     for i, utter in enumerate(utters):
-        toks = nlp(utter.text)
-        words = [tok.lower_ for tok in toks if not tok.is_punct]
+        toks = nltk.word_tokenize(utter.text)
+        words = [tok.lower() for tok in toks]
         for word in words:
             if word in EN_WORDS:
                 en_count += 1
