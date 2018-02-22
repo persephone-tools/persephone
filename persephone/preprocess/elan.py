@@ -1,12 +1,22 @@
 """ Provides a Corpus class that can read ELAN .eaf XML files. """
 
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, Dict, Tuple
 
 from pympi.Elan import Eaf
 
 from .. import corpus
 from ..utterance import Utterance
+
+
+def get_time_origin(media_descriptor: Dict) -> int:
+    """ Determines the time offset of the annotations."""
+    try:
+        return int(media_descriptor["TIME_ORIGIN"])
+    except KeyError:
+        # Since it wasn't specified, we don't need to adjust 
+        # utterance offsets.
+        return 0
 
 def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> None:#List[Utterance]:
     """
@@ -23,13 +33,14 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> None:#List[
     # The following inner functions are inner functions because they rely on
     # eaf_path, though I suppose they could also be separate and take the
     # path as an argument
-    def get_eaf_media_path(eafob: Eaf) -> Path:
-        """ Determines the media_path of an object to use. """
+    def get_eaf_media_path_and_time_origin(eafob: Eaf) -> Tuple[Path, int]:
+        """ Determines the media_path of an object to use. Takes the first one
+        path where the file exists. """
 
         for md in eafob.media_descriptors:
             media_path = eaf_path.parent / md["RELATIVE_MEDIA_URL"]
             if media_path.is_file():
-                return media_path
+                return media_path, get_time_origin(md)
 
         # Sometimes the media file is in the same directory as the eaf
         # file, even if the eaf file says it's somewhere else. This might
@@ -39,7 +50,7 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> None:#List[
         for md in eafob.media_descriptors:
             media_path = eaf_path.parent / Path(md["RELATIVE_MEDIA_URL"]).name
             if media_path.is_file():
-                return media_path
+                return media_path, get_time_origin(md)
 
         raise FileNotFoundError(
             """Cannot find media file corresponding to {}.
@@ -53,7 +64,8 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> None:#List[
     # further below to take the eafob and media_path of the enclosing function.
     # Not sure whether to do that (at one extreme), or to take more arguments
     # and move out of the enclosing function.
-    def utterances_from_tier(eafob: Eaf, tier_name: str, media_path: Path) -> List[str]:
+    def utterances_from_tier(eafob: Eaf, tier_name: str,
+                             media_path: Path, time_origin: int) -> List[str]:
         """ Returns utterances found in the given Eaf object in the given tier."""
 
         try:
@@ -61,6 +73,7 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> None:#List[
         except KeyError:
             participant = None # We don't know the name of the speaker.
 
+        tier_utterances = []
         for i, annotation in enumerate(eafob.get_annotation_data_for_tier(tier_name)):
             eaf_stem = eaf_path.stem
             utter_id = "{}.{}.{}".format(eaf_stem, tier_name, i)
@@ -69,20 +82,18 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> None:#List[
             text = annotation[2]
             utterance = Utterance(media_path, eaf_path, utter_id,
                                   start_time, end_time, text, participant)
+            tier_utterances.append(utterance)
+
+        return tier_utterances
 
     eaf = Eaf(str(eaf_path))
-    media_path = get_eaf_media_path(eaf)
-    try:
-        time_origin = int(md["TIME_ORIGIN"])
-    except KeyError:
-        # Since it wasn't specified, we don't need to adjust 
-        # utterance offsets.
-        time_origin = 0
+    media_path, time_origin = get_eaf_media_path_and_time_origin(eaf)
     utterances = []
     for tier_name in eaf.tiers:
         for tier_prefix in tier_prefixes:
             if tier_name.startswith(tier_prefix):
-                utterances.extend(utterances_from_tier(eaf, tier_name, media_path))
+                utterances.extend(
+                    utterances_from_tier(eaf, tier_name, media_path, time_origin))
     return utterances
 
 def elan_utterances(org_dir: Path, tiers: List[str]) -> List[Utterance]:
