@@ -112,10 +112,11 @@ def elan_utterances(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[Utteranc
 
     elan_tiers = {"rf", "rf@RN", "rf@MARK",
                   "xv", "xv@RN", "xv@MN", "xv@JN", "xv@EN", "xv@MARK", "xv@GN",
-                  "nt@RN", "nt@JN",
-                  "PRN_free", "PRN_Pfx", "NmCl_Gen", "ng_DROP",
-                  "Other",
                  }
+                 # "nt@RN", "nt@JN",
+                 # "PRN_free", "PRN_Pfx", "NmCl_Gen", "ng_DROP",
+                 # "Other",
+                 #}
 
     utterances = []
     for elan_path in good_elan_paths(org_dir=org_dir):
@@ -151,6 +152,9 @@ def elan_utterances(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[Utteranc
                             os.path.basename(elan_path))[0]
                         prefix = "{}.{}.{}".format(
                             elan_prefix, tier, utterance_id)
+                        if prefix == "20161013_mandudjmi.ng_DROP.1":
+                            print(annotation)
+                            print(md["TIME_ORIGIN"])
                         try:
                             start_time = annotation[0] + int(md["TIME_ORIGIN"])
                             end_time = annotation[1] + int(md["TIME_ORIGIN"])
