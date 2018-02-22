@@ -1,7 +1,8 @@
-from typing import Iterable, Any
+from typing import Iterable, Any, Dict, Tuple
 
 class Eaf:
     def __init__(self, elan_paths: str) -> None:
         self.media_descriptors: Iterable[Any] = ...
     def get_tier_names(self) -> Iterable[str]: ...
     def get_annotation_data_for_tier(self, tier: str) -> Iterable[Any]: ...
+    tiers: Dict[str, Tuple]
