@@ -8,15 +8,21 @@ from pympi.Elan import Eaf
 from .. import corpus
 from ..utterance import Utterance
 
-def utterances_from_eaf(eaf_path: Path, tiers: List[str]) -> None:#List[Utterance]:
+def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> None:#List[Utterance]:
     """
-    Extracts utterances of the given tiers found in the ELAN .eaf XML file
+    Extracts utterances in tiers that start with tier_prefixes found in the ELAN .eaf XML file
     at eaf_path.
+
+    For example, if xv@Mark is a tier in the eaf file, and
+    tier_prefixes = ["xv"], then utterances from that tier will be gathered.
     """
 
     if not eaf_path.is_file():
         raise FileNotFoundError("Cannot find {}".format(eaf_path))
 
+    # The following inner functions are inner functions because they rely on
+    # eaf_path, though I suppose they could also be separate and take the
+    # path as an argument
     def get_eaf_media_path(eafob: Eaf) -> Path:
         """ Determines the media_path of an object to use. """
 
@@ -26,7 +32,10 @@ def utterances_from_eaf(eaf_path: Path, tiers: List[str]) -> None:#List[Utteranc
                 return media_path
 
         # Sometimes the media file is in the same directory as the eaf
-        # file, even if the eaf file says it's somewhere else.
+        # file, even if the eaf file says it's somewhere else. This might
+        # actually be risky depending on how people have named their files. 
+        # There's an argument for not doing this and just throwing the
+        # FileNotFoundError.
         for md in eafob.media_descriptors:
             media_path = eaf_path.parent / Path(md["RELATIVE_MEDIA_URL"]).name
             if media_path.is_file():
@@ -34,13 +43,47 @@ def utterances_from_eaf(eaf_path: Path, tiers: List[str]) -> None:#List[Utteranc
 
         raise FileNotFoundError(
             """Cannot find media file corresponding to {}.
-            Tried looking for the following files: {}.""".format(
+            Tried looking for the following files: {}. (Search was relative to
+            the directory the eaf file is in).
+            """.format(
                 eaf_path, [md["RELATIVE_MEDIA_URL"]
                            for md in eafob.media_descriptors]))
 
+    # This could actually only take a tier_name argument and then be moved
+    # further below to take the eafob and media_path of the enclosing function.
+    # Not sure whether to do that (at one extreme), or to take more arguments
+    # and move out of the enclosing function.
+    def utterances_from_tier(eafob: Eaf, tier_name: str, media_path: Path) -> List[str]:
+        """ Returns utterances found in the given Eaf object in the given tier."""
+
+        try:
+            participant = eafob.tiers[tier_name][2]["PARTICIPANT"]
+        except KeyError:
+            participant = None # We don't know the name of the speaker.
+
+        for i, annotation in enumerate(eafob.get_annotation_data_for_tier(tier_name)):
+            eaf_stem = eaf_path.stem
+            utter_id = "{}.{}.{}".format(eaf_stem, tier_name, i)
+            start_time = time_origin + annotation[0]
+            end_time = time_origin + annotation[1]
+            text = annotation[2]
+            utterance = Utterance(media_path, eaf_path, utter_id,
+                                  start_time, end_time, text, participant)
+
     eaf = Eaf(str(eaf_path))
     media_path = get_eaf_media_path(eaf)
-    print(media_path)
+    try:
+        time_origin = int(md["TIME_ORIGIN"])
+    except KeyError:
+        # Since it wasn't specified, we don't need to adjust 
+        # utterance offsets.
+        time_origin = 0
+    utterances = []
+    for tier_name in eaf.tiers:
+        for tier_prefix in tier_prefixes:
+            if tier_name.startswith(tier_prefix):
+                utterances.extend(utterances_from_tier(eaf, tier_name, media_path))
+    return utterances
 
 def elan_utterances(org_dir: Path, tiers: List[str]) -> List[Utterance]:
     """ Collects utterances from the ELAN *.eaf XML files found in a directory."""
