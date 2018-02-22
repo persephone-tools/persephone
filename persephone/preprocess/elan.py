@@ -96,6 +96,16 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> None:#List[
                     utterances_from_tier(eaf, tier_name, media_path, time_origin))
     return utterances
 
+def utterances_from_dir(eaf_dir: Path, tier_prefixes: List[str]) -> List[Utterance]:
+    """ Returns the utterances found in a directory. """
+
+    utterances = []
+    for eaf_path in eaf_dir.iterdir():
+        if eaf_path.suffix == ".eaf":
+            eaf_utterances = utterances_from_eaf(eaf_path, tier_prefixes)
+            utterances.extend(eaf_utterances)
+    return utterances
+
 def elan_utterances(org_dir: Path, tiers: List[str]) -> List[Utterance]:
     """ Collects utterances from the ELAN *.eaf XML files found in a directory."""
 
