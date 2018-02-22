@@ -46,16 +46,16 @@ def get_en_words() -> Set[str]:
                            "wud", "mani", "yak", "manu", "ka-", "mong",
                            "manga", "ka-", "mane", "kala", "name", "kayo",
                            "kare", "laik", "bale", "ni", "rey", "bu",
-                           "re", "real", "iman", "bom", "wam",
+                           "re", "iman", "bom", "wam",
                            "alu", "nan", "kure", "kuri", "wam", "ka", "ng",
                            "yi", "na", "m", "arri", "e", "kele", "arri", "nga",
                            "kakan", "ai", "ning", "mala", "ti", "wolk",
                            "bo", "andi", "ken", "ba", "aa", "kun", "bini",
                            "wo", "bim", "man", "bord", "al", "mah", "won",
-                           "ku", "ay", "belen", "dye", "wen", "yah", "muni",
+                           "ku", "ay", "belen", "wen", "yah", "muni",
                            "bah", "di", "mm", "anu", "nane", "ma", "kum",
                            "birri", "ray", "h", "kane", "mumu", "bi", "ah",
-                           "i-", "n", "mi",
+                           "i-", "n", "mi", "bedman",
                            ])
     EN_WORDS_NOT_IN_EN_DICT = set(["screenprinting"])
     en_words = en_words.difference(NA_WORDS_IN_EN_DICT)
