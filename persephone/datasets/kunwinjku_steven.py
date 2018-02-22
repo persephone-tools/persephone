@@ -22,7 +22,8 @@ Utterance = NamedTuple("Utterance", [("wav_file", str),
                                      ("prefix", str),
                                      ("start_time", int),
                                      ("end_time", int),
-                                     ("text", str)])
+                                     ("text", str),
+                                     ("participant", str)])
 
 BASIC_PHONEMES = set(["a", "b", "d", "dj", "rd", "e", "h", "i", "k", "l",
             "rl", "m", "n", "ng", "nj", "rn", "o", "r", "rr", "u",
@@ -146,15 +147,16 @@ def elan_utterances(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[Utteranc
             tier_names = eafob.get_tier_names()
             for tier in tier_names:
                 if tier.startswith("rf") or tier.startswith("xv") or tier in elan_tiers:
+                    try:
+                        participant = eafob.tiers[tier][2]["PARTICIPANT"]
+                    except KeyError:
+                        participant = None
                     for utterance_id, annotation in enumerate(
                             eafob.get_annotation_data_for_tier(tier)):
                         elan_prefix = os.path.splitext(
                             os.path.basename(elan_path))[0]
                         prefix = "{}.{}.{}".format(
                             elan_prefix, tier, utterance_id)
-                        if prefix == "20161013_mandudjmi.ng_DROP.1":
-                            print(annotation)
-                            print(md["TIME_ORIGIN"])
                         try:
                             start_time = annotation[0] + int(md["TIME_ORIGIN"])
                             end_time = annotation[1] + int(md["TIME_ORIGIN"])
@@ -166,7 +168,7 @@ def elan_utterances(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[Utteranc
                         text = annotation[2]
                         utterance = Utterance(media_path, elan_path,
                                               prefix, start_time, end_time,
-                                              text)
+                                              text, participant)
                         if not utterance.text.strip() == "":
                             utterances.append(utterance)
         else:
