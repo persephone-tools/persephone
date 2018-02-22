@@ -151,11 +151,23 @@ def elan_utterances(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[Utteranc
                             os.path.basename(elan_path))[0]
                         prefix = "{}.{}.{}".format(
                             elan_prefix, tier, utterance_id)
+                        try:
+                            start_time = annotation[0] + int(md["TIME_ORIGIN"])
+                            end_time = annotation[1] + int(md["TIME_ORIGIN"])
+                        except KeyError:
+                            # Then TIME_ORIGIN wasn't specified, so we use the
+                            # offsets as they are.
+                            start_time = annotation[0]
+                            end_time = annotation[1]
+                        text = annotation[2]
                         utterance = Utterance(media_path, elan_path,
-                                              prefix, *annotation[:3])
+                                              prefix, start_time, end_time,
+                                              text)
                         if not utterance.text.strip() == "":
                             utterances.append(utterance)
         else:
+            # TODO Make this an actual warning or do some sort of exception
+            # handling
             print("Warning: Can't find the media file for {}".format(elan_path))
 
     return utterances
