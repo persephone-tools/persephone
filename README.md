@@ -38,7 +38,7 @@ Persephone has been built based on the code contributions of:
 * Ben Foley
 * Nay San
 
-If you use this code in a publication, please cite [Evaluating Phonemic Transcription of Low-Resource Tonal Languages for Language Documentation](https://halshs.archives-ouvertes.fr/halshs-01709648v1/document):
+If you use this code in a publication, please cite [Evaluating Phonemic Transcription of Low-Resource Tonal Languages for Language Documentation](https://halshs.archives-ouvertes.fr/halshs-01709648/document):
 
 ```
 @inproceedings{adams18evaluating,
