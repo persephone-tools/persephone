@@ -5,7 +5,8 @@ from .. import corpus
 class Corpus(corpus.Corpus):
     def __init__(self, tgt_dir, feat_type="fbank", label_type="phonemes",
                  label_segmenter=character_segmenter):
-        """ Need to think about this constructor. Ideally it should take a
+        """
+        Need to think about this constructor. Ideally it should take a
         function:
 
             label_preprocess(utter: String) -> String
@@ -41,4 +42,44 @@ class Corpus(corpus.Corpus):
 
         I notice now that this means that label_type and label_preprocess needs
         to be manually coordinated by the creater of the elan.Corpus. Ideally 
-        the label_preprocess function would dictate the label_type somehow."""
+        the label_preprocess function would dictate the label_type somehow.
+
+        From the end user's perspective, what happens if the orthography cannot
+        be automatically segmented with the greedy algorithm AND the user
+        doesn't want to do character-level prediction AND they can't write
+        their own segmentation algorithm because of lack of technical
+        expertise. Then I guess that is a situation where they might want to
+        do manual segmentation as it's the only option. In such cases, they
+        should be able to create another ELAN tier as is and there can be a
+        label_segmenter that is just the identity function.
+        """
+
+        # Read utterances from tgt_dir/elan/. Perhaps an org_dir for elan
+        # utterances? I'm wary of mixing directories of input data and output
+        # data because it needs to be easy to do a complete reset by just
+        # deleting the directory.
+        utterances = self.read_elan_utterances()
+
+        # Filter utterances based on some criteria (such as codeswitching).
+        # Should this filter_for_some_reason function be an argument to the
+        # constructor, or should it somehow be rolled into the segmenter? Could
+        # have another function that takes a filter and a segmenter and a list
+        # of utterances and returns another list of utterances.
+        tokenized_utterances = filter_for_some_reason(utterances)
+
+        segmented_utters = [label_segmenter(utter) for utter in tokenized_utterances]
+
+        # Writes the utterances to the tgt_dir/label/ dir
+        self.write_labels(tokenized_utterances)
+
+        # Extracts utterance level WAV information from the input file.
+        self.split_wavs(tokenized_utterances)
+
+        # If we're being fed a segment_labels function rather than the actual
+        # labels, then we do actually have to determine all the labels by
+        # reading the utterances. A natural way around this is to make the
+        # label_segmenter an immutable class (say, a NamedTuple) which stores
+        # the labels etc.
+        labels = determine_labels(utterances)
+
+        super().__init__(feat_type, label_type, tgt_dir, labels)
