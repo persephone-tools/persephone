@@ -80,18 +80,6 @@ def explore_elan_files(elan_paths):
 
         input()
 
-def filter_codeswitched(utterances):
-    for utter in utterances:
-        toks = nltk.word_tokenize(utter.text)
-        words = [tok.lower() for tok in toks]
-        codeswitched = False
-        for word in words:
-            if word in EN_WORDS:
-                codeswitched = True
-                break
-        if not codeswitched:
-            yield utter
-
 def segment_utterance(utterance: Utterance) -> Utterance:
     fields = utterance._asdict()
     fields["text"] = segment_str(fields["text"])

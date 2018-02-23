@@ -19,15 +19,14 @@ CORPORA_BASE_PATH = config_file.get("PATHS", "CORPORA_BASE_PATH",
                                     fallback="/lt/work/oadams/")
 
 # The directory of the original source corpora, un-preprocessed.
-CHATINO_DIR = os.path.join(CORPORA_BASE_PATH, "chatino", "CTP")
 NA_DIR = os.path.join(CORPORA_BASE_PATH, "Na")
 # Personal corpora files
-# TODO: fix these stubs
 KUNWINJKU_STEVEN_DIR = config_file.get("PATHS", "KUNWINJKU_STEVEN_PATH",
     fallback=os.path.join(CORPORA_BASE_PATH, "kunwinjku-steven/BKW_files_for_TAP"))
+# TODO I could potentially make the dwyl/english-words repo an optional
+# dependency or fetch it directly. words.txt is a 5MB file.
 EN_WORDS_PATH = config_file.get("PATHS", "EN_WORDS_PATH",
     fallback=os.path.join(CORPORA_BASE_PATH, "english-words/words.txt"))
-BUTCHER_DIR = os.path.join(CORPORA_BASE_PATH, "OA_Data")
 
 # The directory where the preprocessed data will be held.
 TGT_DIR = config_file.get("PATHS", "TARGET", fallback="./data")

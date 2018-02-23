@@ -3,7 +3,6 @@
 import inspect
 import itertools
 import os
-from operator import itemgetter
 import subprocess
 import sys
 

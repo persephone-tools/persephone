@@ -116,12 +116,6 @@ def trim_wav(in_fn, out_fn, start_time, end_time):
         print(args[1:])
         subprocess.run(args)
 
-def make_parent(file_path):
-    """ Makes parent dir for a file path."""
-    parent_dir = os.path.dirname(file_path)
-    if not os.path.isdir(parent_dir):
-        os.makedirs(parent_dir)
-
 def get_prefix_lens(feat_dir: Path, prefixes: List[str],
                     feat_type: str) -> List[Tuple[str,int]]:
     prefix_lens = []

@@ -3,7 +3,6 @@ Describes the abstract Corpus class that all interfaces to corpora should
 subclass.
 """
 
-import abc
 from collections import namedtuple
 import os
 from pathlib import Path
@@ -16,7 +15,6 @@ import numpy as np
 from .preprocess import feat_extract
 from . import utils
 from .exceptions import PersephoneException
-from .exceptions import NoPrefixFileException
 
 class Corpus:
     """
