@@ -98,12 +98,11 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> List[Uttera
 
     eaf = Eaf(eaf_path)
     utterances = []
-    # TODO potential bug if tier_prefixes has prefixes that are common to a
-    # given tier_name.
     for tier_name in eaf.tiers:
         for tier_prefix in tier_prefixes:
             if tier_name.startswith(tier_prefix):
                 utterances.extend(utterances_from_tier(eaf, tier_name))
+                break
     return utterances
 
 def utterances_from_dir(eaf_dir: Path, tier_prefixes: List[str]) -> List[Utterance]:
