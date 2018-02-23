@@ -59,57 +59,6 @@ def get_en_words() -> Set[str]:
 
 EN_WORDS = get_en_words()
 
-def good_elan_paths(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[str]:
-    """
-    Returns a list of ELAN files for recordings with good quality audio, as
-    designated by Steven.
-    """
-
-    with open(join(org_dir, "good-files.txt")) as path_list:
-        good_paths = [path.strip() for path in path_list]
-
-    elan_paths = []
-    for path in good_paths:
-        _, ext = os.path.splitext(path)
-        if ext == ".eaf":
-            elan_paths.append(join(org_dir, path))
-        else:
-            full_path = join(org_dir, path)
-            if os.path.isdir(full_path):
-                for elan_path in glob.glob('{}/**/*.eaf'.format(full_path),
-                                           recursive=True):
-                    elan_paths.append(elan_path)
-
-    return elan_paths
-
-def create_good_eaf_dir(org_dir: Path, tgt_dir: Path) -> None:
-    """ Moves the good files to another directory. Used to get the files Steven
-    recommended working with into a separate directory so the standard
-    persephone.preprocess.elan interface could be used.
-    """
-    import shutil
-
-    good_files_path = org_dir / "good-files.txt"
-    with good_files_path.open() as path_list:
-        good_paths = [path.strip() for path in path_list]
-
-    for path in good_paths:
-        print(path)
-        org_path = org_dir / Path(path)
-        tgt_path = tgt_dir / Path(path)
-        try:
-            shutil.copytree(str(org_path), str(tgt_path))
-        except OSError:
-            shutil.copyfile(str(org_path), str(tgt_path))
-
-    #for eaf_path in org_dir.glob("**/*.eaf"):
-    #    eafob = Eaf(str(eaf_path))
-    #    media_path = elan.get_eaf_media_path_and_time_origin(eaf_path, eafob)[0]
-    #    print(eaf_path)
-    #    print(media_path)
-    #    print("-------------------")
-
-
 def explore_elan_files(elan_paths):
     """
     A function to explore the tiers of ELAN files.
@@ -173,10 +122,11 @@ def explore_code_switching(f=sys.stdout):
     print(en_count)
     print(len(utters))
 
-class Corpus(corpus.Corpus):
-    def __init__(self, feat_type="fbank", label_type="phonemes"):
+class Corpus(preprocess.elan.Corpus):
+    def __init__(self, org_dir: Path = Path(config.KUNWINJKU_STEVEN_DIR),
+                 tgt_dir: Path = Path(config.TGT_DIR, "BKW"),
+                 feat_type: str = "fbank", label_type: str = "phonemes") -> None:
 
-        tgt_dir = Path(config.TGT_DIR, "BKW")
         wav_dir = tgt_dir / "wav"
         label_dir = tgt_dir / "label"
         wav_dir.mkdir(parents=True, exist_ok=True) # pylint: disable=no-member
@@ -211,4 +161,4 @@ class Corpus(corpus.Corpus):
                 utils.trim_wav_ms(in_wav_path, str(out_wav_path), start_time, end_time)
 
         # super() will then do feature extraction and create train/valid/test
-        super().__init__(feat_type, label_type, str(tgt_dir), labels)
+        super().__init__(tgt_dir, feat_type, label_type)

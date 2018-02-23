@@ -1,7 +1,7 @@
 """ Provides a Corpus class that can read ELAN .eaf XML files. """
 
 from pathlib import Path
-from typing import List, Union, Dict, Tuple
+from typing import List, Union, Dict, Tuple, Callable
 
 import pympi.Elan
 
@@ -9,6 +9,12 @@ from .. import corpus
 from ..utterance import Utterance
 
 class Eaf(pympi.Elan.Eaf):
+    """ This subclass exists because eaf MEDIA_DESCRIPTOR elements typically
+    have RELATIVE_MEDIA_URL that contains the path of the media file relative
+    to the eaf file. However, pympi.Elan.Eaf doesn't have a path attribute
+    pointing to the eaf file itself. This class here adds this attribute so
+    that the path to the media file can be reconstructed."""
+
     def __init__(self, eaf_path: Path, author: str = "persephone") -> None:
         super().__init__(str(eaf_path), author=author)
         self.eaf_path = eaf_path
@@ -107,8 +113,10 @@ def utterances_from_dir(eaf_dir: Path, tier_prefixes: List[str]) -> List[Utteran
     return utterances
 
 class Corpus(corpus.Corpus):
-    def __init__(self, tgt_dir, feat_type="fbank", label_type="phonemes",
-                 label_segmenter=None):#character_segmenter):
+    def __init__(self, org_dir: Path, tgt_dir: Path,
+                 feat_type: str = "fbank", label_type: str = "phonemes",
+                 utterance_filter: Callable[Utterance, bool] = None,
+                 label_segmenter: Callable[Utterance, Utterance] = None) -> None:
         """
         Need to think about this constructor. Ideally it should take a
         function:
@@ -158,35 +166,32 @@ class Corpus(corpus.Corpus):
         label_segmenter that is just the identity function.
         """
 
-        # Read utterances from tgt_dir/elan/. Perhaps an org_dir for elan
-        # utterances? I'm wary of mixing directories of input data and output
-        # data because it needs to be easy to do a complete reset by just
-        # deleting the directory.
+        # Is this conditional the right way to do it? I could also test for
+        # each file, but perhaps just testing the existence of the directory is
+        # best.
+        if not tgt_dir.is_dir():
+            # Read utterances from org_dir.
+            utterances = utterances_from_dir(tgt_dir)
 
-        # utterances = self.read_elan_utterances()
+            # Filter utterances based on some criteria (such as codeswitching).
+            utterances = [utter for utter in utterances if utterance_filter(utter)]
 
-        # Filter utterances based on some criteria (such as codeswitching).
-        # Should this filter_for_some_reason function be an argument to the
-        # constructor, or should it somehow be rolled into the segmenter? Could
-        # have another function that takes a filter and a segmenter and a list
-        # of utterances and returns another list of utterances.
+            # Segment the labels in the utterances appropriately
+            utterances = [label_segmenter(utter) for utter in utterances]
 
-        # tokenized_utterances = filter_for_some_reason(utterances)
+            # Writes the utterances to the tgt_dir/label/ dir
+            # determine_labels(utterances)
+            # self.write_labels(tokenized_utterances)
 
-        # segmented_utters = [label_segmenter(utter) for utter in tokenized_utterances]
+            # Extracts utterance level WAV information from the input file.
+            wav.extract_wavs(tokenized_utterances, wav_dir)
 
-        # Writes the utterances to the tgt_dir/label/ dir
-        # self.write_labels(tokenized_utterances)
+            # If we're being fed a segment_labels function rather than the actual
+            # labels, then we do actually have to determine all the labels by
+            # reading the utterances. A natural way around this is to make the
+            # label_segmenter an immutable class (say, a NamedTuple) which stores
+            # the labels etc.
 
-        # Extracts utterance level WAV information from the input file.
-        # self.split_wavs(tokenized_utterances)
+            # labels = determine_labels(utterances)
 
-        # If we're being fed a segment_labels function rather than the actual
-        # labels, then we do actually have to determine all the labels by
-        # reading the utterances. A natural way around this is to make the
-        # label_segmenter an immutable class (say, a NamedTuple) which stores
-        # the labels etc.
-
-        # labels = determine_labels(utterances)
-
-        super().__init__(feat_type, label_type, tgt_dir, labels)
+        super().__init__(feat_type, label_type, tgt_dir, label_segmenter.labels)
