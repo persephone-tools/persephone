@@ -1,5 +1,6 @@
 """ An interface with the Na data. """
 
+from pathlib import Path
 import os
 import random
 import subprocess
@@ -16,8 +17,7 @@ from ..exceptions import PersephoneException
 from ..preprocess import pangloss
 
 ORG_DIR = config.NA_DIR
-# TODO eventually remove "new" when ALTA experiments are finished.
-TGT_DIR = os.path.join(config.TGT_DIR, "na", "new")
+TGT_DIR = os.path.join(config.TGT_DIR, "na")
 ORG_XML_DIR = os.path.join(ORG_DIR, "xml")
 ORG_WAV_DIR = os.path.join(ORG_DIR, "wav")
 TGT_WAV_DIR = os.path.join(TGT_DIR, "wav")
@@ -40,7 +40,6 @@ if not os.path.isdir(TGT_DIR):
 if not os.path.isdir(FEAT_DIR):
     os.makedirs(FEAT_DIR)
 
-# HARDCODED values
 MISC_SYMBOLS = [' ̩', '~', '=', ':', 'F', '¨', '↑', '“', '”', '…', '«', '»',
 'D', 'a', 'ː', '#', '$', "‡"]
 BAD_NA_SYMBOLS = ['D', 'F', '~', '…', '=', '↑', ':']
@@ -504,12 +503,10 @@ class Corpus(corpus.Corpus):
                  label_type="phonemes_and_tones",
                  train_rec_type="text", max_samples=1000,
                  valid_story=None, test_story=None,
-                 tgt_dir=TGT_DIR):
-        super().__init__(feat_type, label_type)
+                 tgt_dir=Path(TGT_DIR)):
 
-        self.FEAT_DIR = os.path.join(tgt_dir, "feat")
-        self.LABEL_DIR = os.path.join(tgt_dir, "label")
-        self.UNTRAN_FEAT_DIR = os.path.join(UNTRAN_DIR, "feat")
+        self.valid_story = valid_story
+        self.test_story = test_story
 
         self.max_samples = max_samples
         self.train_rec_type = train_rec_type
@@ -527,12 +524,12 @@ class Corpus(corpus.Corpus):
         else:
             raise PersephoneException("label_type %s not implemented." % label_type)
 
-        self.feat_type = feat_type
-        self.label_type = label_type
+        prepare_labels(label_type)
+        prepare_feats(feat_type)
 
-        self.valid_story = valid_story
-        self.test_story = test_story
+        super().__init__(feat_type, label_type, tgt_dir, self.labels, max_samples=max_samples)
 
+    def make_data_splits(self, max_samples, valid_story=None, test_story=None):
         # TODO Make this also work with wordlists.
         if valid_story or test_story:
             if not (valid_story and test_story):
@@ -544,21 +541,15 @@ class Corpus(corpus.Corpus):
             train, valid, test = make_story_splits(valid_story, test_story,
                                                    max_samples,
                                                    self.label_type,
-                                                   tgt_dir=tgt_dir)
+                                                   tgt_dir=str(tgt_dir))
         else:
             train, valid, test = make_data_splits(self.label_type,
                                                   train_rec_type=train_rec_type,
                                                   max_samples=max_samples,
-                                                  tgt_dir=tgt_dir)
+                                                  tgt_dir=str(tgt_dir))
         self.train_prefixes = train
         self.valid_prefixes = valid
         self.test_prefixes = test
-
-        self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
-                                 ["pad"] + sorted(list(self.labels)))}
-        self.INDEX_TO_LABEL = {index: phn for index, phn in enumerate(
-                                 ["pad"] + sorted(list(self.labels)))}
-        self.vocab_size = len(self.labels)
 
     def output_story_prefixes(self):
         """ Writes the set of prefixes to a file this is useful for pretty
