@@ -13,8 +13,8 @@ def write_utters(utterances: List[Utterance],
                  tgt_dir: Path, ext: str) -> None:
     """ Write the Utterance.text to a file in the tgt_dir. """
 
-    tgt_dir.mkdir()
+    tgt_dir.mkdir(parents=True)
     for utter in utterances:
         out_path = tgt_dir / "{}.{}".format(utter.prefix, ext)
-        with out_path.open() as f:
+        with out_path.open("w") as f:
             print(utter.text, file=f)

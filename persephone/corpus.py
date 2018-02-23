@@ -6,6 +6,7 @@ subclass.
 import abc
 from collections import namedtuple
 import os
+from pathlib import Path
 from os.path import join
 import random
 import subprocess
@@ -61,24 +62,33 @@ class Corpus:
 
         self.untranscribed_prefixes = self.get_untranscribed_prefixes()
 
+    def get_wav_dir(self):
+        return self.tgt_dir / "wav"
+
+    def get_feat_dir(self):
+        return self.tgt_dir / "feat"
+
+    def get_label_dir(self):
+        return self.tgt_dir / "label"
+
     def set_and_check_directories(self, tgt_dir):
 
         # Set the directory names
         self.tgt_dir = tgt_dir
-        self.feat_dir = os.path.join(tgt_dir, "feat")
-        self.wav_dir = os.path.join(tgt_dir, "wav")
-        self.label_dir = os.path.join(tgt_dir, "label")
+        self.feat_dir = self.get_feat_dir()
+        self.wav_dir = self.get_wav_dir()
+        self.label_dir = self.get_label_dir()
 
         # Check directories exist.
-        if not os.path.isdir(tgt_dir):
+        if not tgt_dir.is_dir():
             raise FileNotFoundError(
                 "The directory {} does not exist.".format(tgt_dir))
-        if not os.path.isdir(self.wav_dir):
+        if not self.wav_dir.is_dir():
             raise PersephoneException(
                 "The supplied path requires a 'wav' subdirectory.")
-        if not os.path.isdir(self.feat_dir):
+        if not self.feat_dir.is_dir():
             os.makedirs(self.feat_dir)
-        if not os.path.isdir(self.label_dir):
+        if not self.label_dir.is_dir():
             raise PersephoneException(
                 "The supplied path requires a 'label' subdirectory.")
 
@@ -117,9 +127,10 @@ class Corpus:
     def make_data_splits(self, max_samples):
         """ Splits the utterances into training, validation and test sets."""
 
-        train_prefix_fn = join(self.tgt_dir, "train_prefixes.txt")
-        valid_prefix_fn = join(self.tgt_dir, "valid_prefixes.txt")
-        test_prefix_fn = join(self.tgt_dir, "test_prefixes.txt")
+        # TODO Change this to being paths everywhere
+        train_prefix_fn = join(str(self.tgt_dir), "train_prefixes.txt")
+        valid_prefix_fn = join(str(self.tgt_dir), "valid_prefixes.txt")
+        test_prefix_fn = join(str(self.tgt_dir), "test_prefixes.txt")
 
         train_f_exists = os.path.isfile(train_prefix_fn)
         valid_f_exists = os.path.isfile(valid_prefix_fn)
@@ -247,7 +258,8 @@ class Corpus:
 
     def get_untranscribed_prefixes(self):
 
-        untranscribed_prefix_fn = join(self.tgt_dir, "untranscribed_prefixes.txt")
+        # TODO Change to pathlib.Path
+        untranscribed_prefix_fn = join(str(self.tgt_dir), "untranscribed_prefixes.txt")
         if os.path.exists(untranscribed_prefix_fn):
             with open(untranscribed_prefix_fn) as f:
                 prefixes = f.readlines()
@@ -300,7 +312,7 @@ class ReadyCorpus(Corpus):
 
         labels = self.determine_labels(tgt_dir, label_type)
 
-        super().__init__(feat_type, label_type, tgt_dir, labels)
+        super().__init__(feat_type, label_type, Path(tgt_dir), labels)
 
     @staticmethod
     def determine_labels(tgt_dir, label_type):

@@ -109,6 +109,9 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> List[Uttera
 def utterances_from_dir(eaf_dir: Path, tier_prefixes: List[str]) -> List[Utterance]:
     """ Returns the utterances found in a directory. """
 
+    print(eaf_dir)
+    print(tier_prefixes)
+
     utterances = []
     for eaf_path in eaf_dir.glob("**/*.eaf"):
         eaf_utterances = utterances_from_eaf(eaf_path, tier_prefixes)
@@ -169,12 +172,14 @@ class Corpus(corpus.Corpus):
         label_segmenter that is just the identity function.
         """
 
+        self.tgt_dir = tgt_dir
+
         # Is this conditional the right way to do it? I could also test for
         # each file, but perhaps just testing the existence of the directory is
-        # best.
+        # best. TODO No, change it; it leads to hard-to-understand errors
         if not tgt_dir.is_dir():
             # Read utterances from org_dir.
-            utterances = utterances_from_dir(tgt_dir,
+            utterances = utterances_from_dir(org_dir,
                                              tier_prefixes=["xv", "rf"])
             print(len(utterances))
 
@@ -187,12 +192,10 @@ class Corpus(corpus.Corpus):
             print(len(utterances))
 
             # Writes the utterances to the tgt_dir/label/ dir
-            label_dir = tgt_dir / "label"
-            write_utters(utterances, label_dir, label_type)
+            write_utters(utterances, self.get_label_dir(), label_type)
 
             # Extracts utterance level WAV information from the input file.
-            wav_dir = tgt_dir / "wav"
-            extract_wavs(utterances, wav_dir)
+            extract_wavs(utterances, self.get_wav_dir())
 
             # If we're being fed a segment_labels function rather than the actual
             # labels, then we do actually have to determine all the labels by
@@ -202,4 +205,4 @@ class Corpus(corpus.Corpus):
 
             # labels = determine_labels(utterances)
 
-        super().__init__(feat_type, label_type, str(tgt_dir), label_segmenter.labels)
+        super().__init__(feat_type, label_type, tgt_dir, label_segmenter.labels)
