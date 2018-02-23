@@ -44,21 +44,6 @@ class Eaf(pympi.Elan.Eaf):
                 self.media_descriptor = md
                 return
 
-        # Sometimes the media file is in the same directory as the eaf
-        # file, even if the eaf file says it's somewhere else. This might
-        # actually be risky depending on how people have named their files. 
-        # There's an argument for not doing this and just throwing the
-        # FileNotFoundError. TODO Consider whether to ditch this or not.
-        for md in self.media_descriptors:
-            media_path = self.eaf_path.parent / Path(md["RELATIVE_MEDIA_URL"]).name
-            if media_path.is_file():
-                print("WARNING: {}.".format(self.eaf_path))
-                print("WARNING: {}.".format(media_path))
-                print("WARNING: {}.".format(md["RELATIVE_MEDIA_URL"]))
-                print("--------------------")
-                self.media_descriptor = md
-                return
-
         raise FileNotFoundError(
             """Cannot find media file corresponding to {}.
             Tried looking for the following files: {}.
