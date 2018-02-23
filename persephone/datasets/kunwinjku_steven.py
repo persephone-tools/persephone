@@ -18,6 +18,7 @@ from ..transcription_preprocessing import segment_into_tokens
 from .. import utils
 from ..utterance import Utterance
 from ..preprocess import elan
+from ..preprocess import wav
 
 BASIC_PHONEMES = set(["a", "b", "d", "dj", "rd", "e", "h", "i", "k", "l",
             "rl", "m", "n", "ng", "nj", "rn", "o", "r", "rr", "u",
@@ -158,7 +159,7 @@ class Corpus(preprocess.elan.Corpus):
             out_wav_path = Path(wav_dir, wav_fn)
             if not out_wav_path.is_file():
                 in_wav_path = utterance.wav_file
-                utils.trim_wav_ms(in_wav_path, str(out_wav_path), start_time, end_time)
+                wav.trim_wav_ms(in_wav_path, str(out_wav_path), start_time, end_time)
 
         # super() will then do feature extraction and create train/valid/test
         super().__init__(tgt_dir, feat_type, label_type)
