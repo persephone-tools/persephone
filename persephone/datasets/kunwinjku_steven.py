@@ -17,6 +17,7 @@ from .. import config
 from ..transcription_preprocessing import segment_into_tokens
 from .. import utils
 from ..utterance import Utterance
+from ..preprocess import elan
 
 BASIC_PHONEMES = set(["a", "b", "d", "dj", "rd", "e", "h", "i", "k", "l",
             "rl", "m", "n", "ng", "nj", "rn", "o", "r", "rr", "u",
@@ -81,6 +82,34 @@ def good_elan_paths(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[str]:
 
     return elan_paths
 
+def create_good_eaf_dir(org_dir: Path, tgt_dir: Path) -> None:
+    """ Moves the good files to another directory. Used to get the files Steven
+    recommended working with into a separate directory so the standard
+    persephone.preprocess.elan interface could be used.
+    """
+    import shutil
+
+    good_files_path = org_dir / "good-files.txt"
+    with good_files_path.open() as path_list:
+        good_paths = [path.strip() for path in path_list]
+
+    for path in good_paths:
+        print(path)
+        org_path = org_dir / Path(path)
+        tgt_path = tgt_dir / Path(path)
+        try:
+            shutil.copytree(str(org_path), str(tgt_path))
+        except OSError:
+            shutil.copyfile(str(org_path), str(tgt_path))
+
+    #for eaf_path in org_dir.glob("**/*.eaf"):
+    #    eafob = Eaf(str(eaf_path))
+    #    media_path = elan.get_eaf_media_path_and_time_origin(eaf_path, eafob)[0]
+    #    print(eaf_path)
+    #    print(media_path)
+    #    print("-------------------")
+
+
 def explore_elan_files(elan_paths):
     """
     A function to explore the tiers of ELAN files.
@@ -99,77 +128,6 @@ def explore_elan_files(elan_paths):
                 continue
 
         input()
-
-def elan_utterances(org_dir: str = config.KUNWINJKU_STEVEN_DIR) -> List[Utterance]:
-    """ Collects utterances from various ELAN tiers. This is based on analysis
-    of the 'good' ELAN files, and may not generalize."""
-
-    elan_tiers = {"rf", "rf@RN", "rf@MARK",
-                  "xv", "xv@RN", "xv@MN", "xv@JN", "xv@EN", "xv@MARK", "xv@GN",
-                 }
-                 # "nt@RN", "nt@JN",
-                 # "PRN_free", "PRN_Pfx", "NmCl_Gen", "ng_DROP",
-                 # "Other",
-                 #}
-
-    utterances = []
-    for elan_path in good_elan_paths(org_dir=org_dir):
-        eafob = Eaf(elan_path)
-        #import pprint; pprint.pprint(dir(eafob))
-        can_find_path = False
-        for md in eafob.media_descriptors:
-            try:
-                media_path = os.path.join(os.path.dirname(elan_path),
-                                          md["RELATIVE_MEDIA_URL"])
-                if os.path.exists(media_path):
-                    # Only one media_path file is needed, as long as it exists.
-                    can_find_path = True
-                    break
-                # Try just looking for the basename specified in the
-                # RELATIVE_MEDIA_URL
-                media_path = os.path.join(os.path.dirname(elan_path),
-                                          os.path.basename(md["RELATIVE_MEDIA_URL"]))
-                if os.path.exists(media_path):
-                    can_find_path = True
-                    break
-            except KeyError:
-                # Then it might be hard to find the MEDIA URL if its not
-                # relative. Keep trying.
-                continue
-        if can_find_path:
-            tier_names = eafob.get_tier_names()
-            for tier in tier_names:
-                if tier.startswith("rf") or tier.startswith("xv") or tier in elan_tiers:
-                    try:
-                        participant = eafob.tiers[tier][2]["PARTICIPANT"]
-                    except KeyError:
-                        participant = None
-                    for utterance_id, annotation in enumerate(
-                            eafob.get_annotation_data_for_tier(tier)):
-                        elan_prefix = os.path.splitext(
-                            os.path.basename(elan_path))[0]
-                        prefix = "{}.{}.{}".format(
-                            elan_prefix, tier, utterance_id)
-                        try:
-                            start_time = annotation[0] + int(md["TIME_ORIGIN"])
-                            end_time = annotation[1] + int(md["TIME_ORIGIN"])
-                        except KeyError:
-                            # Then TIME_ORIGIN wasn't specified, so we use the
-                            # offsets as they are.
-                            start_time = annotation[0]
-                            end_time = annotation[1]
-                        text = annotation[2]
-                        utterance = Utterance(media_path, elan_path,
-                                              prefix, start_time, end_time,
-                                              text, participant)
-                        if not utterance.text.strip() == "":
-                            utterances.append(utterance)
-        else:
-            # TODO Make this an actual warning or do some sort of exception
-            # handling
-            print("Warning: Can't find the media file for {}".format(elan_path))
-
-    return utterances
 
 def filter_codeswitched(utterances):
     for utter in utterances:
