@@ -3,48 +3,67 @@
 from pathlib import Path
 from typing import List, Union, Dict, Tuple
 
-from pympi.Elan import Eaf
+import pympi.Elan
 
 from .. import corpus
 from ..utterance import Utterance
 
-class Eaf(
+class Eaf(pympi.Elan.Eaf):
+    def __init__(self, eaf_path: Path, author: str = "persephone") -> None:
+        super().__init__(str(eaf_path), author=author)
+        self.eaf_path = eaf_path
+        self.initialize_media_descriptor()
 
-def get_time_origin(media_descriptor: Dict) -> int:
-    """ Determines the time offset of the annotations."""
-    try:
-        return int(media_descriptor["TIME_ORIGIN"])
-    except KeyError:
-        # Since it wasn't specified, we don't need to adjust 
-        # utterance offsets.
-        return 0
+    @property
+    def media_path(self) -> Path:
+        """ The URL of the associated media file."""
+        return self.get_media_path(self.media_descriptor)
 
-def get_eaf_media_path_and_time_origin(eaf_path: Path, eafob: Eaf) -> Tuple[Path, int]:
-    """ Determines the media_path of an object to use. Takes the first one
-    path where the file exists. """
+    @property
+    def time_origin(self) -> int:
+        """ The time offset of the annotations."""
+        try:
+            return int(self.media_descriptor["TIME_ORIGIN"])
+        except KeyError:
+            # Since it wasn't specified, we don't need to adjust 
+            # utterance offsets.
+            return 0
 
-    for md in eafob.media_descriptors:
-        media_path = eaf_path.parent / md["RELATIVE_MEDIA_URL"]
-        if media_path.is_file():
-            return media_path, get_time_origin(md)
+    def get_media_path(self, media_descriptor: Dict) -> Path:
+        return self.eaf_path.parent / media_descriptor["RELATIVE_MEDIA_URL"]
 
-    # Sometimes the media file is in the same directory as the eaf
-    # file, even if the eaf file says it's somewhere else. This might
-    # actually be risky depending on how people have named their files. 
-    # There's an argument for not doing this and just throwing the
-    # FileNotFoundError.
-    for md in eafob.media_descriptors:
-        media_path = eaf_path.parent / Path(md["RELATIVE_MEDIA_URL"]).name
-        if media_path.is_file():
-            return media_path, get_time_origin(md)
+    def initialize_media_descriptor(self) -> None:
+        """
+        Returns the media descriptor for the first media descriptor where
+        the file can be found.
+        """
 
-    raise FileNotFoundError(
-        """Cannot find media file corresponding to {}.
-        Tried looking for the following files: {}. (Search was relative to
-        the directory the eaf file is in).
-        """.format(
-            eaf_path, [md["RELATIVE_MEDIA_URL"]
-                       for md in eafob.media_descriptors]))
+        for md in self.media_descriptors:
+            media_path = self.get_media_path(md)
+            if media_path.is_file():
+                self.media_descriptor = md
+                return
+
+        # Sometimes the media file is in the same directory as the eaf
+        # file, even if the eaf file says it's somewhere else. This might
+        # actually be risky depending on how people have named their files. 
+        # There's an argument for not doing this and just throwing the
+        # FileNotFoundError. TODO Consider whether to ditch this or not.
+        for md in self.media_descriptors:
+            media_path = self.eaf_path.parent / Path(md["RELATIVE_MEDIA_URL"]).name
+            if media_path.is_file():
+                print("WARNING: {}.".format(self.eaf_path))
+                print("WARNING: {}.".format(media_path))
+                print("WARNING: {}.".format(md["RELATIVE_MEDIA_URL"]))
+                print("--------------------")
+                self.media_descriptor = md
+                return
+
+        raise FileNotFoundError(
+            """Cannot find media file corresponding to {}.
+            Tried looking for the following files: {}.
+            """.format(self.eaf_path, [self.get_media_path(md)
+                                       for md in self.media_descriptors]))
 
 def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> None:#List[Utterance]:
     """
@@ -58,13 +77,11 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> None:#List[
     if not eaf_path.is_file():
         raise FileNotFoundError("Cannot find {}".format(eaf_path))
 
-
     # This could actually only take a tier_name argument and then be moved
     # further below to take the eafob and media_path of the enclosing function.
     # Not sure whether to do that (at one extreme), or to take more arguments
     # and move out of the enclosing function.
-    def utterances_from_tier(eafob: Eaf, tier_name: str,
-                             media_path: Path, time_origin: int) -> List[str]:
+    def utterances_from_tier(eafob: Eaf, tier_name: str) -> List[str]:
         """ Returns utterances found in the given Eaf object in the given tier."""
 
         try:
@@ -76,25 +93,23 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> None:#List[
         for i, annotation in enumerate(eafob.get_annotation_data_for_tier(tier_name)):
             eaf_stem = eaf_path.stem
             utter_id = "{}.{}.{}".format(eaf_stem, tier_name, i)
-            start_time = time_origin + annotation[0]
-            end_time = time_origin + annotation[1]
+            start_time = eafob.time_origin + annotation[0]
+            end_time = eafob.time_origin + annotation[1]
             text = annotation[2]
-            utterance = Utterance(media_path, eaf_path, utter_id,
+            utterance = Utterance(eafob.media_path, eaf_path, utter_id,
                                   start_time, end_time, text, participant)
             tier_utterances.append(utterance)
 
         return tier_utterances
 
-    eaf = Eaf(str(eaf_path))
-    media_path, time_origin = get_eaf_media_path_and_time_origin(eaf_path, eaf)
+    eaf = Eaf(eaf_path)
     utterances = []
     # TODO potential bug if tier_prefixes has prefixes that are common to a
     # given tier_name.
     for tier_name in eaf.tiers:
         for tier_prefix in tier_prefixes:
             if tier_name.startswith(tier_prefix):
-                utterances.extend(
-                    utterances_from_tier(eaf, tier_name, media_path, time_origin))
+                utterances.extend(utterances_from_tier(eaf, tier_name))
     return utterances
 
 def utterances_from_dir(eaf_dir: Path, tier_prefixes: List[str]) -> List[Utterance]:
