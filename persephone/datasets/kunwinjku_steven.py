@@ -155,9 +155,6 @@ class Corpus(elan.Corpus):
             raise NotImplementedError(
                 "label_type {} not implemented.".format(label_type))
 
-        # 0. Fetch the utterances from the ELAN files that aren't codeswitched.
-        utterances = list(filter_codeswitched(elan_utterances()))
-
         # 1. Preprocess transcriptions and put them in the label/ directory
         for utterance in utterances:
             phoneme_str = segment_phonemes(utterance.text)

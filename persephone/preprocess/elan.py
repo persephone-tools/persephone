@@ -180,11 +180,10 @@ class Corpus(corpus.Corpus):
             utterances = [label_segmenter(utter) for utter in utterances]
 
             # Writes the utterances to the tgt_dir/label/ dir
-            # determine_labels(utterances)
-            # self.write_labels(tokenized_utterances)
+            utterance.write_text(utterances, label_dir, label_type)
 
             # Extracts utterance level WAV information from the input file.
-            wav.extract_wavs(tokenized_utterances, wav_dir)
+            wav.extract_wavs(utterances, wav_dir)
 
             # If we're being fed a segment_labels function rather than the actual
             # labels, then we do actually have to determine all the labels by
