@@ -1,5 +1,5 @@
 def test_segment_into_chars():
-    from persephone.transcription_preprocessing import segment_into_chars
+    from persephone.preprocess.labels import segment_into_chars
 
     input_1 = "hello"
     output_1 = "h e l l o"
@@ -18,7 +18,7 @@ def test_segment_into_chars():
     assert segment_into_chars(input_3) == output_3
 
 def test_segment_into_tokens():
-    from persephone.transcription_preprocessing import segment_into_tokens
+    from persephone.preprocess.labels import segment_into_tokens
     from persephone.datasets.na import PHONEMES
     from persephone.datasets.na import TONES
     from persephone.datasets.na import SYMBOLS_TO_PREDICT

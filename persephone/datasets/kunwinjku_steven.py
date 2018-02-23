@@ -14,12 +14,12 @@ from pympi.Elan import Eaf
 
 from .. import corpus
 from .. import config
-from ..transcription_preprocessing import segment_into_tokens
+from ..preprocess.labels import segment_into_tokens
 from .. import utils
 from ..utterance import Utterance
 from ..preprocess import elan
 from ..preprocess import wav
-from ..preprocess.label_segmenter import LabelSegmenter
+from ..preprocess.labels import LabelSegmenter
 
 BASIC_PHONEMES = set(["a", "b", "d", "dj", "rd", "e", "h", "i", "k", "l",
             "rl", "m", "n", "ng", "nj", "rn", "o", "r", "rr", "u",

@@ -299,12 +299,12 @@ class Corpus:
 
         for prefix in self.determine_prefixes():
             print("Utterance: {}".format(prefix))
-            wav_fn = os.path.join(self.feat_dir, prefix + ".wav")
-            label_fn = os.path.join(str(self.label_dir), prefix + ".phonemes")
-            with open(label_fn) as f:
+            wav_fn = self.feat_dir / "{}.wav".format(prefix)
+            label_fn = self.label_dir / "{}.{}".format(prefix,self.label_type)
+            with label_fn.open() as f:
                 transcript = f.read().strip()
             print("Transcription: {}".format(transcript))
-            subprocess.run(["play", wav_fn])
+            subprocess.run(["play", str(wav_fn)])
 
 class ReadyCorpus(Corpus):
     """ Interface to a corpus that has WAV files and label files split into

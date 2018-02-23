@@ -9,7 +9,7 @@ from .. import corpus
 from ..utterance import Utterance
 from ..utterance import write_utters
 from ..preprocess.wav import extract_wavs
-from ..preprocess.label_segmenter import LabelSegmenter
+from ..preprocess.labels import LabelSegmenter
 
 class Eaf(pympi.Elan.Eaf):
     """ This subclass exists because eaf MEDIA_DESCRIPTOR elements typically
