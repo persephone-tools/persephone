@@ -7,6 +7,9 @@ import pympi.Elan
 
 from .. import corpus
 from ..utterance import Utterance
+from ..utterance import write_utters
+from ..preprocess.wav import extract_wavs
+from ..preprocess.label_segmenter import LabelSegmenter
 
 class Eaf(pympi.Elan.Eaf):
     """ This subclass exists because eaf MEDIA_DESCRIPTOR elements typically
@@ -15,8 +18,8 @@ class Eaf(pympi.Elan.Eaf):
     pointing to the eaf file itself. This class here adds this attribute so
     that the path to the media file can be reconstructed."""
 
-    def __init__(self, eaf_path: Path, author: str = "persephone") -> None:
-        super().__init__(str(eaf_path), author=author)
+    def __init__(self, eaf_path: Path) -> None:
+        super().__init__(str(eaf_path))
         self.eaf_path = eaf_path
         self.initialize_media_descriptor()
 
@@ -56,7 +59,7 @@ class Eaf(pympi.Elan.Eaf):
             """.format(self.eaf_path, [self.get_media_path(md)
                                        for md in self.media_descriptors]))
 
-def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> None:#List[Utterance]:
+def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> List[Utterance]:
     """
     Extracts utterances in tiers that start with tier_prefixes found in the ELAN .eaf XML file
     at eaf_path.
@@ -72,7 +75,7 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> None:#List[
     # further below to take the eafob and media_path of the enclosing function.
     # Not sure whether to do that (at one extreme), or to take more arguments
     # and move out of the enclosing function.
-    def utterances_from_tier(eafob: Eaf, tier_name: str) -> List[str]:
+    def utterances_from_tier(eafob: Eaf, tier_name: str) -> List[Utterance]:
         """ Returns utterances found in the given Eaf object in the given tier."""
 
         try:
@@ -115,8 +118,8 @@ def utterances_from_dir(eaf_dir: Path, tier_prefixes: List[str]) -> List[Utteran
 class Corpus(corpus.Corpus):
     def __init__(self, org_dir: Path, tgt_dir: Path,
                  feat_type: str = "fbank", label_type: str = "phonemes",
-                 utterance_filter: Callable[Utterance, bool] = None,
-                 label_segmenter: Callable[Utterance, Utterance] = None) -> None:
+                 utterance_filter: Callable[[Utterance], bool] = None,
+                 label_segmenter: LabelSegmenter = None) -> None:
         """
         Need to think about this constructor. Ideally it should take a
         function:
@@ -171,19 +174,25 @@ class Corpus(corpus.Corpus):
         # best.
         if not tgt_dir.is_dir():
             # Read utterances from org_dir.
-            utterances = utterances_from_dir(tgt_dir)
+            utterances = utterances_from_dir(tgt_dir,
+                                             tier_prefixes=["xv", "rf"])
+            print(len(utterances))
 
             # Filter utterances based on some criteria (such as codeswitching).
             utterances = [utter for utter in utterances if utterance_filter(utter)]
+            print(len(utterances))
 
             # Segment the labels in the utterances appropriately
-            utterances = [label_segmenter(utter) for utter in utterances]
+            utterances = [label_segmenter.segment_labels(utter) for utter in utterances]
+            print(len(utterances))
 
             # Writes the utterances to the tgt_dir/label/ dir
-            utterance.write_text(utterances, label_dir, label_type)
+            label_dir = tgt_dir / "label"
+            write_utters(utterances, label_dir, label_type)
 
             # Extracts utterance level WAV information from the input file.
-            wav.extract_wavs(utterances, wav_dir)
+            wav_dir = tgt_dir / "wav"
+            extract_wavs(utterances, wav_dir)
 
             # If we're being fed a segment_labels function rather than the actual
             # labels, then we do actually have to determine all the labels by
@@ -193,4 +202,4 @@ class Corpus(corpus.Corpus):
 
             # labels = determine_labels(utterances)
 
-        super().__init__(feat_type, label_type, tgt_dir, label_segmenter.labels)
+        super().__init__(feat_type, label_type, str(tgt_dir), label_segmenter.labels)

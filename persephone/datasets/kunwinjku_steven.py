@@ -19,6 +19,7 @@ from .. import utils
 from ..utterance import Utterance
 from ..preprocess import elan
 from ..preprocess import wav
+from ..preprocess.label_segmenter import LabelSegmenter
 
 BASIC_PHONEMES = set(["a", "b", "d", "dj", "rd", "e", "h", "i", "k", "l",
             "rl", "m", "n", "ng", "nj", "rn", "o", "r", "rr", "u",
@@ -107,13 +108,14 @@ def segment_str(text: str, phoneme_inventory: Set[str] = PHONEMES) -> str:
     text = segment_into_tokens(text, phoneme_inventory)
     return text
 
-def explore_code_switching(f=sys.stdout):
+bkw_label_segmenter = LabelSegmenter(segment_utterance, PHONEMES)
 
-    utters = elan_utterances()
+def explore_code_switching(utterances: List[Utterance]) -> None:
 
+    f=sys.stdout
     en_count = 0
-    for i, utter in enumerate(utters):
-        toks = nltk.word_tokenize(utter.text)
+    for i, utter in enumerate(utterances):
+        toks = nltk.word_tokenize(utter.text) # type: ignore
         words = [tok.lower() for tok in toks]
         for word in words:
             if word in EN_WORDS:
@@ -121,33 +123,25 @@ def explore_code_switching(f=sys.stdout):
                 print("Utterance #%s" % i, file=f)
                 print("Original: %s" % utter.text, file=f)
                 print("Tokenized: %s" % words, file=f)
-                print("Phonemic: %s" % segment_phonemes(utter.text), file=f)
+                print("Phonemic: %s" % segment_str(utter.text), file=f)
                 print("En word: %s" % word, file=f)
                 print("---------------------------------------------", file=f)
                 break
     print(en_count)
-    print(len(utters))
+    print(len(utterances))
 
 def filter_for_not_codeswitched(utter: Utterance) -> bool:
-    toks = nltk.word_tokenize(utter.text)
+    toks = nltk.word_tokenize(utter.text) # type: ignore
     words = [tok.lower() for tok in toks]
-    codeswitched = False
     for word in words:
         if word in EN_WORDS:
-            codeswitched = True
-            break
-    if not codeswitched:
-        yield utter
+            return False
+    return True
 
 class Corpus(elan.Corpus):
     def __init__(self, org_dir: Path = Path(config.KUNWINJKU_STEVEN_DIR),
                  tgt_dir: Path = Path(config.TGT_DIR, "BKW"),
                  feat_type: str = "fbank", label_type: str = "phonemes") -> None:
-
-        wav_dir = tgt_dir / "wav"
-        label_dir = tgt_dir / "label"
-        wav_dir.mkdir(parents=True, exist_ok=True) # pylint: disable=no-member
-        label_dir.mkdir(parents=True, exist_ok=True) # pylint: disable=no-member
 
         if label_type == "phonemes":
             labels = PHONEMES
@@ -155,27 +149,8 @@ class Corpus(elan.Corpus):
             raise NotImplementedError(
                 "label_type {} not implemented.".format(label_type))
 
-        # 1. Preprocess transcriptions and put them in the label/ directory
-        for utterance in utterances:
-            phoneme_str = segment_phonemes(utterance.text)
-            label_fn = "{}.{}".format(utterance.prefix, label_type)
-            label_path = Path(label_dir, label_fn)
-            if not label_path.is_file():
-                with label_path.open("w") as f:
-                    print(phoneme_str, file=f)
-
-        # 2. Split the WAV files and put them in the wav/
-        for utterance in utterances:
-            start_time = utterance.start_time
-            end_time = utterance.end_time
-            wav_fn = "{}.{}".format(utterance.prefix, "wav")
-            out_wav_path = Path(wav_dir, wav_fn)
-            if not out_wav_path.is_file():
-                in_wav_path = utterance.wav_file
-                wav.trim_wav_ms(in_wav_path, str(out_wav_path), start_time, end_time)
-
         # super() will then do feature extraction and create train/valid/test
         super().__init__(org_dir, tgt_dir,
                          feat_type=feat_type, label_type=label_type,
                          utterance_filter=filter_for_not_codeswitched,
-                         label_segmenter=segment_utterance)
+                         label_segmenter=bkw_label_segmenter)
