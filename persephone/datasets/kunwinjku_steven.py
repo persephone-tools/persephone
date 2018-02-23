@@ -91,7 +91,12 @@ def filter_codeswitched(utterances):
         if not codeswitched:
             yield utter
 
-def segment_phonemes(text: str, phoneme_inventory: Set[str] = PHONEMES) -> str:
+def segment_utterance(utterance: Utterance) -> Utterance:
+    fields = utterance._asdict()
+    fields["text"] = segment_str(fields["text"])
+    return Utterance(**fields)
+
+def segment_str(text: str, phoneme_inventory: Set[str] = PHONEMES) -> str:
     """
     Takes as input a string in Kunwinjku and segments it into phoneme-like
     units based on the standard orthographic rules specified at
@@ -123,7 +128,18 @@ def explore_code_switching(f=sys.stdout):
     print(en_count)
     print(len(utters))
 
-class Corpus(preprocess.elan.Corpus):
+def filter_for_not_codeswitched(utter: Utterance) -> bool:
+    toks = nltk.word_tokenize(utter.text)
+    words = [tok.lower() for tok in toks]
+    codeswitched = False
+    for word in words:
+        if word in EN_WORDS:
+            codeswitched = True
+            break
+    if not codeswitched:
+        yield utter
+
+class Corpus(elan.Corpus):
     def __init__(self, org_dir: Path = Path(config.KUNWINJKU_STEVEN_DIR),
                  tgt_dir: Path = Path(config.TGT_DIR, "BKW"),
                  feat_type: str = "fbank", label_type: str = "phonemes") -> None:
@@ -162,4 +178,7 @@ class Corpus(preprocess.elan.Corpus):
                 wav.trim_wav_ms(in_wav_path, str(out_wav_path), start_time, end_time)
 
         # super() will then do feature extraction and create train/valid/test
-        super().__init__(tgt_dir, feat_type, label_type)
+        super().__init__(org_dir, tgt_dir,
+                         feat_type=feat_type, label_type=label_type,
+                         utterance_filter=filter_for_not_codeswitched,
+                         label_segmenter=segment_utterance)
