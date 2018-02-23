@@ -86,8 +86,7 @@ class Corpus:
         if not self.wav_dir.is_dir():
             raise PersephoneException(
                 "The supplied path requires a 'wav' subdirectory.")
-        if not self.feat_dir.is_dir():
-            os.makedirs(self.feat_dir)
+        self.feat_dir.mkdir(parents=True, exist_ok=True)
         if not self.label_dir.is_dir():
             raise PersephoneException(
                 "The supplied path requires a 'label' subdirectory.")
@@ -118,7 +117,7 @@ class Corpus:
                 # Then we should extract feats
                 should_extract_feats = True
                 if not os.path.isfile(mono16k_wav_path):
-                    feat_extract.convert_wav(path, mono16k_wav_path)
+                    feat_extract.convert_wav(str(path), mono16k_wav_path)
 
         # TODO Should be extracting feats on a per-file basis. Right now we
         # check if any feats files don't exist and then do all the feature
@@ -277,10 +276,10 @@ class Corpus:
         return feat_fns
 
     def determine_prefixes(self):
-        label_fns = [fn for fn in os.listdir(self.label_dir)
+        label_fns = [fn for fn in os.listdir(str(self.label_dir))
                if fn.endswith(self.label_type)]
         label_prefixes = set([os.path.splitext(fn)[0] for fn in label_fns])
-        wav_fns = [fn for fn in os.listdir(self.wav_dir)
+        wav_fns = [fn for fn in os.listdir(str(self.wav_dir))
                if fn.endswith(".wav")]
         wav_prefixes = set([os.path.splitext(fn)[0] for fn in wav_fns])
 
@@ -301,7 +300,7 @@ class Corpus:
         for prefix in self.determine_prefixes():
             print("Utterance: {}".format(prefix))
             wav_fn = os.path.join(self.feat_dir, prefix + ".wav")
-            label_fn = os.path.join(self.label_dir, prefix + ".phonemes")
+            label_fn = os.path.join(str(self.label_dir), prefix + ".phonemes")
             with open(label_fn) as f:
                 transcript = f.read().strip()
             print("Transcription: {}".format(transcript))

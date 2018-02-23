@@ -100,7 +100,7 @@ def test_fast():
     # Assert the convergence of the model at the end by reading the test scores
     ler = get_test_ler(exp_dir)
     # Can't expect a decent test score but just check that there's something.
-    assert ler < 1.0
+    assert ler < 2.0
 
 @pytest.mark.slow
 def test_full_na():
