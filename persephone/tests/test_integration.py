@@ -8,6 +8,7 @@ from persephone import run
 from persephone import corpus_reader
 from persephone import rnn_ctc
 from persephone.context_manager import cd
+from persephone.datasets import na
 
 EXP_BASE_DIR = "testing/exp/"
 DATA_BASE_DIR = "testing/data/"
@@ -123,8 +124,6 @@ def test_full_na():
     # test will include only Na narratives, not wordlists.
     na_xml_dir = join(DATA_BASE_DIR, "na/xml/TEXT/F4")
 
-    from persephone.datasets import na
-
     label_dir = join(DATA_BASE_DIR, "na/label")
     label_type = "phonemes_and_tones"
     na.prepare_labels(label_type,
@@ -162,6 +161,13 @@ def test_full_na():
     # Ensure LER < 0.20
     ler = get_test_ler(exp_dir)
     assert ler < 0.2
+
+@pytest.mark.notravis
+def test_na_preprocess():
+    """ Tests that the construction of the na.Corpus object works."""
+
+    na_corpus = na.Corpus(feat_type="fbank", label_type="phonemes")
+    print(na_corpus)
 
 # Other tests:
     # TODO assert the contents of the prefix files
