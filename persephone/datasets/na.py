@@ -10,10 +10,10 @@ import xml.etree.ElementTree as ET
 
 from .. import config
 from .. import corpus
-from .. import feat_extract
+from ..preprocess import feat_extract
 from .. import utils
 from ..exceptions import PersephoneException
-from . import pangloss
+from ..preprocess import pangloss
 
 ORG_DIR = config.NA_DIR
 # TODO eventually remove "new" when ALTA experiments are finished.

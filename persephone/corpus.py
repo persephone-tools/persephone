@@ -13,7 +13,7 @@ import subprocess
 
 import numpy as np
 
-from . import feat_extract
+from .preprocess import feat_extract
 from . import utils
 from .exceptions import PersephoneException
 from .exceptions import NoPrefixFileException

@@ -11,12 +11,6 @@ from git import Repo
 from . import config
 from . import rnn_ctc
 from .datasets import na
-#from . import datasets.griko
-from .datasets import chatino
-from .datasets import butcher
-#from . import datasets.timit
-#from . import datasets.japhug
-#from . import datasets.babel
 from .corpus_reader import CorpusReader
 from .exceptions import PersephoneException, DirtyRepoException
 from .utils import is_git_directory_clean
@@ -156,7 +150,7 @@ def train(exp_dir, language, feat_type, label_type,
     #log.addHandler(fh)
 
     if language == "chatino":
-        corpus = chatino.Corpus(feat_type, label_type)
+        raise NotImplementedError("Chatino code needs a rewrite.")
     elif language == "na":
         corpus = na.Corpus(feat_type, label_type,
                                     train_rec_type=train_rec_type,
@@ -164,7 +158,8 @@ def train(exp_dir, language, feat_type, label_type,
                                     test_story=test_story)
     elif language == "kunwinjku":
         # TODO How to choose between the Bird and Butcher corpora?
-        corpus = butcher.Corpus(feat_type, label_type)
+        raise NotImplementedError("Need to finish testing.")
+        #corpus = kunwinjku_steven.Corpus(feat_type, label_type)
     else:
         raise PersephoneException("Language '%s' not supported." % language)
 
