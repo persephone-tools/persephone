@@ -1,7 +1,9 @@
 """ Miscellaneous utility functions. """
 import os
+from pathlib import Path
 import subprocess
 from subprocess import PIPE
+from typing import List, Tuple
 
 from git import Repo
 import numpy as np
@@ -120,11 +122,12 @@ def make_parent(file_path):
     if not os.path.isdir(parent_dir):
         os.makedirs(parent_dir)
 
-def get_prefix_lens(feat_dir, prefixes, feat_type):
+def get_prefix_lens(feat_dir: Path, prefixes: List[str],
+                    feat_type: str) -> List[Tuple[str,int]]:
     prefix_lens = []
     for prefix in prefixes:
-        path = os.path.join(feat_dir, "%s.%s.npy" % (prefix, feat_type))
-        _, batch_x_lens = load_batch_x([path], flatten=False)
+        path = feat_dir / ("%s.%s.npy" % (prefix, feat_type))
+        _, batch_x_lens = load_batch_x([str(path)], flatten=False)
         prefix_lens.append((prefix, batch_x_lens[0]))
     return prefix_lens
 

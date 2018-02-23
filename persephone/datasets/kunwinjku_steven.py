@@ -138,6 +138,12 @@ def filter_for_not_codeswitched(utter: Utterance) -> bool:
             return False
     return True
 
+def filter_for_not_empty(utter: Utterance) -> bool:
+    return not utter.text.strip() == ""
+
+def bkw_filter(utter: Utterance) -> bool:
+    return filter_for_not_codeswitched(utter) and filter_for_not_empty(utter)
+
 class Corpus(elan.Corpus):
     def __init__(self, org_dir: Path = Path(config.KUNWINJKU_STEVEN_DIR),
                  tgt_dir: Path = Path(config.TGT_DIR, "BKW"),
@@ -152,5 +158,5 @@ class Corpus(elan.Corpus):
         # super() will then do feature extraction and create train/valid/test
         super().__init__(org_dir, tgt_dir,
                          feat_type=feat_type, label_type=label_type,
-                         utterance_filter=filter_for_not_codeswitched,
+                         utterance_filter=bkw_filter,
                          label_segmenter=bkw_label_segmenter)

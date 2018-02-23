@@ -103,17 +103,16 @@ class Corpus:
     def prepare_feats(self):
         """ Prepares input features"""
 
-        if not os.path.isdir(self.feat_dir):
-            os.makedirs(self.feat_dir)
+        self.feat_dir.mkdir(parents=True, exist_ok=True)
 
         should_extract_feats = False
-        for fn in os.listdir(self.wav_dir):
-            path = join(self.wav_dir, fn)
-            if not path.endswith(".wav"):
+        for path in self.wav_dir.iterdir():
+            if not path.suffix == ".wav":
                 continue
-            prefix = os.path.basename(os.path.splitext(path)[0])
-            mono16k_wav_path = join(self.feat_dir, "%s.wav" % prefix)
-            feat_path = join(self.feat_dir,
+            # TODO use pathlib.Path
+            prefix = os.path.basename(os.path.splitext(str(path))[0])
+            mono16k_wav_path = join(str(self.feat_dir), "%s.wav" % prefix)
+            feat_path = join(str(self.feat_dir),
                              "%s.%s.npy" % (prefix, self.feat_type))
             if not os.path.isfile(feat_path):
                 # Then we should extract feats
@@ -121,8 +120,11 @@ class Corpus:
                 if not os.path.isfile(mono16k_wav_path):
                     feat_extract.convert_wav(path, mono16k_wav_path)
 
+        # TODO Should be extracting feats on a per-file basis. Right now we
+        # check if any feats files don't exist and then do all the feature
+        # extraction.
         if should_extract_feats:
-            feat_extract.from_dir(self.feat_dir, self.feat_type)
+            feat_extract.from_dir(str(self.feat_dir), self.feat_type)
 
     def make_data_splits(self, max_samples):
         """ Splits the utterances into training, validation and test sets."""
@@ -241,9 +243,10 @@ class Corpus:
         return self._num_feats
 
     def prefixes_to_fns(self, prefixes):
-        feat_fns = [os.path.join(self.feat_dir, "%s.%s.npy" % (prefix, self.feat_type))
+        # TODO Return pathlib.Paths
+        feat_fns = [str(self.feat_dir / ("%s.%s.npy" % (prefix, self.feat_type)))
                     for prefix in prefixes]
-        label_fns = [os.path.join(self.label_dir, "%s.%s" % (prefix, self.label_type))
+        label_fns = [str(self.label_dir / ("%s.%s" % (prefix, self.label_type)))
                       for prefix in prefixes]
         return feat_fns, label_fns
 
