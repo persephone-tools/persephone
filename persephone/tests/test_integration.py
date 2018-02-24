@@ -28,11 +28,11 @@ def set_up_base_testing_dir():
     if not os.path.isdir(DATA_BASE_DIR):
         os.makedirs(DATA_BASE_DIR)
 
-def remove_dir(path: Path):
+def rm_dir(path: Path):
 
     import shutil
-    if os.path.isdir(path):
-        shutil.rmtree(path)
+    if path.is_dir():
+        shutil.rmtree(str(path))
 
 def download_example_data(example_link):
     """
