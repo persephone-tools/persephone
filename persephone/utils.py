@@ -5,20 +5,21 @@ import subprocess
 from subprocess import PIPE
 from typing import List, Tuple
 
-from git import Repo
-import numpy as np
+from git import Repo # type: ignore
+import numpy as np # type: ignore
 from nltk.metrics import distance
 
 from . import config
 from .exceptions import DirtyRepoException
 
-def is_git_directory_clean(path_to_repo, search_parent_dirs=True):
+def is_git_directory_clean(path_to_repo: Path,
+                           search_parent_dirs: bool = True) -> None:
     """
     Check that the git working directory is in a clean state
     and raise exceptions if not.
     :path_to_repo: The path of the git repo
     """
-    repo = Repo(path_to_repo, search_parent_dirs)
+    repo = Repo(str(path_to_repo), search_parent_dirs)
     if repo.untracked_files:
         raise DirtyRepoException("Untracked files. Commit them first.")
     # If there are changes to already tracked files
