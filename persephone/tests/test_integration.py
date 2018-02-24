@@ -19,20 +19,20 @@ DATA_BASE_DIR = "testing/data/"
 # it should have a txt extension.
 TEST_PER_FN = "test/test_per" 
 
-def set_up_base_testing_dir(reset=True):
+def set_up_base_testing_dir():
     """ Creates a directory to store corpora and experimental directories used
     in testing. """
-
-    if reset:
-        # Remove old data
-        import shutil
-        if os.path.isdir(DATA_BASE_DIR):
-            shutil.rmtree(DATA_BASE_DIR)
 
     if not os.path.isdir(EXP_BASE_DIR):
         os.makedirs(EXP_BASE_DIR)
     if not os.path.isdir(DATA_BASE_DIR):
         os.makedirs(DATA_BASE_DIR)
+
+def remove_dir(path: Path):
+
+    import shutil
+    if os.path.isdir(path):
+        shutil.rmtree(path)
 
 def download_example_data(example_link):
     """
@@ -43,6 +43,7 @@ def download_example_data(example_link):
     # Prepare data and exp dirs
     set_up_base_testing_dir()
     zip_fn = join(DATA_BASE_DIR, "data.zip")
+    os.remove(zip_fn)
 
     # Fetch the zip archive
     import urllib.request
@@ -69,6 +70,7 @@ def test_tutorial():
     # 1024 utterance sample set.
     NA_EXAMPLE_LINK = "https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download"
     na_example_dir = join(DATA_BASE_DIR, "na_example/")
+    rm_dir(Path(na_example_dir))
 
     download_example_data(NA_EXAMPLE_LINK)
 
@@ -91,6 +93,7 @@ def test_fast():
     # 4 utterance toy set
     TINY_EXAMPLE_LINK = "https://cloudstor.aarnet.edu.au/plus/s/g2GreDNlDKUq9rz/download"
     tiny_example_dir = join(DATA_BASE_DIR, "tiny_example/")
+    rm_dir(Path(tiny_example_dir))
 
     download_example_data(TINY_EXAMPLE_LINK)
 
@@ -114,6 +117,7 @@ def test_full_na():
     download_example_data(NA_WAVS_LINK)
 
     na_dir = join(DATA_BASE_DIR, "na/")
+    os.rm_dir(na_dir)
     os.makedirs(na_dir)
     org_wav_dir = join(na_dir, "org_wav/")
     os.rename(join(DATA_BASE_DIR, "na_wav/"), org_wav_dir)
@@ -174,7 +178,7 @@ def test_na_preprocess():
     # just assumes it is there.
 
     # Prepare data and exp dirs
-    set_up_base_testing_dir(reset=False)
+    set_up_base_testing_dir()
     tgt_dir = Path(DATA_BASE_DIR) / "na"
     tgt_dir.mkdir(exist_ok=True)
 
