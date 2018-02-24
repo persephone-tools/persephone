@@ -36,35 +36,35 @@ design, development and documentation, along with any bug reports or
 pull requests you may have.
 
 Contributors
-^^^^^^^^^^^^
+============
 
-Persephone has been built based on the code contributions of: \* Oliver
-Adams \* `Janis
-Lesinskis <https://www.customprogrammingsolutions.com/>`__ \* Ben Foley
-\* Nay San
+Persephone has been built based on the code contributions of:
 
-If you use this code in a publication, please cite the `workshop
-paper <https://halshs.archives-ouvertes.fr/halshs-01656683/document>`__
-(which is currently being refined into a conference paper):
+* Oliver Adams
+* `Janis Lesinskis <https://www.customprogrammingsolutions.com/>`_
+* Ben Foley
+* Nay San
+
+If you use this code in a publication, please cite `Evaluating Phonemic
+Transcription of Low-Resource Tonal Languages for Language
+Documentation <https://halshs.archives-ouvertes.fr/halshs-01709648/document>`_:
 
 ::
 
-    @inproceedings{adams17alta,
-    title = {Phonemic transcription of low-resource tonal languages},
-    author = {Oliver Adams, Trevor Cohn, Graham Neubig, Alexis Michaud},
-    booktitle = {Australasian Language Technology Association Workshop 2017},
-    month = {December},
-    year = {2017}
+    @inproceedings{adams18evaluating,
+    title = {Evaluating phonemic transcription of low-resource tonal languages for language documentation},
+    author = {Adams, Oliver and Cohn, Trevor and Neubig, Graham and Cruz, Hilaria and Bird, Steven and Michaud, Alexis},
+    booktitle = {Proceedings of LREC 2018},
+    year = {2018}
     }
 
 Quickstart
-----------
+==========
 
 This guide is written to help you get the tool working on your machine.
 We will use a example setup that involves training a phoneme
-transcription tool for `Yongning
-Na <http://lacito.vjf.cnrs.fr/pangloss/languages/Na_en.php>`__. For this
-we use a small (even by language documentation standards) sub-sampling
+transcription tool for `Yongning Na <http://lacito.vjf.cnrs.fr/pangloss/languages/Na_en.php>`_.
+For this we use a small (even by language documentation standards) sub-sampling
 of elicited speech of Yongning Na, a language of Southwestern China.
 
 The example that we will run can be run on most personal computers
@@ -78,17 +78,17 @@ Windows using the Docker container described below.
 
 For now you must open up a terminal to enter commands at the command
 line. (The commands below are prefixed with a
-":math:`". Don't enter the "`", just whatever comes afterwards).
+``":math:`"``. Don't enter the ``"`"``, just whatever comes afterwards).
 
 1. Installation
-~~~~~~~~~~~~~~~
+---------------
 
 Installation option 1: Using the Docker container
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To simplify setup and system dependencies, a Docker container has been
 created. This just requires `Docker to be
-installed <https://docs.docker.com/install/>`__. Once you have installed
+installed <https://docs.docker.com/install/>`_. Once you have installed
 docker you can fetch our container with:
 
 ::
@@ -142,7 +142,7 @@ experiments:
     mkdir data
 
 Get the data
-`here <https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download>`__
+`here <https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download>`_
 
 Unzip ``na_example_small.zip``. There should now be a directory
 ``na_example/``, with subdirfectories ``wav/`` and ``label/``. You can
@@ -151,7 +151,7 @@ it is in the working directory:
 ``persephone-tutorial/data/na_example/``.
 
 2. Training a toy Na model
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 One way to conduct experiments is to run the code from the iPython
 interpreter. Back to the terminal:
@@ -198,7 +198,7 @@ transcription file with phonemes (or perhaps characters) delimited by
 spaces.
 
 3. Using your own data
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 If you have gotten this far, congratulations! You're now ready to start
 using your own data. The example setup we created with the Na data
@@ -207,7 +207,7 @@ formatted, and how you make the system read that data. In fact, if you
 format your data in the same way, you can create your own Persephone
 ``Corpus`` object with:
 
-::
+.. code:: python
 
     corp = corpus.ReadyCorpus("<your-corpus-directory>", label_type="extension")
 
@@ -303,7 +303,7 @@ of which utterances are in in each set, modify
 the available utterances in neither of these text files.
 
 4. Miscellaneous Considerations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------
 
 On choosing an appropriate label granularity
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -337,7 +337,7 @@ so its less likely to be good (though who knows, it might still yield
 performance improvements).
 
 5. Saving and loading models; transcribing untranscribed data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------------------------
 
 So far, the tutorial described how to load a ``Corpus`` object, and
 perform training and testing with a single function
@@ -367,7 +367,7 @@ as well as the size of the "batches" that are fed to the model during
 training. You create a CorpusReader by feeding it a corpus (here the
 example na\_corpus):
 
-::
+.. code:: python
 
     from persephone import corpus
     na_corpus = corpus.ReadyCorpus("data/na_example/")
@@ -378,7 +378,7 @@ Here, ``na_reader`` is an interface to the corpus which will read from
 the corpus files 512 training utterances, in batches of 16 utterances.
 We can now feed data to a ``Model``:
 
-::
+.. code:: python
 
     from persephone import rnn_ctc
     model = rnn_ctc.Model(exp_dir, na_reader, num_layers=2, hidden_size=250)
@@ -390,13 +390,13 @@ function) we have also specified what corpus to read from, how many
 layers there are in the neural network, and the amount of "neurons" in
 those layers. We can now train the model with:
 
-::
+.. code:: python
 
     model.train()
 
 After training, we can transcribe untranscribed data with:
 
-::
+.. code:: python
 
     model.transcribe()
 
@@ -412,7 +412,7 @@ to transcribe untranscribed data, you create a model with the same
 hyperparameters and call ``model.transcribe()`` with the
 ``restore_model_path`` keyword argument:
 
-::
+.. code:: python
 
     model = rnn_ctc.Model(<new-exp-dir>, na_reader, num_layers=2, hidden_size=250)
     model.transcribe(restore_model_path="<old-exp-dir>/model/model_best.ckpt")
