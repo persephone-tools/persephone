@@ -76,7 +76,7 @@ Windows using the Docker container described below.
 
 For now you must open up a terminal to enter commands at the command
 line. (The commands below are prefixed with a
-":math:`". Don't enter the "`", just whatever comes afterwards).
+``":math:`"``. Don't enter the ``"`"``, just whatever comes afterwards).
 
 1. Installation
 ---------------
