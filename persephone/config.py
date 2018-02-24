@@ -19,7 +19,7 @@ CORPORA_BASE_PATH = config_file.get("PATHS", "CORPORA_BASE_PATH",
                                     fallback="/lt/work/oadams/")
 
 # The directory of the original source corpora, un-preprocessed.
-NA_DIR = os.path.join(CORPORA_BASE_PATH, "Na")
+NA_DIR = config_file.get("PATHS", "NA_DIR", fallback=os.path.join(CORPORA_BASE_PATH, "Na"))
 # Personal corpora files
 KUNWINJKU_STEVEN_DIR = config_file.get("PATHS", "KUNWINJKU_STEVEN_PATH",
     fallback=os.path.join(CORPORA_BASE_PATH, "kunwinjku-steven/BKW_files_for_TAP"))
@@ -34,8 +34,9 @@ TGT_DIR = config_file.get("PATHS", "TARGET", fallback="./data")
 EXP_DIR = config_file.get("PATHS", "EXPERIMENTS", fallback="./exp")
 
 # The path to the sox tool; currently used for splitting WAVs, but we can
-# replace with pydub TODO
-SOX_PATH = config_file.get("PATHS", "SOX_BASE_PATH", fallback="/home/oadams/tools/sox-14.4.2/src/sox")
+# replace with pydub. Actually, the pydub approach is slow so now
+# wav.trim_wav_ms tries to use sox and then fallsback to pydub/ffmpeg
+SOX_PATH = config_file.get("PATHS", "SOX_PATH", fallback="sox")
 # FFMPEG is used for normalizing WAVs
 FFMPEG_PATH = config_file.get("PATHS", "FFMPEG_PATH", fallback="ffmpeg")
 # Kaldi is used for pitch extraction

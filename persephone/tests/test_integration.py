@@ -1,5 +1,6 @@
 import os
 from os.path import join
+from pathlib import Path
 import pytest
 import subprocess
 
@@ -22,6 +23,11 @@ def set_up_base_testing_dir():
     """ Creates a directory to store corpora and experimental directories used
     in testing. """
 
+    # Remove old data
+    import shutil
+    if os.path.isdir(DATA_BASE_DIR):
+        shutil.rmtree(DATA_BASE_DIR)
+
     if not os.path.isdir(EXP_BASE_DIR):
         os.makedirs(EXP_BASE_DIR)
     if not os.path.isdir(DATA_BASE_DIR):
@@ -32,11 +38,6 @@ def download_example_data(example_link):
     Clears DATA_BASE_DIR, collects the zip archive from example_link and unpacks it into
     DATA_BASE_DIR.
     """
-
-    # Remove old data
-    import shutil
-    if os.path.isdir(DATA_BASE_DIR):
-        shutil.rmtree(DATA_BASE_DIR)
 
     # Prepare data and exp dirs
     set_up_base_testing_dir()
@@ -166,7 +167,18 @@ def test_full_na():
 def test_na_preprocess():
     """ Tests that the construction of the na.Corpus object works."""
 
-    na_corpus = na.Corpus(feat_type="fbank", label_type="phonemes")
+    # Prepare data and exp dirs
+    set_up_base_testing_dir()
+    tgt_dir = Path(DATA_BASE_DIR) / "na"
+    tgt_dir.mkdir()
+
+    from shutil import copyfile
+    copyfile("persephone/tests/test_sets/valid_prefixes.txt",
+             str(tgt_dir / "valid_prefixes.txt"))
+    copyfile("persephone/tests/test_sets/test_prefixes.txt",
+             str(tgt_dir / "test_prefixes.txt"))
+
+    na_corpus = na.Corpus(feat_type="fbank", label_type="phonemes", tgt_dir=tgt_dir)
     print(na_corpus)
 
 # Other tests:

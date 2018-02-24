@@ -30,5 +30,6 @@ setup(name='persephone',
            'pylint==1.8.2',
            'mypy==0.560',
            'pydub==0.20.0',
+           'pint==0.8.1',
       ],
 )

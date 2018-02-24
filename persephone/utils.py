@@ -106,16 +106,6 @@ def get_prefixes(dirname, extension):
                 prefixes.append(os.path.join(root, filename.split(".")[0]))
     return sorted(prefixes)
 
-def trim_wav(in_fn, out_fn, start_time, end_time):
-    """ Crops the wav file at in_fn so that the audio between start_time and
-    end_time is output to out_fn. Measured in seconds.
-    """
-
-    if not os.path.isfile(out_fn):
-        args = [config.SOX_PATH, in_fn, out_fn, "trim", str(start_time), "=" + str(end_time)]
-        print(args[1:])
-        subprocess.run(args)
-
 def get_prefix_lens(feat_dir: Path, prefixes: List[str],
                     feat_type: str) -> List[Tuple[str,int]]:
     prefix_lens = []
@@ -134,7 +124,7 @@ def filter_by_size(feat_dir, prefixes, feat_type, max_samples):
     """
 
     # TODO Tell the user what utterances we are removing.
-    prefix_lens = get_prefix_lens(feat_dir, prefixes, feat_type)
+    prefix_lens = get_prefix_lens(Path(feat_dir), prefixes, feat_type)
     prefixes = [prefix for prefix, length in prefix_lens
                 if length <= max_samples]
     return prefixes

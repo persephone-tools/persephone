@@ -69,6 +69,18 @@ class Corpus:
     def get_label_dir(self):
         return self.tgt_dir / "label"
 
+    @property
+    def train_prefix_fn(self):
+        return join(str(self.tgt_dir), "train_prefixes.txt")
+
+    @property
+    def valid_prefix_fn(self):
+        return join(str(self.tgt_dir), "valid_prefixes.txt")
+
+    @property
+    def test_prefix_fn(self):
+        return join(str(self.tgt_dir), "test_prefixes.txt")
+
     def set_and_check_directories(self, tgt_dir):
 
         # Set the directory names
@@ -125,11 +137,6 @@ class Corpus:
 
     def make_data_splits(self, max_samples):
         """ Splits the utterances into training, validation and test sets."""
-
-        # TODO Change this to being paths everywhere
-        train_prefix_fn = join(str(self.tgt_dir), "train_prefixes.txt")
-        valid_prefix_fn = join(str(self.tgt_dir), "valid_prefixes.txt")
-        test_prefix_fn = join(str(self.tgt_dir), "test_prefixes.txt")
 
         train_f_exists = os.path.isfile(train_prefix_fn)
         valid_f_exists = os.path.isfile(valid_prefix_fn)
