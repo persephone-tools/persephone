@@ -24,6 +24,10 @@ def trim_wav_ms(in_path: Path, out_path: Path,
 def trim_wav_pydub(in_path: Path, out_path: Path,
                 start_time: int, end_time: int) -> None:
     """ Crops the wav file. """
+
+    if out_path.is_file():
+        return
+
     # TODO add logging here
     #print("in_fn: {}".format(in_fn))
     #print("out_fn: {}".format(out_fn))
@@ -44,14 +48,17 @@ def trim_wav_sox(in_path: Path, out_path: Path,
     """ Crops the wav file at in_fn so that the audio between start_time and
     end_time is output to out_fn. Measured in milliseconds.
     """
+
+    if out_path.is_file():
+        return
+
     start_time = millisecs_to_secs(start_time)
     end_time = millisecs_to_secs(end_time)
-    if not out_path.is_file():
-        args = [config.SOX_PATH, str(in_path), str(out_path),
-                "trim", str(start_time), "=" + str(end_time)]
-        # TODO Use logging here
-        print(args[1:])
-        subprocess.run(args)
+    args = [config.SOX_PATH, str(in_path), str(out_path),
+            "trim", str(start_time), "=" + str(end_time)]
+    # TODO Use logging here
+    print(args[1:])
+    subprocess.run(args)
 
 def extract_wavs(utterances: List[Utterance], tgt_dir: Path) -> None:
     """

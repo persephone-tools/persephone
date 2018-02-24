@@ -19,14 +19,15 @@ DATA_BASE_DIR = "testing/data/"
 # it should have a txt extension.
 TEST_PER_FN = "test/test_per" 
 
-def set_up_base_testing_dir():
+def set_up_base_testing_dir(reset=True):
     """ Creates a directory to store corpora and experimental directories used
     in testing. """
 
-    # Remove old data
-    import shutil
-    if os.path.isdir(DATA_BASE_DIR):
-        shutil.rmtree(DATA_BASE_DIR)
+    if reset:
+        # Remove old data
+        import shutil
+        if os.path.isdir(DATA_BASE_DIR):
+            shutil.rmtree(DATA_BASE_DIR)
 
     if not os.path.isdir(EXP_BASE_DIR):
         os.makedirs(EXP_BASE_DIR)
@@ -168,9 +169,9 @@ def test_na_preprocess():
     """ Tests that the construction of the na.Corpus object works."""
 
     # Prepare data and exp dirs
-    set_up_base_testing_dir()
+    set_up_base_testing_dir(reset=False)
     tgt_dir = Path(DATA_BASE_DIR) / "na"
-    tgt_dir.mkdir()
+    tgt_dir.mkdir(exist_ok=True)
 
     from shutil import copyfile
     copyfile("persephone/tests/test_sets/valid_prefixes.txt",
@@ -180,6 +181,7 @@ def test_na_preprocess():
 
     na_corpus = na.Corpus(feat_type="fbank", label_type="phonemes", tgt_dir=tgt_dir)
     print(na_corpus)
+    import pdb; pdb.set_trace()
 
 # Other tests:
     # TODO assert the contents of the prefix files

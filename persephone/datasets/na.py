@@ -304,8 +304,7 @@ def prepare_labels(label_type, org_xml_dir=ORG_XML_DIR, label_dir=LABEL_DIR):
     if not os.path.exists(os.path.join(label_dir, "WORDLIST")):
         os.makedirs(os.path.join(label_dir, "WORDLIST"))
 
-    for path in Path(org_xml_dir).glob("**/F4/*.xml"):
-        print(path)
+    for path in Path(org_xml_dir).glob("*.xml"):
         fn = path.name
         prefix, _ = os.path.splitext(fn)
 
@@ -514,8 +513,8 @@ class Corpus(corpus.Corpus):
                  tgt_dir=Path(TGT_DIR)):
 
         self.tgt_dir = tgt_dir
-        self.get_wav_dir().mkdir()
-        self.get_label_dir().mkdir()
+        self.get_wav_dir().mkdir(parents=True, exist_ok=True)
+        self.get_label_dir().mkdir(exist_ok=True)
 
         self.valid_story = valid_story
         self.test_story = test_story
@@ -567,9 +566,6 @@ class Corpus(corpus.Corpus):
         self.train_prefixes = train
         self.valid_prefixes = valid
         self.test_prefixes = test
-        self.write_prefixes(self.train_prefixes, self.train_prefix_fn)
-        self.write_prefixes(self.valid_prefixes, self.valid_prefix_fn)
-        self.write_prefixes(self.test_prefixes, self.test_prefix_fn)
 
     def output_story_prefixes(self):
         """ Writes the set of prefixes to a file this is useful for pretty

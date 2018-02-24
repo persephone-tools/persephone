@@ -51,6 +51,7 @@ def segment_into_tokens(utterance: str, token_inventory: Iterable[str]):
             if utterance[:i] in token_inventory:
                 return utterance[:i], utterance[i:]
         # If the next character is preventing segmentation, move on.
+        # TODO This needs to be logged with a warning on the first occurrence.
         return "", utterance[1:]
 
     tokens = []
