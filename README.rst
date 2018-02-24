@@ -205,7 +205,7 @@ formatted, and how you make the system read that data. In fact, if you
 format your data in the same way, you can create your own Persephone
 ``Corpus`` object with:
 
-::
+.. code:: python
 
     corp = corpus.ReadyCorpus("<your-corpus-directory>", label_type="extension")
 
@@ -365,7 +365,7 @@ as well as the size of the "batches" that are fed to the model during
 training. You create a CorpusReader by feeding it a corpus (here the
 example na\_corpus):
 
-::
+.. code:: python
 
     from persephone import corpus
     na_corpus = corpus.ReadyCorpus("data/na_example/")
@@ -376,7 +376,7 @@ Here, ``na_reader`` is an interface to the corpus which will read from
 the corpus files 512 training utterances, in batches of 16 utterances.
 We can now feed data to a ``Model``:
 
-::
+.. code:: python
 
     from persephone import rnn_ctc
     model = rnn_ctc.Model(exp_dir, na_reader, num_layers=2, hidden_size=250)
@@ -388,13 +388,13 @@ function) we have also specified what corpus to read from, how many
 layers there are in the neural network, and the amount of "neurons" in
 those layers. We can now train the model with:
 
-::
+.. code:: python
 
     model.train()
 
 After training, we can transcribe untranscribed data with:
 
-::
+.. code:: python
 
     model.transcribe()
 
@@ -410,7 +410,7 @@ to transcribe untranscribed data, you create a model with the same
 hyperparameters and call ``model.transcribe()`` with the
 ``restore_model_path`` keyword argument:
 
-::
+.. code:: python
 
     model = rnn_ctc.Model(<new-exp-dir>, na_reader, num_layers=2, hidden_size=250)
     model.transcribe(restore_model_path="<old-exp-dir>/model/model_best.ckpt")
