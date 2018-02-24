@@ -168,6 +168,11 @@ def test_full_na():
 def test_na_preprocess():
     """ Tests that the construction of the na.Corpus object works."""
 
+    # TODO Only test_tutorial really needs to actually pull the data each time.
+    # The other tests, including this one, can check if the data is already in
+    # the (normal) data dir and only pull it if needed. Currently this test
+    # just assumes it is there.
+
     # Prepare data and exp dirs
     set_up_base_testing_dir(reset=False)
     tgt_dir = Path(DATA_BASE_DIR) / "na"
@@ -180,8 +185,9 @@ def test_na_preprocess():
              str(tgt_dir / "test_prefixes.txt"))
 
     na_corpus = na.Corpus(feat_type="fbank", label_type="phonemes", tgt_dir=tgt_dir)
-    print(na_corpus)
-    import pdb; pdb.set_trace()
+    assert len(na_corpus.get_train_fns()[0]) == 3092
+    assert len(na_corpus.get_valid_fns()[0]) == 294
+    assert len(na_corpus.get_test_fns()[0]) == 293
 
 # Other tests:
     # TODO assert the contents of the prefix files

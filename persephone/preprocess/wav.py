@@ -9,7 +9,7 @@ from pydub import AudioSegment # type: ignore
 from .. import config
 from ..utterance import Utterance
 
-def millisecs_to_secs(millisecs: int) -> int:
+def millisecs_to_secs(millisecs: int) -> float:
     return millisecs / 1000
 
 def trim_wav_ms(in_path: Path, out_path: Path,
@@ -52,10 +52,10 @@ def trim_wav_sox(in_path: Path, out_path: Path,
     if out_path.is_file():
         return
 
-    start_time = millisecs_to_secs(start_time)
-    end_time = millisecs_to_secs(end_time)
+    start_time_secs = millisecs_to_secs(start_time)
+    end_time_secs = millisecs_to_secs(end_time)
     args = [config.SOX_PATH, str(in_path), str(out_path),
-            "trim", str(start_time), "=" + str(end_time)]
+            "trim", str(start_time_secs), "=" + str(end_time_secs)]
     # TODO Use logging here
     print(args[1:])
     subprocess.run(args)

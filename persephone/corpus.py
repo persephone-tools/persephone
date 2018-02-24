@@ -138,14 +138,14 @@ class Corpus:
     def make_data_splits(self, max_samples):
         """ Splits the utterances into training, validation and test sets."""
 
-        train_f_exists = os.path.isfile(train_prefix_fn)
-        valid_f_exists = os.path.isfile(valid_prefix_fn)
-        test_f_exists = os.path.isfile(test_prefix_fn)
+        train_f_exists = os.path.isfile(self.train_prefix_fn)
+        valid_f_exists = os.path.isfile(self.valid_prefix_fn)
+        test_f_exists = os.path.isfile(self.test_prefix_fn)
 
         if train_f_exists and valid_f_exists and test_f_exists:
-            self.train_prefixes = self.read_prefixes(train_prefix_fn)
-            self.valid_prefixes = self.read_prefixes(valid_prefix_fn)
-            self.test_prefixes = self.read_prefixes(test_prefix_fn)
+            self.train_prefixes = self.read_prefixes(self.train_prefix_fn)
+            self.valid_prefixes = self.read_prefixes(self.valid_prefix_fn)
+            self.test_prefixes = self.read_prefixes(self.test_prefix_fn)
             return
 
         # Otherwise we now need to load prefixes for other cases addressed
@@ -159,24 +159,24 @@ class Corpus:
             self.train_prefixes = train_prefixes
             self.valid_prefixes = valid_prefixes
             self.test_prefixes = test_prefixes
-            self.write_prefixes(train_prefixes, train_prefix_fn)
-            self.write_prefixes(valid_prefixes, valid_prefix_fn)
-            self.write_prefixes(test_prefixes, test_prefix_fn)
+            self.write_prefixes(train_prefixes, self.train_prefix_fn)
+            self.write_prefixes(valid_prefixes, self.valid_prefix_fn)
+            self.write_prefixes(test_prefixes, self.test_prefix_fn)
         elif not train_f_exists and valid_f_exists and test_f_exists:
             # Then we just make all other prefixes training prefixes.
-            self.valid_prefixes = self.read_prefixes(valid_prefix_fn)
-            self.test_prefixes = self.read_prefixes(test_prefix_fn)
+            self.valid_prefixes = self.read_prefixes(self.valid_prefix_fn)
+            self.test_prefixes = self.read_prefixes(self.test_prefix_fn)
             train_prefixes = list(
                 set(prefixes) - set(self.valid_prefixes))
             self.train_prefixes = list(
                 set(train_prefixes) - set(self.test_prefixes))
-            self.write_prefixes(prefixes, train_prefix_fn)
+            self.write_prefixes(prefixes, self.train_prefix_fn)
         else:
             raise NotImplementedError(
                 "The following case has not been implemented:" + 
-                "{} exists - {}\n".format(train_prefix_fn, train_f_exists) +
-                "{} exists - {}\n".format(valid_prefix_fn, valid_f_exists) +
-                "{} exists - {}\n".format(test_prefix_fn, test_f_exists))
+                "{} exists - {}\n".format(self.train_prefix_fn, train_f_exists) +
+                "{} exists - {}\n".format(self.valid_prefix_fn, valid_f_exists) +
+                "{} exists - {}\n".format(self.test_prefix_fn, test_f_exists))
 
     @staticmethod
     def read_prefixes(prefix_fn):
@@ -281,15 +281,15 @@ class Corpus:
         return feat_fns
 
     def determine_prefixes(self):
-        label_fns = [fn for fn in os.listdir(str(self.label_dir))
-               if fn.endswith(self.label_type)]
-        label_prefixes = set([os.path.splitext(fn)[0] for fn in label_fns])
-        wav_fns = [fn for fn in os.listdir(str(self.wav_dir))
-               if fn.endswith(".wav")]
-        wav_prefixes = set([os.path.splitext(fn)[0] for fn in wav_fns])
+        label_prefixes = [path.relative_to(self.label_dir).with_suffix("")
+                          for path in 
+                          self.label_dir.glob("**/*.{}".format(self.label_type))]
+        wav_prefixes = [path.relative_to(self.wav_dir).with_suffix("")
+                          for path in 
+                          self.wav_dir.glob("**/*.{}".format("wav"))]
 
         # Take the intersection
-        prefixes = list(label_prefixes & wav_prefixes)
+        prefixes = list(set(label_prefixes) & set(wav_prefixes))
 
         if prefixes == []:
             raise PersephoneException("""WARNING: Corpus object has no data. Are you sure

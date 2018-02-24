@@ -7,7 +7,7 @@ import subprocess
 from subprocess import PIPE
 
 import numpy as np
-import pint
+import pint # type: ignore
 import xml.etree.ElementTree as ET
 
 from .. import config
@@ -350,7 +350,11 @@ def prepare_untran(feat_type="fbank_and_pitch"):
         length = utils.wav_length(in_fn)
         while True:
             out_fn = os.path.join(feat_dir, "%s.%d.wav" % (prefix, split_id))
-            utils.trim_wav(in_fn, out_fn, start, end)
+            start_time = start * ureg.seconds
+            end_time = end * ureg.seconds
+            wav.trim_wav_ms(Path(in_fn), Path(out_fn),
+                            start_time.to(ureg.milliseconds).magnitude,
+                            end_time.to(ureg.milliseconds).magnitude)
             if end > length:
                 break
             start += 10
@@ -513,8 +517,8 @@ class Corpus(corpus.Corpus):
                  tgt_dir=Path(TGT_DIR)):
 
         self.tgt_dir = tgt_dir
-        self.get_wav_dir().mkdir(parents=True, exist_ok=True)
-        self.get_label_dir().mkdir(exist_ok=True)
+        self.get_wav_dir().mkdir(parents=True, exist_ok=True) # pylint: disable=no-member
+        self.get_label_dir().mkdir(exist_ok=True) # pylint: disable=no-member
 
         self.valid_story = valid_story
         self.test_story = test_story
