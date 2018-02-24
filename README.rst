@@ -36,7 +36,7 @@ design, development and documentation, along with any bug reports or
 pull requests you may have.
 
 Contributors
-^^^^^^^^^^^^
+============
 
 Persephone has been built based on the code contributions of: \* Oliver
 Adams \* `Janis
