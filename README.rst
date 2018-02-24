@@ -38,10 +38,12 @@ pull requests you may have.
 Contributors
 ============
 
-Persephone has been built based on the code contributions of: \* Oliver
-Adams \* `Janis
-Lesinskis <https://www.customprogrammingsolutions.com/>`_ \* Ben Foley
-\* Nay San
+Persephone has been built based on the code contributions of:
+
+* Oliver Adams
+* `Janis Lesinskis <https://www.customprogrammingsolutions.com/>`_
+* Ben Foley
+* Nay San
 
 If you use this code in a publication, please cite `Evaluating Phonemic
 Transcription of Low-Resource Tonal Languages for Language
