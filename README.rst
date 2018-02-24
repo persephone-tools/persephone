@@ -57,7 +57,7 @@ Documentation <https://halshs.archives-ouvertes.fr/halshs-01709648/document>`__:
     }
 
 Quickstart
-----------
+==========
 
 This guide is written to help you get the tool working on your machine.
 We will use a example setup that involves training a phoneme
@@ -80,7 +80,7 @@ line. (The commands below are prefixed with a
 ":math:`". Don't enter the "`", just whatever comes afterwards).
 
 1. Installation
-~~~~~~~~~~~~~~~
+---------------
 
 Installation option 1: Using the Docker container
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -150,7 +150,7 @@ it is in the working directory:
 ``persephone-tutorial/data/na_example/``.
 
 2. Training a toy Na model
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 One way to conduct experiments is to run the code from the iPython
 interpreter. Back to the terminal:
@@ -197,7 +197,7 @@ transcription file with phonemes (or perhaps characters) delimited by
 spaces.
 
 3. Using your own data
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 If you have gotten this far, congratulations! You're now ready to start
 using your own data. The example setup we created with the Na data
@@ -302,7 +302,7 @@ of which utterances are in in each set, modify
 the available utterances in neither of these text files.
 
 4. Miscellaneous Considerations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------
 
 On choosing an appropriate label granularity
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -336,7 +336,7 @@ so its less likely to be good (though who knows, it might still yield
 performance improvements).
 
 5. Saving and loading models; transcribing untranscribed data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------------------------------
 
 So far, the tutorial described how to load a ``Corpus`` object, and
 perform training and testing with a single function
