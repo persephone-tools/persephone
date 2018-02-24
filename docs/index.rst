@@ -11,6 +11,9 @@ Welcome to persephone's documentation!
    :caption: Contents:
 
 .. autofunction:: persephone.utterance.write_utters
+.. autoclass:: persephone.corpus.Corpus
+.. autoclass:: persephone.utterance.Utterance
+.. autofunction:: persephone.utterance.Utterance
 
 
 Indices and tables

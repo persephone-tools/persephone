@@ -17,8 +17,7 @@ from . import utils
 from .exceptions import PersephoneException
 
 class Corpus:
-    """
-    All interfaces to corpora are subclasses of this class. A corpus assumes
+    """ All interfaces to corpora are subclasses of this class. A corpus assumes
     that WAV files are already segmented and in the tgt_dir/wav, and that
     labels are in tgt_dir/label. If additional preprocessing is required,
     then subclass Corpus, do what you need to do in __init__(), and then call
@@ -37,6 +36,8 @@ class Corpus:
                          test utterance. Used to save memory in exchange for
                          reducing the number of effective training examples.
         """
+
+        #: The feat type obv
         self.feat_type = feat_type
         self.label_type = label_type
 
