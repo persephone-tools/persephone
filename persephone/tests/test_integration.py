@@ -43,7 +43,8 @@ def download_example_data(example_link):
     # Prepare data and exp dirs
     set_up_base_testing_dir()
     zip_fn = join(DATA_BASE_DIR, "data.zip")
-    os.remove(zip_fn)
+    if os.path.exists(zip_fn):
+        os.remove(zip_fn)
 
     # Fetch the zip archive
     import urllib.request
