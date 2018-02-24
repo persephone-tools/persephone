@@ -40,12 +40,12 @@ Contributors
 
 Persephone has been built based on the code contributions of: \* Oliver
 Adams \* `Janis
-Lesinskis <https://www.customprogrammingsolutions.com/>`__ \* Ben Foley
+Lesinskis <https://www.customprogrammingsolutions.com/>`_ \* Ben Foley
 \* Nay San
 
 If you use this code in a publication, please cite `Evaluating Phonemic
 Transcription of Low-Resource Tonal Languages for Language
-Documentation <https://halshs.archives-ouvertes.fr/halshs-01709648/document>`__:
+Documentation <https://halshs.archives-ouvertes.fr/halshs-01709648/document>`_:
 
 ::
 
@@ -61,9 +61,8 @@ Quickstart
 
 This guide is written to help you get the tool working on your machine.
 We will use a example setup that involves training a phoneme
-transcription tool for `Yongning
-Na <http://lacito.vjf.cnrs.fr/pangloss/languages/Na_en.php>`__. For this
-we use a small (even by language documentation standards) sub-sampling
+transcription tool for `Yongning Na <http://lacito.vjf.cnrs.fr/pangloss/languages/Na_en.php>`_.
+For this we use a small (even by language documentation standards) sub-sampling
 of elicited speech of Yongning Na, a language of Southwestern China.
 
 The example that we will run can be run on most personal computers
@@ -87,7 +86,7 @@ Installation option 1: Using the Docker container
 
 To simplify setup and system dependencies, a Docker container has been
 created. This just requires `Docker to be
-installed <https://docs.docker.com/install/>`__. Once you have installed
+installed <https://docs.docker.com/install/>`_. Once you have installed
 docker you can fetch our container with:
 
 ::
@@ -141,7 +140,7 @@ experiments:
     mkdir data
 
 Get the data
-`here <https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download>`__
+`here <https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download>`_
 
 Unzip ``na_example_small.zip``. There should now be a directory
 ``na_example/``, with subdirfectories ``wav/`` and ``label/``. You can
