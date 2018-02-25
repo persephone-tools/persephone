@@ -4,6 +4,7 @@ subclass.
 """
 
 from collections import namedtuple
+import logging
 import os
 from pathlib import Path
 from os.path import join
@@ -12,9 +13,12 @@ import subprocess
 
 import numpy as np
 
+from . import config
 from .preprocess import feat_extract
 from . import utils
 from .exceptions import PersephoneException
+
+logging.config.fileConfig(config.LOGGING_INI_PATH)
 
 class Corpus:
     """ All interfaces to corpora are subclasses of this class. A corpus assumes
@@ -46,6 +50,7 @@ class Corpus:
 
         # Label-related stuff
         self.initialize_labels(labels)
+        logging.info("Corpus label set: \n\t{}".format(labels))
 
         # This is a lazy function that assumes wavs are already in the WAV dir
         # but only creates features if necessary

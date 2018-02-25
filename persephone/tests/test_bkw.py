@@ -6,12 +6,18 @@ import subprocess
 import pytest
 
 from persephone import config
+from persephone.datasets import bkw
 
 @pytest.mark.notravis
 class TestBKW:
 
+    tgt_dir = Path(config.TEST_TGT_DATA_ROOT) / "bkw"
+    NUM_UTTERS = 1250
+
     @pytest.fixture(scope="class")
-    def prepare_bkw_data(self):
+    def prep_org_data(self):
+        """ Ensure the un-preprocessed data is available. """
+
         # Ensure the BKW data is all there
         bkw_path = Path(config.BKW_PATH)
         if not bkw_path.is_dir():
@@ -28,9 +34,26 @@ class TestBKW:
                             ENGLISH_WORDS_URL, str(en_words_path.parent)])
         assert en_words_path.is_file()
 
-        return en_words_path
+    @pytest.fixture
+    def clean_tgt_dir(self):
+        """ Clears the target testing directory. """
 
+        if self.tgt_dir.is_dir():
+            import shutil
+            shutil.rmtree(str(self.tgt_dir))
 
-    def test_en_words(self, prepare_bkw_data):
-        with prepare_bkw_data.open() as f:
-            print(f.read())
+        assert not self.tgt_dir.is_dir()
+
+    @pytest.mark.slow
+    def test_bkw_preprocess(self, prep_org_data, clean_tgt_dir):
+
+        corp = bkw.Corpus(tgt_dir=self.tgt_dir)
+
+        assert len(corp.determine_prefixes()) == self.NUM_UTTERS
+        assert (tgt_dir / "wav").is_dir()
+        assert len(list(corp.wav_dir.iterdir())) == self.NUM_UTTERS
+
+    def test_bkw_after_preprocessing(self):
+
+        corp = bkw.Corpus(tgt_dir=self.tgt_dir)
+        assert len(corp.determine_prefixes()) == self.NUM_UTTERS

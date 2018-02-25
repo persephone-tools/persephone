@@ -10,7 +10,7 @@ EXPERIMENTS = /path/to/experiment/output
 """
 import configparser
 import os
-
+from pathlib import Path
 
 config_file = configparser.ConfigParser()
 config_file.read('settings.ini')
@@ -42,3 +42,8 @@ FFMPEG_PATH = config_file.get("PATHS", "FFMPEG_PATH", fallback="ffmpeg")
 KALDI_ROOT = config_file.get("PATHS", "KALDI_ROOT_PATH", fallback="/home/oadams/tools/kaldi")
 # Used for lattice output
 OPENFST_BIN_PATH = config_file.get("PATHS", "OPEN_FST_BIN_PATH", fallback="/home/oadams/tools/openfst-1.6.2/src/bin")
+
+TEST_TGT_DATA_ROOT = config_file.get("PATHS", "TEST_TGT_DATA_ROOT",
+                                      fallback="./testing/data/")
+
+LOGGING_INI_PATH = config_file.get("PATHS", "log_ini_path", fallback="./logging.ini")

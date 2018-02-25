@@ -1,5 +1,6 @@
 """ Provide functions for preprocessing the WAV files. """
 
+import logging
 from pathlib import Path
 import subprocess
 from typing import List
@@ -19,11 +20,22 @@ def trim_wav_ms(in_path: Path, out_path: Path,
     try:
         trim_wav_sox(in_path, out_path, start_time, end_time)
     except FileNotFoundError:
+        # Then sox isn't installed, so use pydub/ffmpeg
+        trim_wav_pydub(in_path, out_path, start_time, end_time)
+    except subprocess.CalledProcessError:
+        # Then there is an issue calling sox. Perhaps the input file is an mp4
+        # or some other filetype not supported out-of-the-box by sox. So we try
+        # using pydub/ffmpeg.
         trim_wav_pydub(in_path, out_path, start_time, end_time)
 
 def trim_wav_pydub(in_path: Path, out_path: Path,
                 start_time: int, end_time: int) -> None:
     """ Crops the wav file. """
+
+    logging.info(
+        "Using pydub/ffmpeg to create {} from {}".format(in_path, out_path) + 
+        " using a start_time of {} and an end_time of {}".format(start_time,
+                                                                 end_time))
 
     if out_path.is_file():
         return
@@ -58,7 +70,7 @@ def trim_wav_sox(in_path: Path, out_path: Path,
             "trim", str(start_time_secs), "=" + str(end_time_secs)]
     # TODO Use logging here
     print(args[1:])
-    subprocess.run(args)
+    subprocess.run(args, check=True)
 
 def extract_wavs(utterances: List[Utterance], tgt_dir: Path) -> None:
     """
