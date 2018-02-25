@@ -1,7 +1,8 @@
 """ Provides a Corpus class that can read ELAN .eaf XML files. """
 
+import logging
 from pathlib import Path
-from typing import List, Union, Dict, Tuple, Callable
+from typing import List, Union, Dict, Tuple, Callable, Set
 
 import pympi.Elan
 
@@ -108,8 +109,9 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> List[Uttera
 def utterances_from_dir(eaf_dir: Path, tier_prefixes: List[str]) -> List[Utterance]:
     """ Returns the utterances found in a directory. """
 
-    print(eaf_dir)
-    print(tier_prefixes)
+    logging.info(
+        "EAF from directory: {}, searching with tier_prefixes {}".format(
+            eaf_dir, tier_prefixes))
 
     utterances = []
     for eaf_path in eaf_dir.glob("**/*.eaf"):
@@ -180,15 +182,12 @@ class Corpus(corpus.Corpus):
             # Read utterances from org_dir.
             utterances = utterances_from_dir(org_dir,
                                              tier_prefixes=["xv", "rf"])
-            print(len(utterances))
 
             # Filter utterances based on some criteria (such as codeswitching).
             utterances = [utter for utter in utterances if utterance_filter(utter)]
-            print(len(utterances))
 
             # Segment the labels in the utterances appropriately
             utterances = [label_segmenter.segment_labels(utter) for utter in utterances]
-            print(len(utterances))
 
             # Writes the utterances to the tgt_dir/label/ dir
             write_utters(utterances, self.get_label_dir(), label_type)

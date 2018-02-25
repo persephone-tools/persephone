@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Set, Tuple
 
 Utterance = NamedTuple("Utterance", [("media_path", Path),
                                      ("org_transcription_path", Path),
@@ -35,3 +35,21 @@ def write_utters(utterances: List[Utterance],
         out_path = tgt_dir / "{}.{}".format(utter.prefix, ext)
         with out_path.open("w") as f:
             print(utter.text, file=f)
+
+def remove_duplicates(utterances: List[Utterance]) -> List[Utterance]:
+    """ Removes utterances with the same start_time, end_time and text. Other
+    metadata isn't considered.
+    """
+
+    filtered_utters = []
+    utter_set = set() # type: Set[Tuple[int, int, str]]
+    for utter in utterances:
+        if (utter.start_time, utter.end_time, utter.text) in utter_set:
+            continue
+        filtered_utters.append(utter)
+        utter_set.add((utter.start_time, utter.end_time, utter.text))
+
+    return filtered_utters
+
+def remove_empty(utterances: List[Utterance]) -> List[Utterance]:
+    return [utter for utter in utterances if utter.text.strip() != ""]

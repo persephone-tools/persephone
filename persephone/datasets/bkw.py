@@ -10,6 +10,8 @@ import sys
 from typing import List, NamedTuple, Set
 
 import nltk # type: ignore
+# TODO This download should be conditional, since a complaint is raised if
+# there is no net connection
 nltk.download("punkt") # type: ignore
 from pympi.Elan import Eaf
 
