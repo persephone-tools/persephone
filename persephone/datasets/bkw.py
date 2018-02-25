@@ -1,4 +1,4 @@
-""" Interface to Steven's Kunwinjku data. """
+""" Interface to Alex/Steven's Kunwinjku data. """
 
 import glob
 import os
@@ -133,7 +133,7 @@ def bkw_filter(utter: Utterance) -> bool:
     return filter_for_not_codeswitched(utter) and filter_for_not_empty(utter)
 
 class Corpus(elan.Corpus):
-    def __init__(self, org_dir: Path = Path(config.KUNWINJKU_STEVEN_DIR),
+    def __init__(self, org_dir: Path = Path(config.BKW_PATH),
                  tgt_dir: Path = Path(config.TGT_DIR, "BKW"),
                  feat_type: str = "fbank", label_type: str = "phonemes") -> None:
 
