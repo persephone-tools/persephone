@@ -69,7 +69,6 @@ def trim_wav_sox(in_path: Path, out_path: Path,
     args = [config.SOX_PATH, str(in_path), str(out_path),
             "trim", str(start_time_secs), "=" + str(end_time_secs)]
     # TODO Use logging here
-    print(args[1:])
     subprocess.run(args, check=True)
 
 def extract_wavs(utterances: List[Utterance], tgt_dir: Path) -> None:
