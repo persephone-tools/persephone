@@ -7,6 +7,7 @@ from typing import List, Union, Dict, Tuple, Callable, Set
 import pympi.Elan
 
 from .. import corpus
+from .. import utterance
 from ..utterance import Utterance
 from ..utterance import write_utters
 from ..preprocess.wav import extract_wavs
@@ -185,6 +186,9 @@ class Corpus(corpus.Corpus):
 
             # Filter utterances based on some criteria (such as codeswitching).
             utterances = [utter for utter in utterances if utterance_filter(utter)]
+            utterances = utterance.remove_duplicates(utterances)
+            utterances = utterance.remove_empty(utterances)
+            print("Len utterances {}".format(len(utterances)))
 
             # Segment the labels in the utterances appropriately
             utterances = [label_segmenter.segment_labels(utter) for utter in utterances]
