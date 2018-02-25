@@ -5,6 +5,7 @@ import os
 from os.path import join
 from pathlib import Path
 import string
+import subprocess
 import sys
 from typing import List, NamedTuple, Set
 
@@ -28,11 +29,22 @@ DOUBLE_STOPS = set(["bb", "dd", "djdj", "rdd", "kk"])
 DIPHTHONGS = set(["ay", "aw", "ey", "ew", "iw", "oy", "ow", "uy"])
 PHONEMES = BASIC_PHONEMES | DOUBLE_STOPS | DIPHTHONGS
 
+def pull_en_words() -> None:
+    """ Fetches a repository containing English words. """
+
+    ENGLISH_WORDS_URL = "https://github.com/dwyl/english-words.git"
+    en_words_path = Path(config.EN_WORDS_PATH)
+    if not en_words_path.is_file():
+        subprocess.run(["git", "clone",
+                        ENGLISH_WORDS_URL, str(en_words_path.parent)])
+
 def get_en_words() -> Set[str]:
     """
     Returns a list of English words which can be used to filter out
     code-switched sentences.
     """
+
+    pull_en_words()
 
     with open(config.EN_WORDS_PATH) as words_f:
         raw_words = words_f.readlines()

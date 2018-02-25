@@ -27,11 +27,6 @@ class TestBKW:
         assert bkw_path.is_dir()
 
         # Ensure english-words/words.txt is there.
-        ENGLISH_WORDS_URL = "https://github.com/dwyl/english-words.git"
-        en_words_path = Path(config.EN_WORDS_PATH)
-        if not en_words_path.is_file():
-            subprocess.run(["git", "clone",
-                            ENGLISH_WORDS_URL, str(en_words_path.parent)])
         assert en_words_path.is_file()
 
     @pytest.fixture
