@@ -3,12 +3,8 @@
 from pathlib import Path
 import os
 import random
-import subprocess
-from subprocess import PIPE
 
-import numpy as np
 import pint # type: ignore
-import xml.etree.ElementTree as ET
 
 from .. import config
 from .. import corpus
@@ -248,7 +244,7 @@ def trim_wavs(org_wav_dir=ORG_WAV_DIR,
         if not path.endswith(".xml"):
             continue
 
-        rec_type, sents, times, transls = pangloss.get_sents_times_and_translations(path)
+        rec_type, _, times, _ = pangloss.get_sents_times_and_translations(path)
 
         # Extract the wavs given the times.
         for i, (start_time, end_time) in enumerate(times):
@@ -268,34 +264,6 @@ def trim_wavs(org_wav_dir=ORG_WAV_DIR,
                             start_time.to(ureg.milliseconds).magnitude,
                             end_time.to(ureg.milliseconds).magnitude)
 
-# Commenting out because of spacy requirement and working with the French
-# translations isn't very integral to persephone.
-#def prepare_transls():
-#    """ Prepares the French translations. """
-#
-#    import spacy
-#    fr_nlp = spacy.load("fr")
-#
-#    if not os.path.exists(os.path.join(TRANSL_DIR, "TEXT")):
-#        os.makedirs(os.path.join(TRANSL_DIR, "TEXT"))
-#    if not os.path.exists(os.path.join(TRANSL_DIR, "WORDLIST")):
-#        os.makedirs(os.path.join(TRANSL_DIR, "WORDLIST"))
-#
-#    for fn in os.listdir(ORG_XML_DIR):
-#        print(fn)
-#        path = os.path.join(ORG_XML_DIR, fn)
-#        prefix, _ = os.path.splitext(fn)
-#
-#        rec_type, sents, times, transls = pangloss.get_sents_times_and_translations(path)
-#
-#        # Tokenize the French translations and write them to file.
-#        transls = [preprocess_french(transl[0], fr_nlp) for transl in transls]
-#        for i, transl in enumerate(transls):
-#            out_prefix = "%s.%d" % (prefix, i)
-#            transl_path = os.path.join(TRANSL_DIR, rec_type, out_prefix + ".fr.txt")
-#            with open(transl_path, "w") as transl_f:
-#                print(transl, file=transl_f)
-
 def prepare_labels(label_type, org_xml_dir=ORG_XML_DIR, label_dir=LABEL_DIR):
     """ Prepare the neural network output targets."""
 
@@ -308,7 +276,7 @@ def prepare_labels(label_type, org_xml_dir=ORG_XML_DIR, label_dir=LABEL_DIR):
         fn = path.name
         prefix, _ = os.path.splitext(fn)
 
-        rec_type, sents, times, transls = pangloss.get_sents_times_and_translations(str(path))
+        rec_type, sents, _, _ = pangloss.get_sents_times_and_translations(str(path))
         # Write the sentence transcriptions to file
         sents = [preprocess_na(sent, label_type) for sent in sents]
         for i, sent in enumerate(sents):
@@ -468,7 +436,7 @@ def make_data_splits(label_type, train_rec_type="text_and_wordlist", max_samples
         else:
             raise PersephoneException("train_rec_type='%s' not supported." % train_rec_type)
         train_prefixes = prefixes
-    random.seed(0)
+    random.seed(seed)
     random.shuffle(train_prefixes)
 
     return train_prefixes, valid_prefixes, test_prefixes
