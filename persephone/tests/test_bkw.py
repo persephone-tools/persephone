@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 from typing import List
 
+import pint
 import pytest
 from pympi.Elan import Eaf
 
@@ -14,6 +15,8 @@ from persephone.utterance import Utterance
 from persephone.datasets import bkw
 from persephone.preprocess import elan
 from persephone.corpus_reader import CorpusReader
+
+ureg = pint.UnitRegistry()
 
 @pytest.mark.notravis
 class TestBKW:
@@ -174,11 +177,12 @@ class TestBKW:
         utterances = [utter for utter in utterances if bkw.bkw_filter(utter)]
         print(len(utterances))
         utterances = [utter for utter in utterances if utterance.duration(utter) < 10000]
+        total = 0
         for speaker, duration in utterance.speaker_durations(utterances):
-            print("Speaker: {}\nDuration: {:0.2f}".format(speaker, duration))
+            dur_mins = (duration * ureg.milliseconds).to(ureg.minutes)
+            total += dur_mins
+            print("Speaker: {}\nDuration: {:0.2f}".format(speaker, dur_mins))
             print()
-        total = sum([duration for _, duration in
-                     utterance.speaker_durations(utterances)])
         print("Total duration: {:0.2f}".format(total))
 
     @pytest.mark.skip
