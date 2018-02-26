@@ -2,10 +2,6 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, NamedTuple, Set, Tuple, DefaultDict
 
-import pint # type: ignore
-
-ureg = pint.UnitRegistry()
-
 Utterance = NamedTuple("Utterance", [("media_path", Path),
                                      ("org_transcription_path", Path),
                                      ("prefix", str),
@@ -59,12 +55,13 @@ def remove_duplicates(utterances: List[Utterance]) -> List[Utterance]:
 def remove_empty(utterances: List[Utterance]) -> List[Utterance]:
     return [utter for utter in utterances if utter.text.strip() != ""]
 
-def duration(utterances: List[Utterance],
-              in_units=ureg.milliseconds, out_units=ureg.minutes) -> int:
+# Doing everything in milliseconds now; other units are only for reporting to
+# users
+def duration(utter: Utterance) -> int:
+    return utter.end_time - utter.start_time
 
-    durations = [(utter.end_time - utter.start_time) for utter in utterances]
-    total_dur = sum(durations) * in_units
-    return total_dur.to(out_units).magnitude
+def total_duration(utterances: List[Utterance]) -> int:
+    return sum([duration(utter) for utter in utterances])
 
 def speaker_durations(utterances: List[Utterance]) -> List[Tuple[str, int]]:
     """ Takes a list of utterances and itemizes them by speaker, returning a
@@ -77,6 +74,6 @@ def speaker_durations(utterances: List[Utterance]) -> List[Tuple[str, int]]:
 
     speaker_durations = []
     for speaker in speaker_utters:
-        speaker_durations.append((speaker, duration(speaker_utters[speaker])))
+        speaker_durations.append((speaker, total_duration(speaker_utters[speaker])))
 
     return speaker_durations

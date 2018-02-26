@@ -20,7 +20,7 @@ class TestBKW:
 
     tgt_dir = Path(config.TEST_TGT_DATA_ROOT) / "bkw"
     en_words_path = Path(config.EN_WORDS_PATH)
-    NUM_UTTERS = 987
+    NUM_UTTERS = 1005
 
     @pytest.fixture(scope="class")
     def prep_org_data(self):
@@ -30,7 +30,7 @@ class TestBKW:
         bkw_path = Path(config.BKW_PATH)
         if not bkw_path.is_dir():
             raise NotImplementedError(
-                "Data isn't available and I haven't figured out how authentication"
+                "Data isn't available in {} and I haven't figured out how authentication".format(bkw_path) +
                 " should best work for datasets that aren't yet public.")
         assert bkw_path.is_dir()
 
@@ -126,8 +126,9 @@ class TestBKW:
 
     def test_corpus_duration(self, prep_org_data):
         corp = bkw.Corpus(tgt_dir=self.tgt_dir)
-        cr = CorpusReader(corp)
+        cr = CorpusReader(corp, batch_size=1)
         cr.calc_time()
+        print("Number of corpus utterances: {}".format(len(corp.get_train_fns()[0])))
 
     def test_explore_code_switching(self, prep_org_data):
         bkw_org_path = prep_org_data
@@ -170,9 +171,21 @@ class TestBKW:
         print(len(utterances))
         utterances = utterance.remove_duplicates(utterances)
         print(len(utterances))
+        utterances = [utter for utter in utterances if bkw.bkw_filter(utter)]
+        print(len(utterances))
+        utterances = [utter for utter in utterances if utterance.duration(utter) < 10000]
         for speaker, duration in utterance.speaker_durations(utterances):
             print("Speaker: {}\nDuration: {:0.2f}".format(speaker, duration))
             print()
         total = sum([duration for _, duration in
                      utterance.speaker_durations(utterances)])
         print("Total duration: {:0.2f}".format(total))
+
+    @pytest.mark.skip
+    def test_poly_durations(self, prep_org_data):
+        bkw_org_path = prep_org_data
+        utterances = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])
+        print("Total duration of utterances is {}".format(
+            utterance.duration(utterances)))
+        print("Total duration of the first utterance is {}".format(
+            utterance.duration(utterances[0])))
