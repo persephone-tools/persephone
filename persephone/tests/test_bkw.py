@@ -162,3 +162,17 @@ class TestBKW:
         #import pprint
         #pprint.pprint(list(eaf.get_gaps_and_overlaps(tier1, tier2)))
 
+    def test_speaker_durations(self, prep_org_data):
+        bkw_org_path = prep_org_data
+        utterances = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])
+        print(len(utterances))
+        utterances = utterance.remove_empty(utterances)
+        print(len(utterances))
+        utterances = utterance.remove_duplicates(utterances)
+        print(len(utterances))
+        for speaker, duration in utterance.speaker_durations(utterances):
+            print("Speaker: {}\nDuration: {:0.2f}".format(speaker, duration))
+            print()
+        total = sum([duration for _, duration in
+                     utterance.speaker_durations(utterances)])
+        print("Total duration: {:0.2f}".format(total))
