@@ -14,11 +14,12 @@ from persephone.utterance import Utterance
 from persephone.datasets import bkw
 from persephone.preprocess import elan
 from persephone.corpus_reader import CorpusReader
+from persephone.run import prep_exp_dir
 
 @pytest.mark.notravis
 class TestBKW:
 
-    tgt_dir = Path(config.TEST_TGT_DATA_ROOT) / "bkw"
+    tgt_dir = Path(config.TEST_DATA_PATH) / "bkw"
     en_words_path = Path(config.EN_WORDS_PATH)
     NUM_UTTERS = 1005
 
@@ -189,3 +190,14 @@ class TestBKW:
             utterance.duration(utterances)))
         print("Total duration of the first utterance is {}".format(
             utterance.duration(utterances[0])))
+
+    @pytest.mark.slow
+    def test_multispeaker(self, prep_org_data):
+        """ Trains a multispeaker BKW system using default settings. """
+
+        exp_dir = prep_exp_dir(directory=config.TEST_EXP_PATH)
+        # TODO bkw.Corpus and elan.Corpus should take an org_dir argument.
+        corp = bkw.Corpus(tgt_dir=self.tgt_dir)
+        cr = CorpusReader(corp)
+        model = rnn_ctc.Model(exp_dir, cr, num_layers=2, hidden_size=250)
+        model.train(min_epochs=30)

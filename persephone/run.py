@@ -1,5 +1,3 @@
-""" A driver script that runs experiments. """
-
 import logging
 import os
 from os.path import join
