@@ -23,7 +23,7 @@ NA_DIR = config_file.get("PATHS", "NA_DIR", fallback=os.path.join(CORPORA_BASE_P
 
 # For Kunwinjku data:
 BKW_PATH = config_file.get("PATHS", "BKW_PATH",
-    fallback=os.path.join(CORPORA_BASE_PATH, "BKW-good"))
+    fallback=os.path.join(CORPORA_BASE_PATH, "BKW-speaker-ids/"))
 EN_WORDS_PATH = config_file.get("PATHS", "EN_WORDS_PATH",
     fallback=os.path.join(CORPORA_BASE_PATH, "english-words/words.txt"))
 

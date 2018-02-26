@@ -6,6 +6,7 @@ import subprocess
 from typing import List
 
 import pytest
+from pympi.Elan import Eaf
 
 from persephone import config
 from persephone import utterance
@@ -151,6 +152,13 @@ class TestBKW:
                 speakers.add(utter.participant)
 
         assert len(no_speaker_tiers) == 0
+        assert len(speakers) == 19
 
-        print(speakers)
-        print(len(speakers))
+    def test_overlapping_utters(self, prep_org_data):
+        tier1 = "rf"
+        tier2 = "rf@MN"
+        eaf_path = prep_org_data / "Marys_Yirlinkirrkirr.eaf"
+        eaf = Eaf(str(eaf_path))
+        #import pprint
+        #pprint.pprint(list(eaf.get_gaps_and_overlaps(tier1, tier2)))
+
