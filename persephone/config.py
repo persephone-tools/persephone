@@ -32,6 +32,10 @@ TGT_DIR = config_file.get("PATHS", "TARGET", fallback="./data")
 # The path for experiments
 EXP_DIR = config_file.get("PATHS", "EXPERIMENTS", fallback="./exp")
 
+TEST_ROOT = config_file.get("PATHS", "TEST_ROOT", fallback="./testing/")
+TEST_EXP_PATH = os.path.join(TEST_ROOT, "exp/")
+TEST_DATA_PATH = os.path.join(TEST_ROOT, "data/")
+
 # The path to the sox tool; currently used for splitting WAVs, but we can
 # replace with pydub. Actually, the pydub approach is slow so now
 # wav.trim_wav_ms tries to use sox and then fallsback to pydub/ffmpeg
@@ -42,8 +46,5 @@ FFMPEG_PATH = config_file.get("PATHS", "FFMPEG_PATH", fallback="ffmpeg")
 KALDI_ROOT = config_file.get("PATHS", "KALDI_ROOT_PATH", fallback="/home/oadams/tools/kaldi")
 # Used for lattice output
 OPENFST_BIN_PATH = config_file.get("PATHS", "OPEN_FST_BIN_PATH", fallback="/home/oadams/tools/openfst-1.6.2/src/bin")
-
-TEST_TGT_DATA_ROOT = config_file.get("PATHS", "TEST_TGT_DATA_ROOT",
-                                      fallback="./testing/data/")
 
 LOGGING_INI_PATH = config_file.get("PATHS", "log_ini_path", fallback="./logging.ini")
