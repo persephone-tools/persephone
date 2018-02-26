@@ -17,7 +17,7 @@ class TestBKW:
 
     tgt_dir = Path(config.TEST_TGT_DATA_ROOT) / "bkw"
     en_words_path = Path(config.EN_WORDS_PATH)
-    NUM_UTTERS = 1250
+    NUM_UTTERS = 987
 
     @pytest.fixture(scope="class")
     def prep_org_data(self):
