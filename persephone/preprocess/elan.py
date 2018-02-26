@@ -61,6 +61,36 @@ class Eaf(pympi.Elan.Eaf):
             """.format(self.eaf_path, [self.get_media_path(md)
                                        for md in self.media_descriptors]))
 
+def sort_annotations(annotations: List[Tuple[int, int, str]]
+                     ) -> List[Tuple[int, int, str]]:
+    """ Sorts the annotations by their start_time. """
+    return sorted(annotations, key=lambda x: x[0])
+
+def utterances_from_tier(eafob: Eaf, tier_name: str) -> List[Utterance]:
+    """ Returns utterances found in the given Eaf object in the given tier."""
+
+    try:
+        participant = eafob.tiers[tier_name][2]["PARTICIPANT"]
+    except KeyError:
+        participant = None # We don't know the name of the speaker.
+
+    tier_utterances = []
+
+    annotations = sort_annotations(
+        list(eafob.get_annotation_data_for_tier(tier_name)))
+
+    for i, annotation in enumerate(annotations):
+        eaf_stem = eafob.eaf_path.stem
+        utter_id = "{}.{}.{}".format(eaf_stem, tier_name, i)
+        start_time = eafob.time_origin + annotation[0]
+        end_time = eafob.time_origin + annotation[1]
+        text = annotation[2]
+        utterance = Utterance(eafob.media_path, eafob.eaf_path, utter_id,
+                              start_time, end_time, text, participant)
+        tier_utterances.append(utterance)
+
+    return tier_utterances
+
 def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> List[Utterance]:
     """
     Extracts utterances in tiers that start with tier_prefixes found in the ELAN .eaf XML file
@@ -72,31 +102,6 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> List[Uttera
 
     if not eaf_path.is_file():
         raise FileNotFoundError("Cannot find {}".format(eaf_path))
-
-    # This could actually only take a tier_name argument and then be moved
-    # further below to take the eafob and media_path of the enclosing function.
-    # Not sure whether to do that (at one extreme), or to take more arguments
-    # and move out of the enclosing function.
-    def utterances_from_tier(eafob: Eaf, tier_name: str) -> List[Utterance]:
-        """ Returns utterances found in the given Eaf object in the given tier."""
-
-        try:
-            participant = eafob.tiers[tier_name][2]["PARTICIPANT"]
-        except KeyError:
-            participant = None # We don't know the name of the speaker.
-
-        tier_utterances = []
-        for i, annotation in enumerate(eafob.get_annotation_data_for_tier(tier_name)):
-            eaf_stem = eaf_path.stem
-            utter_id = "{}.{}.{}".format(eaf_stem, tier_name, i)
-            start_time = eafob.time_origin + annotation[0]
-            end_time = eafob.time_origin + annotation[1]
-            text = annotation[2]
-            utterance = Utterance(eafob.media_path, eaf_path, utter_id,
-                                  start_time, end_time, text, participant)
-            tier_utterances.append(utterance)
-
-        return tier_utterances
 
     eaf = Eaf(eaf_path)
     utterances = []
