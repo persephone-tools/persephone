@@ -1,5 +1,6 @@
 """ Testing Persephone on Alex/Steven's Kunwinjku data. """
 
+from os.path import splitext
 from pathlib import Path
 import subprocess
 from typing import List
@@ -11,6 +12,7 @@ from persephone import utterance
 from persephone.utterance import Utterance
 from persephone.datasets import bkw
 from persephone.preprocess import elan
+from persephone.corpus_reader import CorpusReader
 
 @pytest.mark.notravis
 class TestBKW:
@@ -121,5 +123,34 @@ class TestBKW:
         assert len(utterance.remove_empty(
                    utterance.remove_duplicates(xv_rf_utters))) == 473
 
-    def test_sort_utter_check(self, prep_org_data):
-        pass
+    def test_corpus_duration(self, prep_org_data):
+        corp = bkw.Corpus(tgt_dir=self.tgt_dir)
+        cr = CorpusReader(corp)
+        cr.calc_time()
+
+    def test_explore_code_switching(self, prep_org_data):
+        bkw_org_path = prep_org_data
+        utterances = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])
+        utterances = utterance.remove_empty(
+                     utterance.remove_duplicates(utterances))
+        codeswitched_path = self.tgt_dir / "codeswitched.txt"
+        bkw.explore_code_switching(utterances, codeswitched_path)
+
+    def test_speaker_id(self, prep_org_data):
+        bkw_org_path = prep_org_data
+        utterances = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])
+        no_speaker_tiers = set()
+        speaker_tiers = set()
+        speakers = set()
+        for utter in utterances:
+            tier_id = splitext(utter.prefix)[0]
+            if utter.participant == None:
+                no_speaker_tiers.add(tier_id)
+            else:
+                speaker_tiers.add((tier_id, utter.participant))
+                speakers.add(utter.participant)
+
+        assert len(no_speaker_tiers) == 0
+
+        print(speakers)
+        print(len(speakers))

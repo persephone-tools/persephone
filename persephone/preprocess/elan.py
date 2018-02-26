@@ -193,7 +193,6 @@ class Corpus(corpus.Corpus):
             utterances = [utter for utter in utterances if utterance_filter(utter)]
             utterances = utterance.remove_duplicates(utterances)
             utterances = utterance.remove_empty(utterances)
-            print("Len utterances {}".format(len(utterances)))
 
             # Segment the labels in the utterances appropriately
             utterances = [label_segmenter.segment_labels(utter) for utter in utterances]

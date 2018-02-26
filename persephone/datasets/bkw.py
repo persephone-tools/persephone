@@ -66,7 +66,9 @@ def get_en_words() -> Set[str]:
                            "ku", "ay", "belen", "wen", "yah", "muni",
                            "bah", "di", "mm", "anu", "nane", "ma", "kum",
                            "birri", "ray", "h", "kane", "mumu", "bi", "ah",
-                           "i-", "n", "mi", "bedman",
+                           "i-", "n", "mi", "bedman", "rud", "le", "babu",
+                           "da", "kakkak", "yun", "ande", "naw", "kam", "bolk",
+                           "woy", "u", "bi-",
                            ])
     EN_WORDS_NOT_IN_EN_DICT = set(["screenprinting"])
     en_words = en_words.difference(NA_WORDS_IN_EN_DICT)
@@ -112,25 +114,26 @@ def segment_str(text: str, phoneme_inventory: Set[str] = PHONEMES) -> str:
 
 bkw_label_segmenter = LabelSegmenter(segment_utterance, PHONEMES)
 
-def explore_code_switching(utterances: List[Utterance]) -> None:
+def explore_code_switching(utterances: List[Utterance], out_path: Path) -> None:
 
-    f=sys.stdout
-    en_count = 0
-    for i, utter in enumerate(utterances):
-        toks = nltk.word_tokenize(utter.text) # type: ignore
-        words = [tok.lower() for tok in toks]
-        for word in words:
-            if word in EN_WORDS:
-                en_count += 1
-                print("Utterance #%s" % i, file=f)
-                print("Original: %s" % utter.text, file=f)
-                print("Tokenized: %s" % words, file=f)
-                print("Phonemic: %s" % segment_str(utter.text), file=f)
-                print("En word: %s" % word, file=f)
-                print("---------------------------------------------", file=f)
-                break
-    print(en_count)
-    print(len(utterances))
+    with out_path.open("w") as f:
+        en_count = 0
+        for i, utter in enumerate(utterances):
+            toks = nltk.word_tokenize(utter.text) # type: ignore
+            words = [tok.lower() for tok in toks]
+            for word in words:
+                if word in EN_WORDS:
+                    en_count += 1
+                    print("Prefix: {}".format(utter.prefix), file=f)
+                    print("Utterance #%s" % i, file=f)
+                    print("Original: %s" % utter.text, file=f)
+                    print("Tokenized: %s" % words, file=f)
+                    print("Phonemic: %s" % segment_str(utter.text), file=f)
+                    print("En word: %s" % word, file=f)
+                    print("---------------------------------------------", file=f)
+                    break
+        print("Num of codeswitched/English sentences: {}".format(en_count), file=f)
+        print("Total number of utterances: {}".format(len(utterances)), file=f)
 
 def filter_for_not_codeswitched(utter: Utterance) -> bool:
     toks = nltk.word_tokenize(utter.text) # type: ignore
