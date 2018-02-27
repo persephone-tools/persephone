@@ -105,7 +105,7 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> List[Uttera
 
     eaf = Eaf(eaf_path)
     utterances = []
-    for tier_name in eaf.tiers:
+    for tier_name in sorted(list(eaf.tiers)): # Sorting for determinism
         for tier_prefix in tier_prefixes:
             if tier_name.startswith(tier_prefix):
                 utterances.extend(utterances_from_tier(eaf, tier_name))
