@@ -37,13 +37,6 @@ UNTRAN_DIR = os.path.join(TGT_DIR, "untranscribed")
 #            for fn in os.listdir(ORG_TRANSCRIPT_DIR)
 #            if fn.endswith(".txt")]
 
-# TODO Move into feat creation functions.
-if not os.path.isdir(TGT_DIR):
-    os.makedirs(TGT_DIR)
-
-if not os.path.isdir(FEAT_DIR):
-    os.makedirs(FEAT_DIR)
-
 MISC_SYMBOLS = [' ̩', '~', '=', ':', 'F', '¨', '↑', '“', '”', '…', '«', '»',
 'D', 'a', 'ː', '#', '$', "‡"]
 BAD_NA_SYMBOLS = ['D', 'F', '~', '…', '=', '↑', ':']
@@ -368,6 +361,13 @@ def prepare_untran(feat_type="fbank_and_pitch"):
 def prepare_feats(feat_type, org_wav_dir=ORG_WAV_DIR, feat_dir=FEAT_DIR, tgt_wav_dir=TGT_WAV_DIR,
                   org_xml_dir=ORG_XML_DIR, label_dir=LABEL_DIR):
     """ Prepare the input features."""
+
+    if not os.path.isdir(TGT_DIR):
+        os.makedirs(TGT_DIR)
+
+    if not os.path.isdir(FEAT_DIR):
+        os.makedirs(FEAT_DIR)
+
 
     if not os.path.isdir(os.path.join(feat_dir, "WORDLIST")):
         os.makedirs(os.path.join(feat_dir, "WORDLIST"))
