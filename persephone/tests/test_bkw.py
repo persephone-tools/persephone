@@ -255,3 +255,32 @@ class TestBKW:
         assert corp_1.utterances != None
         assert corp_1.utterances == corp_2.utterances
         assert len(corp_1.utterances) == self.NUM_UTTERS
+
+    def test_empty_wav(self, prep_org_data):
+        # Checking the origin of the empty wav.
+
+        utterance_too_short = Utterance(
+            media_path=Path(
+                'data/org/BKW-speaker-ids/Mark on rock with Timecode.mp4'),
+            org_transcription_path=Path(
+                'data/org/BKW-speaker-ids/Mark on Rock.eaf'),
+            prefix='Mark on Rock.rf@MARK.401',
+            start_time=1673900, end_time=1673923,
+            text=' kunkare bu yoh', speaker='Mark Djandiomerr')
+
+        utterance_ok = Utterance(
+            media_path=Path(
+                'data/org/BKW-speaker-ids/Mandak/20161102_mandak.wav'),
+            org_transcription_path=Path(
+                'data/org/BKW-speaker-ids/Mandak/Mandak_MN.eaf'),
+            prefix='Mandak_MN.xv@MN.5',
+            start_time=23155, end_time=25965,
+            text='Mani mandak karrulkngeyyo.', speaker='Margaret')
+
+        utterances = [utterance_too_short, utterance_ok]
+
+        assert utterance.remove_too_short(utterances) == [utterance_ok]
+
+        bkw_org_path = prep_org_data
+        utterances = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])
+        assert utterance.remove_too_short(utterances) == utterances

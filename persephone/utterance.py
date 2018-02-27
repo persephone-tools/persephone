@@ -96,3 +96,18 @@ def write_utt2spk(utterances: List[Utterance], tgt_dir: Path) -> None:
     with utt2spk_path.open("w") as f:
         for utter in utterances:
             print("{} {}".format(utter.prefix, utter.speaker), file=f)
+
+def remove_too_short(utterances: List[Utterance],
+                     _winlen=25, winstep=10) -> List[Utterance]:
+    """ Removes utterances that will probably have issues with CTC because of
+    the number of frames being less than the number of tokens in the
+    transcription. Assuming char tokenization to minimize false negatives.
+    """
+    def is_too_short(utterance: Utterance) -> bool:
+        charlen = len(utterance.text)
+        if (duration(utterance) / winstep) < charlen:
+            return True
+        else:
+            return False
+
+    return [utter for utter in utterances if not is_too_short(utter)]
