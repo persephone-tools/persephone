@@ -1,8 +1,10 @@
 """ Testing Persephone on Alex/Steven's Kunwinjku data. """
 
 import logging
+import os
 from os.path import splitext
 from pathlib import Path
+import pprint
 import subprocess
 from typing import List
 
@@ -218,10 +220,10 @@ class TestBKW:
         utterance.write_utt2spk(utterances, self.tgt_dir)
         with (self.tgt_dir / "utt2spk").open() as f:
             assert len(f.readlines()) == len(utterances)
+        os.remove(str(self.tgt_dir / "utt2spk"))
 
-    @pytest.mark.skip
     def test_utt2spk(self, prep_org_data):
-        corp = bkw.Corpus(tgt_dir=self.tgt_dir, speaker="Mark Djandiomerr")
+        corp = bkw.Corpus(tgt_dir=self.tgt_dir, speakers=["Mark Djandiomerr"])
         assert len(corp.spakers) == 1
         assert len(corp.get_train_fns()) < self.NUM_UTTERS / 2
         corp = bkw.Corpus(tgt_dir=self.tgt_dir)
@@ -283,4 +285,10 @@ class TestBKW:
 
         bkw_org_path = prep_org_data
         utterances = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])
-        assert utterance.remove_too_short(utterances) == utterances
+
+        filtered = utterance.remove_too_short(utterances)
+        if filtered != utterances:
+            diff = set(utterances) - set(filtered)
+            print("set(utterances) - set(filtered): {}:\n".format(
+                pprint.pformat(diff)))
+            assert False

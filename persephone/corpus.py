@@ -29,7 +29,7 @@ class Corpus:
     """
 
     def __init__(self, feat_type, label_type, tgt_dir, labels,
-                 max_samples=1000):
+                 max_samples=1000, speakers=None):
         """ feat_type: A string describing the input features. For
                        example, 'log_mel_filterbank'.
             target_type: A string describing the targets. For example,

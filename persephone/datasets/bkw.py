@@ -152,7 +152,8 @@ def bkw_filter(utter: Utterance) -> bool:
 class Corpus(elan.Corpus):
     def __init__(self, org_dir: Path = Path(config.BKW_PATH),
                  tgt_dir: Path = Path(config.TGT_DIR, "BKW"),
-                 feat_type: str = "fbank", label_type: str = "phonemes") -> None:
+                 feat_type: str = "fbank", label_type: str = "phonemes",
+                 speakers: List[str] = None) -> None:
 
         if label_type == "phonemes":
             labels = PHONEMES
@@ -164,4 +165,5 @@ class Corpus(elan.Corpus):
         super().__init__(org_dir, tgt_dir,
                          feat_type=feat_type, label_type=label_type,
                          utterance_filter=bkw_filter,
-                         label_segmenter=bkw_label_segmenter)
+                         label_segmenter=bkw_label_segmenter,
+                         speakers=speakers)

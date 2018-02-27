@@ -130,7 +130,7 @@ class Corpus(corpus.Corpus):
                  feat_type: str = "fbank", label_type: str = "phonemes",
                  utterance_filter: Callable[[Utterance], bool] = None,
                  label_segmenter: LabelSegmenter = None,
-                 lazy: bool = True) -> None:
+                 speakers: List[str] = None, lazy: bool = True) -> None:
         """
         Need to think about this constructor. Ideally it should take a
         function:
@@ -198,11 +198,12 @@ class Corpus(corpus.Corpus):
 
         self.utterances = utterances
 
-        # Writes the utterances to the tgt_dir/label/ dir
-        write_utters(utterances, self.get_label_dir(), label_type, lazy=lazy)
+        utterance.write_utt2spk(self.utterances, self.tgt_dir)
 
+        # Writes the utterances to the tgt_dir/label/ dir
+        write_utters(self.utterances, self.get_label_dir(), label_type, lazy=lazy)
         # Extracts utterance level WAV information from the input file.
-        extract_wavs(utterances, self.get_wav_dir(), lazy=lazy)
+        extract_wavs(self.utterances, self.get_wav_dir(), lazy=lazy)
 
         super().__init__(feat_type, label_type, tgt_dir,
-                         label_segmenter.labels)
+                         label_segmenter.labels, speakers=speakers)

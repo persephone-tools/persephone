@@ -1,12 +1,17 @@
 """ An CorpusReader class that interfaces with preprocessed corpora."""
 
+import logging
+import pprint
 import random
 
 from nltk.metrics import distance
 import numpy as np
 
+from . import config
 from . import utils
 from .exceptions import PersephoneException
+
+logging.config.fileConfig(config.LOGGING_INI_PATH)
 
 class CorpusReader:
     """ Interfaces to the preprocessed corpora to read in train, valid, and
@@ -116,6 +121,7 @@ class CorpusReader:
             random.shuffle(fn_batches)
 
         for fn_batch in fn_batches:
+            logging.debug(pprint.pformat(fn_batch))
             yield self.load_batch(fn_batch)
 
     def valid_batch(self):
