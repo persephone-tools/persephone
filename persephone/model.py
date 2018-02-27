@@ -2,6 +2,7 @@
 
 import inspect
 import itertools
+import logging
 import os
 import subprocess
 import sys
@@ -18,6 +19,8 @@ OPENFST_PATH = config.OPENFST_BIN_PATH
 
 allow_growth_config = tf.ConfigProto()
 allow_growth_config.gpu_options.allow_growth=True #pylint: disable=no-member
+
+logging.config.fileConfig(config.LOGGING_INI_PATH)
 
 class Model:
     """ Generic model for our ASR tasks. """

@@ -1,5 +1,0 @@
-[pre-commit-hook]
-
-command=/home/oadams/venv3/bin/pylint
-disable=locally-disabled
-limit=8.0
