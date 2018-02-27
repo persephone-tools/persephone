@@ -129,7 +129,8 @@ class Corpus(corpus.Corpus):
     def __init__(self, org_dir: Path, tgt_dir: Path,
                  feat_type: str = "fbank", label_type: str = "phonemes",
                  utterance_filter: Callable[[Utterance], bool] = None,
-                 label_segmenter: LabelSegmenter = None) -> None:
+                 label_segmenter: LabelSegmenter = None,
+                 lazy: bool = True) -> None:
         """
         Need to think about this constructor. Ideally it should take a
         function:
@@ -181,34 +182,27 @@ class Corpus(corpus.Corpus):
 
         self.tgt_dir = tgt_dir
 
-        # Is this conditional the right way to do it? I could also test for
-        # each file, but perhaps just testing the existence of the directory is
-        # best. TODO No, change it; it leads to hard-to-understand errors
-        if not tgt_dir.is_dir():
-            # Read utterances from org_dir.
-            utterances = utterances_from_dir(org_dir,
-                                             tier_prefixes=["xv", "rf"])
+        # Read utterances from org_dir.
+        utterances = utterances_from_dir(org_dir,
+                                         tier_prefixes=["xv", "rf"])
 
-            # Filter utterances based on some criteria (such as codeswitching).
-            utterances = [utter for utter in utterances if utterance_filter(utter)]
-            utterances = utterance.remove_duplicates(utterances)
-            utterances = utterance.remove_empty(utterances)
+        # Filter utterances based on some criteria (such as codeswitching).
+        utterances = [utter for utter in utterances if utterance_filter(utter)]
+        utterances = utterance.remove_duplicates(utterances)
 
-            # Segment the labels in the utterances appropriately
-            utterances = [label_segmenter.segment_labels(utter) for utter in utterances]
+        # Segment the labels in the utterances appropriately
+        utterances = [label_segmenter.segment_labels(utter) for utter in utterances]
 
-            # Writes the utterances to the tgt_dir/label/ dir
-            write_utters(utterances, self.get_label_dir(), label_type)
+        # Finally, ensure empty utterances are removed.
+        utterances = utterance.remove_empty(utterances)
 
-            # Extracts utterance level WAV information from the input file.
-            extract_wavs(utterances, self.get_wav_dir())
+        self.utterances = utterances
 
-            # If we're being fed a segment_labels function rather than the actual
-            # labels, then we do actually have to determine all the labels by
-            # reading the utterances. A natural way around this is to make the
-            # label_segmenter an immutable class (say, a NamedTuple) which stores
-            # the labels etc.
+        # Writes the utterances to the tgt_dir/label/ dir
+        write_utters(utterances, self.get_label_dir(), label_type, lazy=lazy)
 
-            # labels = determine_labels(utterances)
+        # Extracts utterance level WAV information from the input file.
+        extract_wavs(utterances, self.get_wav_dir(), lazy=lazy)
 
-        super().__init__(feat_type, label_type, tgt_dir, label_segmenter.labels)
+        super().__init__(feat_type, label_type, tgt_dir,
+                         label_segmenter.labels)

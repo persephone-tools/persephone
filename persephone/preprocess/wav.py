@@ -10,6 +10,8 @@ from pydub import AudioSegment # type: ignore
 from .. import config
 from ..utterance import Utterance
 
+logging.config.fileConfig(config.LOGGING_INI_PATH)
+
 def millisecs_to_secs(millisecs: int) -> float:
     return millisecs / 1000
 
@@ -33,7 +35,7 @@ def trim_wav_pydub(in_path: Path, out_path: Path,
     """ Crops the wav file. """
 
     logging.info(
-        "Using pydub/ffmpeg to create {} from {}".format(in_path, out_path) + 
+        "Using pydub/ffmpeg to create {} from {}".format(out_path, in_path) +
         " using a start_time of {} and an end_time of {}".format(start_time,
                                                                  end_time))
 
@@ -71,16 +73,21 @@ def trim_wav_sox(in_path: Path, out_path: Path,
     # TODO Use logging here
     subprocess.run(args, check=True)
 
-def extract_wavs(utterances: List[Utterance], tgt_dir: Path) -> None:
+def extract_wavs(utterances: List[Utterance], tgt_dir: Path,
+                 lazy: bool) -> None:
     """
     Extracts WAVs from the media files associated with a list of utterances
     and puts them in the tgt_dir.
     """
-    # TODO Add logging here
     tgt_dir.mkdir(parents=True, exist_ok=True)
     for utter in utterances:
         wav_fn = "{}.{}".format(utter.prefix, "wav")
         out_wav_path = tgt_dir / wav_fn
-        if not out_wav_path.is_file():
-            trim_wav_ms(utter.media_path, out_wav_path,
-                        utter.start_time, utter.end_time)
+        if lazy and out_wav_path.is_file():
+            logging.info("File {} already exists and lazy == {}; not " \
+                         "writing.".format(out_wav_path, lazy))
+            continue
+        logging.info("File {} does not exist and lazy == {}; creating " \
+                     "it.".format(out_wav_path, lazy))
+        trim_wav_ms(utter.media_path, out_wav_path,
+                    utter.start_time, utter.end_time)

@@ -19,8 +19,9 @@ Utterance.__doc__= (
     """)
 
 def write_utters(utterances: List[Utterance],
-                 tgt_dir: Path, ext: str) -> None:
-    """ Write the Utterance.text to a file in the tgt_dir.
+                 tgt_dir: Path, ext: str, lazy: bool) -> None:
+    """ Write the utterance transcriptions to files in the tgt_dir. Is lazy and
+    checks if the file already exists.
 
     Args:
         utterances: A list of Utterance objects to be written.
@@ -31,9 +32,11 @@ def write_utters(utterances: List[Utterance],
 
     """
 
-    tgt_dir.mkdir(parents=True)
+    tgt_dir.mkdir(parents=True, exist_ok=True)
     for utter in utterances:
         out_path = tgt_dir / "{}.{}".format(utter.prefix, ext)
+        if lazy and out_path.is_file():
+            continue
         with out_path.open("w") as f:
             print(utter.text, file=f)
 

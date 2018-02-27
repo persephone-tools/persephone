@@ -1,5 +1,6 @@
 """ Testing Persephone on Alex/Steven's Kunwinjku data. """
 
+import logging
 from os.path import splitext
 from pathlib import Path
 import subprocess
@@ -19,12 +20,15 @@ from persephone.run import prep_exp_dir
 
 ureg = pint.UnitRegistry()
 
+logging.config.fileConfig(config.LOGGING_INI_PATH)
+
 @pytest.mark.notravis
 class TestBKW:
 
     tgt_dir = Path(config.TEST_DATA_PATH) / "bkw"
     en_words_path = Path(config.EN_WORDS_PATH)
-    NUM_UTTERS = 1005
+    NUM_UTTERS = 1004
+    NUM_SPEAKERS = 19
 
     @pytest.fixture(scope="class")
     def prep_org_data(self):
@@ -56,6 +60,7 @@ class TestBKW:
     def check_corpus(self):
         corp = bkw.Corpus(tgt_dir=self.tgt_dir)
 
+        assert len(corp.utterances) == self.NUM_UTTERS
         assert len(corp.determine_prefixes()) == self.NUM_UTTERS
         assert (self.tgt_dir / "wav").is_dir()
         assert len(list(corp.wav_dir.iterdir())) == self.NUM_UTTERS
@@ -157,7 +162,7 @@ class TestBKW:
                 speakers.add(utter.participant)
 
         assert len(no_speaker_tiers) == 0
-        assert len(speakers) == 19
+        assert len(speakers) == self.NUM_SPEAKERS
 
     def test_overlapping_utters(self, prep_org_data):
         tier1 = "rf"
@@ -205,3 +210,40 @@ class TestBKW:
         cr = CorpusReader(corp)
         model = rnn_ctc.Model(exp_dir, cr, num_layers=2, hidden_size=250)
         model.train(min_epochs=30)
+
+    @pytest.mark.skip
+    def test_utt2spk(self, prep_org_data):
+        corp = bkw.Corpus(tgt_dir=self.tgt_dir, speaker="Mark Djandiomerr")
+        assert len(corp.spakers) == 1
+        assert len(corp.get_train_fns()) < self.NUM_UTTERS / 2
+        corp = bkw.Corpus(tgt_dir=self.tgt_dir)
+        assert len(corp.speakers) == self.NUM_SPEAKERS
+        assert len(corp.get_train_fns()) == self.NUM_UTTERS
+
+    def test_deterministic(self, prep_org_data):
+        """ Ensures loading and processing utterences from ELAN files is
+        deterministic.
+        """
+        bkw_org_path = prep_org_data
+        utterances_1 = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])
+        utterances_2 = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])
+        assert utterances_1 == utterances_2
+        utterances_1 = [utter for utter in utterances_1 if bkw.bkw_filter(utter)]
+        utterances_2 = [utter for utter in utterances_2 if bkw.bkw_filter(utter)]
+        assert utterances_1 == utterances_2
+        utterances_1 = utterance.remove_duplicates(utterances_1)
+        utterances_2 = utterance.remove_duplicates(utterances_2)
+        assert utterances_1 == utterances_2
+        utterances_1 = [bkw.bkw_label_segmenter.segment_labels(utter) for utter in utterances_1]
+        utterances_2 = [bkw.bkw_label_segmenter.segment_labels(utter) for utter in utterances_2]
+        assert utterances_1 == utterances_2
+        utterances_1 = utterance.remove_empty(utterances_1)
+        utterances_2 = utterance.remove_empty(utterances_2)
+        assert utterances_1 == utterances_2
+
+    def test_deterministic_2(self, prep_org_data):
+        corp_1 = bkw.Corpus(tgt_dir=self.tgt_dir)
+        corp_2 = bkw.Corpus(tgt_dir=self.tgt_dir)
+        assert corp_1.utterances != None
+        assert corp_1.utterances == corp_2.utterances
+        assert len(corp_1.utterances) == self.NUM_UTTERS
