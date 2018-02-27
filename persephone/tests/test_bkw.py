@@ -155,11 +155,11 @@ class TestBKW:
         speakers = set()
         for utter in utterances:
             tier_id = splitext(utter.prefix)[0]
-            if utter.participant == None:
+            if utter.speaker == None:
                 no_speaker_tiers.add(tier_id)
             else:
-                speaker_tiers.add((tier_id, utter.participant))
-                speakers.add(utter.participant)
+                speaker_tiers.add((tier_id, utter.speaker))
+                speakers.add(utter.speaker)
 
         assert len(no_speaker_tiers) == 0
         assert len(speakers) == self.NUM_SPEAKERS
@@ -210,6 +210,13 @@ class TestBKW:
         cr = CorpusReader(corp)
         model = rnn_ctc.Model(exp_dir, cr, num_layers=2, hidden_size=250)
         model.train(min_epochs=30)
+
+    def test_write_utt2spk(self, prep_org_data):
+        bkw_org_path = prep_org_data
+        utterances = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])
+        utterance.write_utt2spk(utterances, self.tgt_dir)
+        with (self.tgt_dir / "utt2spk").open() as f:
+            assert len(f.readlines()) == len(utterances)
 
     @pytest.mark.skip
     def test_utt2spk(self, prep_org_data):

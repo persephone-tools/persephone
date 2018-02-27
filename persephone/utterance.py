@@ -1,6 +1,6 @@
 from collections import defaultdict
 from pathlib import Path
-from typing import List, NamedTuple, Set, Tuple, DefaultDict
+from typing import List, NamedTuple, Set, Tuple, DefaultDict, Dict
 
 Utterance = NamedTuple("Utterance", [("media_path", Path),
                                      ("org_transcription_path", Path),
@@ -8,7 +8,7 @@ Utterance = NamedTuple("Utterance", [("media_path", Path),
                                      ("start_time", int),
                                      ("end_time", int),
                                      ("text", str),
-                                     ("participant", str)])
+                                     ("speaker", str)])
 Utterance.__doc__= (
     """ Here's a docstring.
 
@@ -66,17 +66,33 @@ def duration(utter: Utterance) -> int:
 def total_duration(utterances: List[Utterance]) -> int:
     return sum([duration(utter) for utter in utterances])
 
+def make_speaker_utters(utterances: List[Utterance]) -> Dict[str, List[Utterance]]:
+    """ Creates a dictionary mapping from speakers to their utterances. """
+
+    speaker_utters = defaultdict(list) # type: DefaultDict[str, List[Utterance]]
+    for utter in utterances:
+        speaker_utters[utter.speaker].append(utter)
+
+    return speaker_utters
+
 def speaker_durations(utterances: List[Utterance]) -> List[Tuple[str, int]]:
     """ Takes a list of utterances and itemizes them by speaker, returning a
     list of tuples of the form (Speaker Name, duration).
     """
 
-    speaker_utters = defaultdict(list) # type: DefaultDict[str, List[Utterance]]
-    for utter in utterances:
-        speaker_utters[utter.participant].append(utter)
+    speaker_utters = make_speaker_utters(utterances)
 
     speaker_durations = []
     for speaker in speaker_utters:
         speaker_durations.append((speaker, total_duration(speaker_utters[speaker])))
 
     return speaker_durations
+
+def write_utt2spk(utterances: List[Utterance], tgt_dir: Path) -> None:
+    """ Creates a Kaldi-style utt2spk and spk2utt files that maps from utterances (prefixes)
+    to speakers. """
+
+    utt2spk_path = tgt_dir / "utt2spk"
+    with utt2spk_path.open("w") as f:
+        for utter in utterances:
+            print("{} {}".format(utter.prefix, utter.speaker), file=f)

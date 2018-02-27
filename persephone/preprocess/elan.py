@@ -70,9 +70,9 @@ def utterances_from_tier(eafob: Eaf, tier_name: str) -> List[Utterance]:
     """ Returns utterances found in the given Eaf object in the given tier."""
 
     try:
-        participant = eafob.tiers[tier_name][2]["PARTICIPANT"]
+        speaker = eafob.tiers[tier_name][2]["PARTICIPANT"]
     except KeyError:
-        participant = None # We don't know the name of the speaker.
+        speaker = None # We don't know the name of the speaker.
 
     tier_utterances = []
 
@@ -86,7 +86,7 @@ def utterances_from_tier(eafob: Eaf, tier_name: str) -> List[Utterance]:
         end_time = eafob.time_origin + annotation[1]
         text = annotation[2]
         utterance = Utterance(eafob.media_path, eafob.eaf_path, utter_id,
-                              start_time, end_time, text, participant)
+                              start_time, end_time, text, speaker)
         tier_utterances.append(utterance)
 
     return tier_utterances
