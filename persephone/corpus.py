@@ -129,7 +129,7 @@ class Corpus:
             if not path.suffix == ".wav":
                 continue
             prefix = os.path.basename(os.path.splitext(str(path))[0])
-            mono16k_wav_path = self.feat_dir / "{}.wav".format(prefix))
+            mono16k_wav_path = self.feat_dir / "{}.wav".format(prefix)
             feat_path = self.feat_dir / "{}.{}.npy".format(prefix, self.feat_type)
             if not feat_path.is_file():
                 # Then we should extract feats
