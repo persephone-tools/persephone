@@ -209,7 +209,7 @@ class Corpus:
         ratios=Ratios(.90, .05, .05)
         train_end = int(ratios.train*len(prefixes))
         valid_end = int(train_end + ratios.valid*len(prefixes))
-        # TODO Add a context manager to govern randomness here.
+        random.seed(seed)
         random.shuffle(prefixes)
 
         train_prefixes = prefixes[:train_end]
