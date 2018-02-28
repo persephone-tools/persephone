@@ -60,8 +60,13 @@ class TestBKW:
 
         assert not self.tgt_dir.is_dir()
 
-    def check_corpus(self):
-        corp = bkw.Corpus(tgt_dir=self.tgt_dir)
+    @pytest.fixture
+    def preprocess_corpus(self):
+        """ Ensure's corpus preprocessing happens before any of the tests
+        run that rely on it"""
+        return bkw.Corpus(tgt_dir=self.tgt_dir)
+
+    def check_corpus(self, corp):
 
         assert len(corp.utterances) == self.NUM_UTTERS
         assert len(corp.determine_prefixes()) == self.NUM_UTTERS
@@ -69,11 +74,11 @@ class TestBKW:
         assert len(list(corp.wav_dir.iterdir())) == self.NUM_UTTERS
 
     @pytest.mark.slow
-    def test_bkw_preprocess(self, prep_org_data, clean_tgt_dir):
-        self.check_corpus()
+    def test_bkw_preprocess(self, prep_org_data, clean_tgt_dir, preprocess_corpus):
+        self.check_corpus(preprocess_corpus)
 
-    def test_bkw_after_preprocessing(self):
-        self.check_corpus()
+    def test_bkw_after_preprocessing(self, preprocess_corpus):
+        self.check_corpus(preprocess_corpus)
 
     @staticmethod
     def count_empty(utterances: List[Utterance]) -> int:
@@ -88,24 +93,24 @@ class TestBKW:
 
         utterances = elan.utterances_from_dir(bkw_org_path, ["xv"])
         assert len(utterances) == 1036
-        assert len(utterance.remove_empty(utterances)) == 1035
+        assert len(utterance.remove_empty_text(utterances)) == 1035
         assert len(utterance.remove_duplicates(utterances)) == 1029
         assert len(utterance.remove_duplicates(
-                                   utterance.remove_empty(utterances))) == 1028
+                                   utterance.remove_empty_text(utterances))) == 1028
 
         utterances = elan.utterances_from_dir(bkw_org_path, ["rf"])
         assert len(utterances) == 1242
-        assert len(utterance.remove_empty(utterances)) == 631
+        assert len(utterance.remove_empty_text(utterances)) == 631
         assert len(utterance.remove_duplicates(utterances)) == 1239
         assert len(utterance.remove_duplicates(
-                                   utterance.remove_empty(utterances))) == 631
+                                   utterance.remove_empty_text(utterances))) == 631
 
         utterances = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])
         assert len(utterances) == 2278
-        assert len(utterance.remove_empty(utterances)) == 1666
+        assert len(utterance.remove_empty_text(utterances)) == 1666
         assert len(utterance.remove_duplicates(utterances)) == 1899
         assert len(utterance.remove_duplicates(
-                                   utterance.remove_empty(utterances))) == 1291
+                                   utterance.remove_empty_text(utterances))) == 1291
 
     @staticmethod
     def check_text_in_utters(text: str, utters: List[Utterance]) -> bool:
@@ -133,7 +138,7 @@ class TestBKW:
         assert len(rf_utters) == 420
         assert len(xv_rf_utters) == 845
         assert len(utterance.remove_duplicates(xv_rf_utters)) == 476
-        assert len(utterance.remove_empty(
+        assert len(utterance.remove_empty_text(
                    utterance.remove_duplicates(xv_rf_utters))) == 473
 
     def test_corpus_duration(self, prep_org_data):
@@ -145,7 +150,7 @@ class TestBKW:
     def test_explore_code_switching(self, prep_org_data):
         bkw_org_path = prep_org_data
         utterances = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])
-        utterances = utterance.remove_empty(
+        utterances = utterance.remove_empty_text(
                      utterance.remove_duplicates(utterances))
         codeswitched_path = self.tgt_dir / "codeswitched.txt"
         bkw.explore_code_switching(utterances, codeswitched_path)
@@ -179,7 +184,7 @@ class TestBKW:
         bkw_org_path = prep_org_data
         utterances = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])
         print(len(utterances))
-        utterances = utterance.remove_empty(utterances)
+        utterances = utterance.remove_empty_text(utterances)
         print(len(utterances))
         utterances = utterance.remove_duplicates(utterances)
         print(len(utterances))
@@ -224,7 +229,7 @@ class TestBKW:
 
     def test_utt2spk(self, prep_org_data):
         corp = bkw.Corpus(tgt_dir=self.tgt_dir, speakers=["Mark Djandiomerr"])
-        assert len(corp.spakers) == 1
+        assert len(corp.speakers) == 1
         assert len(corp.get_train_fns()) < self.NUM_UTTERS / 2
         corp = bkw.Corpus(tgt_dir=self.tgt_dir)
         assert len(corp.speakers) == self.NUM_SPEAKERS
@@ -247,8 +252,8 @@ class TestBKW:
         utterances_1 = [bkw.bkw_label_segmenter.segment_labels(utter) for utter in utterances_1]
         utterances_2 = [bkw.bkw_label_segmenter.segment_labels(utter) for utter in utterances_2]
         assert utterances_1 == utterances_2
-        utterances_1 = utterance.remove_empty(utterances_1)
-        utterances_2 = utterance.remove_empty(utterances_2)
+        utterances_1 = utterance.remove_empty_text(utterances_1)
+        utterances_2 = utterance.remove_empty_text(utterances_2)
         assert utterances_1 == utterances_2
 
     def test_deterministic_2(self, prep_org_data):

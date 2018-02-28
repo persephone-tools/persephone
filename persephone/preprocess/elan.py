@@ -193,8 +193,12 @@ class Corpus(corpus.Corpus):
         # Segment the labels in the utterances appropriately
         utterances = [label_segmenter.segment_labels(utter) for utter in utterances]
 
-        # Finally, ensure empty utterances are removed.
-        utterances = utterance.remove_empty(utterances)
+        # Remove utterances without transcriptions.
+        utterances = utterance.remove_empty_text(utterances)
+
+        # Remove utterances with exceptionally short wav_files that are too
+        # short for CTC to work.
+        utterances = utterance.remove_too_short(utterances)
 
         self.utterances = utterances
 
