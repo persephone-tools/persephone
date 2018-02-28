@@ -64,6 +64,9 @@ class Corpus:
         self.train_prefixes = utils.sort_by_size(
             self.feat_dir, self.train_prefixes, feat_type)
 
+        # Ensure no overlap between training and test sets
+        self.ensure_no_set_overlap()
+
         self.untranscribed_prefixes = self.get_untranscribed_prefixes()
 
     def get_wav_dir(self):
@@ -347,3 +350,16 @@ class ReadyCorpus(Corpus):
                         raise
                     phonemes = phonemes.union(line_phonemes)
         return phonemes
+
+    def ensure_no_set_overlap(self):
+        """ Ensures no test set data has creeped into the training set."""
+
+        train = set(self.get_train_fns()[0])
+        valid = set(self.get_valid_fns()[0])
+        test = set(self.get_test_fns()[0])
+        assert train - valid == train
+        assert train - test == train
+        assert valid - train == valid
+        assert valid - test == valid
+        assert test - train == test
+        assert test - valid == test
