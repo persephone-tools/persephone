@@ -70,28 +70,28 @@ class Corpus:
 
         self.untranscribed_prefixes = self.get_untranscribed_prefixes()
 
-    def get_wav_dir(self):
+    def get_wav_dir(self) -> Path:
         return self.tgt_dir / "wav"
 
-    def get_feat_dir(self):
+    def get_feat_dir(self) -> Path:
         return self.tgt_dir / "feat"
 
-    def get_label_dir(self):
+    def get_label_dir(self) -> Path:
         return self.tgt_dir / "label"
 
     @property
-    def train_prefix_fn(self):
-        return join(str(self.tgt_dir), "train_prefixes.txt")
+    def train_prefix_fn(self) -> Path:
+        return self.tgt_dir / "train_prefixes.txt"
 
     @property
-    def valid_prefix_fn(self):
-        return join(str(self.tgt_dir), "valid_prefixes.txt")
+    def valid_prefix_fn(self) -> Path:
+        return self.tgt_dir / "valid_prefixes.txt"
 
     @property
-    def test_prefix_fn(self):
-        return join(str(self.tgt_dir), "test_prefixes.txt")
+    def test_prefix_fn(self) -> Path:
+        return self.tgt_dir / "test_prefixes.txt"
 
-    def set_and_check_directories(self, tgt_dir):
+    def set_and_check_directories(self, tgt_dir: Path) -> None:
 
         # Set the directory names
         self.tgt_dir = tgt_dir
@@ -128,22 +128,20 @@ class Corpus:
         for path in self.wav_dir.iterdir():
             if not path.suffix == ".wav":
                 continue
-            # TODO use pathlib.Path
             prefix = os.path.basename(os.path.splitext(str(path))[0])
-            mono16k_wav_path = join(str(self.feat_dir), "%s.wav" % prefix)
-            feat_path = join(str(self.feat_dir),
-                             "%s.%s.npy" % (prefix, self.feat_type))
-            if not os.path.isfile(feat_path):
+            mono16k_wav_path = self.feat_dir / "{}.wav".format(prefix))
+            feat_path = self.feat_dir / "{}.{}.npy".format(prefix, self.feat_type)
+            if not feat_path.is_file():
                 # Then we should extract feats
                 should_extract_feats = True
-                if not os.path.isfile(mono16k_wav_path):
-                    feat_extract.convert_wav(str(path), mono16k_wav_path)
+                if not mono16k_wav_path.is_file():
+                    feat_extract.convert_wav(path, mono16k_wav_path)
 
         # TODO Should be extracting feats on a per-file basis. Right now we
         # check if any feats files don't exist and then do all the feature
         # extraction.
         if should_extract_feats:
-            feat_extract.from_dir(str(self.feat_dir), self.feat_type)
+            feat_extract.from_dir(self.feat_dir, self.feat_type)
 
     def make_data_splits(self, max_samples):
         """ Splits the utterances into training, validation and test sets."""

@@ -1,6 +1,7 @@
 """ Performs feature extraction of WAV files for acoustic modelling."""
 
 import os
+from pathlib import Path
 import subprocess
 
 import numpy as np
@@ -98,8 +99,10 @@ def combine_fbank_and_pitch(feat_dir, prefix):
 # elsewhere too (in say, datasets.chatin.prepare_feats()). Kaldi expects
 # specific wav format, so that should be coupled together with pitch extraction
 # here.
-def from_dir(dirname, feat_type):
+def from_dir(dirpath: Path, feat_type: str) -> None:
     """ Performs feature extraction from the WAV files in a directory. """
+
+    dirname = str(dirpath)
 
     def all_wavs_processed():
         """
@@ -143,10 +146,10 @@ def from_dir(dirname, feat_type):
             else:
                 raise PersephoneException("Feature type not found: %s" % feat_type)
 
-def convert_wav(org_wav_fn, tgt_wav_fn):
+def convert_wav(org_wav_fn: Path, tgt_wav_fn: Path) -> None:
     """ Converts the wav into a 16bit mono 16000Hz wav."""
     args = [config.FFMPEG_PATH,
-            "-i", org_wav_fn, "-ac", "1", "-ar", "16000", tgt_wav_fn]
+            "-i", str(org_wav_fn), "-ac", "1", "-ar", "16000", str(tgt_wav_fn)]
     subprocess.run(args)
 
 def kaldi_pitch(wav_dir, feat_dir):

@@ -330,7 +330,7 @@ def prepare_untran(feat_type="fbank_and_pitch"):
         prefix, _ = os.path.splitext(fn)
         mono16k_wav_path = os.path.join(wav_dir, "%s.wav" % prefix)
         if not os.path.isfile(mono16k_wav_path):
-            feat_extract.convert_wav(in_path, mono16k_wav_path)
+            feat_extract.convert_wav(Path(in_path), Path(mono16k_wav_path))
 
     # Split up the wavs
     wav_fns = os.listdir(wav_dir)
@@ -355,7 +355,7 @@ def prepare_untran(feat_type="fbank_and_pitch"):
             split_id += 1
 
     # Do feat extraction.
-    feat_extract.from_dir(os.path.join(feat_dir), feat_type=feat_type)
+    feat_extract.from_dir(Path(os.path.join(feat_dir)), feat_type=feat_type)
 
 # TODO Consider factoring out as non-Na specific
 def prepare_feats(feat_type, org_wav_dir=ORG_WAV_DIR, feat_dir=FEAT_DIR, tgt_wav_dir=TGT_WAV_DIR,
@@ -418,8 +418,8 @@ def prepare_feats(feat_type, org_wav_dir=ORG_WAV_DIR, feat_dir=FEAT_DIR, tgt_wav
                 feat_extract.convert_wav(wav_fn, mono16k_wav_fn)
 
         # Extract features from the wavs.
-        feat_extract.from_dir(os.path.join(feat_dir, "WORDLIST"), feat_type=feat_type)
-        feat_extract.from_dir(os.path.join(feat_dir, "TEXT"), feat_type=feat_type)
+        feat_extract.from_dir(Path(os.path.join(feat_dir, "WORDLIST")), feat_type=feat_type)
+        feat_extract.from_dir(Path(os.path.join(feat_dir, "TEXT")), feat_type=feat_type)
 
 def get_story_prefixes(label_type, label_dir=LABEL_DIR):
     """ Gets the Na text prefixes. """
