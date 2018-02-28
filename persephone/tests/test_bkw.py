@@ -208,6 +208,59 @@ class TestBKW:
         print("Total duration of the first utterance is {}".format(
             utterance.duration(utterances[0])))
 
+    def test_train_data_isnt_test_data(self, prep_org_data):
+
+        corp = bkw.Corpus(tgt_dir=self.tgt_dir)
+
+        # Assert test fns are distinct from train fns.
+        train = set(corp.get_train_fns()[0])
+        valid = set(corp.get_valid_fns()[0])
+        test = set(corp.get_test_fns()[0])
+        print(len(train))
+        print(len(valid))
+        print(len(test))
+        assert train - valid == train
+        assert train - test == train
+        assert valid - train == valid
+        assert valid - test == valid
+        assert test - train == test
+        assert test - valid == test
+
+        # First assert that test corpus utterances aren't in the training set
+        # by loading them.
+        #train = []
+        #for fn in corp.get_train_fns():
+        #    with open(fn) as f:
+        #        train.append(read().strip())
+        #valid = []
+        #for fn in corp.get_valid_fns():
+        #    with open(fn) as f:
+        #        valid.append(read().strip())
+        #test = []
+        #for fn in corp.get_test_fns():
+        #    with open(fn) as f:
+        #        test.append(read().strip())
+        #validtest = valid + test
+        #print(train)
+        #print(validtest)
+
+        # Could try this at the corpus_reader level, though I need to figure
+        # out how that code works again.
+        #cr = CorpusReader(corp)
+        #for batch in cr.train_batch_gen():
+        #    print(batch)
+        #    print(cr.human_readable(batch))
+
+        # Then do the more important test of checking for duplicates again. For
+        # each utterance in the test set, look for the most similar one
+        # edit-distance-wise from the training set. Do the same for the
+        # validation set.
+
+        # Do a code review to ensure I'm doing nothing silly.
+
+        # Run another model for unbounded epochs to see if training error
+        # diverges from test error.
+
     @pytest.mark.slow
     def test_multispeaker(self, prep_org_data):
         """ Trains a multispeaker BKW system using default settings. """

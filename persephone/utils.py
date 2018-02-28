@@ -116,7 +116,8 @@ def get_prefix_lens(feat_dir: Path, prefixes: List[str],
         prefix_lens.append((prefix, batch_x_lens[0]))
     return prefix_lens
 
-def filter_by_size(feat_dir, prefixes, feat_type, max_samples):
+def filter_by_size(feat_dir: Path, prefixes: List[str], feat_type: str,
+                   max_samples: int) -> List[str]:
     """ Sorts the files by their length and returns those with less
     than or equal to max_samples length. Returns the filename prefixes of
     those files. The main job of the method is to filter, but the sorting

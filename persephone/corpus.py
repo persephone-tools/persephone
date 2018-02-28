@@ -10,6 +10,7 @@ from pathlib import Path
 from os.path import join
 import random
 import subprocess
+from typing import List
 
 import numpy as np
 
@@ -179,7 +180,7 @@ class Corpus:
                 set(prefixes) - set(self.valid_prefixes))
             self.train_prefixes = list(
                 set(train_prefixes) - set(self.test_prefixes))
-            self.write_prefixes(prefixes, self.train_prefix_fn)
+            self.write_prefixes(self.train_prefixes, self.train_prefix_fn)
         else:
             raise NotImplementedError(
                 "The following case has not been implemented:" + 
@@ -188,7 +189,7 @@ class Corpus:
                 "{} exists - {}\n".format(self.test_prefix_fn, test_f_exists))
 
     @staticmethod
-    def read_prefixes(prefix_fn):
+    def read_prefixes(prefix_fn: Path) -> List[str]:
         with open(prefix_fn) as prefix_f:
             prefixes = [line.strip() for line in prefix_f]
         if prefixes == []:
@@ -289,11 +290,11 @@ class Corpus:
                     for prefix in self.untranscribed_prefixes]
         return feat_fns
 
-    def determine_prefixes(self):
-        label_prefixes = [path.relative_to(self.label_dir).with_suffix("")
+    def determine_prefixes(self) -> List[str]:
+        label_prefixes = [str(path.relative_to(self.label_dir).with_suffix(""))
                           for path in 
                           self.label_dir.glob("**/*.{}".format(self.label_type))]
-        wav_prefixes = [path.relative_to(self.wav_dir).with_suffix("")
+        wav_prefixes = [str(path.relative_to(self.wav_dir).with_suffix(""))
                           for path in 
                           self.wav_dir.glob("**/*.{}".format("wav"))]
 
@@ -319,6 +320,19 @@ class Corpus:
                 transcript = f.read().strip()
             print("Transcription: {}".format(transcript))
             subprocess.run(["play", str(wav_fn)])
+
+    def ensure_no_set_overlap(self):
+        """ Ensures no test set data has creeped into the training set."""
+
+        train = set(self.get_train_fns()[0])
+        valid = set(self.get_valid_fns()[0])
+        test = set(self.get_test_fns()[0])
+        assert train - valid == train
+        assert train - test == train
+        assert valid - train == valid
+        assert valid - test == valid
+        assert test - train == test
+        assert test - valid == test
 
 class ReadyCorpus(Corpus):
     """ Interface to a corpus that has WAV files and label files split into
@@ -351,15 +365,3 @@ class ReadyCorpus(Corpus):
                     phonemes = phonemes.union(line_phonemes)
         return phonemes
 
-    def ensure_no_set_overlap(self):
-        """ Ensures no test set data has creeped into the training set."""
-
-        train = set(self.get_train_fns()[0])
-        valid = set(self.get_valid_fns()[0])
-        test = set(self.get_test_fns()[0])
-        assert train - valid == train
-        assert train - test == train
-        assert valid - train == valid
-        assert valid - test == valid
-        assert test - train == test
-        assert test - valid == test
