@@ -77,7 +77,7 @@ class TestBKW:
     def test_bkw_preprocess(self, prep_org_data, clean_tgt_dir, preprocessed_corpus):
         self.check_corpus(preprocess_corpus)
 
-    def test_bkw_after_preprocessing(self, preprocess_corpus):
+    def test_bkw_after_preprocessing(self, preprocessed_corpus):
         self.check_corpus(preprocess_corpus)
 
     @staticmethod

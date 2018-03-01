@@ -202,6 +202,7 @@ class Corpus(corpus.Corpus):
 
         self.utterances = utterances
 
+        tgt_dir.mkdir(parents=True, exist_ok=True)
         utterance.write_utt2spk(self.utterances, self.tgt_dir)
 
         # Writes the utterances to the tgt_dir/label/ dir
