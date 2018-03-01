@@ -13,19 +13,21 @@ from . import config
 from .exceptions import DirtyRepoException
 
 def is_git_directory_clean(path_to_repo: Path,
-                           search_parent_dirs: bool = True) -> None:
+                           search_parent_dirs: bool = True,
+                           check_untracked: bool = False) -> None:
     """
     Check that the git working directory is in a clean state
     and raise exceptions if not.
     :path_to_repo: The path of the git repo
     """
     repo = Repo(str(path_to_repo), search_parent_directories=search_parent_dirs)
-    if repo.untracked_files:
-        raise DirtyRepoException("Untracked files. Commit them first.")
     # If there are changes to already tracked files
     if repo.is_dirty():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
+    if check_untracked:
+        if repo.untracked_files:
+            raise DirtyRepoException("Untracked files. Commit them first.")
 
 def target_list_to_sparse_tensor(target_list):
     """ Make tensorflow SparseTensor from list of targets, with each element in
