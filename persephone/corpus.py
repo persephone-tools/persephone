@@ -297,8 +297,8 @@ class Corpus:
                           for path in 
                           self.wav_dir.glob("**/*.{}".format("wav"))]
 
-        # Take the intersection
-        prefixes = list(set(label_prefixes) & set(wav_prefixes))
+        # Take the intersection; sort for determinism.
+        prefixes = sorted(list(set(label_prefixes) & set(wav_prefixes)))
 
         if prefixes == []:
             raise PersephoneException("""WARNING: Corpus object has no data. Are you sure
