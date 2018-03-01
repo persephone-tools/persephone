@@ -146,9 +146,9 @@ class Corpus:
     def make_data_splits(self, max_samples):
         """ Splits the utterances into training, validation and test sets."""
 
-        train_f_exists = os.path.isfile(self.train_prefix_fn)
-        valid_f_exists = os.path.isfile(self.valid_prefix_fn)
-        test_f_exists = os.path.isfile(self.test_prefix_fn)
+        train_f_exists = self.train_prefix_fn.is_file()
+        valid_f_exists = self.valid_prefix_fn.is_file()
+        test_f_exists = self.test_prefix_fn.is_file()
 
         if train_f_exists and valid_f_exists and test_f_exists:
             self.train_prefixes = self.read_prefixes(self.train_prefix_fn)
@@ -188,6 +188,7 @@ class Corpus:
 
     @staticmethod
     def read_prefixes(prefix_fn: Path) -> List[str]:
+        assert prefix_fn.is_file()
         with open(prefix_fn) as prefix_f:
             prefixes = [line.strip() for line in prefix_f]
         if prefixes == []:

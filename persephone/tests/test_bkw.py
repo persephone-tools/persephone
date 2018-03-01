@@ -61,7 +61,7 @@ class TestBKW:
         assert not self.tgt_dir.is_dir()
 
     @pytest.fixture
-    def preprocess_corpus(self):
+    def preprocessed_corpus(self, prep_org_data):
         """ Ensure's corpus preprocessing happens before any of the tests
         run that rely on it"""
         return bkw.Corpus(tgt_dir=self.tgt_dir)
@@ -74,7 +74,7 @@ class TestBKW:
         assert len(list(corp.wav_dir.iterdir())) == self.NUM_UTTERS
 
     @pytest.mark.slow
-    def test_bkw_preprocess(self, prep_org_data, clean_tgt_dir, preprocess_corpus):
+    def test_bkw_preprocess(self, prep_org_data, clean_tgt_dir, preprocessed_corpus):
         self.check_corpus(preprocess_corpus)
 
     def test_bkw_after_preprocessing(self, preprocess_corpus):
@@ -141,8 +141,8 @@ class TestBKW:
         assert len(utterance.remove_empty_text(
                    utterance.remove_duplicates(xv_rf_utters))) == 473
 
-    def test_corpus_duration(self, prep_org_data):
-        corp = bkw.Corpus(tgt_dir=self.tgt_dir)
+    def test_corpus_duration(self, preprocessed_corpus):
+        corp = preprocessed_corpus
         cr = CorpusReader(corp, batch_size=1)
         cr.calc_time()
         print("Number of corpus utterances: {}".format(len(corp.get_train_fns()[0])))
@@ -208,9 +208,9 @@ class TestBKW:
         print("Total duration of the first utterance is {}".format(
             utterance.duration(utterances[0])))
 
-    def test_train_data_isnt_test_data(self, prep_org_data):
+    def test_train_data_isnt_test_data(self, preprocessed_corpus):
 
-        corp = bkw.Corpus(tgt_dir=self.tgt_dir)
+        corp = preprocessed_corpus
 
         # Assert test fns are distinct from train fns.
         train = set(corp.get_train_fns()[0])
@@ -262,12 +262,12 @@ class TestBKW:
         # diverges from test error.
 
     @pytest.mark.slow
-    def test_multispeaker(self, prep_org_data):
+    def test_multispeaker(self, preprocessed_corpus):
         """ Trains a multispeaker BKW system using default settings. """
 
         exp_dir = prep_exp_dir(directory=config.TEST_EXP_PATH)
         # TODO bkw.Corpus and elan.Corpus should take an org_dir argument.
-        corp = bkw.Corpus(tgt_dir=self.tgt_dir)
+        corp = preprocessed_corpus
         cr = CorpusReader(corp)
         model = rnn_ctc.Model(exp_dir, cr, num_layers=2, hidden_size=250)
         model.train(min_epochs=30)
@@ -311,10 +311,17 @@ class TestBKW:
 
     def test_deterministic_2(self, prep_org_data):
         corp_1 = bkw.Corpus(tgt_dir=self.tgt_dir)
+        # Remove the prefix files.
+        os.remove(str(corp_1.train_prefix_fn))
+        os.remove(str(corp_1.valid_prefix_fn))
+        os.remove(str(corp_1.test_prefix_fn))
         corp_2 = bkw.Corpus(tgt_dir=self.tgt_dir)
         assert corp_1.utterances != None
         assert corp_1.utterances == corp_2.utterances
         assert len(corp_1.utterances) == self.NUM_UTTERS
+        assert corp_1.get_train_fns() == corp2.get_train_fns()
+        assert corp_1.get_valid_fns() == corp2.get_valid_fns()
+        assert corp_1.get_test_fns() == corp2.get_test_fns()
 
     def test_empty_wav(self, prep_org_data):
         # Checking the origin of the empty wav.
