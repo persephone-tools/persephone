@@ -19,7 +19,7 @@ def is_git_directory_clean(path_to_repo: Path,
     and raise exceptions if not.
     :path_to_repo: The path of the git repo
     """
-    repo = Repo(str(path_to_repo), search_parent_dirs)
+    repo = Repo(str(path_to_repo), search_parent_directories=search_parent_dirs)
     if repo.untracked_files:
         raise DirtyRepoException("Untracked files. Commit them first.")
     # If there are changes to already tracked files

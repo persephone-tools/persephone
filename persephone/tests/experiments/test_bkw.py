@@ -2,16 +2,16 @@ from pathlib import Path
 
 import pytest
 
-import utils
+from persephone import utils
 
 @pytest.mark.experiment
 class TestBKWExperiment:
 
     @pytest.fixture
-    def clean_git():
+    def clean_git(self):
         utils.is_git_directory_clean(".")
 
-    def test_tf_gpu():
+    def test_tf_gpu(self):
         import tensorflow as tf
         # Creates a graph.
         a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a')
@@ -22,7 +22,7 @@ class TestBKWExperiment:
         # Runs the op.
         print(sess.run(c))
 
-    def test_bkw(clean_git):
+    def test_bkw(self, clean_git):
         """ Trains a multispeaker BKW system using default settings. """
         from persephone.run import prep_exp_dir
         import persephone.datasets.bkw as bkw
