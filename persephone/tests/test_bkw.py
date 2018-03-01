@@ -64,7 +64,7 @@ class TestBKW:
     def preprocessed_corpus(self, prep_org_data):
         """ Ensure's corpus preprocessing happens before any of the tests
         run that rely on it"""
-        return bkw.Corpus(tgt_dir=self.tgt_dir)
+        return bkw.create_corpus(tgt_dir=self.tgt_dir)
 
     def check_corpus(self, corp):
 
@@ -287,10 +287,10 @@ class TestBKW:
 
     @pytest.mark.skip
     def test_utt2spk(self, prep_org_data):
-        corp = bkw.Corpus(tgt_dir=self.tgt_dir, speakers=["Mark Djandiomerr"])
+        corp = bkw.create_corpus(tgt_dir=self.tgt_dir, speakers=["Mark Djandiomerr"])
         assert len(corp.speakers) == 1
         assert len(corp.get_train_fns()) < self.NUM_UTTERS / 2
-        corp = bkw.Corpus(tgt_dir=self.tgt_dir)
+        corp = bkw.create_corpus(tgt_dir=self.tgt_dir)
         assert len(corp.speakers) == self.NUM_SPEAKERS
         assert len(corp.get_train_fns()) == self.NUM_UTTERS
 
@@ -316,12 +316,12 @@ class TestBKW:
         assert utterances_1 == utterances_2
 
     def test_deterministic_2(self, prep_org_data):
-        corp_1 = bkw.Corpus(tgt_dir=self.tgt_dir)
+        corp_1 = bkw.create_corpus(tgt_dir=self.tgt_dir)
         # Remove the prefix files.
         os.remove(str(corp_1.train_prefix_fn))
         os.remove(str(corp_1.valid_prefix_fn))
         os.remove(str(corp_1.test_prefix_fn))
-        corp_2 = bkw.Corpus(tgt_dir=self.tgt_dir)
+        corp_2 = bkw.create_corpus(tgt_dir=self.tgt_dir)
         assert corp_1.utterances != None
         assert corp_1.utterances == corp_2.utterances
         assert len(corp_1.utterances) == self.NUM_UTTERS

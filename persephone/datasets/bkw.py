@@ -150,7 +150,7 @@ def filter_for_not_empty(utter: Utterance) -> bool:
 def bkw_filter(utter: Utterance) -> bool:
     return filter_for_not_codeswitched(utter) and filter_for_not_empty(utter)
 
-def prepare_corpus(org_dir: Path = Path(config.BKW_PATH),
+def create_corpus(org_dir: Path = Path(config.BKW_PATH),
                  tgt_dir: Path = Path(config.TGT_DIR, "BKW"),
                  feat_type: str = "fbank", label_type: str = "phonemes",
                  speakers: List[str] = None) -> Corpus:
