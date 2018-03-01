@@ -23,6 +23,7 @@ from ..utterance import Utterance
 from ..preprocess import elan
 from ..preprocess import wav
 from ..preprocess.labels import LabelSegmenter
+from ..corpus import Corpus
 
 BASIC_PHONEMES = set(["a", "b", "d", "dj", "rd", "e", "h", "i", "k", "l",
             "rl", "m", "n", "ng", "nj", "rn", "o", "r", "rr", "u",
@@ -149,21 +150,17 @@ def filter_for_not_empty(utter: Utterance) -> bool:
 def bkw_filter(utter: Utterance) -> bool:
     return filter_for_not_codeswitched(utter) and filter_for_not_empty(utter)
 
-class Corpus(elan.Corpus):
-    def __init__(self, org_dir: Path = Path(config.BKW_PATH),
+def prepare_corpus(org_dir: Path = Path(config.BKW_PATH),
                  tgt_dir: Path = Path(config.TGT_DIR, "BKW"),
                  feat_type: str = "fbank", label_type: str = "phonemes",
-                 speakers: List[str] = None) -> None:
+                 speakers: List[str] = None) -> Corpus:
 
-        if label_type == "phonemes":
-            labels = PHONEMES
-        else:
-            raise NotImplementedError(
-                "label_type {} not implemented.".format(label_type))
+    if label_type != "phonemes":
+        raise NotImplementedError(
+            "label_type {} not implemented.".format(label_type))
 
-        # super() will then do feature extraction and create train/valid/test
-        super().__init__(org_dir, tgt_dir,
-                         feat_type=feat_type, label_type=label_type,
-                         utterance_filter=bkw_filter,
-                         label_segmenter=bkw_label_segmenter,
-                         speakers=speakers)
+    return corpus.Corpus.from_elan(org_dir, tgt_dir,
+                     feat_type=feat_type, label_type=label_type,
+                     utterance_filter=bkw_filter,
+                     label_segmenter=bkw_label_segmenter,
+                     speakers=speakers, tier_prefixes=["xv", "rf"])
