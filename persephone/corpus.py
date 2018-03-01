@@ -10,7 +10,7 @@ from pathlib import Path
 from os.path import join
 import random
 import subprocess
-from typing import List
+from typing import List, Callable, Type, TypeVar
 
 import numpy as np
 
@@ -18,8 +18,14 @@ from . import config
 from .preprocess import feat_extract
 from . import utils
 from .exceptions import PersephoneException
+from .preprocess import elan, wav
+from . import utterance
+from .utterance import Utterance
+from .preprocess.labels import LabelSegmenter
 
 logging.config.fileConfig(config.LOGGING_INI_PATH)
+
+CorpusT = TypeVar("CorpusT", bound="Corpus")
 
 class Corpus:
     """ All interfaces to corpora are subclasses of this class. A corpus assumes
@@ -69,6 +75,57 @@ class Corpus:
         self.ensure_no_set_overlap()
 
         self.untranscribed_prefixes = self.get_untranscribed_prefixes()
+
+        # TODO Need to contemplate whether Corpus objects have Utterance
+        # objects or # not. Some of the TestBKW tests currently rely on this
+        # for testing.
+        self.utterances = None # type: List[Utterance]
+
+
+    @classmethod
+    def from_elan(cls: Type[CorpusT], org_dir: Path, tgt_dir: Path,
+                 feat_type: str = "fbank", label_type: str = "phonemes",
+                 utterance_filter: Callable[[Utterance], bool] = None,
+                 label_segmenter: LabelSegmenter = None,
+                 speakers: List[str] = None, lazy: bool = True,
+                 tier_prefixes: List[str] = ["xv", "rf"]) -> CorpusT:
+
+        # Read utterances from org_dir.
+        utterances = elan.utterances_from_dir(org_dir,
+                                              tier_prefixes=tier_prefixes)
+
+        # Filter utterances based on some criteria (such as codeswitching).
+        utterances = [utter for utter in utterances if utterance_filter(utter)]
+        utterances = utterance.remove_duplicates(utterances)
+
+        # Segment the labels in the utterances appropriately
+        utterances = [label_segmenter.segment_labels(utter) for utter in utterances]
+
+        # Remove utterances without transcriptions.
+        utterances = utterance.remove_empty_text(utterances)
+
+        # Remove utterances with exceptionally short wav_files that are too
+        # short for CTC to work.
+        utterances = utterance.remove_too_short(utterances)
+
+        tgt_dir.mkdir(parents=True, exist_ok=True)
+        utterance.write_utt2spk(utterances, tgt_dir)
+
+        # TODO A lot of these methods aren't ELAN-specific. preprocess.elan was
+        # only used to get the utterances. There could be another Corpus
+        # factory method that takes Utterance objects. the fromElan and
+        # fromPangloss constructors could call this.
+
+        # Writes the utterances to the tgt_dir/label/ dir
+        utterance.write_utters(utterances, (tgt_dir / "label"),
+                               label_type, lazy=lazy)
+        # Extracts utterance level WAV information from the input file.
+        wav.extract_wavs(utterances, (tgt_dir / "wav"), lazy=lazy)
+
+        corpus = cls(feat_type, label_type, tgt_dir,
+                     label_segmenter.labels, speakers=speakers)
+        corpus.utterances = utterances
+        return corpus
 
     def get_wav_dir(self) -> Path:
         return self.tgt_dir / "wav"
@@ -363,4 +420,3 @@ class ReadyCorpus(Corpus):
                         raise
                     phonemes = phonemes.union(line_phonemes)
         return phonemes
-
