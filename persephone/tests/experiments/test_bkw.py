@@ -31,7 +31,7 @@ class TestBKWExperiment:
         from persephone import config
 
         exp_dir = prep_exp_dir(directory=config.TEST_EXP_PATH)
-        corp = bkw.Corpus(tgt_dir=Path(config.TEST_DATA_PATH) / "bkw")
+        corp = bkw.create_corpus(tgt_dir=Path(config.TEST_DATA_PATH) / "bkw")
         cr = CorpusReader(corp)
         model = rnn_ctc.Model(exp_dir, cr, num_layers=2, hidden_size=250)
         model.train(min_epochs=30)
