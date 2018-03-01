@@ -75,10 +75,10 @@ class TestBKW:
 
     @pytest.mark.slow
     def test_bkw_preprocess(self, prep_org_data, clean_tgt_dir, preprocessed_corpus):
-        self.check_corpus(preprocess_corpus)
+        self.check_corpus(preprocessed_corpus)
 
     def test_bkw_after_preprocessing(self, preprocessed_corpus):
-        self.check_corpus(preprocess_corpus)
+        self.check_corpus(preprocessed_corpus)
 
     @staticmethod
     def count_empty(utterances: List[Utterance]) -> int:
@@ -319,9 +319,9 @@ class TestBKW:
         assert corp_1.utterances != None
         assert corp_1.utterances == corp_2.utterances
         assert len(corp_1.utterances) == self.NUM_UTTERS
-        assert corp_1.get_train_fns() == corp2.get_train_fns()
-        assert corp_1.get_valid_fns() == corp2.get_valid_fns()
-        assert corp_1.get_test_fns() == corp2.get_test_fns()
+        assert corp_1.get_train_fns() == corp_2.get_train_fns()
+        assert corp_1.get_valid_fns() == corp_2.get_valid_fns()
+        assert corp_1.get_test_fns() == corp_2.get_test_fns()
 
     def test_empty_wav(self, prep_org_data):
         # Checking the origin of the empty wav.

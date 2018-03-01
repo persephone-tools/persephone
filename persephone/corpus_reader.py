@@ -1,6 +1,7 @@
 """ An CorpusReader class that interfaces with preprocessed corpora."""
 
 import logging
+import logging.config
 import pprint
 import random
 

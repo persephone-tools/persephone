@@ -5,6 +5,6 @@ class gpu_options:
         self.allow_growth: bool
 
 class ConfigProto:
-    def __init__(self):
+    def __init__(self, log_device_placement: bool) -> None:
         self.gpu_options: gpu_options
         #self.gpu_options.allow_growth: bool

@@ -189,7 +189,7 @@ class Corpus:
     @staticmethod
     def read_prefixes(prefix_fn: Path) -> List[str]:
         assert prefix_fn.is_file()
-        with open(prefix_fn) as prefix_f:
+        with prefix_fn.open() as prefix_f:
             prefixes = [line.strip() for line in prefix_f]
         if prefixes == []:
             raise PersephoneException(
@@ -198,11 +198,11 @@ class Corpus:
         return prefixes
 
     @staticmethod
-    def write_prefixes(prefixes, prefix_fn):
+    def write_prefixes(prefixes: List[str], prefix_fn: Path) -> None:
         if prefixes == []:
             raise PersephoneException(
                 "No prefixes. Will not write {}".format(prefix_fn))
-        with open(prefix_fn, "w") as prefix_f:
+        with prefix_fn.open("w") as prefix_f:
             for prefix in prefixes:
                 print(prefix, file=prefix_f)
 
