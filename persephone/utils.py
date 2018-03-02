@@ -1,28 +1,41 @@
 """ Miscellaneous utility functions. """
+import logging
+import logging.config
 import os
+from pathlib import Path
 import subprocess
 from subprocess import PIPE
+from typing import List, Tuple
 
-from git import Repo
-import numpy as np
+from git import Repo # type: ignore
+import numpy as np # type: ignore
 from nltk.metrics import distance
 
 from . import config
 from .exceptions import DirtyRepoException
 
-def is_git_directory_clean(path_to_repo, search_parent_dirs=True):
+logging.config.fileConfig(config.LOGGING_INI_PATH)
+
+def is_git_directory_clean(path_to_repo: Path,
+                           search_parent_dirs: bool = True,
+                           check_untracked: bool = False) -> None:
     """
     Check that the git working directory is in a clean state
     and raise exceptions if not.
     :path_to_repo: The path of the git repo
     """
-    repo = Repo(path_to_repo, search_parent_dirs)
-    if repo.untracked_files:
-        raise DirtyRepoException("Untracked files. Commit them first.")
+    repo = Repo(str(path_to_repo), search_parent_directories=search_parent_dirs)
+    logging.debug("is_git_directory_clean check for repo in path={} from "\
+                  "cwd={} with search_parent_directories={}".format(
+                        path_to_repo, os.getcwd(), search_parent_dirs))
+
     # If there are changes to already tracked files
     if repo.is_dirty():
         raise DirtyRepoException("Changes to the index or working tree."
                                  "Commit them first .")
+    if check_untracked:
+        if repo.untracked_files:
+            raise DirtyRepoException("Untracked files. Commit them first.")
 
 def target_list_to_sparse_tensor(target_list):
     """ Make tensorflow SparseTensor from list of targets, with each element in
@@ -104,31 +117,17 @@ def get_prefixes(dirname, extension):
                 prefixes.append(os.path.join(root, filename.split(".")[0]))
     return sorted(prefixes)
 
-def trim_wav(in_fn, out_fn, start_time, end_time):
-    """ Crops the wav file at in_fn so that the audio between start_time and
-    end_time is output to out_fn.
-    """
-
-    if not os.path.isfile(out_fn):
-        args = [config.SOX_PATH, in_fn, out_fn, "trim", str(start_time), "=" + str(end_time)]
-        print(args[1:])
-        subprocess.run(args)
-
-def make_parent(file_path):
-    """ Makes parent dir for a file path."""
-    parent_dir = os.path.dirname(file_path)
-    if not os.path.isdir(parent_dir):
-        os.makedirs(parent_dir)
-
-def get_prefix_lens(feat_dir, prefixes, feat_type):
+def get_prefix_lens(feat_dir: Path, prefixes: List[str],
+                    feat_type: str) -> List[Tuple[str,int]]:
     prefix_lens = []
     for prefix in prefixes:
-        path = os.path.join(feat_dir, "%s.%s.npy" % (prefix, feat_type))
-        _, batch_x_lens = load_batch_x([path], flatten=False)
+        path = feat_dir / ("%s.%s.npy" % (prefix, feat_type))
+        _, batch_x_lens = load_batch_x([str(path)], flatten=False)
         prefix_lens.append((prefix, batch_x_lens[0]))
     return prefix_lens
 
-def filter_by_size(feat_dir, prefixes, feat_type, max_samples):
+def filter_by_size(feat_dir: Path, prefixes: List[str], feat_type: str,
+                   max_samples: int) -> List[str]:
     """ Sorts the files by their length and returns those with less
     than or equal to max_samples length. Returns the filename prefixes of
     those files. The main job of the method is to filter, but the sorting
@@ -137,7 +136,7 @@ def filter_by_size(feat_dir, prefixes, feat_type, max_samples):
     """
 
     # TODO Tell the user what utterances we are removing.
-    prefix_lens = get_prefix_lens(feat_dir, prefixes, feat_type)
+    prefix_lens = get_prefix_lens(Path(feat_dir), prefixes, feat_type)
     prefixes = [prefix for prefix, length in prefix_lens
                 if length <= max_samples]
     return prefixes

@@ -40,7 +40,7 @@ main repository on GitHub, clone, and develop on a branch. Steps:
 
 5. Go to the GitHub web page of your fork of the Persephone repo.  Click the
 'Pull request' button to send your changes to the project's maintainers for
-review. Please send pull requests to development branch. This will send an
+review. This will send an
 email to the maintainers. 
 
 (If you are unfamiliar with Git, please look up the

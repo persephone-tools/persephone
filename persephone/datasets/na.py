@@ -1,24 +1,28 @@
 """ An interface with the Na data. """
 
+from pathlib import Path
 import os
 import random
 import subprocess
 from subprocess import PIPE
 
 import numpy as np
+import pint # type: ignore
 import xml.etree.ElementTree as ET
 
 from .. import config
 from .. import corpus
-from .. import feat_extract
+from ..preprocess import feat_extract
+from ..preprocess import wav
 from .. import utils
 from ..exceptions import PersephoneException
-from . import pangloss
+from ..preprocess import pangloss
+
+ureg = pint.UnitRegistry()
 
 ORG_DIR = config.NA_DIR
-# TODO eventually remove "new" when ALTA experiments are finished.
-TGT_DIR = os.path.join(config.TGT_DIR, "na", "new")
-ORG_XML_DIR = os.path.join(ORG_DIR, "xml")
+TGT_DIR = os.path.join(config.TGT_DIR, "na")
+ORG_XML_DIR = os.path.join(ORG_DIR, "xml/TEXT/F4/")
 ORG_WAV_DIR = os.path.join(ORG_DIR, "wav")
 TGT_WAV_DIR = os.path.join(TGT_DIR, "wav")
 FEAT_DIR = os.path.join(TGT_DIR, "feat")
@@ -33,14 +37,6 @@ UNTRAN_DIR = os.path.join(TGT_DIR, "untranscribed")
 #            for fn in os.listdir(ORG_TRANSCRIPT_DIR)
 #            if fn.endswith(".txt")]
 
-# TODO Move into feat creation functions.
-if not os.path.isdir(TGT_DIR):
-    os.makedirs(TGT_DIR)
-
-if not os.path.isdir(FEAT_DIR):
-    os.makedirs(FEAT_DIR)
-
-# HARDCODED values
 MISC_SYMBOLS = [' ̩', '~', '=', ':', 'F', '¨', '↑', '“', '”', '…', '«', '»',
 'D', 'a', 'ː', '#', '$', "‡"]
 BAD_NA_SYMBOLS = ['D', 'F', '~', '…', '=', '↑', ':']
@@ -86,6 +82,7 @@ def preprocess_na(sent, label_type):
     elif label_type == "phonemes":
         phonemes = True
         tones = False
+        tgm = False
     elif label_type == "tones":
         phonemes = False
         tones = True
@@ -133,6 +130,10 @@ def preprocess_na(sent, label_type):
                 return sentence[:2], sentence[2:]
             else:
                 return None, sentence[2:]
+        if sentence[:2] == "˧̩":
+            return "˧", sentence[2:]
+        if sentence[:2] == "˧̍":
+            return "˧", sentence[2:]
         if sentence[0] in UNI_PHNS:
             if phonemes:
                 return sentence[0], sentence[1:]
@@ -254,7 +255,11 @@ def trim_wavs(org_wav_dir=ORG_WAV_DIR,
 
             out_wav_path = os.path.join(tgt_wav_dir, rec_type, "%s.%d.wav" % (prefix, i))
             assert os.path.isfile(in_wav_path)
-            utils.trim_wav(in_wav_path, out_wav_path, start_time, end_time)
+            start_time = start_time * ureg.seconds
+            end_time = end_time * ureg.seconds
+            wav.trim_wav_ms(Path(in_wav_path), Path(out_wav_path),
+                            start_time.to(ureg.milliseconds).magnitude,
+                            end_time.to(ureg.milliseconds).magnitude)
 
 # Commenting out because of spacy requirement and working with the French
 # translations isn't very integral to persephone.
@@ -292,17 +297,11 @@ def prepare_labels(label_type, org_xml_dir=ORG_XML_DIR, label_dir=LABEL_DIR):
     if not os.path.exists(os.path.join(label_dir, "WORDLIST")):
         os.makedirs(os.path.join(label_dir, "WORDLIST"))
 
-    for fn in os.listdir(org_xml_dir):
-        print(fn)
-
-        path = os.path.join(org_xml_dir, fn)
+    for path in Path(org_xml_dir).glob("*.xml"):
+        fn = path.name
         prefix, _ = os.path.splitext(fn)
-        if os.path.isdir(path):
-            continue
-        if not path.endswith(".xml"):
-            continue
 
-        rec_type, sents, times, transls = pangloss.get_sents_times_and_translations(path)
+        rec_type, sents, times, transls = pangloss.get_sents_times_and_translations(str(path))
         # Write the sentence transcriptions to file
         sents = [preprocess_na(sent, label_type) for sent in sents]
         for i, sent in enumerate(sents):
@@ -331,7 +330,7 @@ def prepare_untran(feat_type="fbank_and_pitch"):
         prefix, _ = os.path.splitext(fn)
         mono16k_wav_path = os.path.join(wav_dir, "%s.wav" % prefix)
         if not os.path.isfile(mono16k_wav_path):
-            feat_extract.convert_wav(in_path, mono16k_wav_path)
+            feat_extract.convert_wav(Path(in_path), Path(mono16k_wav_path))
 
     # Split up the wavs
     wav_fns = os.listdir(wav_dir)
@@ -344,7 +343,11 @@ def prepare_untran(feat_type="fbank_and_pitch"):
         length = utils.wav_length(in_fn)
         while True:
             out_fn = os.path.join(feat_dir, "%s.%d.wav" % (prefix, split_id))
-            utils.trim_wav(in_fn, out_fn, start, end)
+            start_time = start * ureg.seconds
+            end_time = end * ureg.seconds
+            wav.trim_wav_ms(Path(in_fn), Path(out_fn),
+                            start_time.to(ureg.milliseconds).magnitude,
+                            end_time.to(ureg.milliseconds).magnitude)
             if end > length:
                 break
             start += 10
@@ -352,12 +355,19 @@ def prepare_untran(feat_type="fbank_and_pitch"):
             split_id += 1
 
     # Do feat extraction.
-    feat_extract.from_dir(os.path.join(feat_dir), feat_type=feat_type)
+    feat_extract.from_dir(Path(os.path.join(feat_dir)), feat_type=feat_type)
 
 # TODO Consider factoring out as non-Na specific
 def prepare_feats(feat_type, org_wav_dir=ORG_WAV_DIR, feat_dir=FEAT_DIR, tgt_wav_dir=TGT_WAV_DIR,
                   org_xml_dir=ORG_XML_DIR, label_dir=LABEL_DIR):
     """ Prepare the input features."""
+
+    if not os.path.isdir(TGT_DIR):
+        os.makedirs(TGT_DIR)
+
+    if not os.path.isdir(FEAT_DIR):
+        os.makedirs(FEAT_DIR)
+
 
     if not os.path.isdir(os.path.join(feat_dir, "WORDLIST")):
         os.makedirs(os.path.join(feat_dir, "WORDLIST"))
@@ -408,8 +418,8 @@ def prepare_feats(feat_type, org_wav_dir=ORG_WAV_DIR, feat_dir=FEAT_DIR, tgt_wav
                 feat_extract.convert_wav(wav_fn, mono16k_wav_fn)
 
         # Extract features from the wavs.
-        feat_extract.from_dir(os.path.join(feat_dir, "WORDLIST"), feat_type=feat_type)
-        feat_extract.from_dir(os.path.join(feat_dir, "TEXT"), feat_type=feat_type)
+        feat_extract.from_dir(Path(os.path.join(feat_dir, "WORDLIST")), feat_type=feat_type)
+        feat_extract.from_dir(Path(os.path.join(feat_dir, "TEXT")), feat_type=feat_type)
 
 def get_story_prefixes(label_type, label_dir=LABEL_DIR):
     """ Gets the Na text prefixes. """
@@ -496,7 +506,7 @@ def make_story_splits(valid_story, test_story, max_samples, label_type, tgt_dir=
 
     return train, valid, test
 
-class Corpus(corpus.AbstractCorpus):
+class Corpus(corpus.Corpus):
     """ Class to interface with the Na corpus. """
 
     def __init__(self,
@@ -504,12 +514,14 @@ class Corpus(corpus.AbstractCorpus):
                  label_type="phonemes_and_tones",
                  train_rec_type="text", max_samples=1000,
                  valid_story=None, test_story=None,
-                 tgt_dir=TGT_DIR):
-        super().__init__(feat_type, label_type)
+                 tgt_dir=Path(TGT_DIR)):
 
-        self.FEAT_DIR = os.path.join(tgt_dir, "feat")
-        self.LABEL_DIR = os.path.join(tgt_dir, "label")
-        self.UNTRAN_FEAT_DIR = os.path.join(UNTRAN_DIR, "feat")
+        self.tgt_dir = tgt_dir
+        self.get_wav_dir().mkdir(parents=True, exist_ok=True) # pylint: disable=no-member
+        self.get_label_dir().mkdir(exist_ok=True) # pylint: disable=no-member
+
+        self.valid_story = valid_story
+        self.test_story = test_story
 
         self.max_samples = max_samples
         self.train_rec_type = train_rec_type
@@ -527,12 +539,17 @@ class Corpus(corpus.AbstractCorpus):
         else:
             raise PersephoneException("label_type %s not implemented." % label_type)
 
-        self.feat_type = feat_type
-        self.label_type = label_type
+        tgt_label_dir = str(tgt_dir / "label")
+        tgt_wav_dir = str(tgt_dir / "wav")
+        tgt_feat_dir = str(tgt_dir / "feat")
+        prepare_labels(label_type, label_dir=tgt_label_dir)
+        prepare_feats(feat_type, tgt_wav_dir=tgt_wav_dir,
+                                 feat_dir=tgt_feat_dir,
+                                 label_dir=tgt_label_dir)
 
-        self.valid_story = valid_story
-        self.test_story = test_story
+        super().__init__(feat_type, label_type, tgt_dir, self.labels, max_samples=max_samples)
 
+    def make_data_splits(self, max_samples, valid_story=None, test_story=None):
         # TODO Make this also work with wordlists.
         if valid_story or test_story:
             if not (valid_story and test_story):
@@ -544,21 +561,15 @@ class Corpus(corpus.AbstractCorpus):
             train, valid, test = make_story_splits(valid_story, test_story,
                                                    max_samples,
                                                    self.label_type,
-                                                   tgt_dir=tgt_dir)
+                                                   tgt_dir=str(self.tgt_dir))
         else:
             train, valid, test = make_data_splits(self.label_type,
-                                                  train_rec_type=train_rec_type,
+                                                  train_rec_type=self.train_rec_type,
                                                   max_samples=max_samples,
-                                                  tgt_dir=tgt_dir)
+                                                  tgt_dir=str(self.tgt_dir))
         self.train_prefixes = train
         self.valid_prefixes = valid
         self.test_prefixes = test
-
-        self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
-                                 ["pad"] + sorted(list(self.labels)))}
-        self.INDEX_TO_LABEL = {index: phn for index, phn in enumerate(
-                                 ["pad"] + sorted(list(self.labels)))}
-        self.vocab_size = len(self.labels)
 
     def output_story_prefixes(self):
         """ Writes the set of prefixes to a file this is useful for pretty
@@ -573,13 +584,6 @@ class Corpus(corpus.AbstractCorpus):
         with open(fn, "w") as f:
             for utter_id in self.test_prefixes:
                 print(utter_id.split("/")[1], file=f)
-
-    # TODO Use 'labels' instead of 'phonemes' here and in corpus.py
-    # Also, factor out as non-Na-specific.
-    def indices_to_phonemes(self, indices):
-        return [(self.INDEX_TO_LABEL[index]) for index in indices]
-    def phonemes_to_indices(self, labels):
-        return [self.LABEL_TO_INDEX[label] for label in labels]
 
     def __repr__(self):
         return ("%s(" % self.__class__.__name__ +

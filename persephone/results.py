@@ -2,14 +2,15 @@
 
 from . import config
 from .datasets import na
-from .datasets import chatino
+from pathlib import Path
+from typing import Set, Dict, Tuple
 
 from collections import defaultdict
 import os
 from . import utils
 
-from distance import min_edit_distance_align
-from distance import cluster_alignment_errors
+from .distance import min_edit_distance_align
+from .distance import cluster_alignment_errors
 
 def round_items(floats):
     return ["%0.3f" % fl for fl in floats]
@@ -320,34 +321,34 @@ def error_types(exp_path, labels=None):
     print(inss)
     print(dels)
 
-def chatino_tone_confusion(exp_path):
-    """ Outputs a confusion matrix for Chatino tones."""
+def tone_confusion(exp_path: Path, label_set: Set[str]) -> None:
+    """ Outputs a label confusion matrix."""
 
-    tones = list(chatino.TONES)
+    labels = list(label_set)
     alignments = ed_alignments(exp_path)
 
-    d = defaultdict(int)
+    d = defaultdict(int) # type: Dict[Tuple[str, str], int]
     for alignment in alignments:
         for arrow in alignment:
-            if arrow[0] in tones:
+            if arrow[0] in labels:
                 d[arrow] += 1
 
     import pprint; pprint.pprint(d)
 
-    total = defaultdict(int)
-    for ref in tones:
-        for hyp in tones:
+    total = defaultdict(int) # type: Dict[str, int]
+    for ref in labels:
+        for hyp in labels:
             total[ref] += d[(ref, hyp)]
 
-    nonzero_tones = [item[0] for item in total.items() if item[1] > 4]
+    nonzero_labels = [item[0] for item in total.items() if item[1] > 4]
     print(sorted(total.items(), key=lambda x: x[1]))
 
-    for hyp in nonzero_tones[:-1]:
+    for hyp in nonzero_labels[:-1]:
         print(hyp + ",", end="")
-    print("%s\\\\" % nonzero_tones[-1])
-    for ref in nonzero_tones:
+    print("%s\\\\" % nonzero_labels[-1])
+    for ref in nonzero_labels:
         print(ref + ",", end="")
-        for hyp in nonzero_tones[:-1]:
+        for hyp in nonzero_labels[:-1]:
             print("%0.3f," % (d[(ref, hyp)]*100/total[ref]), end="")
-        print("%0.3f\\\\" % (d[(ref, nonzero_tones[-1])]*100/total[ref]))
+        print("%0.3f\\\\" % (d[(ref, nonzero_labels[-1])]*100/total[ref]))
 
