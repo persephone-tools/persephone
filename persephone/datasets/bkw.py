@@ -10,7 +10,7 @@ import nltk # type: ignore
 nltk.download("punkt") # type: ignore
 from pympi.Elan import Eaf
 
-from .. import utils
+from .. import corpus
 from .. import config
 from ..preprocess.labels import segment_into_tokens
 from ..utterance import Utterance
