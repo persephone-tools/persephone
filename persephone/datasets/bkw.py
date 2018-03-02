@@ -1,13 +1,8 @@
 """ Interface to Alex/Steven's Kunwinjku data. """
 
-import glob
-import os
-from os.path import join
 from pathlib import Path
-import string
 import subprocess
-import sys
-from typing import List, NamedTuple, Set
+from typing import List, Set
 
 import nltk # type: ignore
 # TODO This download should be conditional, since a complaint is raised if
@@ -15,13 +10,10 @@ import nltk # type: ignore
 nltk.download("punkt") # type: ignore
 from pympi.Elan import Eaf
 
-from .. import corpus
 from .. import config
 from ..preprocess.labels import segment_into_tokens
-from .. import utils
 from ..utterance import Utterance
 from ..preprocess import elan
-from ..preprocess import wav
 from ..preprocess.labels import LabelSegmenter
 from ..corpus import Corpus
 
