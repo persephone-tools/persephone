@@ -1,5 +1,3 @@
-""" A driver script that runs experiments. """
-
 import logging
 import os
 from os.path import join
@@ -11,12 +9,6 @@ from git import Repo
 from . import config
 from . import rnn_ctc
 from .datasets import na
-#from . import datasets.griko
-from .datasets import chatino
-from .datasets import butcher
-#from . import datasets.timit
-#from . import datasets.japhug
-#from . import datasets.babel
 from .corpus_reader import CorpusReader
 from .exceptions import PersephoneException, DirtyRepoException
 from .utils import is_git_directory_clean
@@ -66,72 +58,13 @@ def prep_exp_dir(directory=EXP_DIR):
 
     return exp_dir
 
-
 def run():
     """
-    The only function that should be called from this module. Ensures
-    experiments are documented in their own dir with a reference to the hash
+    Ensures experiments are documented in their own dir with a reference to the hash
     of the commit used to run the experiment.
     """
     is_git_directory_clean(".")
     exp_dir = prep_exp_dir()
-    scaling_graph(exp_dir)
-    #rerun_storyfoldxv(exp_dir)
-
-def scaling_graph(exp_dir):
-
-    num_runs = 3
-    num_trains = [128,256,512,1024,2048]
-    #feat_types = ["fbank_and_pitch", "fbank"]
-    #label_types = ["phonemes", "phonemes_and_tones"]
-
-    feat_types = ["fbank", "pitch", "fbank_and_pitch", "phonemes_onehot"]
-    label_types = ["tones_notgm"]
-
-    for feat_type in feat_types:
-        for label_type in label_types:
-            for num_train in num_trains:
-                long_exp_dir = os.path.join(exp_dir, feat_type, label_type,
-                                            str(num_train))
-                os.makedirs(long_exp_dir)
-                for i in range(num_runs):
-                    train(long_exp_dir, "na", feat_type, label_type, 3, 250,
-                          train_rec_type="text", num_train=num_train,
-                          max_train_ler=0.7, max_valid_ler=0.7)
-
-def rerun_storyfoldxv(exp_dir):
-
-    valid_test = [('crdo-NRU_F4_RENAMING', 'crdo-NRU_F4_HOUSEBUILDING')]#,
-    #              ('crdo-NRU_F4_TRADER_AND_HIS_SON', 'crdo-NRU_F4_RENAMING'),
-    #              ('crdo-NRU_F4_ELDERS3', 'crdo-NRU_F4_BURIEDALIVE3'),
-    #              ('crdo-NRU_F4_BURIEDALIVE2', 'crdo-NRU_F4_CARAVANS')]
-
-    with open(join(exp_dir, "storyfold_crossvalidation.txt"), "w") as f:
-        for valid_text, test_text in valid_test:
-            for out_f in [f, sys.stdout]:
-                print("Test text: %s" % test_text, file=out_f)
-                print("Valid text: %s" % valid_text, file=out_f)
-                print("", file=out_f, flush=True)
-
-            train(exp_dir, "na", "fbank_and_pitch", "phonemes_and_tones", 3, 400,
-                   valid_story=valid_text, test_story=test_text,
-                   max_valid_ler=0.5, max_train_ler=0.1)
-
-def story_fold_cross_validation(exp_dir):
-
-    label_type = "phonemes_and_tones"
-    with open(join(exp_dir, "storyfold_crossvalidation.txt"), "w") as f:
-        texts = na.get_stories(label_type)
-        for i, test_text in enumerate(texts):
-            valid_text = texts[(i+1) % len(texts)]
-            for out_f in [f, sys.stdout]:
-                print(i, file=out_f)
-                print("Test text: %s" % test_text, file=out_f)
-                print("Valid text: %s" % valid_text, file=out_f)
-                print("", file=out_f, flush=True)
-
-            train(exp_dir, "na", "fbank_and_pitch", label_type, 3, 400,
-                   valid_story=valid_text, test_story=test_text)
 
 def train(exp_dir, language, feat_type, label_type,
           num_layers, hidden_size,
@@ -156,7 +89,7 @@ def train(exp_dir, language, feat_type, label_type,
     #log.addHandler(fh)
 
     if language == "chatino":
-        corpus = chatino.Corpus(feat_type, label_type)
+        raise NotImplementedError("Chatino code needs a rewrite.")
     elif language == "na":
         corpus = na.Corpus(feat_type, label_type,
                                     train_rec_type=train_rec_type,
@@ -164,7 +97,8 @@ def train(exp_dir, language, feat_type, label_type,
                                     test_story=test_story)
     elif language == "kunwinjku":
         # TODO How to choose between the Bird and Butcher corpora?
-        corpus = butcher.Corpus(feat_type, label_type)
+        raise NotImplementedError("Need to finish testing.")
+        #corpus = kunwinjku_steven.Corpus(feat_type, label_type)
     else:
         raise PersephoneException("Language '%s' not supported." % language)
 

@@ -3,7 +3,13 @@ Offers functions for tokenizing utterances into phonemes, characters or
 other symbols.
 """
 
-from typing import Iterable
+from typing import Callable, Iterable, NamedTuple, Set
+
+from ..utterance import Utterance
+
+LabelSegmenter = NamedTuple("LabelSegmenter",
+                            [("segment_labels", Callable[[Utterance], Utterance]),
+                            ("labels", Set[str])])
 
 def segment_into_chars(utterance: str) -> str:
     """ Segments an utterance into space delimited characters. """
@@ -45,6 +51,7 @@ def segment_into_tokens(utterance: str, token_inventory: Iterable[str]):
             if utterance[:i] in token_inventory:
                 return utterance[:i], utterance[i:]
         # If the next character is preventing segmentation, move on.
+        # TODO This needs to be logged with a warning on the first occurrence.
         return "", utterance[1:]
 
     tokens = []
