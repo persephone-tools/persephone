@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import subprocess
 from subprocess import PIPE
-from typing import List, Tuple
+from typing import List, Sequence, Tuple, TypeVar
 
 from git import Repo # type: ignore
 import numpy as np # type: ignore
@@ -15,6 +15,8 @@ from . import config
 from .exceptions import DirtyRepoException
 
 logging.config.fileConfig(config.LOGGING_INI_PATH)
+
+T = TypeVar("T")
 
 def is_git_directory_clean(path_to_repo: Path,
                            search_parent_dirs: bool = True,
@@ -92,15 +94,16 @@ def load_batch_x(path_batch, flatten, time_major=False):
         batch = collapse(batch, time_major=time_major)
     return batch, np.array(utter_lens)
 
-def batch_per(hyps, refs):
+def batch_per(hyps: Sequence[Sequence[T]],
+              refs: Sequence[Sequence[T]]) -> float:
     """ Calculates the phoneme error rate of a batch."""
 
-    total_per = 0
+    macro_per = 0.0
     for i in range(len(hyps)):
         ref = [phn_i for phn_i in refs[i] if phn_i != 0]
         hyp = [phn_i for phn_i in hyps[i] if phn_i != 0]
-        total_per += distance.edit_distance(ref, hyp)/len(ref)
-    return total_per/len(hyps)
+        macro_per += distance.edit_distance(ref, hyp)/len(ref)
+    return macro_per/len(hyps)
 
 def get_prefixes(dirname, extension):
     """ Returns a list of prefixes to files in the directory (which might be a whole
