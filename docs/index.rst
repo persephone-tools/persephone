@@ -12,7 +12,8 @@
    :maxdepth: 2
    :caption: Contents:
 
-.. include:: ../README.rst
+   introduction
+   api
 
 Indices and tables
 ==================

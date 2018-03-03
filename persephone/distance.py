@@ -11,14 +11,19 @@ def min_edit_distance(
         ins_cost: Callable[..., int] = lambda _x: 1,
         del_cost: Callable[..., int] = lambda _x: 1,
         sub_cost: Callable[..., int] = lambda x, y: 0 if x == y else 1) -> int:
-    """Finds the minimum edit distance between two sequences using the
-    Levenshtein weighting as a default, but offers keyword arguments to supply
-    functions to measure the costs for editing with different elements.
+    """Calculates the minimum edit distance between two sequences.
 
-    ins_cost -- A function describing the cost of inserting a given char
-    del_cost -- A function describing the cost of deleting a given char
-    sub_cost -- A function describing the cost of substituting one char for
-    another
+    Uses the Levenshtein weighting as a default, but offers keyword arguments
+    to supply functions to measure the costs for editing with different
+    elements.
+
+    Args:
+        ins_cost: A function describing the cost of inserting a given char
+        del_cost: A function describing the cost of deleting a given char
+        sub_cost: A function describing the cost of substituting one char for
+
+    Returns:
+        The edit distance between the two input sequences.
 
     """
 
@@ -58,16 +63,20 @@ def min_edit_distance_align(
         ins_cost = lambda _x: 1,
         del_cost = lambda _x: 1,
         sub_cost = lambda x, y: 0 if x == y else 1):
-    """Finds a minimum cost alignment between two strings using the
-    Levenshtein weighting as a default, but offering keyword arguments to
-    supply functions to measure the costs for editing with different
-    characters.
+    """Finds a minimum cost alignment between two strings.
 
-    ins_cost -- A function describing the cost of inserting a given char
-    del_cost -- A function describing the cost of deleting a given char
-    sub_cost -- A function describing the cost of substituting one char for
-    another
+    Uses the Levenshtein weighting as a default, but offers keyword arguments
+    to supply functions to measure the costs for editing with different
+    characters. Note that the alignment may not be unique.
 
+    Args:
+        ins_cost: A function describing the cost of inserting a given char
+        del_cost: A function describing the cost of deleting a given char
+        sub_cost: A function describing the cost of substituting one char for
+
+    Returns:
+        A sequence of tuples representing character level alignments between
+        the source and target strings.
     """
 
     # Initialize an m+1 by n+1 array to hold the distances, and an equal sized
@@ -139,7 +148,9 @@ def min_edit_distance_align(
 #def cluster_alignment_errors(alignment: List[Tuple[str, str]]
 #                            ) -> List[Tuple[Tuple[str, ...]]]:
 def cluster_alignment_errors(alignment):
-    """Takes an alignment created by min_edit_distance_align() and groups
+    # TODO Review documentation and consider for inclusion in API.
+    """Clusters alignments
+    Takes an alignment created by min_edit_distance_align() and groups
     consecutive errors together. This is useful, because there are often
     many possible alignments, and so often we can't meaningfully distinguish
     between alignment errors at the character level, so it makes many-to-many
@@ -164,9 +175,20 @@ def cluster_alignment_errors(alignment):
 
     return newalign
 
-def word_error_rate(ref: Sequence[T], hypo: Sequence[T]) -> float:
-    """ Returns the word error rate of the supplied hypothesis with respect to
-    the reference string.
+def word_error_rate(ref: Sequence[T], hyp: Sequence[T]) -> float:
+    """ Calculate the word error rate of a sequence against a reference.
+
+    Args:
+        ref: The gold-standard reference sequence
+        hyp: The hypothesis to be evaluated against the reference.
+
+    Returns:
+        The word error rate of the supplied hypthesis with respect to the
+        reference string.
+
+    Raises:
+        persephone.exceptions.EmptyReferenceException: If the length of the reference sequence is 0.
+
     """
 
     if len(ref) == 0:
@@ -174,5 +196,5 @@ def word_error_rate(ref: Sequence[T], hypo: Sequence[T]) -> float:
             "Cannot calculating word error rate against a length 0 "\
             "reference sequence.")
 
-    distance = min_edit_distance(ref, hypo)
+    distance = min_edit_distance(ref, hyp)
     return 100 * float(distance) / len(ref)
