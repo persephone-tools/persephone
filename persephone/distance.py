@@ -45,13 +45,19 @@ def min_edit_distance(
 
     return int(distance[len(source), len(target)])
 
-# This could work on generic sequences but for now it relies on empty strings.
 def min_edit_distance_align(
-        source: Sequence[str], target: Sequence[str],
-        ins_cost: Callable[..., int] = lambda _x: 1,
-        del_cost: Callable[..., int] = lambda _x: 1,
-        sub_cost: Callable[..., int] = lambda x, y: 0 if x == y else 1
-        ) -> List[Tuple[str,str]]:
+        # TODO Wrangle the typing errors in this function.
+        # TODO This could work on generic sequences but for now it relies on
+        # empty strings.
+        #source: Sequence[str], target: Sequence[str],
+        #ins_cost: Callable[..., int] = lambda _x: 1,
+        #del_cost: Callable[..., int] = lambda _x: 1,
+        #sub_cost: Callable[..., int] = lambda x, y: 0 if x == y else 1
+        #) -> List[Tuple[str, str]]:
+        source, target,
+        ins_cost = lambda _x: 1,
+        del_cost = lambda _x: 1,
+        sub_cost = lambda x, y: 0 if x == y else 1):
     """Finds a minimum cost alignment between two strings using the
     Levenshtein weighting as a default, but offering keyword arguments to
     supply functions to measure the costs for editing with different
@@ -63,9 +69,6 @@ def min_edit_distance_align(
     another
 
     """
-
-    print("source: ", repr(source))
-    print("target: ", repr(target))
 
     # Initialize an m+1 by n+1 array to hold the distances, and an equal sized
     # array to store the backpointers. Note that the strings start from index
@@ -98,12 +101,9 @@ def min_edit_distance_align(
             dist[i][j] = minimum
             bptrs[i][j] = pointer
 
-    print(bptrs)
-
     # Put the backtrace in a list, and reverse it to get a forward trace.
     bt = [(m,n)]
     cell = bptrs[m][n]
-    print(cell)
     while True:
         if not cell:
             # If it's an empty list or tuple, as will be the case at the start
@@ -115,20 +115,12 @@ def min_edit_distance_align(
         else:
             break
     trace = list(reversed(bt))
-    print("Trace", trace)
 
     # Construct an alignment between source and target using the trace.
     alignment = []
     for i in range(1, len(trace)):
         current = trace[i]
-#        if not current:
-#            # If it's an emtpy list or tuple, as will be the case at the start
-#            # of the trace
-#            continue
         prev = trace[i-1]
-
-        print("Current: ", current)
-        print("Prev: ", prev)
 
         # If the cell is diagonal from the previous one, it's a substitution or
         # there wasn't a change.
@@ -141,9 +133,11 @@ def min_edit_distance_align(
         elif current[1] - prev[1] == 1:
             alignment.append(("", target[current[1]-1]))
 
-    print("Alignment: ", alignment)
     return alignment
 
+# TODO Wrangle the typing errors in this function.
+#def cluster_alignment_errors(alignment: List[Tuple[str, str]]
+#                            ) -> List[Tuple[Tuple[str, ...]]]:
 def cluster_alignment_errors(alignment):
     """Takes an alignment created by min_edit_distance_align() and groups
     consecutive errors together. This is useful, because there are often

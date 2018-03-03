@@ -5,7 +5,7 @@ import pytest
 from nltk.metrics import distance
 
 from persephone.distance import min_edit_distance, min_edit_distance_align
-from persephone.distance import word_error_rate
+from persephone.distance import cluster_alignment_errors, word_error_rate
 from persephone.exceptions import EmptyReferenceException
 
 def rand_str(length: int, alphabet: str = string.digits) -> str:
@@ -40,7 +40,6 @@ def test_med(seq_cases):
     # Tests edit distance implementation against that of NLTK, with randomized
     # strings and substitution cost functions.
     for s1, s2, sub_cost, dist in seq_cases:
-        print(s1, s2, sub_cost, dist)
         sub_cost_f = lambda x, y: 0 if x == y else sub_cost
         assert min_edit_distance(s1, s2, sub_cost=sub_cost_f) == dist
         if len(s1) == 0:
@@ -51,11 +50,9 @@ def test_med(seq_cases):
 
 def test_med_align(seq_cases):
     for ref, hyp, sub_cost, dist in seq_cases:
-        print("----------------------")
         if not isinstance(ref, str):
             # Ignore generic sequences
             continue
-        print(ref, hyp, sub_cost, dist)
         sub_cost_f = lambda x, y: 0 if x == y else sub_cost
         alignment = min_edit_distance_align(ref, hyp, sub_cost=sub_cost_f)
         align_dist = 0
@@ -68,6 +65,15 @@ def test_med_align(seq_cases):
                 else: # It's a substitution
                     align_dist += sub_cost
         assert align_dist == dist
+        clustered = cluster_alignment_errors(alignment)
+        recreated_ref = []
+        for cluster_arrow in clustered:
+            recreated_ref.extend(cluster_arrow[0])
+        recreated_hyp = []
+        assert "".join(recreated_ref) == ref
+        for cluster_arrow in clustered:
+            recreated_hyp.extend(cluster_arrow[1])
+        assert "".join(recreated_hyp) == hyp
 
 # TODO Test the ins_cost and del_cost arguments of min_edit_distance and
 # min_edit_distance_align
