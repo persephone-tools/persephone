@@ -6,6 +6,8 @@
 Welcome to persephone's documentation!
 ======================================
 
+Some text
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
