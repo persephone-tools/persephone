@@ -2,6 +2,8 @@ from typing import Any, Callable, Sequence, TypeVar
 
 import numpy as np
 
+from persephone.exceptions import EmptyReferenceException
+
 T = TypeVar("T")
 
 def min_edit_distance(
@@ -146,9 +148,15 @@ def cluster_alignment_errors(alignment):
 
     return newalign
 
-def word_error_rate(ref, hypo):
-    """Returns the word error rate of the supplied hypothesis with respect to
-    the reference string."""
+def word_error_rate(ref: Sequence[T], hypo: Sequence[T]) -> float:
+    """ Returns the word error rate of the supplied hypothesis with respect to
+    the reference string.
+    """
+
+    if len(ref) == 0:
+        raise EmptyReferenceException(
+            "Cannot calculating word error rate against a length 0 "\
+            "reference sequence.")
 
     distance = min_edit_distance(ref, hypo)
     return 100 * float(distance) / len(ref)
