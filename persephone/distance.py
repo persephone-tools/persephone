@@ -1,9 +1,14 @@
+from typing import Any, Callable, Sequence, TypeVar
+
 import numpy as np
 
-def min_edit_distance(source, target,
-        ins_cost=lambda _x: 1,
-        del_cost=lambda _x: 1,
-        sub_cost=lambda x, y: 0 if x == y else 1):
+T = TypeVar("T")
+
+def min_edit_distance(
+        source: Sequence[T], target: Sequence[T],
+        ins_cost: Callable[..., int] = lambda _x: 1,
+        del_cost: Callable[..., int] = lambda _x: 1,
+        sub_cost: Callable[..., int] = lambda x, y: 0 if x == y else 1) -> int:
     """Finds the minimum edit distance between two strings using the
     Levenshtein weighting as a default, but offers keyword arguments to supply
     functions to measure the costs for editing with different characters.
@@ -19,7 +24,7 @@ def min_edit_distance(source, target,
     # with index 0 being used to denote the empty string.
     n = len(target)
     m = len(source)
-    distance = np.zeros([m+1, n+1], dtype=np.int16)
+    distance = np.zeros((m+1, n+1), dtype=np.int16)
 
     # Initialize the zeroth row and column to be the distance from the empty
     # string.
@@ -36,11 +41,7 @@ def min_edit_distance(source, target,
                     distance[i-1, j-1] + sub_cost(source[i-1],target[j-1]),
                     distance[i, j-1] + del_cost(target[j-1]))
 
-    return distance[len(source), len(target)]
-
-def print_matrix(matrix):
-    for row in matrix:
-        print(row)
+    return int(distance[len(source), len(target)])
 
 def min_edit_distance_align(source, target,
         ins_cost=lambda _x: 1,
