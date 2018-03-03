@@ -277,14 +277,6 @@ class TestBKW:
         model = rnn_ctc.Model(exp_dir, cr, num_layers=2, hidden_size=250)
         model.train(min_epochs=30)
 
-    def test_write_utt2spk(self, prep_org_data):
-        bkw_org_path = prep_org_data
-        utterances = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])
-        utterance.write_utt2spk(utterances, self.tgt_dir)
-        with (self.tgt_dir / "utt2spk").open() as f:
-            assert len(f.readlines()) == len(utterances)
-        os.remove(str(self.tgt_dir / "utt2spk"))
-
     @pytest.mark.skip
     def test_utt2spk(self, prep_org_data):
         corp = bkw.create_corpus(tgt_dir=self.tgt_dir, speakers=["Mark Djandiomerr"])

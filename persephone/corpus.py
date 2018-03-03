@@ -116,8 +116,8 @@ class Corpus:
         # factory method that takes Utterance objects. the fromElan and
         # fromPangloss constructors could call this.
 
-        # Writes the utterances to the tgt_dir/label/ dir
-        utterance.write_utters(utterances, (tgt_dir / "label"),
+        # Writes the transcriptions to the tgt_dir/label/ dir
+        utterance.write_transcriptions(utterances, (tgt_dir / "label"),
                                label_type, lazy=lazy)
         # Extracts utterance level WAV information from the input file.
         wav.extract_wavs(utterances, (tgt_dir / "wav"), lazy=lazy)

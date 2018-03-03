@@ -9,7 +9,6 @@ import pympi.Elan
 from .. import corpus
 from .. import utterance
 from ..utterance import Utterance
-from ..utterance import write_utters
 from ..preprocess.wav import extract_wavs
 from ..preprocess.labels import LabelSegmenter
 

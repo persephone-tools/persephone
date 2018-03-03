@@ -1,6 +1,7 @@
 from collections import defaultdict
+import json
 from pathlib import Path
-from typing import List, NamedTuple, Set, Tuple, DefaultDict, Dict
+from typing import List, NamedTuple, Set, Sequence, Tuple, DefaultDict, Dict
 
 Utterance = NamedTuple("Utterance", [("media_path", Path),
                                      ("org_transcription_path", Path),
@@ -18,8 +19,8 @@ Utterance.__doc__= (
 
     """)
 
-def write_utters(utterances: List[Utterance],
-                 tgt_dir: Path, ext: str, lazy: bool) -> None:
+def write_transcriptions(utterances: List[Utterance],
+                         tgt_dir: Path, ext: str, lazy: bool) -> None:
     """ Write the utterance transcriptions to files in the tgt_dir. Is lazy and
     checks if the file already exists.
 
@@ -88,14 +89,26 @@ def speaker_durations(utterances: List[Utterance]) -> List[Tuple[str, int]]:
 
     return speaker_durations
 
-def write_utt2spk(utterances: List[Utterance], tgt_dir: Path) -> None:
-    """ Creates a Kaldi-style utt2spk and spk2utt files that maps from utterances (prefixes)
-    to speakers. """
 
-    utt2spk_path = tgt_dir / "utt2spk"
-    with utt2spk_path.open("w") as f:
-        for utter in utterances:
-            print("{} {}".format(utter.prefix, utter.speaker), file=f)
+def write_utters(utters: Sequence[Utterance], tgt_dir: Path) -> None:
+    """ Serializes the Utterance objects to JSON files in
+    tgt_dir/utters.json.
+    """
+
+    utters_path = tgt_dir / "utters.json"
+    with utters_path.open("w") as f:
+        print(json.dumps(utters, indent=4), file=f)
+
+def read_utters(tgt_dir: Path) -> Tuple[Utterance]:
+    """ Reads a sequence of Utterance objects from the JSON files in
+    tgt_dir/utters.json.
+    """
+
+    utters_path = tgt_dir / "utters.json"
+    with utters_path.open() as f:
+       json_list = json.load(f)
+       return tuple(Utterance(*utter_fields)
+                    for utter_fields in json_list)
 
 def remove_too_short(utterances: List[Utterance],
                      _winlen=25, winstep=10) -> List[Utterance]:
