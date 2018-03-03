@@ -16,17 +16,6 @@ class TestBKWExperiment:
     def clean_git(self):
         utils.is_git_directory_clean(".")
 
-    def test_tf_gpu(self):
-        import tensorflow as tf
-        # Creates a graph.
-        a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a')
-        b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b')
-        c = tf.matmul(a, b)
-        # Creates a session with log_device_placement set to True.
-        sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
-        # Runs the op.
-        print(sess.run(c))
-
     @staticmethod
     def train_bkw(num_layers: int) -> None:
         exp_dir = prep_exp_dir(directory=config.TEST_EXP_PATH)

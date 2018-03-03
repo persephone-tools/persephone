@@ -89,27 +89,6 @@ def speaker_durations(utterances: List[Utterance]) -> List[Tuple[str, int]]:
 
     return speaker_durations
 
-
-def write_utters(utters: Sequence[Utterance], tgt_dir: Path) -> None:
-    """ Serializes the Utterance objects to JSON files in
-    tgt_dir/utters.json.
-    """
-
-    utters_path = tgt_dir / "utters.json"
-    with utters_path.open("w") as f:
-        print(json.dumps(utters, indent=4), file=f)
-
-def read_utters(tgt_dir: Path) -> Tuple[Utterance]:
-    """ Reads a sequence of Utterance objects from the JSON files in
-    tgt_dir/utters.json.
-    """
-
-    utters_path = tgt_dir / "utters.json"
-    with utters_path.open() as f:
-       json_list = json.load(f)
-       return tuple(Utterance(*utter_fields)
-                    for utter_fields in json_list)
-
 def remove_too_short(utterances: List[Utterance],
                      _winlen=25, winstep=10) -> List[Utterance]:
     """ Removes utterances that will probably have issues with CTC because of

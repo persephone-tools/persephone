@@ -13,6 +13,7 @@ import pytest
 from pympi.Elan import Eaf
 
 from persephone import config
+from persephone import corpus
 from persephone import utterance
 from persephone.utterance import Utterance
 from persephone.datasets import bkw
@@ -355,3 +356,12 @@ class TestBKW:
             print("set(utterances) - set(filtered): {}:\n".format(
                 pprint.pformat(diff)))
             assert False
+
+    # TODO This sort of test, and others don't really rely on the BKW data
+    # specifically so could be tested elsewhere (in Travis!)
+    def test_pickle_corpus(self, preprocessed_corpus):
+        corp = preprocessed_corpus
+        corp.pickle()
+        retrieved_corp = corpus.Corpus.from_pickle(corp.tgt_dir)
+        assert corp.utterances == retrieved_corp.utterances
+        print(len(retrieved_corp.utterances))

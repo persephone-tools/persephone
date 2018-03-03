@@ -7,6 +7,7 @@ from collections import namedtuple
 import logging.config
 import os
 from pathlib import Path
+import pickle
 from os.path import join
 import random
 import subprocess
@@ -81,6 +82,7 @@ class Corpus:
         # for testing.
         self.utterances = None # type: List[Utterance]
 
+        self.pickle()
 
     @classmethod
     def from_elan(cls: Type[CorpusT], org_dir: Path, tgt_dir: Path,
@@ -109,7 +111,6 @@ class Corpus:
         utterances = utterance.remove_too_short(utterances)
 
         tgt_dir.mkdir(parents=True, exist_ok=True)
-        utterance.write_utt2spk(utterances, tgt_dir)
 
         # TODO A lot of these methods aren't ELAN-specific. preprocess.elan was
         # only used to get the utterances. There could be another Corpus
@@ -389,6 +390,20 @@ class Corpus:
         assert valid - test == valid
         assert test - train == test
         assert test - valid == test
+
+    def pickle(self):
+        """ Pickles the Corpus object in a file in tgt_dir. """
+
+        pickle_path = self.tgt_dir / "corpus.p"
+        with pickle_path.open("wb") as f:
+            pickle.dump(self, f)
+
+    @classmethod
+    def from_pickle(cls: Type[CorpusT], tgt_dir: Path) -> CorpusT:
+        pickle_path = tgt_dir / "corpus.p"
+        with pickle_path.open("rb") as f:
+            return pickle.load(f)
+
 
 class ReadyCorpus(Corpus):
     """ Interface to a corpus that has WAV files and label files split into
