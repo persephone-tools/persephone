@@ -6,20 +6,26 @@ import pytest
 from persephone import results
 from persephone import utils
 from persephone.corpus import Corpus
+from persephone.corpus_reader import CorpusReader
 
 #@pytest.fixture
 #def bkw_exp_dir():
 #    path = Path("persephone/tests/test_sets/bkw_slug_exp_13")
 
-# TODO This should become testable on Travis using mock data.
-@pytest.mark.experiment
-def test_speaker_results():
+@pytest.fixture(scope="module",
+                params=["test", "valid"])
+def prepared_data(request):
     data_path = Path("testing/data/bkw")
     exp_path = Path("testing/exp/19/")
+
     # TODO I shouldn't really be using "decoded" for the validation set dir
     # anymore.
-    hyps_path = exp_path / "decoded" / "best_hyps"
-    refs_path = exp_path / "decoded" / "refs"
+    if request.param == "test":
+        hyps_path = exp_path / "test" / "hyps"
+        refs_path = exp_path / "test" / "refs"
+    else:
+        hyps_path = exp_path / "decoded" / "best_hyps"
+        refs_path = exp_path / "decoded" / "refs"
 
     with hyps_path.open() as f:
         hyps = [hyp.split() for hyp in f.readlines()]
@@ -27,25 +33,64 @@ def test_speaker_results():
         refs = [hyp.split() for hyp in f.readlines()]
 
     corp = Corpus.from_pickle(data_path)
+    if request.param == "test":
+        eval_prefixes = corp.test_prefixes
+    else:
+        eval_prefixes = corp.valid_prefixes
+
+    return request.param, corp, eval_prefixes, hyps, refs
+
+# TODO This should become testable on Travis using mock data.
+@pytest.mark.experiment
+def test_speaker_results(prepared_data):
+
+    eval_type, corp, eval_prefixes, hyps, refs = prepared_data
+
+    print()
+    print("Eval type: ", eval_type)
 
     import pprint
 
-    speaker = "Mark Djandiomerr"
+    speakers = set()
+    for utter in corp.utterances:
+        print(utter.speaker)
+        speakers.add(utter.speaker)
+    print("{} speakers found.".format(len(speakers)))
+    print(speakers)
+
     speaker_prefixes = defaultdict(list)
     assert corp.utterances
     for utter in corp.utterances:
-        if utter.speaker == speaker and utter.prefix in corp.valid_prefixes:
-            speaker_prefixes[speaker].append(utter.prefix)
+        if utter.prefix in eval_prefixes:
+            speaker_prefixes[utter.speaker].append(utter.prefix)
 
-    pprint.pprint(speaker_prefixes)
+    print(speaker_prefixes)
+    print()
+
+    prefix2speaker = dict()
+    for utter in corp.utterances:
+        prefix2speaker[utter.prefix] = utter.speaker
 
     speaker_hyps_refs = defaultdict(list)
-    prefix_hyps_refs = zip(corp.valid_prefixes, hyps, refs)
+    prefix_hyps_refs = zip(eval_prefixes, hyps, refs)
     for prefix, hyp, ref in prefix_hyps_refs:
-        if prefix in speaker_prefixes[speaker]:
-            speaker_hyps_refs[speaker].append((hyp, ref))
-    print(len(speaker_hyps_refs[speaker]))
-    print(utils.batch_per(*zip(*speaker_hyps_refs[speaker])))
+        speaker_hyps_refs[prefix2speaker[prefix]].append((hyp, ref))
+
+
+    print("{:20} {:10} {}".format("Speaker", "PER", "Num utters"))
+    fmt = "{:20} {:<10.3f} {}"
+    total_per = 0
+    for speaker in speakers:
+        if speaker_hyps_refs[speaker]:
+            speaker_per = utils.batch_per(*zip(*speaker_hyps_refs[speaker]))
+            print(fmt.format(speaker, speaker_per,
+                             len(speaker_hyps_refs[speaker])))
+            total_per += speaker_per*len(speaker_hyps_refs[speaker])
+    print(fmt.format("Average",
+                     total_per/len(eval_prefixes),
+                     len(eval_prefixes)
+                     )
+         )
 
     return
 
@@ -53,16 +98,6 @@ def test_speaker_results():
 
     # Create a Dict[speaker, Tuple[List[hyp], List[ref]]]
 
-    def make_spk2hypsrefs(hyps, refs, prefixes, prefix2speaker):
-        spk2hypsrefs = defaultdict(lambda: [[],[]])
-        for prefix, hyp, ref in zip(prefixes, hyps, refs):
-            spk2hypsrefs[prefix2speaker[prefix]][0].append(hyp)
-            spk2hypsrefs[prefix2speaker[prefix]][1].append(ref)
-        return spk2hypsrefs
-
-    per = utils.batch_per(hyps, refs)
-    print(per)
-    spk2hypsrefs = make_spk2hypsrefs(hyps, refs, prefixes, prefix2speaker)
     #alignments = []
     #for ref, hyp in zip(refs, hyps):
     #    alignment = distance.min_edit_distance_align(ref, hyp)
