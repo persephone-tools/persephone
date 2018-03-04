@@ -8,7 +8,7 @@ install:
 script:
   - pylint -E persephone
   - mypy persephone
-  - pytest
+  - pytest --cov=persephone
 notifications:
   email:
     recipients:
