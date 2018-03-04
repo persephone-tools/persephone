@@ -1,6 +1,9 @@
 API
 ===
 
+.. Preprocessing
+.. -------------
+
 Distance measurements
 ---------------------
 
