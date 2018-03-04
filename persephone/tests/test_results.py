@@ -11,6 +11,8 @@ from persephone.corpus import Corpus
 #def bkw_exp_dir():
 #    path = Path("persephone/tests/test_sets/bkw_slug_exp_13")
 
+# TODO This should become testable on Travis using mock data.
+@pytest.mark.experiment
 def test_speaker_results():
     data_path = Path("testing/data/bkw")
     exp_path = Path("testing/exp/19/")
