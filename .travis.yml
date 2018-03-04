@@ -2,12 +2,17 @@ language: python
 python:
   - "3.5"
   - "3.6"
-install: pip install .
+install:
+  - pip install .
+  - pip install pytest-cov
+  - pip install python-coveralls
 script:
   - pylint -E persephone
   - mypy persephone
-  - pytest
+  - pytest --cov=persephone
 notifications:
   email:
     recipients:
       - oliver.adams@gmail.com
+after_success:
+  - coveralls

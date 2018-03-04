@@ -18,7 +18,7 @@ from .exceptions import PersephoneException
 
 OPENFST_PATH = config.OPENFST_BIN_PATH
 
-allow_growth_config = tf.ConfigProto(log_device_placement=True)
+allow_growth_config = tf.ConfigProto(log_device_placement=False)
 allow_growth_config.gpu_options.allow_growth=True #pylint: disable=no-member
 
 logging.config.fileConfig(config.LOGGING_INI_PATH)

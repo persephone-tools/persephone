@@ -63,4 +63,3 @@ def segment_into_tokens(utterance: str, token_inventory: Iterable[str]):
     tokens = [tok for tok in tokens if tok != ""]
 
     return " ".join(tokens)
-

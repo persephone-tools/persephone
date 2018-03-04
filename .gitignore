@@ -9,3 +9,11 @@ exp/
 *.swp
 *.pyc
 venv3/
+testing/
+persephone.egg-info/
+data/
+log.txt
+.tox/
+.pytest_cache/
+.mypy_cache/
+.coverage

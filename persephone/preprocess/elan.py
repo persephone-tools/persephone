@@ -111,8 +111,23 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> List[Uttera
                 break
     return utterances
 
-def utterances_from_dir(eaf_dir: Path, tier_prefixes: List[str]) -> List[Utterance]:
-    """ Returns the utterances found in a directory. """
+def utterances_from_dir(eaf_dir: Path,
+                        tier_prefixes: List[str]) -> List[Utterance]:
+    """ Returns the utterances found in ELAN files in a directory.
+
+    Recursively explores the directory, gathering ELAN files and extracting
+    utterances from them for tiers that start with the specified prefixes.
+
+    Args:
+        eaf_dir: A path to the directory to be searched
+        tier_prefixes: Stings matching the start of ELAN tier names that are to
+            be extracted. For example, if you want to extract from tiers "xv-Jane"
+            and "xv-Mark", then tier_prefixes = ["xv"] would do the job.
+
+    Returns:
+        A list of Utterance objects.
+
+    """
 
     logging.info(
         "EAF from directory: {}, searching with tier_prefixes {}".format(

@@ -21,12 +21,47 @@ from persephone.preprocess import elan
 from persephone.corpus_reader import CorpusReader
 from persephone.run import prep_exp_dir
 from persephone import rnn_ctc
+from persephone import utils
 
 ureg = pint.UnitRegistry()
 
 logging.config.fileConfig(config.LOGGING_INI_PATH)
 
-@pytest.mark.notravis
+@pytest.mark.experiment
+class TestBKWExperiment:
+
+    @pytest.fixture
+    def clean_git(self):
+        utils.is_git_directory_clean(".")
+
+    def test_tf_gpu(self):
+        import tensorflow as tf
+        # Creates a graph.
+        a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a')
+        b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b')
+        c = tf.matmul(a, b)
+        # Creates a session with log_device_placement set to True.
+        sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
+        # Runs the op.
+        print(sess.run(c))
+
+    @staticmethod
+    def train_bkw(num_layers: int) -> None:
+        exp_dir = prep_exp_dir(directory=config.TEST_EXP_PATH)
+        corp = bkw.create_corpus(tgt_dir=Path(config.TEST_DATA_PATH) / "bkw")
+        cr = CorpusReader(corp)
+        model = rnn_ctc.Model(exp_dir, cr, num_layers=num_layers, hidden_size=250)
+        model.train(min_epochs=40)
+
+    def test_bkw_2_layers(self, clean_git):
+        """ Trains a multispeaker BKW system using default settings. """
+        self.train_bkw(num_layers=2)
+
+    def test_bkw_3_layers(self, clean_git):
+        """ Trains a multispeaker BKW system using default settings. """
+        self.train_bkw(num_layers=3)
+
+@pytest.mark.experiment
 class TestBKW:
 
     tgt_dir = Path(config.TEST_DATA_PATH) / "bkw"
@@ -324,28 +359,6 @@ class TestBKW:
 
     def test_empty_wav(self, prep_org_data):
         # Checking the origin of the empty wav.
-
-        utterance_too_short = Utterance(
-            media_path=Path(
-                'data/org/BKW-speaker-ids/Mark on rock with Timecode.mp4'),
-            org_transcription_path=Path(
-                'data/org/BKW-speaker-ids/Mark on Rock.eaf'),
-            prefix='Mark on Rock.rf@MARK.401',
-            start_time=1673900, end_time=1673923,
-            text=' kunkare bu yoh', speaker='Mark Djandiomerr')
-
-        utterance_ok = Utterance(
-            media_path=Path(
-                'data/org/BKW-speaker-ids/Mandak/20161102_mandak.wav'),
-            org_transcription_path=Path(
-                'data/org/BKW-speaker-ids/Mandak/Mandak_MN.eaf'),
-            prefix='Mandak_MN.xv@MN.5',
-            start_time=23155, end_time=25965,
-            text='Mani mandak karrulkngeyyo.', speaker='Margaret')
-
-        utterances = [utterance_too_short, utterance_ok]
-
-        assert utterance.remove_too_short(utterances) == [utterance_ok]
 
         bkw_org_path = prep_org_data
         utterances = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])

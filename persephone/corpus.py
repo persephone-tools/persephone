@@ -29,11 +29,15 @@ logging.config.fileConfig(config.LOGGING_INI_PATH)
 CorpusT = TypeVar("CorpusT", bound="Corpus")
 
 class Corpus:
-    """ All interfaces to corpora are subclasses of this class. A corpus assumes
-    that WAV files are already segmented and in the tgt_dir/wav, and that
-    labels are in tgt_dir/label. If additional preprocessing is required,
-    then subclass Corpus, do what you need to do in __init__(), and then call
-    the superclass constructor.
+    """ Represents a preprocessed corpus that is ready to be used in model
+    training.
+
+    Construction of a Corpus object involves preprocessing data if the data has
+    not previously already been preprocessed. Once a Corpus object is created
+    it should be considered immutable. At this point feature extraction from
+    WAVs will have been performed, with feature files in tgt_dir/feat/.
+    Transcriptions will have been segmented into appropriate tokens (labels)
+    and will be stored in tgt_dir/label/.
     """
 
     def __init__(self, feat_type, label_type, tgt_dir, labels,
@@ -49,8 +53,12 @@ class Corpus:
                          reducing the number of effective training examples.
         """
 
-        #: The feat type obv
+        #: A string representing the type of speech feature (eg. "fbank"
+        #: for log filterbank energies).
         self.feat_type = feat_type
+
+        #: An arbitrary string representing the transcription tokenization
+        #: used (eg. "phonemes", "tones", "joint", or "characters").
         self.label_type = label_type
 
         # Setting up directories
@@ -322,6 +330,12 @@ class Corpus:
         return feat_fns, label_fns
 
     def get_train_fns(self):
+        """ Fetches the training set of the corpus.
+
+        Outputs a Tuple of size 2, where the first element is a list of paths
+        to input features files, one per utterance. The second element is a list
+        of paths to the transcriptions.
+        """
         return self.prefixes_to_fns(self.train_prefixes)
 
     def get_valid_fns(self):

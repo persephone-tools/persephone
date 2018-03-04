@@ -15,6 +15,8 @@ def pytest_addoption(parser):
         help="Runs end-to-end experiments. This is for reproducing reported "\
              "results and to ensure models converge with larger amounts of "\
              "data.")
+    parser.addoption("--preprocess", action="store_true",
+        help="Encourages re-preprocessing of data.")
 
 def pytest_runtest_setup(item):
     """

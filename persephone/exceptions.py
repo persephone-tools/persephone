@@ -9,8 +9,14 @@ class NoPrefixFileException(PersephoneException):
     found.
     """
 
-class DirtyRepoException(Exception):
+class DirtyRepoException(PersephoneException):
     """
     An exception that is raised if the current working directory
     is in a dirty state according to Git.
+    """
+
+class EmptyReferenceException(PersephoneException):
+    """
+    When calculating word error rates, the reference string must be of 
+    length >= 1. Otherwise, this exception will be thrown.
     """
