@@ -5,6 +5,8 @@ Fundamental classes
 -------------------
 
 .. autoclass:: persephone.utterance.Utterance
+.. autoclass:: persephone.corpus.Corpus
+   :members:
 
 Preprocessing
 -------------
