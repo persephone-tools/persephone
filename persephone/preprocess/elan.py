@@ -114,7 +114,7 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> List[Uttera
 
 def utterances_from_dir(eaf_dir: Path,
                         tier_prefixes: List[str]) -> List[Utterance]:
-    """ Returns the utterances found in a directory.
+    """ Returns the utterances found in ELAN files in a directory.
 
     Recursively explores the directory, gathering ELAN files and extracting
     utterances from them for tiers that start with the specified prefixes.
