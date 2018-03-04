@@ -2,7 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, NamedTuple, Set, Tuple, DefaultDict, Dict
 
-Utterance = NamedTuple("Utterance", [("media_path", Path),
+Utterance = NamedTuple("Utterance", [("org_media_path", Path),
                                      ("org_transcription_path", Path),
                                      ("prefix", str),
                                      ("start_time", int),
@@ -10,11 +10,23 @@ Utterance = NamedTuple("Utterance", [("media_path", Path),
                                      ("text", str),
                                      ("speaker", str)])
 Utterance.__doc__= (
-    """ Here's a docstring.
+    """ An immutable object that represents a single utterance.
 
     Attributes:
-        media_path: blah
-        org_transcription_path: blah2
+        org_media_path: A pathlib.Path the original source audio that contains the
+            utterance, which may comprise many utterances.
+        org_transcription_path: A pathlib.Path to the source of the transcription of
+            the utterance, which may comprise many utterances (say, in the
+            case of ELAN files).
+        prefix: A string identifier for the utterance which is used to prefix the
+            target wav and transcription files, which are called <prefix>.wav,
+            <prefix>.phonemes, etc.
+        start_time: An integer denoting the offset, in milliseconds, of the
+            utterance in the original media file.
+        end_time: An integer denoting the endpoint, in milliseconds, of the
+            utterance in the original media file.
+        text: A string representation of the transcription.
+        speaker: A string identifier for the speaker of the utterance.
 
     """)
 

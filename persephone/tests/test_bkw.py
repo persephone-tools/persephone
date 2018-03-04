@@ -333,7 +333,7 @@ class TestBKW:
         # Checking the origin of the empty wav.
 
         utterance_too_short = Utterance(
-            media_path=Path(
+            org_media_path=Path(
                 'data/org/BKW-speaker-ids/Mark on rock with Timecode.mp4'),
             org_transcription_path=Path(
                 'data/org/BKW-speaker-ids/Mark on Rock.eaf'),
@@ -342,7 +342,7 @@ class TestBKW:
             text=' kunkare bu yoh', speaker='Mark Djandiomerr')
 
         utterance_ok = Utterance(
-            media_path=Path(
+            org_media_path=Path(
                 'data/org/BKW-speaker-ids/Mandak/20161102_mandak.wav'),
             org_transcription_path=Path(
                 'data/org/BKW-speaker-ids/Mandak/Mandak_MN.eaf'),

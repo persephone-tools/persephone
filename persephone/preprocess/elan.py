@@ -122,8 +122,8 @@ def utterances_from_dir(eaf_dir: Path,
     Args:
         eaf_dir: A path to the directory to be searched
         tier_prefixes: Stings matching the start of ELAN tier names that are to
-        be extracted. For example, if you want to extract from tiers "xv@Jane"
-        and "xv@Mark", then tier_prefixes = ["xv"] would do the job.
+            be extracted. For example, if you want to extract from tiers "xv-Jane"
+            and "xv-Mark", then tier_prefixes = ["xv"] would do the job.
 
     Returns:
         A list of Utterance objects.

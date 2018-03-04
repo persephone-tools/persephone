@@ -1,10 +1,16 @@
 API
 ===
 
+Fundamental classes
+-------------------
+
+.. autoclass:: persephone.utterance.Utterance
+
 Preprocessing
 -------------
 
 .. autofunction:: persephone.preprocess.elan.utterances_from_dir
+.. autofunction:: persephone.preprocess.wav.extract_wavs
 
 Distance measurements
 ---------------------

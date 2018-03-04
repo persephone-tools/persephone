@@ -17,7 +17,19 @@ def millisecs_to_secs(millisecs: int) -> float:
 
 def trim_wav_ms(in_path: Path, out_path: Path,
                 start_time: int, end_time: int) -> None:
-    """ Tries to trim a wav with sox, then backs off to pydub/ffmpeg. """
+    """ Extracts part of a WAV File.
+
+    First attempts to call sox. If sox is unavailable, it backs off to
+    pydub+ffmpeg.
+
+    Args:
+        in_path: A path to the source file to extract a portion of
+        out_path: A path describing the to-be-created WAV file.
+        start_time: The point in the source WAV file at which to begin
+            extraction.
+        end_time: The point in the source WAV file at which to end extraction.
+
+    """
 
     try:
         trim_wav_sox(in_path, out_path, start_time, end_time)
@@ -75,9 +87,16 @@ def trim_wav_sox(in_path: Path, out_path: Path,
 
 def extract_wavs(utterances: List[Utterance], tgt_dir: Path,
                  lazy: bool) -> None:
-    """
-    Extracts WAVs from the media files associated with a list of utterances
-    and puts them in the tgt_dir.
+    """ Extracts WAVs from the media files associated with a list of Utterance
+    objects and stores it in a target directory.
+
+    Args:
+        utterances: A list of Utterance objects, which include information
+            about the source media file, and the offset of the utterance in the
+            media_file.
+        tgt_dir: The directory in which to write the output WAVs.
+        lazy: If True, then existing WAVs will not be overwritten if they have
+            the same name
     """
     tgt_dir.mkdir(parents=True, exist_ok=True)
     for utter in utterances:
@@ -89,5 +108,5 @@ def extract_wavs(utterances: List[Utterance], tgt_dir: Path,
             continue
         logging.info("File {} does not exist and lazy == {}; creating " \
                      "it.".format(out_wav_path, lazy))
-        trim_wav_ms(utter.media_path, out_wav_path,
+        trim_wav_ms(utter.org_media_path, out_wav_path,
                     utter.start_time, utter.end_time)
