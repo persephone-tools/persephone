@@ -11,3 +11,5 @@ notifications:
   email:
     recipients:
       - oliver.adams@gmail.com
+after_success:
+  - coveralls
