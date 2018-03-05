@@ -53,19 +53,14 @@ def test_speaker_results(prepared_data):
 
     speakers = set()
     for utter in corp.utterances:
-        print(utter.speaker)
         speakers.add(utter.speaker)
-    print("{} speakers found.".format(len(speakers)))
-    print(speakers)
+    #print("{} speakers found.".format(len(speakers)))
 
     speaker_prefixes = defaultdict(list)
     assert corp.utterances
     for utter in corp.utterances:
         if utter.prefix in eval_prefixes:
             speaker_prefixes[utter.speaker].append(utter.prefix)
-
-    print(speaker_prefixes)
-    print()
 
     prefix2speaker = dict()
     for utter in corp.utterances:
@@ -80,12 +75,16 @@ def test_speaker_results(prepared_data):
     print("{:20} {:10} {}".format("Speaker", "PER", "Num utters"))
     fmt = "{:20} {:<10.3f} {}"
     total_per = 0
+    speaker_stats = []
     for speaker in speakers:
         if speaker_hyps_refs[speaker]:
             speaker_per = utils.batch_per(*zip(*speaker_hyps_refs[speaker]))
-            print(fmt.format(speaker, speaker_per,
-                             len(speaker_hyps_refs[speaker])))
+            speaker_stats.append((speaker, speaker_per,
+                                 len(speaker_hyps_refs[speaker])))
             total_per += speaker_per*len(speaker_hyps_refs[speaker])
+    speaker_stats.sort(key=lambda x: x[2], reverse=True)
+    for speaker_stat in speaker_stats:
+        print(fmt.format(*speaker_stat))
     print(fmt.format("Average",
                      total_per/len(eval_prefixes),
                      len(eval_prefixes)

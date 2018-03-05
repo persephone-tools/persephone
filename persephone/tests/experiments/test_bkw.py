@@ -233,12 +233,18 @@ class TestBKW:
         print(len(utterances))
         utterances = [utter for utter in utterances if utterance.duration(utter) < 10000]
         total = 0
-        for speaker, duration in utterance.speaker_durations(utterances):
-            dur_mins = (duration * ureg.milliseconds).to(ureg.minutes)
+        fmt = "{:20}{:10}"
+        dur_fmt = "{:<10.3f}"
+        print(fmt.format("Speaker", "Duration"))
+        for speaker, duration in sorted(
+                                      utterance.speaker_durations(utterances),
+                                      key=lambda x: x[1],
+                                      reverse=True):
+            dur_mins = (duration * ureg.milliseconds).to(ureg.minutes).magnitude
+            dur_str = dur_fmt.format(dur_mins)
             total += dur_mins
-            print("Speaker: {}\nDuration: {:0.2f}".format(speaker, dur_mins))
-            print()
-        print("Total duration: {:0.2f}".format(total))
+            print(fmt.format(speaker, dur_str))
+        print(fmt.format("Total", dur_fmt.format(total)))
 
     @pytest.mark.skip
     def test_poly_durations(self, prep_org_data):
