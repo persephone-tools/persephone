@@ -3,8 +3,9 @@
 from . import config
 from .datasets import na
 from pathlib import Path
-from typing import Set, Dict, Tuple
+from typing import Set, Dict, Tuple, Sequence
 
+from collections import Counter
 from collections import defaultdict
 import os
 from . import utils
@@ -320,6 +321,64 @@ def error_types(exp_path, labels=None):
     print(subs)
     print(inss)
     print(dels)
+
+def count_sub_del_ins(hyps: Sequence[Sequence[str]],
+                      refs: Sequence[Sequence[str]]
+                     ) -> Tuple[int, int, int, int]:
+
+    alignments = [min_edit_distance_align(ref, hyp)
+                  for hyp, ref in zip(hyps, refs)]
+
+    arrow_counter = Counter() # type: Dict[Tuple[str, str], int]
+    for alignment in alignments:
+        arrow_counter.update(alignment)
+
+    print(arrow_counter)
+    print([(arrow, count) for arrow, count in arrow_counter.items()])
+    subs = sum([count for arrow, count in arrow_counter.items()
+                if arrow[0] != arrow[1] and arrow[0] != "" and arrow[1] != ""])
+    dels = sum([count for arrow, count in arrow_counter.items()
+                if arrow[0] != arrow[1] and arrow[0] != "" and arrow[1] == ""])
+    inss = sum([count for arrow, count in arrow_counter.items()
+                if arrow[0] != arrow[1] and arrow[0] == "" and arrow[1] != ""])
+    total = sum([count for _, count in arrow_counter.items()])
+
+    print(subs, dels, inss, total)
+
+def confusion_matrix(hyps: Sequence[Sequence[str]],
+                     refs: Sequence[Sequence[str]],
+                     label_set: Set[str] = None,
+                     max_width: int = 18) -> str:
+    """ Formats a confusion matrix over substitutions, ignoring insertions
+    and deletions. """
+
+    if not label_set:
+        # Then determine the label set by reading
+        raise NotImplementedError()
+
+    alignments = [min_edit_distance_align(ref, hyp)
+                  for hyp, ref in zip(hyps, refs)]
+
+    arrow_counter = Counter() # type: Dict[Tuple[str, str], int]
+    for alignment in alignments:
+        arrow_counter.update(alignment)
+
+    ref_total = Counter() # type: Dict[str, int]
+    for alignment in alignments:
+        ref_total.update([arrow[0] for arrow in alignment])
+
+    labels = [label for label, count
+              in sorted(ref_total.items(), key=lambda x: x[1], reverse=True)
+              if label != ""][:max_width]
+
+    fmt = "{:3} "*(len(labels)+1)
+    print(fmt.format(" ", *labels))
+    fmt = "{:3} " + ("{:<3} " * (len(labels)))
+    for ref in labels:
+        ref_results = [arrow_counter[(ref, hyp)] for hyp in labels]
+        print(fmt.format(ref, *ref_results))
+
+    return str(labels)
 
 def tone_confusion(exp_path: Path, label_set: Set[str]) -> None:
     """ Outputs a label confusion matrix."""

@@ -44,6 +44,8 @@ def prepared_data(request):
 @pytest.mark.experiment
 def test_speaker_results(prepared_data):
 
+    # TODO Make by-speaker results formatting part of results.py
+
     eval_type, corp, eval_prefixes, hyps, refs = prepared_data
 
     print()
@@ -91,16 +93,7 @@ def test_speaker_results(prepared_data):
                      )
          )
 
+    print(results.confusion_matrix(hyps, refs, label_set=set(corp.labels)))
+    print(results.count_sub_del_ins(hyps, refs))
+
     return
-
-    # Create a Dict[speaker, List[prefix]]
-
-    # Create a Dict[speaker, Tuple[List[hyp], List[ref]]]
-
-    #alignments = []
-    #for ref, hyp in zip(refs, hyps):
-    #    alignment = distance.min_edit_distance_align(ref, hyp)
-    #    alignments.append(alignment)
-    #print(alignments)
-
-    #res = results.by_speaker(hyps, refs, prefixes, prefix2speaker)
