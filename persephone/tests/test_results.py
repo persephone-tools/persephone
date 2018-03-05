@@ -93,10 +93,12 @@ def test_speaker_results(prepared_data):
                      )
          )
 
-    print(results.confusion_matrix(hyps, refs,
-                                   label_set=set(corp.labels),
-                                   max_width=25))
-    print(results.count_sub_del_ins(hyps, refs))
-    results.latex_output(hyps, refs, eval_prefixes)
+    print(results.fmt_confusion_matrix(hyps, refs,
+                                       label_set=set(corp.labels),
+                                       max_width=25))
+    print(results.fmt_error_types(hyps, refs))
+    results.fmt_latex_output(hyps, refs,
+                             eval_prefixes,
+                             Path("./hyps_refs.txt"))
 
     return

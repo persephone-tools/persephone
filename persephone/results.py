@@ -205,48 +205,19 @@ def symbol_f1(exp_num, symbol):
 
     return f1
 
-def latex_output(hyps: Sequence[Sequence[str]],
-                 refs: Sequence[Sequence[str]],
-                 prefixes: Sequence[str]
-                ) -> str:
+def fmt_latex_output(hyps: Sequence[Sequence[str]],
+                     refs: Sequence[Sequence[str]],
+                     prefixes: Sequence[str],
+                     out_fn: Path,
+                    ) -> None:
+    """ Output the hypotheses and references to a LaTeX source file for
+    pretty printing.
+    """
 
-    """ Pretty print the hypotheses and references. """
-
-    alignments = [min_edit_distance_align(ref, hyp)
+    alignments_ = [min_edit_distance_align(ref, hyp)
                   for hyp, ref in zip(hyps, refs)]
 
-    """
-    alignment_matrix = []
-    for refs_path, hyps_path in zip(refs_paths, hyps_paths):
-        with open(refs_path) as refs_f:
-            lines = refs_f.readlines()
-            refs = [line.split() for line in lines]
-
-        with open(hyps_path) as hyps_f:
-            lines = hyps_f.readlines()
-            hyps = [line.split() for line in lines]
-
-        alignments = []
-        for ref, hyp in zip(refs, hyps):
-            alignment = min_edit_distance_align(ref, hyp)
-            alignments.append(alignment)
-        alignment_matrix.append(alignments)
-    """
-
-    """
-    with open(utter_ids_fn) as f:
-        prefixes = [line.replace("_", "\_") for line in f]
-        # TODO Na-specific stuff commented out for work on Chatino
-        #prefixes2 = []
-        #for prefix in prefixes:
-        #    sp = prefix.split(".")
-        #    prefixes2.append(" ".join([sp[0], "Sent \\#" + str(int(sp[1])+1)]))
-        #prefixes = prefixes2
-    #print(prefixes)
-    """
-
-    with open("hyps_refs.tex", "w") as out_f:
-
+    with out_fn.open("w") as out_f:
         print("\documentclass[10pt]{article}\n"
               "\\usepackage[a4paper,margin=0.5in,landscape]{geometry}\n"
               "\\usepackage[utf8]{inputenc}\n"
@@ -261,7 +232,7 @@ def latex_output(hyps: Sequence[Sequence[str]],
               "\\begin{longtable}{ll}", file=out_f)
 
         print("\\toprule", file=out_f)
-        for sent in zip(prefixes, alignments):
+        for sent in zip(prefixes, alignments_):
             prefix = sent[0]
             alignments = sent[1:]
             print("Utterance ID: &", prefix.strip().replace("_", "\_"), "\\\\", file=out_f)
@@ -284,66 +255,16 @@ def latex_output(hyps: Sequence[Sequence[str]],
         print("\end{longtable}", file=out_f)
         print("\end{document}", file=out_f)
 
-def error_types(exp_path, labels=None):
-    """ Stats about the most common types of errors in the test set."""
-
-    test_path = os.path.join(exp_path, "test")
-    hyps_path = os.path.join(test_path, "hyps")
-    refs_path = os.path.join(test_path, "refs")
-
-    with open(hyps_path) as hyps_f:
-        lines = hyps_f.readlines()
-        hyps = [filter_labels(line.split(), labels) for line in lines]
-    with open(refs_path) as refs_f:
-        lines = refs_f.readlines()
-        refs = [filter_labels(line.split(), labels) for line in lines]
-
-    alignments = []
-    errors = []
-    for ref, hyp in zip(refs, hyps):
-        alignment = min_edit_distance_align(ref, hyp)
-        alignment = cluster_alignment_errors(alignment)
-        alignments.append(alignment)
-        for arrow in alignment:
-            if arrow[0] != arrow[1]:
-                errors.append(arrow)
-
-    err_hist = {}
-    for error in errors:
-        if error in err_hist:
-            err_hist[error] += 1
-        else:
-            err_hist[error] = 1
-
-    error_list = sorted(err_hist.items(), key=lambda x: x[1], reverse=False)
-    for thing in error_list:
-        print(thing)
-
-    subs = 0
-    inss = 0
-    dels = 0
-    for error in error_list:
-        if len(error[0][1]) == 0:
-            dels += 1
-        if len(error[0][0]) == 0:
-            inss += 1
-        else:
-            subs += 1
-    print(subs)
-    print(inss)
-    print(dels)
-
-def count_sub_del_ins(hyps: Sequence[Sequence[str]],
-                      refs: Sequence[Sequence[str]]
-                     ) -> str:
+def fmt_error_types(hyps: Sequence[Sequence[str]],
+                    refs: Sequence[Sequence[str]]
+                   ) -> str:
 
     alignments = [min_edit_distance_align(ref, hyp)
                   for hyp, ref in zip(hyps, refs)]
 
     arrow_counter = Counter() # type: Dict[Tuple[str, str], int]
     for alignment in alignments:
-        arrow_counter.update(alignment)
-
+        arrow_counter.update(alignment) 
     sub_count = sum([count for arrow, count in arrow_counter.items()
                 if arrow[0] != arrow[1] and arrow[0] != "" and arrow[1] != ""])
     dels = [(arrow[0], count) for arrow, count in arrow_counter.items()
@@ -367,10 +288,10 @@ def count_sub_del_ins(hyps: Sequence[Sequence[str]],
     return "".join(fmt_pieces)
 
 
-def confusion_matrix(hyps: Sequence[Sequence[str]],
-                     refs: Sequence[Sequence[str]],
-                     label_set: Set[str] = None,
-                     max_width: int = 25) -> str:
+def fmt_confusion_matrix(hyps: Sequence[Sequence[str]],
+                         refs: Sequence[Sequence[str]],
+                         label_set: Set[str] = None,
+                         max_width: int = 25) -> str:
     """ Formats a confusion matrix over substitutions, ignoring insertions
     and deletions. """
 
@@ -398,39 +319,8 @@ def confusion_matrix(hyps: Sequence[Sequence[str]],
     format_pieces.append(fmt.format(" ", *labels))
     fmt = "{:3} " + ("{:<3} " * (len(labels)))
     for ref in labels:
+        # TODO
         ref_results = [arrow_counter[(ref, hyp)] for hyp in labels]
         format_pieces.append(fmt.format(ref, *ref_results))
 
     return "\n".join(format_pieces)
-
-def tone_confusion(exp_path: Path, label_set: Set[str]) -> None:
-    """ Outputs a label confusion matrix."""
-
-    labels = list(label_set)
-    alignments = ed_alignments(exp_path)
-
-    d = defaultdict(int) # type: Dict[Tuple[str, str], int]
-    for alignment in alignments:
-        for arrow in alignment:
-            if arrow[0] in labels:
-                d[arrow] += 1
-
-    import pprint; pprint.pprint(d)
-
-    total = defaultdict(int) # type: Dict[str, int]
-    for ref in labels:
-        for hyp in labels:
-            total[ref] += d[(ref, hyp)]
-
-    nonzero_labels = [item[0] for item in total.items() if item[1] > 4]
-    print(sorted(total.items(), key=lambda x: x[1]))
-
-    for hyp in nonzero_labels[:-1]:
-        print(hyp + ",", end="")
-    print("%s\\\\" % nonzero_labels[-1])
-    for ref in nonzero_labels:
-        print(ref + ",", end="")
-        for hyp in nonzero_labels[:-1]:
-            print("%0.3f," % (d[(ref, hyp)]*100/total[ref]), end="")
-        print("%0.3f\\\\" % (d[(ref, nonzero_labels[-1])]*100/total[ref]))
-
