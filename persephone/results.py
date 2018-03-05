@@ -205,9 +205,17 @@ def symbol_f1(exp_num, symbol):
 
     return f1
 
-def latex_output(refs_paths, hyps_paths, utter_ids_fn):
+def latex_output(hyps: Sequence[Sequence[str]],
+                 refs: Sequence[Sequence[str]],
+                 prefixes: Sequence[str]
+                ) -> str:
+
     """ Pretty print the hypotheses and references. """
 
+    alignments = [min_edit_distance_align(ref, hyp)
+                  for hyp, ref in zip(hyps, refs)]
+
+    """
     alignment_matrix = []
     for refs_path, hyps_path in zip(refs_paths, hyps_paths):
         with open(refs_path) as refs_f:
@@ -223,7 +231,9 @@ def latex_output(refs_paths, hyps_paths, utter_ids_fn):
             alignment = min_edit_distance_align(ref, hyp)
             alignments.append(alignment)
         alignment_matrix.append(alignments)
+    """
 
+    """
     with open(utter_ids_fn) as f:
         prefixes = [line.replace("_", "\_") for line in f]
         # TODO Na-specific stuff commented out for work on Chatino
@@ -233,6 +243,7 @@ def latex_output(refs_paths, hyps_paths, utter_ids_fn):
         #    prefixes2.append(" ".join([sp[0], "Sent \\#" + str(int(sp[1])+1)]))
         #prefixes = prefixes2
     #print(prefixes)
+    """
 
     with open("hyps_refs.tex", "w") as out_f:
 
@@ -245,15 +256,15 @@ def latex_output(refs_paths, hyps_paths, utter_ids_fn):
               "\\usepackage{longtable}\n"
               "\setmainfont[Mapping=tex-text,Ligatures=Common,Scale=MatchLowercase]{Doulos SIL}\n"
               "\DeclareRobustCommand{\hl}[1]{{\\textcolor{red}{#1}}}\n"
-              "% Hyps path: " + hyps_path +
+              #"% Hyps path: " + hyps_path +
               "\\begin{document}\n"
               "\\begin{longtable}{ll}", file=out_f)
 
         print("\\toprule", file=out_f)
-        for sent in zip(prefixes, *alignment_matrix):
+        for sent in zip(prefixes, alignments):
             prefix = sent[0]
             alignments = sent[1:]
-            print("Utterance ID: &", prefix.strip(), "\\\\", file=out_f)
+            print("Utterance ID: &", prefix.strip().replace("_", "\_"), "\\\\", file=out_f)
             for i, alignment in enumerate(alignments):
                 ref_list = []
                 hyp_list = []
@@ -267,7 +278,7 @@ def latex_output(refs_paths, hyps_paths, utter_ids_fn):
                         ref_list.append("\hl{%s}" % arrow[0])
                         hyp_list.append("\hl{%s}" % arrow[1])
                 print("Ref: &", "".join(ref_list), "\\\\", file=out_f)
-                print("{}: &".format(hyps_paths[i].replace("_", "\_")), "".join(hyp_list), "\\\\", file=out_f)
+                print("Hyp: &", "".join(hyp_list), "\\\\", file=out_f)
             print("\\midrule", file=out_f)
 
         print("\end{longtable}", file=out_f)

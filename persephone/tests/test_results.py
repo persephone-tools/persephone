@@ -97,5 +97,6 @@ def test_speaker_results(prepared_data):
                                    label_set=set(corp.labels),
                                    max_width=25))
     print(results.count_sub_del_ins(hyps, refs))
+    results.latex_output(hyps, refs, eval_prefixes)
 
     return
