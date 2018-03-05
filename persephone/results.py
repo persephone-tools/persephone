@@ -324,7 +324,7 @@ def error_types(exp_path, labels=None):
 
 def count_sub_del_ins(hyps: Sequence[Sequence[str]],
                       refs: Sequence[Sequence[str]]
-                     ) -> Tuple[int, int, int, int]:
+                     ) -> str:
 
     alignments = [min_edit_distance_align(ref, hyp)
                   for hyp, ref in zip(hyps, refs)]
@@ -333,22 +333,33 @@ def count_sub_del_ins(hyps: Sequence[Sequence[str]],
     for alignment in alignments:
         arrow_counter.update(alignment)
 
-    print(arrow_counter)
-    print([(arrow, count) for arrow, count in arrow_counter.items()])
-    subs = sum([count for arrow, count in arrow_counter.items()
+    sub_count = sum([count for arrow, count in arrow_counter.items()
                 if arrow[0] != arrow[1] and arrow[0] != "" and arrow[1] != ""])
-    dels = sum([count for arrow, count in arrow_counter.items()
-                if arrow[0] != arrow[1] and arrow[0] != "" and arrow[1] == ""])
-    inss = sum([count for arrow, count in arrow_counter.items()
+    dels = [(arrow[0], count) for arrow, count in arrow_counter.items()
+            if arrow[0] != arrow[1] and arrow[0] != "" and arrow[1] == ""]
+    del_count = sum([count for arrow, count in dels])
+    ins_count = sum([count for arrow, count in arrow_counter.items()
                 if arrow[0] != arrow[1] and arrow[0] == "" and arrow[1] != ""])
     total = sum([count for _, count in arrow_counter.items()])
 
-    print(subs, dels, inss, total)
+    fmt_pieces = []
+    fmt = "{:15}{:<4}\n"
+    fmt_pieces.append(fmt.format("Substitutions", sub_count))
+    fmt_pieces.append(fmt.format("Deletions", del_count))
+    fmt_pieces.append(fmt.format("Insertions", ins_count))
+    fmt_pieces.append("\n")
+    fmt_pieces.append("Deletions:\n")
+    fmt_pieces.extend(["{:4}{:<4}\n".format(label, count)
+                       for label, count in
+                       sorted(dels, reverse=True, key=lambda x: x[1])])
+
+    return "".join(fmt_pieces)
+
 
 def confusion_matrix(hyps: Sequence[Sequence[str]],
                      refs: Sequence[Sequence[str]],
                      label_set: Set[str] = None,
-                     max_width: int = 18) -> str:
+                     max_width: int = 25) -> str:
     """ Formats a confusion matrix over substitutions, ignoring insertions
     and deletions. """
 
@@ -371,14 +382,15 @@ def confusion_matrix(hyps: Sequence[Sequence[str]],
               in sorted(ref_total.items(), key=lambda x: x[1], reverse=True)
               if label != ""][:max_width]
 
+    format_pieces = []
     fmt = "{:3} "*(len(labels)+1)
-    print(fmt.format(" ", *labels))
+    format_pieces.append(fmt.format(" ", *labels))
     fmt = "{:3} " + ("{:<3} " * (len(labels)))
     for ref in labels:
         ref_results = [arrow_counter[(ref, hyp)] for hyp in labels]
-        print(fmt.format(ref, *ref_results))
+        format_pieces.append(fmt.format(ref, *ref_results))
 
-    return str(labels)
+    return "\n".join(format_pieces)
 
 def tone_confusion(exp_path: Path, label_set: Set[str]) -> None:
     """ Outputs a label confusion matrix."""

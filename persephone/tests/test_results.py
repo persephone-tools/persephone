@@ -93,7 +93,9 @@ def test_speaker_results(prepared_data):
                      )
          )
 
-    print(results.confusion_matrix(hyps, refs, label_set=set(corp.labels)))
+    print(results.confusion_matrix(hyps, refs,
+                                   label_set=set(corp.labels),
+                                   max_width=25))
     print(results.count_sub_del_ins(hyps, refs))
 
     return
