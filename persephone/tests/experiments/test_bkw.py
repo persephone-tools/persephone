@@ -445,5 +445,5 @@ class TestBKW:
         for fold_corpus in self.random_cross_validation_corpora(corp, 20):
             sub_exp_dir = prep_sub_exp_dir(exp_dir)
             cr = CorpusReader(fold_corpus)
-            model = rnn_ctc.Model(exp_dir, cr, num_layers=2, hidden_size=250)
+            model = rnn_ctc.Model(sub_exp_dir, cr, num_layers=2, hidden_size=250)
             model.train(min_epochs=30)
