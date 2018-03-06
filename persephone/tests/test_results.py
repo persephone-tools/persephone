@@ -103,8 +103,8 @@ def test_speaker_results(prepared_data):
 @pytest.fixture
 def na_hyps_refs():
     na_test_data_path = Path("persephone/tests/test_data/na_nowordlist_tgm")
-    hyps_path = na_test_data_path / "hyps"
-    refs_path = na_test_data_path / "refs"
+    hyps_path = na_test_data_path / "test" / "hyps"
+    refs_path = na_test_data_path / "test" / "refs"
     prefixes_path = na_test_data_path / "test_prefixes.txt"
 
     with hyps_path.open() as f:

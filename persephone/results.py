@@ -13,95 +13,11 @@ from . import utils
 from .distance import min_edit_distance_align
 from .distance import cluster_alignment_errors
 
-def round_items(floats):
-    return ["%0.3f" % fl for fl in floats]
-
-def average(exp_nums, show_tgm_f1=False, phones=na.PHONEMES, tones=na.TONES):
-    """ Averages the results across a few experimental runs. """
-
-    ler_total = 0
-    per_total = 0
-    ter_total = 0
-    tgm_f1_total = 0
-    for i, exp_num in enumerate(exp_nums):
-        path = os.path.join(config.EXP_DIR, str(exp_num))
-        ler, per, ter = test_results(path, phones, tones)
-        tgm_f1 = 0
-        if show_tgm_f1:
-            tgm_f1 = symbol_f1(exp_num, "|")
-        print("Exp #{}:".format(i))
-        print("\tPER & TER & LER & TGM-F1")
-        print("\t{} & {} & {} & {}".format(per, ter, ler, tgm_f1))
-        ler_total += ler
-        per_total += per
-        ter_total += ter
-        tgm_f1_total +=  tgm_f1
-    print("Average:")
-    print("\tPER & TER & LER & TGM-F1")
-    print("\t{} & {} & {} & {}\\\\".format(
-        per_total/(i+1), ter_total/(i+1), ler_total/(i+1), tgm_f1_total/(i+1)))
-
-def format(exp_paths,
-                   phones=na.PHONEMES,
-                   tones=na.TONES):
-    """ Takes a list of experimental paths such as mam/exp/<number> and outputs
-    the results. """
-
-    valid_lers = []
-    valid_pers = []
-    test_lers = []
-    test_pers = []
-    test_ters = []
-
-    for path in exp_paths:
-
-        test_ler, test_per, test_ter = test_results(path, phones, tones)
-        test_lers.append(test_ler)
-        test_pers.append(test_per)
-        test_ters.append(test_ter)
-
-        with open(os.path.join(path, "best_scores.txt")) as best_f:
-            sp = best_f.readline().replace(",", "").split()
-            training_ler, valid_ler, valid_per = float(sp[4]), float(sp[7]), float(sp[10])
-            valid_lers.append(valid_ler)
-
-    print("Valid LER", round_items(valid_lers))
-    print("Test LER", round_items(test_lers))
-    print("Test PER", round_items(test_pers))
-    print("Test TER", round_items(test_ters))
-
-    print("PERS:")
-    for item in zip([128,256,512,1024,2048], test_pers):
-        print("(%d, %f)" % item)
-
-    print("TERS:")
-    for item in zip([128,256,512,1024,2048], test_ters):
-        print("(%d, %f)" % item)
-
-def filter_labels(sent, labels=None):
+def filter_labels(sent: Sequence[str], labels: Set[str] = None):
     """ Returns only the tokens present in the sentence that are in labels."""
     if labels:
         return [tok for tok in sent if tok in labels]
     return sent
-
-def test_results(exp_path, phones, tones):
-    """ Gets results of the model on the test set. """
-
-    test_path = os.path.join(exp_path, "test")
-    print(test_path)
-    with open(os.path.join(test_path, "test_per")) as test_f:
-        line = test_f.readlines()[0]
-        test_ler = float(line.split()[2].strip(","))
-
-    test_per = filtered_error_rate(os.path.join(test_path, "hyps"),
-                                      os.path.join(test_path, "refs"),
-                                      phones)
-
-    test_ter = filtered_error_rate(os.path.join(test_path, "hyps"),
-                                      os.path.join(test_path, "refs"),
-                                      tones)
-
-    return test_ler, test_per, test_ter
 
 def filtered_error_rate(hyps_path, refs_path, labels):
 
@@ -121,6 +37,25 @@ def filtered_error_rate(hyps_path, refs_path, labels):
         return -1
 
     return utils.batch_per(hyps, refs)
+
+def test_results(exp_path, phones, tones):
+    """ Gets results of the model on the test set. """
+
+    test_path = os.path.join(exp_path, "test")
+    print(test_path)
+    with open(os.path.join(test_path, "test_per")) as test_f:
+        line = test_f.readlines()[0]
+        test_ler = float(line.split()[2].strip(","))
+
+    test_per = filtered_error_rate(os.path.join(test_path, "hyps"),
+                                      os.path.join(test_path, "refs"),
+                                      phones)
+
+    test_ter = filtered_error_rate(os.path.join(test_path, "hyps"),
+                                      os.path.join(test_path, "refs"),
+                                      tones)
+
+    return test_ler, test_per, test_ter
 
 def ed_alignments(exp_path):
 
