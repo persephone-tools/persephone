@@ -74,6 +74,7 @@ class Corpus:
         self._num_feats = None
 
         # This is also lazy if the {train,valid,test}_prefixes.txt files exist.
+        self.max_samples = max_samples
         self.make_data_splits(max_samples=max_samples)
 
         # Sort the training prefixes by size for more efficient training

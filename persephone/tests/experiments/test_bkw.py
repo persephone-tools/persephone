@@ -1,10 +1,12 @@
 """ Testing Persephone on Alex/Steven's Kunwinjku data. """
 
+import copy
 import logging
 import os
 from os.path import splitext
 from pathlib import Path
 import pprint
+import random
 import subprocess
 from typing import List
 
@@ -19,7 +21,7 @@ from persephone.utterance import Utterance
 from persephone.datasets import bkw
 from persephone.preprocess import elan
 from persephone.corpus_reader import CorpusReader
-from persephone.run import prep_exp_dir
+from persephone.run import prep_exp_dir, prep_sub_exp_dir
 from persephone import rnn_ctc
 from persephone import utils
 
@@ -384,3 +386,64 @@ class TestBKW:
         retrieved_corp = corpus.Corpus.from_pickle(corp.tgt_dir)
         assert corp.utterances == retrieved_corp.utterances
         print(len(retrieved_corp.utterances))
+
+    # TODO I should probably turn this function into a generator
+    @staticmethod
+    def random_cross_validation_corpora(corpus, k):
+        """ Returns k CorpusReader objects, each of which represent the kth fold in
+        a random k-fold cross-validation. For the purposes of this, the corpus
+        train_fns, valid_fns and test_fns are all merged together and divided up
+        into folds."""
+
+        def check_folds(folds):
+            prefix_set = set()
+            for fold in folds:
+                assert prefix_set | set(fold)
+                prefix_set.update(set(fold))
+
+        # Need at least separate folds for training, validation and testing.
+        assert k >= 3
+
+        # Make k identical copies of the corpus
+        corpus_copies = [copy.deepcopy(corpus) for _ in range(k)]
+
+        # Create a set of all prefixes
+        all_prefixes = corpus.train_prefixes + corpus.valid_prefixes + corpus.test_prefixes
+        all_prefixes = utils.filter_by_size(corpus.feat_dir, all_prefixes, corpus.feat_type,
+                                            corpus.max_samples)
+
+
+        # Slice the prefixes into k folds
+        random.shuffle(all_prefixes)
+        fold_size = int(len(all_prefixes) / k)
+        folds = [all_prefixes[i:i+fold_size] for i in range(0, len(all_prefixes), fold_size)]
+        if len(folds) > k:
+            # Then merge the last two folds (the number of prefixes didn't divide
+            # perfectly into the number of folds
+            folds = folds[:-2] + [folds[-2] + folds[-1]]
+
+        check_folds(folds)
+
+        def rotate(l):
+            """ Rotates a list by one element. """
+            return l[1:] + l[:1]
+
+        # Assign each of the corpus copies a fold
+        for i in range(k):
+            corpus_copies[i].test_prefixes = folds[0]
+            corpus_copies[i].valid_prefixes = folds[1]
+            corpus_copies[i].train_prefixes = sum(folds[2:], [])
+            folds = rotate(folds)
+
+        return corpus_copies
+
+    def test_random_xv(self, preprocessed_corpus):
+        corp = preprocessed_corpus
+
+        exp_dir = prep_exp_dir(directory=config.TEST_EXP_PATH)
+
+        for fold_corpus in self.random_cross_validation_corpora(corp, 20):
+            sub_exp_dir = prep_sub_exp_dir(exp_dir)
+            cr = CorpusReader(fold_corpus)
+            model = rnn_ctc.Model(exp_dir, cr, num_layers=2, hidden_size=250)
+            model.train(min_epochs=30)
