@@ -12,31 +12,34 @@ from . import utils
 
 from .distance import min_edit_distance_align
 from .distance import cluster_alignment_errors
+from .exceptions import EmptyLabelsException
 
-def filter_labels(sent: Sequence[str], labels: Set[str] = None):
+def filter_labels(sent: Sequence[str],
+                  labels: Set[str] = None) -> Sequence[str]:
     """ Returns only the tokens present in the sentence that are in labels."""
+
     if labels:
         return [tok for tok in sent if tok in labels]
     return sent
 
-def filtered_error_rate(hyps_path, refs_path, labels):
+def filtered_error_rate(hyps: Sequence[Sequence[str]],
+                        refs: Sequence[Sequence[str]],
+                        labels: Set[str] = None) -> float:
 
-    with open(hyps_path) as hyps_f:
-        lines = hyps_f.readlines()
-        hyps = [filter_labels(line.split(), labels) for line in lines]
-    with open(refs_path) as refs_f:
-        lines = refs_f.readlines()
-        refs = [filter_labels(line.split(), labels) for line in lines]
+    filt_hyps = [filter_labels(line, labels) for line in hyps]
+    filt_refs = [filter_labels(line, labels) for line in refs]
 
     # For the case where there are no tokens left after filtering.
-    only_empty = True
-    for entry in hyps:
-        if entry != []:
-            only_empty = False
+    for transcriptions in [filt_hyps, filt_refs]:
+        only_empty = True
+        for utter in transcriptions:
+            if utter != []:
+                only_empty = False
+                break
     if only_empty:
-        return -1
+        raise EmptyLabelsException("Only empty utterances.")
 
-    return utils.batch_per(hyps, refs)
+    return utils.batch_per(filt_hyps, filt_refs)
 
 def test_results(exp_path, phones, tones):
     """ Gets results of the model on the test set. """

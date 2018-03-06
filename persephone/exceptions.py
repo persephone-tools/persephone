@@ -20,3 +20,9 @@ class EmptyReferenceException(PersephoneException):
     When calculating word error rates, the reference string must be of 
     length >= 1. Otherwise, this exception will be thrown.
     """
+
+class EmptyLabelsException(PersephoneException):
+    """
+    All label sequences in either references or hypotheses are empty. Have you
+    filtered for the wrong label set?
+    """

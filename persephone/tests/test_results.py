@@ -8,6 +8,9 @@ from persephone import results
 from persephone import utils
 from persephone.corpus import Corpus
 from persephone.corpus_reader import CorpusReader
+from persephone.datasets import na
+from persephone.datasets import bkw
+from persephone.exceptions import EmptyLabelsException
 
 @pytest.fixture(scope="module",
                 params=["test", "valid"])
@@ -126,9 +129,9 @@ def test_fmt_error_types(na_hyps_refs):
     print()
     print(results.fmt_error_types(hyps, refs))
 
-def test_fmt_latex_output(na_hyps_refs):
-    hyps, refs, prefixes = na_hyps_refs
-    print(prefixes)
+def test_filtered_error_rate(na_hyps_refs):
+    hyps, refs, _ = na_hyps_refs
     print()
-    results.fmt_latex_output(hyps, refs, prefixes,
-                                   Path("testing/fmt_latex_output.tex"))
+    with pytest.raises(EmptyLabelsException):
+        results.filtered_error_rate(hyps, refs, labels=bkw.DIPHTHONGS)
+    print(results.filtered_error_rate(hyps, refs, labels=na.TONES))
