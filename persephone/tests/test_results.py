@@ -1,5 +1,6 @@
 from collections import defaultdict
 from pathlib import Path
+import sys
 
 import pytest
 
@@ -7,10 +8,6 @@ from persephone import results
 from persephone import utils
 from persephone.corpus import Corpus
 from persephone.corpus_reader import CorpusReader
-
-#@pytest.fixture
-#def bkw_exp_dir():
-#    path = Path("persephone/tests/test_sets/bkw_slug_exp_13")
 
 @pytest.fixture(scope="module",
                 params=["test", "valid"])
@@ -102,3 +99,36 @@ def test_speaker_results(prepared_data):
                              Path("./hyps_refs.txt"))
 
     return
+
+@pytest.fixture
+def na_hyps_refs():
+    na_test_data_path = Path("persephone/tests/test_data/na_nowordlist_tgm")
+    hyps_path = na_test_data_path / "hyps"
+    refs_path = na_test_data_path / "refs"
+    prefixes_path = na_test_data_path / "test_prefixes.txt"
+
+    with hyps_path.open() as f:
+        hyps = [hyp.split() for hyp in f.readlines()]
+    with refs_path.open() as f:
+        refs = [ref.split() for ref in f.readlines()]
+    with prefixes_path.open() as f:
+        prefixes = [prefix.strip() for prefix in f.readlines()]
+
+    return hyps, refs, prefixes
+
+def test_fmt_confusion_matrix(na_hyps_refs):
+    hyps, refs, _ = na_hyps_refs
+    print()
+    print(results.fmt_confusion_matrix(hyps, refs, max_width=12))
+
+def test_fmt_error_types(na_hyps_refs):
+    hyps, refs, _ = na_hyps_refs
+    print()
+    print(results.fmt_error_types(hyps, refs))
+
+def test_fmt_latex_output(na_hyps_refs):
+    hyps, refs, prefixes = na_hyps_refs
+    print(prefixes)
+    print()
+    results.fmt_latex_output(hyps, refs, prefixes,
+                                   Path("testing/fmt_latex_output.tex"))

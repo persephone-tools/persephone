@@ -287,6 +287,16 @@ def fmt_error_types(hyps: Sequence[Sequence[str]],
 
     return "".join(fmt_pieces)
 
+def determine_label_set(hyps: Sequence[Sequence[str]],
+                        refs: Sequence[Sequence[str]]) -> Set[str]:
+    """ Creates a set of labels in the hyps and refs. """
+
+    label_set = set() # type: Set[str]
+    for utter in hyps:
+        label_set.update(utter)
+    for utter in refs:
+        label_set.update(utter)
+    return label_set
 
 def fmt_confusion_matrix(hyps: Sequence[Sequence[str]],
                          refs: Sequence[Sequence[str]],
@@ -297,7 +307,7 @@ def fmt_confusion_matrix(hyps: Sequence[Sequence[str]],
 
     if not label_set:
         # Then determine the label set by reading
-        raise NotImplementedError()
+        label_set = determine_label_set(hyps, refs)
 
     alignments = [min_edit_distance_align(ref, hyp)
                   for hyp, ref in zip(hyps, refs)]

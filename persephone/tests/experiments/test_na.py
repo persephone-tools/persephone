@@ -151,9 +151,9 @@ def test_full_na():
                      label_dir=label_dir)
 
     from shutil import copyfile
-    copyfile("persephone/tests/test_sets/valid_prefixes.txt",
+    copyfile("persephone/tests/test_data/na_nowordlist_tgm/valid_prefixes.txt",
              join(na_dir, "valid_prefixes.txt"))
-    copyfile("persephone/tests/test_sets/test_prefixes.txt",
+    copyfile("persephone/tests/test_data/na_nowordlist_tgm/test_prefixes.txt",
              join(na_dir, "test_prefixes.txt"))
     na.make_data_splits(label_type, train_rec_type="text", tgt_dir=na_dir)
 
