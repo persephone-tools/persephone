@@ -249,8 +249,8 @@ Current data formatting requirements:
 
 * Each transcript file includes a space-delimited list of *labels* to the model should learn to transcribe. For example:
 
-    - ``data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.phonemes`` contains ``l e dz ɯ z e l e dz ɯ z e``
-    - ``data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.phonemes_and_tones`` might contain: ``l e ˧ dz ɯ ˥ z e ˩ | l e ˧ dz ɯ ˥ z e ˩``
+  - ``data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.phonemes`` contains ``l e dz ɯ z e l e dz ɯ z e``
+  - ``data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.phonemes_and_tones`` might contain: ``l e ˧ dz ɯ ˥ z e ˩ | l e ˧ dz ɯ ˥ z e ˩``
 
 * Persephone is agnostic to what your chosen labels are. It simply tries to figure out how to map speech to that labelling. These labels can be multiple characters long: the spaces demarcate labels. Labels can be any unicode character(s).
 
