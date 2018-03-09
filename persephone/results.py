@@ -41,7 +41,7 @@ def filtered_error_rate(hyps: Sequence[Sequence[str]],
 
     return utils.batch_per(filt_hyps, filt_refs)
 
-def test_results(exp_path: Path, labels: Set[str] = labels
+def test_results(exp_path: Path, labels: Set[str] = None,
                 ) -> Tuple[float, float]:
     """ Gets results of the model on the test set. """
 
