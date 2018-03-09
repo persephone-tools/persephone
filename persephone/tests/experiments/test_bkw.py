@@ -447,3 +447,24 @@ class TestBKW:
             cr = CorpusReader(fold_corpus)
             model = rnn_ctc.Model(sub_exp_dir, cr, num_layers=2, hidden_size=250)
             model.train(min_epochs=30)
+
+    def test_xv_error_stats(self):
+        """ Statistics for Task 1 of Steven's: Gathering statistics of the
+        types of errors that occur across the whole corpus based on phonemic
+        context. Using results of cross-validation run found in
+        slug:code/persephone/testing/exp/28/"""
+
+        refs = []
+        hyps = []
+
+        exp_path = Path("testing/exp/28/")
+        for path in exp_path.iterdir():
+            if path.is_dir():
+                with (path / "test" / "refs").open() as f:
+                    refs.extend(line.strip() for line in f.readlines())
+                with (path / "test" / "hyps").open() as f:
+                    hyps.extend(line.strip() for line in f.readlines())
+
+        print(list(zip(refs, hyps)))
+        print(len(refs))
+
