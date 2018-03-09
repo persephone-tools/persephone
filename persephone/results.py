@@ -41,24 +41,23 @@ def filtered_error_rate(hyps: Sequence[Sequence[str]],
 
     return utils.batch_per(filt_hyps, filt_refs)
 
-def test_results(exp_path, phones, tones):
+def test_results(exp_path: Path, labels: Set[str] = labels
+                ) -> Tuple[float, float]:
     """ Gets results of the model on the test set. """
 
-    test_path = os.path.join(exp_path, "test")
-    print(test_path)
-    with open(os.path.join(test_path, "test_per")) as test_f:
+    test_path = exp_path / "test"
+    hyps_path = test_path / "hyps"
+    refs_path = test_path / "refs"
+    per_path = test_path / "test_per"
+
+    with per_path.open() as test_f:
         line = test_f.readlines()[0]
         test_ler = float(line.split()[2].strip(","))
 
-    test_per = filtered_error_rate(os.path.join(test_path, "hyps"),
-                                      os.path.join(test_path, "refs"),
-                                      phones)
+    test_ler = filtered_error_rate(hyps, refs, labels=None)
+    test_filtered_ler = filtered_error_rate(hyps, refs, labels=labels)
 
-    test_ter = filtered_error_rate(os.path.join(test_path, "hyps"),
-                                      os.path.join(test_path, "refs"),
-                                      tones)
-
-    return test_ler, test_per, test_ter
+    return test_ler, test_filtered_ler
 
 def ed_alignments(exp_path):
 
