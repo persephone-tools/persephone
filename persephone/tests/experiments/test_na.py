@@ -34,7 +34,7 @@ def rm_dir(path: Path):
     if path.is_dir():
         shutil.rmtree(str(path))
 
-def download_example_data(example_link):
+def download_example_data(example_link, data_base_dir=DATA_BASE_DIR):
     """
     Clears DATA_BASE_DIR, collects the zip archive from example_link and unpacks it into
     DATA_BASE_DIR.
@@ -42,7 +42,7 @@ def download_example_data(example_link):
 
     # Prepare data and exp dirs
     set_up_base_testing_dir()
-    zip_fn = join(DATA_BASE_DIR, "data.zip")
+    zip_fn = join(data_base_dir, "data.zip")
     if os.path.exists(zip_fn):
         os.remove(zip_fn)
 
@@ -52,7 +52,7 @@ def download_example_data(example_link):
 
     # Unzip the data
     import subprocess
-    args = ["unzip", zip_fn, "-d", DATA_BASE_DIR]
+    args = ["unzip", zip_fn, "-d", data_base_dir]
     subprocess.run(args, check=True)
 
 def get_test_ler(exp_dir):
@@ -200,10 +200,48 @@ def test_na_preprocess():
     assert len(na_corpus.get_valid_fns()[0]) == 294
     assert len(na_corpus.get_test_fns()[0]) == 293
 
-# Other tests:
-    # TODO assert the contents of the prefix files
+@pytest.mark.experiment
+def test_reuse_model()
+    # TODO Currently assumes we're on slug. Need to package up the model and
+    # put it on cloudstor, then create a fixture to download it.
 
-    # TODO Assert that we've filtered files with too many frames
+@pytest.fixture(scope="module")
+def prep_org_data():
 
-    # TODO Test out corpus reader on the same data. (Make a function for that
-    # within this functions scope)
+    na_path = Path(config.NA_PATH)
+    if not na_path.is_dir():
+        # Pulls Na wavs from cloudstor.
+        NA_WAVS_LINK = "https://cloudstor.aarnet.edu.au/plus/s/LnNyNa20GQ8qsPC/download"
+        download_example_data(NA_WAVS_LINK)
+
+    return
+
+    na_dir = join(DATA_BASE_DIR, "na/")
+    os.rm_dir(na_dir)
+    os.makedirs(na_dir)
+    org_wav_dir = join(na_dir, "org_wav/")
+    os.rename(join(DATA_BASE_DIR, "na_wav/"), org_wav_dir)
+    tgt_wav_dir = join(na_dir, "wav/")
+
+    NA_REPO_URL = "https://github.com/alexis-michaud/na-data.git"
+    with cd(DATA_BASE_DIR):
+        subprocess.run(["git", "clone", NA_REPO_URL, "na/xml/"], check=True)
+    # Note also that this subdirectory only containts TEXTs, so this integration
+    # test will include only Na narratives, not wordlists.
+    na_xml_dir = join(DATA_BASE_DIR, "na/xml/TEXT/F4")
+
+    label_dir = join(DATA_BASE_DIR, "na/label")
+    label_type = "phonemes_and_tones"
+    na.prepare_labels(label_type,
+        org_xml_dir=na_xml_dir, label_dir=label_dir)
+
+    tgt_feat_dir = join(DATA_BASE_DIR, "na/feat")
+    # TODO Make this fbank_and_pitch, but then I need to install kaldi on ray
+    # or run the tests on GPUs on slug or doe.
+    feat_type = "fbank"
+    na.prepare_feats(feat_type,
+                     org_wav_dir=org_wav_dir,
+                     tgt_wav_dir=tgt_wav_dir,
+                     feat_dir=tgt_feat_dir,
+                     org_xml_dir=na_xml_dir,
+                     label_dir=label_dir)

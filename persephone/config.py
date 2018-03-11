@@ -19,7 +19,7 @@ CORPORA_BASE_PATH = config_file.get("PATHS", "CORPORA_BASE_PATH",
                                     fallback="./data/org/")
 
 # The directory of the original source corpora, un-preprocessed.
-NA_DIR = config_file.get("PATHS", "NA_DIR", fallback=os.path.join(CORPORA_BASE_PATH, "Na"))
+NA_PATH = config_file.get("PATHS", "NA_PATH", fallback=os.path.join(CORPORA_BASE_PATH, "na"))
 
 # For Kunwinjku data:
 BKW_PATH = config_file.get("PATHS", "BKW_PATH",
