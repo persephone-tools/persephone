@@ -16,7 +16,7 @@ from ..preprocess import pangloss
 
 ureg = pint.UnitRegistry()
 
-ORG_DIR = config.NA_DIR
+ORG_DIR = config.NA_PATH
 TGT_DIR = os.path.join(config.TGT_DIR, "na")
 ORG_XML_DIR = os.path.join(ORG_DIR, "xml/TEXT/F4/")
 ORG_WAV_DIR = os.path.join(ORG_DIR, "wav")

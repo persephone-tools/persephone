@@ -5,6 +5,7 @@ import pytest
 import subprocess
 
 from persephone import corpus
+from persephone import config
 from persephone import run
 from persephone import corpus_reader
 from persephone import rnn_ctc
@@ -19,14 +20,14 @@ DATA_BASE_DIR = "testing/data/"
 # it should have a txt extension.
 TEST_PER_FN = "test/test_per" 
 
-def set_up_base_testing_dir():
+def set_up_base_testing_dir(data_base_dir=DATA_BASE_DIR):
     """ Creates a directory to store corpora and experimental directories used
     in testing. """
 
     if not os.path.isdir(EXP_BASE_DIR):
         os.makedirs(EXP_BASE_DIR)
-    if not os.path.isdir(DATA_BASE_DIR):
-        os.makedirs(DATA_BASE_DIR)
+    if not os.path.isdir(data_base_dir):
+        os.makedirs(data_base_dir)
 
 def rm_dir(path: Path):
 
@@ -41,7 +42,7 @@ def download_example_data(example_link, data_base_dir=DATA_BASE_DIR):
     """
 
     # Prepare data and exp dirs
-    set_up_base_testing_dir()
+    set_up_base_testing_dir(data_base_dir=data_base_dir)
     zip_fn = join(data_base_dir, "data.zip")
     if os.path.exists(zip_fn):
         os.remove(zip_fn)
@@ -201,39 +202,45 @@ def test_na_preprocess():
     assert len(na_corpus.get_test_fns()[0]) == 293
 
 @pytest.mark.experiment
-def test_reuse_model()
+def test_reuse_model(preprocess_na):
     # TODO Currently assumes we're on slug. Need to package up the model and
     # put it on cloudstor, then create a fixture to download it.
+    pass
 
 @pytest.fixture(scope="module")
 def prep_org_data():
 
     na_path = Path(config.NA_PATH)
-    if not na_path.is_dir():
+    org_wav_dir = na_path / "na_wav"
+    if not org_wav_dir.is_dir():
         # Pulls Na wavs from cloudstor.
         NA_WAVS_LINK = "https://cloudstor.aarnet.edu.au/plus/s/LnNyNa20GQ8qsPC/download"
-        download_example_data(NA_WAVS_LINK)
-
-    return
-
-    na_dir = join(DATA_BASE_DIR, "na/")
-    os.rm_dir(na_dir)
-    os.makedirs(na_dir)
-    org_wav_dir = join(na_dir, "org_wav/")
-    os.rename(join(DATA_BASE_DIR, "na_wav/"), org_wav_dir)
-    tgt_wav_dir = join(na_dir, "wav/")
+        download_example_data(NA_WAVS_LINK, data_base_dir=config.NA_PATH)
 
     NA_REPO_URL = "https://github.com/alexis-michaud/na-data.git"
-    with cd(DATA_BASE_DIR):
-        subprocess.run(["git", "clone", NA_REPO_URL, "na/xml/"], check=True)
+    org_xml_dir = na_path / "xml"
+    if not org_xml_dir.is_dir():
+        with cd(na_path):
+            subprocess.run(["git", "clone", NA_REPO_URL, "xml/"], check=True)
     # Note also that this subdirectory only containts TEXTs, so this integration
     # test will include only Na narratives, not wordlists.
-    na_xml_dir = join(DATA_BASE_DIR, "na/xml/TEXT/F4")
+    org_xml_dir = org_xml_dir / "TEXT" / "F4"
 
-    label_dir = join(DATA_BASE_DIR, "na/label")
+    return org_wav_dir, org_xml_dir
+
+@pytest.fixture(scope="module")
+def preprocess_na(prep_org_data):
+
+    org_wav_path, org_xml_path = prep_org_data
+
+    tgt_dir = Path(config.TEST_DATA_PATH) / "na"
+    label_dir = tgt_dir / "label"
     label_type = "phonemes_and_tones"
     na.prepare_labels(label_type,
-        org_xml_dir=na_xml_dir, label_dir=label_dir)
+                      org_xml_dir=str(org_xml_path),
+                      label_dir=str(label_dir))
+
+    return
 
     tgt_feat_dir = join(DATA_BASE_DIR, "na/feat")
     # TODO Make this fbank_and_pitch, but then I need to install kaldi on ray
