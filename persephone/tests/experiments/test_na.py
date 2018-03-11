@@ -201,12 +201,6 @@ def test_na_preprocess():
     assert len(na_corpus.get_valid_fns()[0]) == 294
     assert len(na_corpus.get_test_fns()[0]) == 293
 
-@pytest.mark.experiment
-def test_reuse_model(preprocess_na):
-    # TODO Currently assumes we're on slug. Need to package up the model and
-    # put it on cloudstor, then create a fixture to download it.
-    pass
-
 @pytest.fixture(scope="module")
 def prep_org_data():
 
@@ -235,20 +229,27 @@ def preprocess_na(prep_org_data):
 
     tgt_dir = Path(config.TEST_DATA_PATH) / "na"
     label_dir = tgt_dir / "label"
-    label_type = "phonemes_and_tones"
-    na.prepare_labels(label_type,
-                      org_xml_dir=str(org_xml_path),
-                      label_dir=str(label_dir))
+    if not label_dir.is_dir():
+        label_type = "phonemes_and_tones"
+        na.prepare_labels(label_type,
+                          org_xml_dir=str(org_xml_path),
+                          label_dir=str(label_dir))
 
-    return
-
-    tgt_feat_dir = join(DATA_BASE_DIR, "na/feat")
+    tgt_feat_dir = tgt_dir / "feat"
     # TODO Make this fbank_and_pitch, but then I need to install kaldi on ray
     # or run the tests on GPUs on slug or doe.
     feat_type = "fbank"
-    na.prepare_feats(feat_type,
-                     org_wav_dir=org_wav_dir,
-                     tgt_wav_dir=tgt_wav_dir,
-                     feat_dir=tgt_feat_dir,
-                     org_xml_dir=na_xml_dir,
-                     label_dir=label_dir)
+    if not tgt_feat_dir.is_dir():
+        na.prepare_feats(feat_type,
+                         org_wav_dir=str(org_wav_path),
+                         tgt_wav_dir=str(tgt_dir / "wav"),
+                         feat_dir=str(tgt_feat_dir),
+                         org_xml_dir=str(org_xml_path),
+                         label_dir=str(label_dir))
+
+@pytest.mark.experiment
+def test_reuse_model(preprocess_na):
+    # TODO Currently assumes we're on slug. Need to package up the model and
+    # put it on cloudstor, then create a fixture to download it.
+    pass
+

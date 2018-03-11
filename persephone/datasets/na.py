@@ -1,5 +1,6 @@
 """ An interface with the Na data. """
 
+import logging
 from pathlib import Path
 import os
 import random
@@ -15,6 +16,8 @@ from ..exceptions import PersephoneException
 from ..preprocess import pangloss
 
 ureg = pint.UnitRegistry()
+
+logging.config.fileConfig(config.LOGGING_INI_PATH)
 
 ORG_DIR = config.NA_PATH
 TGT_DIR = os.path.join(config.TGT_DIR, "na")
@@ -220,7 +223,7 @@ def trim_wavs(org_wav_dir=ORG_WAV_DIR,
     """ Extracts sentence-level transcriptions, translations and wavs from the
     Na Pangloss XML and WAV files. But otherwise doesn't preprocess them."""
 
-    print("Trimming wavs...")
+    logging.info("Trimming wavs...")
 
     if not os.path.exists(os.path.join(tgt_wav_dir, "TEXT")):
         os.makedirs(os.path.join(tgt_wav_dir, "TEXT"))
@@ -228,7 +231,6 @@ def trim_wavs(org_wav_dir=ORG_WAV_DIR,
         os.makedirs(os.path.join(tgt_wav_dir, "WORDLIST"))
 
     for fn in os.listdir(org_xml_dir):
-        print(fn)
         path = os.path.join(org_xml_dir, fn)
         prefix, _ = os.path.splitext(fn)
 
@@ -236,6 +238,8 @@ def trim_wavs(org_wav_dir=ORG_WAV_DIR,
             continue
         if not path.endswith(".xml"):
             continue
+
+        logging.info("Trimming wavs from {}".format(fn))
 
         rec_type, _, times, _ = pangloss.get_sents_times_and_translations(path)
 
@@ -336,7 +340,6 @@ def prepare_feats(feat_type, org_wav_dir=ORG_WAV_DIR, feat_dir=FEAT_DIR, tgt_wav
     if not os.path.isdir(FEAT_DIR):
         os.makedirs(FEAT_DIR)
 
-
     if not os.path.isdir(os.path.join(feat_dir, "WORDLIST")):
         os.makedirs(os.path.join(feat_dir, "WORDLIST"))
     if not os.path.isdir(os.path.join(feat_dir, "TEXT")):
@@ -383,6 +386,8 @@ def prepare_feats(feat_type, org_wav_dir=ORG_WAV_DIR, feat_dir=FEAT_DIR, tgt_wav
             wav_fn = os.path.join(tgt_wav_dir, "%s.wav" % prefix)
             mono16k_wav_fn = os.path.join(feat_dir, "%s.wav" % prefix)
             if not os.path.isfile(mono16k_wav_fn):
+                logging.info("Normalizing wav {} to a 16k 16KHz mono {}".format(
+                    wav_fn, mono16k_wav_fn))
                 feat_extract.convert_wav(wav_fn, mono16k_wav_fn)
 
         # Extract features from the wavs.

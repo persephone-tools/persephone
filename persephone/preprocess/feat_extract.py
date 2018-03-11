@@ -1,5 +1,6 @@
 """ Performs feature extraction of WAV files for acoustic modelling."""
 
+import logging
 import os
 from pathlib import Path
 import subprocess
@@ -10,6 +11,8 @@ import scipy.io.wavfile as wav
 
 from .. import config
 from ..exceptions import PersephoneException
+
+logging.config.fileConfig(config.LOGGING_INI_PATH)
 
 def extract_energy(rate, sig):
     """ Extracts the energy of frames. """
@@ -102,6 +105,8 @@ def combine_fbank_and_pitch(feat_dir, prefix):
 def from_dir(dirpath: Path, feat_type: str) -> None:
     """ Performs feature extraction from the WAV files in a directory. """
 
+    logging.info("Extracting features from directory {}".format(dir_path))
+
     dirname = str(dirpath)
 
     def all_wavs_processed():
@@ -129,7 +134,7 @@ def from_dir(dirpath: Path, feat_type: str) -> None:
 
     # Then apply file-wise feature extraction
     for filename in os.listdir(dirname):
-        print("Preparing %s features for %s" % (feat_type, filename))
+        logging.info("Preparing %s features for %s" % (feat_type, filename))
         path = os.path.join(dirname, filename)
         if path.endswith(".wav"):
             if feat_type == "fbank":
