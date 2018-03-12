@@ -271,6 +271,7 @@ def test_reuse_model(preprocess_na):
     model = rnn_ctc.Model(exp_dir, na_reader, num_layers=3, hidden_size=400)
     model.transcribe(restore_model_path="/home/oadams/code/mam/exp/252/model/model_best.ckpt")
 
+@pytest.mark.experiment
 def test_load_meta():
     tgt_dir = Path(config.TEST_DATA_PATH) / "na"
     na_corpus = na.Corpus("fbank", "phonemes_and_tones",
