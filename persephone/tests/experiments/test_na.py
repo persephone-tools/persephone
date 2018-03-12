@@ -2,12 +2,14 @@ import logging
 import os
 from os.path import join
 from pathlib import Path
+import pprint
 import pytest
 import subprocess
 
 from persephone import corpus
 from persephone import config
 from persephone import run
+from persephone.run import prep_exp_dir
 from persephone import corpus_reader
 from persephone import rnn_ctc
 from persephone.context_manager import cd
@@ -208,11 +210,12 @@ def test_na_preprocess():
 def prep_org_data():
 
     na_path = Path(config.NA_PATH)
-    org_wav_dir = na_path / "na_wav"
+    org_wav_dir = na_path / "wav"
     if not org_wav_dir.is_dir():
         # Pulls Na wavs from cloudstor.
         NA_WAVS_LINK = "https://cloudstor.aarnet.edu.au/plus/s/LnNyNa20GQ8qsPC/download"
         download_example_data(NA_WAVS_LINK, data_base_dir=config.NA_PATH)
+        os.rename(str(na_path / "na_wav"), str(org_wav_dir))
 
     NA_REPO_URL = "https://github.com/alexis-michaud/na-data.git"
     org_xml_dir = na_path / "xml"
@@ -253,11 +256,15 @@ def preprocess_na(prep_org_data):
 
 @pytest.mark.experiment
 def test_reuse_model(preprocess_na):
-    # TODO Currently assumes we're on slug. Need to package up the model and
-    # put it on cloudstor, then create a fixture to download it.
-
     tgt_dir = Path(config.TEST_DATA_PATH) / "na"
-    na_corpus = datasets.na.Corpus("fbank_and_pitch", "phonemes_and_tones",
+    na_corpus = na.Corpus("fbank_and_pitch", "phonemes_and_tones",
                                    tgt_dir=tgt_dir)
     na_reader = corpus_reader.CorpusReader(na_corpus)
     logging.info("na_corpus {}".format(na_corpus))
+    logging.info("na_corpus.get_untranscribed_fns():")
+    logging.info(pprint.pformat(na_corpus.get_untranscribed_fns()))
+    # TODO Currently assumes we're on slug. Need to package up the model and
+    # put it on cloudstor, then create a fixture to download it.
+    exp_dir = prep_exp_dir(directory=config.TEST_EXP_PATH)
+    model = rnn_ctc.Model(exp_dir, na_reader, num_layers=3, hidden_size=400)
+    model.transcribe(restore_model_path="/home/oadams/code/mam/exp/252/model/model_best.ckpt")
