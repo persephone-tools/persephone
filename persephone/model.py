@@ -268,6 +268,8 @@ class Model:
 
         saver = tf.train.Saver()
 
+        export_dir = os.path.join(self.exp_dir, "export_dir")
+
         sess = tf.Session(config=allow_growth_config)
 
         if restore_model_path:

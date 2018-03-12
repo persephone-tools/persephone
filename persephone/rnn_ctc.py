@@ -44,8 +44,9 @@ class Model(model.Model):
 
         # Initialize placeholders for feeding data to model.
         self.batch_x = tf.placeholder(
-                tf.float32, [None, None, corpus_reader.corpus.num_feats])
-        self.batch_x_lens = tf.placeholder(tf.int32, [None])
+                tf.float32, [None, None, corpus_reader.corpus.num_feats],
+                name="batch_x")
+        self.batch_x_lens = tf.placeholder(tf.int32, [None], name="batch_x_lens")
         self.batch_y = tf.sparse_placeholder(tf.int32)
 
         batch_size = tf.shape(self.batch_x)[0]
@@ -79,7 +80,7 @@ class Model(model.Model):
         self.logits = tf.matmul(self.outputs, W) + b
         self.logits = tf.reshape(self.logits, [batch_size, -1, vocab_size])
         # igormq made it time major, because of an optimization in ctc_loss.
-        self.logits = tf.transpose(self.logits, (1, 0, 2))
+        self.logits = tf.transpose(self.logits, (1, 0, 2), name="logits")
 
         # For lattice construction
         self.log_softmax = tf.nn.log_softmax(self.logits)
@@ -90,7 +91,7 @@ class Model(model.Model):
 
         # If we want to do manual PER decoding. The decoded[0] beans the best
         # hypothesis (0th) in an n-best list.
-        self.dense_decoded = tf.sparse_tensor_to_dense(self.decoded[0])
+        self.dense_decoded = tf.sparse_tensor_to_dense(self.decoded[0], name="hyp_dense_decoded")
         self.dense_ref = tf.sparse_tensor_to_dense(self.batch_y)
 
         self.loss = tf.nn.ctc_loss(self.batch_y, self.logits, self.batch_x_lens,

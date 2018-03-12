@@ -6,6 +6,8 @@ import pprint
 import pytest
 import subprocess
 
+import tensorflow as tf
+
 from persephone import corpus
 from persephone import config
 from persephone import run
@@ -268,3 +270,57 @@ def test_reuse_model(preprocess_na):
     exp_dir = prep_exp_dir(directory=config.TEST_EXP_PATH)
     model = rnn_ctc.Model(exp_dir, na_reader, num_layers=3, hidden_size=400)
     model.transcribe(restore_model_path="/home/oadams/code/mam/exp/252/model/model_best.ckpt")
+
+def test_load_meta():
+    tgt_dir = Path(config.TEST_DATA_PATH) / "na"
+    na_corpus = na.Corpus("fbank", "phonemes_and_tones",
+                          tgt_dir=tgt_dir)
+    na_reader = corpus_reader.CorpusReader(na_corpus)
+
+    tf.reset_default_graph()
+    #model_prefix_path = "/home/oadams/code/mam/exp/252/model/model_best.ckpt"
+    model_prefix_path = "/home/oadams/code/persephone/testing/exp/39/model/model_best.ckpt"
+    imported_meta = tf.train.import_meta_graph(model_prefix_path + ".meta")
+    print(dir(imported_meta))
+    print(dir(imported_meta.restore))
+
+    #exp_dir = prep_exp_dir(directory=config.TEST_EXP_PATH)
+    #new_mod = rnn_ctc.Model(exp_dir, na_reader)
+    #with tf.Session() as sess:
+    #    sess.run(tf.global_variables_initializer())
+    #    for v in tf.get_default_graph().get_collection("train_op"):
+    #        print(v)
+    #    return
+    with tf.Session() as sess:
+        #imported_meta.restore(sess, tf.train.latest_checkpoint('./'))
+        imported_meta.restore(sess, model_prefix_path)
+        print([x for x in tf.get_default_graph().get_operations() if "Placeholder" in x.type])
+        print(dir(sess))
+        print(sess.graph)
+        print(dir(sess.graph))
+        for v in tf.get_default_graph().get_collection("variables"):
+            print(v)
+        for v in tf.get_default_graph().get_collection("trainable_variables"):
+            print(v)
+        for v in tf.get_default_graph().get_collection("train_op"):
+            print(v)
+        print(tf.get_default_graph().get_all_collection_keys())
+        pprint.pprint([op.name for op in tf.get_default_graph().get_operations()
+                       if "hyp" in op.name])
+        for batch_i, batch in enumerate(na_reader.untranscribed_batch_gen()):
+
+             batch_x, batch_x_lens, feat_fn_batch = batch
+
+             #ph_batch_x = tf.placeholder(
+             #   tf.float32, [None, None, na_reader.corpus.num_feats])
+             #ph_batch_x_lens = tf.placeholder(tf.int32, [None])
+             #ph_batch_y = tf.sparse_placeholder(tf.int32)
+
+             feed_dict = {"batch_x:0": batch_x,
+                          "batch_x_lens:0": batch_x_lens}
+
+             [dense_decoded] = sess.run(["hyp_dense_decoded:0"],
+                                      feed_dict=feed_dict)
+             print(dense_decoded)
+             hyps = na_reader.human_readable(dense_decoded)
+             print(hyps)
