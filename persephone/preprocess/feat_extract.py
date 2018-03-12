@@ -105,7 +105,7 @@ def combine_fbank_and_pitch(feat_dir, prefix):
 def from_dir(dirpath: Path, feat_type: str) -> None:
     """ Performs feature extraction from the WAV files in a directory. """
 
-    logging.info("Extracting features from directory {}".format(dir_path))
+    logging.info("Extracting features from directory {}".format(dirpath))
 
     dirname = str(dirpath)
 

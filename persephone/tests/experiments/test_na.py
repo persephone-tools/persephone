@@ -1,3 +1,4 @@
+import logging
 import os
 from os.path import join
 from pathlib import Path
@@ -19,6 +20,8 @@ DATA_BASE_DIR = "testing/data/"
 # of control, otherwise the test will break when I change it elswhere. Perhaps
 # it should have a txt extension.
 TEST_PER_FN = "test/test_per" 
+
+logging.config.fileConfig(config.LOGGING_INI_PATH)
 
 def set_up_base_testing_dir(data_base_dir=DATA_BASE_DIR):
     """ Creates a directory to store corpora and experimental directories used
@@ -238,18 +241,23 @@ def preprocess_na(prep_org_data):
     tgt_feat_dir = tgt_dir / "feat"
     # TODO Make this fbank_and_pitch, but then I need to install kaldi on ray
     # or run the tests on GPUs on slug or doe.
-    feat_type = "fbank"
-    if not tgt_feat_dir.is_dir():
-        na.prepare_feats(feat_type,
-                         org_wav_dir=str(org_wav_path),
-                         tgt_wav_dir=str(tgt_dir / "wav"),
-                         feat_dir=str(tgt_feat_dir),
-                         org_xml_dir=str(org_xml_path),
-                         label_dir=str(label_dir))
+    feat_type = "fbank_and_pitch"
+    # This is a lazy function anyway, so no need to check if the feat dir
+    # exists.
+    na.prepare_feats(feat_type,
+                     org_wav_dir=str(org_wav_path),
+                     tgt_wav_dir=str(tgt_dir / "wav"),
+                     feat_dir=str(tgt_feat_dir),
+                     org_xml_dir=str(org_xml_path),
+                     label_dir=str(label_dir))
 
 @pytest.mark.experiment
 def test_reuse_model(preprocess_na):
     # TODO Currently assumes we're on slug. Need to package up the model and
     # put it on cloudstor, then create a fixture to download it.
-    pass
 
+    tgt_dir = Path(config.TEST_DATA_PATH) / "na"
+    na_corpus = datasets.na.Corpus("fbank_and_pitch", "phonemes_and_tones",
+                                   tgt_dir=tgt_dir)
+    na_reader = corpus_reader.CorpusReader(na_corpus)
+    logging.info("na_corpus {}".format(na_corpus))
