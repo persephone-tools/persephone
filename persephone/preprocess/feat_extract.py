@@ -180,6 +180,8 @@ def kaldi_pitch(wav_dir, feat_dir):
     # Call Kaldi pitch feat extraction
     args = [os.path.join(config.KALDI_ROOT, "src/featbin/compute-kaldi-pitch-feats"),
             "scp:%s" % (wav_scp_path), "scp,t:%s" % pitch_scp_path]
+    logging.info("Extracting pitch features from wavs listed in {}".format(
+        wav_scp_path))
     subprocess.run(args)
 
     # Convert the Kaldi pitch *.txt files to numpy arrays.

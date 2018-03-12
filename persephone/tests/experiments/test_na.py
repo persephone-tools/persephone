@@ -208,11 +208,12 @@ def test_na_preprocess():
 def prep_org_data():
 
     na_path = Path(config.NA_PATH)
-    org_wav_dir = na_path / "na_wav"
+    org_wav_dir = na_path / "wav"
     if not org_wav_dir.is_dir():
         # Pulls Na wavs from cloudstor.
         NA_WAVS_LINK = "https://cloudstor.aarnet.edu.au/plus/s/LnNyNa20GQ8qsPC/download"
         download_example_data(NA_WAVS_LINK, data_base_dir=config.NA_PATH)
+        os.rename(str(na_path / "na_wav"), str(org_wav_dir))
 
     NA_REPO_URL = "https://github.com/alexis-michaud/na-data.git"
     org_xml_dir = na_path / "xml"
@@ -253,11 +254,11 @@ def preprocess_na(prep_org_data):
 
 @pytest.mark.experiment
 def test_reuse_model(preprocess_na):
-    # TODO Currently assumes we're on slug. Need to package up the model and
-    # put it on cloudstor, then create a fixture to download it.
-
     tgt_dir = Path(config.TEST_DATA_PATH) / "na"
-    na_corpus = datasets.na.Corpus("fbank_and_pitch", "phonemes_and_tones",
+    na_corpus = na.Corpus("fbank_and_pitch", "phonemes_and_tones",
                                    tgt_dir=tgt_dir)
     na_reader = corpus_reader.CorpusReader(na_corpus)
     logging.info("na_corpus {}".format(na_corpus))
+    # TODO Currently assumes we're on slug. Need to package up the model and
+    # put it on cloudstor, then create a fixture to download it.
+

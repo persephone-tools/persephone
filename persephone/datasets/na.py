@@ -28,10 +28,6 @@ FEAT_DIR = os.path.join(TGT_DIR, "feat")
 LABEL_DIR = os.path.join(TGT_DIR, "label")
 TRANSL_DIR = os.path.join(TGT_DIR, "transl")
 
-# The directory for untranscribed audio we want to transcribe with automatic
-# methods.
-UNTRAN_DIR = os.path.join(TGT_DIR, "untranscribed")
-
 #PREFIXES = [os.path.splitext(fn)[0]
 #            for fn in os.listdir(ORG_TRANSCRIPT_DIR)
 #            if fn.endswith(".txt")]
@@ -254,7 +250,8 @@ def trim_wavs(org_wav_dir=ORG_WAV_DIR,
                 in_wav_path = headmic_path
 
             out_wav_path = os.path.join(tgt_wav_dir, rec_type, "%s.%d.wav" % (prefix, i))
-            assert os.path.isfile(in_wav_path)
+            if not os.path.isfile(in_wav_path):
+                raise PersephoneException("{} not a file.".format(in_wav_path))
             start_time = start_time * ureg.seconds
             end_time = end_time * ureg.seconds
             wav.trim_wav_ms(Path(in_wav_path), Path(out_wav_path),
@@ -286,17 +283,17 @@ def prepare_labels(label_type, org_xml_dir=ORG_XML_DIR, label_dir=LABEL_DIR):
                 print(sent, file=sent_f)
 
 # TODO Consider factoring out as non-Na specific.
-def prepare_untran(feat_type="fbank_and_pitch"):
+def prepare_untran(feat_type, tgt_dir, untran_dir):
     """ Preprocesses untranscribed audio."""
-    org_dir = os.path.join(UNTRAN_DIR, "org")
-    wav_dir = os.path.join(UNTRAN_DIR, "wav")
-    feat_dir = os.path.join(UNTRAN_DIR, "feat")
+    org_dir = str(untran_dir)
+    wav_dir = os.path.join(str(tgt_dir), "wav", "untranscribed")
+    feat_dir = os.path.join(str(tgt_dir), "feat", "untranscribed")
     if not os.path.isdir(wav_dir):
         os.makedirs(wav_dir)
     if not os.path.isdir(feat_dir):
         os.makedirs(feat_dir)
 
-    # Standardize into wav files.
+    # Standardize into wav files
     for fn in os.listdir(org_dir):
         in_path = os.path.join(org_dir, fn)
         prefix, _ = os.path.splitext(fn)
@@ -304,27 +301,31 @@ def prepare_untran(feat_type="fbank_and_pitch"):
         if not os.path.isfile(mono16k_wav_path):
             feat_extract.convert_wav(Path(in_path), Path(mono16k_wav_path))
 
-    # Split up the wavs
+    # Split up the wavs and write prefixes to prefix file.
     wav_fns = os.listdir(wav_dir)
-    for fn in wav_fns:
-        in_fn = os.path.join(wav_dir, fn)
-        prefix, _ = os.path.splitext(fn)
-        # Split into sub-wavs and perform feat extraction.
-        split_id = 0
-        start, end = 0, 10 #in seconds
-        length = utils.wav_length(in_fn)
-        while True:
-            out_fn = os.path.join(feat_dir, "%s.%d.wav" % (prefix, split_id))
-            start_time = start * ureg.seconds
-            end_time = end * ureg.seconds
-            wav.trim_wav_ms(Path(in_fn), Path(out_fn),
-                            start_time.to(ureg.milliseconds).magnitude,
-                            end_time.to(ureg.milliseconds).magnitude)
-            if end > length:
-                break
-            start += 10
-            end += 10
-            split_id += 1
+    with (tgt_dir / "untranscribed_prefixes.txt").open("w") as prefix_f:
+        for fn in wav_fns:
+            in_fn = os.path.join(wav_dir, fn)
+            prefix, _ = os.path.splitext(fn)
+            # Split into sub-wavs and perform feat extraction.
+            split_id = 0
+            start, end = 0, 10 #in seconds
+            length = utils.wav_length(in_fn)
+            while True:
+                sub_wav_prefix = "{}.{}".format(prefix, split_id)
+                print(sub_wav_prefix, file=prefix_f)
+                out_fn = os.path.join(feat_dir, "{}.wav".format(sub_wav_prefix))
+                start_time = start * ureg.seconds
+                end_time = end * ureg.seconds
+                if not Path(out_fn).is_file():
+                    wav.trim_wav_ms(Path(in_fn), Path(out_fn),
+                                    start_time.to(ureg.milliseconds).magnitude,
+                                    end_time.to(ureg.milliseconds).magnitude)
+                if end > length:
+                    break
+                start += 10
+                end += 10
+                split_id += 1
 
     # Do feat extraction.
     feat_extract.from_dir(Path(os.path.join(feat_dir)), feat_type=feat_type)
@@ -519,6 +520,11 @@ class Corpus(corpus.Corpus):
         prepare_feats(feat_type, tgt_wav_dir=tgt_wav_dir,
                                  feat_dir=tgt_feat_dir,
                                  label_dir=tgt_label_dir)
+        untran_dir = Path(config.NA_PATH) / "untranscribed_wav"
+        logging.debug(untran_dir)
+        if untran_dir.is_dir(): # pylint: disable=no-member
+            prepare_untran(feat_type=feat_type, tgt_dir=tgt_dir,
+                           untran_dir=untran_dir)
 
         super().__init__(feat_type, label_type, tgt_dir, self.labels, max_samples=max_samples)
 
@@ -566,4 +572,3 @@ class Corpus(corpus.Corpus):
                 "\tmax_samples=%s,\n" % self.max_samples +
                 "\tvalid_story=%s,\n" % repr(self.valid_story) +
                 "\ttest_story=%s)\n" % repr(self.test_story))
-
