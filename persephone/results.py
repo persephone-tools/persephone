@@ -338,7 +338,8 @@ def fmt_latex_untranscribed(hyps: Sequence[Sequence[str]],
     hyps_prefixes = list(zip(hyps, prefixes))
     def utter_id_key(hyp_prefix):
         hyp, prefix = hyp_prefix
-        return int(prefix.split(".")[-1])
+        prefix_split = prefix.split(".")
+        return (prefix_split[0], int(prefix_split[1]))
     hyps_prefixes.sort(key=utter_id_key)
 
     with out_fn.open("w") as out_f:
