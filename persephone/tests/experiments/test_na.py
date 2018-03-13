@@ -274,13 +274,13 @@ def test_reuse_model(preprocess_na):
 @pytest.mark.experiment
 def test_load_meta():
     tgt_dir = Path(config.TEST_DATA_PATH) / "na"
-    na_corpus = na.Corpus("fbank", "phonemes_and_tones",
+    na_corpus = na.Corpus("fbank_and_pitch", "phonemes_and_tones",
                           tgt_dir=tgt_dir)
     na_reader = corpus_reader.CorpusReader(na_corpus)
 
     tf.reset_default_graph()
-    #model_prefix_path = "/home/oadams/code/mam/exp/252/model/model_best.ckpt"
-    model_prefix_path = "/home/oadams/code/persephone/testing/exp/39/model/model_best.ckpt"
+    model_prefix_path = "/home/oadams/code/mam/exp/252/model/model_best.ckpt"
+    #model_prefix_path = "/home/oadams/code/persephone/testing/exp/39/model/model_best.ckpt"
     imported_meta = tf.train.import_meta_graph(model_prefix_path + ".meta")
     print(dir(imported_meta))
     print(dir(imported_meta.restore))
@@ -306,8 +306,12 @@ def test_load_meta():
         for v in tf.get_default_graph().get_collection("train_op"):
             print(v)
         print(tf.get_default_graph().get_all_collection_keys())
-        pprint.pprint([op.name for op in tf.get_default_graph().get_operations()
+        pprint.pprint([repr(op) for op in tf.get_default_graph().get_operations()
                        if "hyp" in op.name])
+        pprint.pprint([repr(op) for op in tf.get_default_graph().get_operations()
+                       if "Placeholder" in op.type])
+        pprint.pprint([repr(op) for op in tf.get_default_graph().get_operations()
+                       if "SparseToDense" in op.type])
         for batch_i, batch in enumerate(na_reader.untranscribed_batch_gen()):
 
              batch_x, batch_x_lens, feat_fn_batch = batch
@@ -317,11 +321,16 @@ def test_load_meta():
              #ph_batch_x_lens = tf.placeholder(tf.int32, [None])
              #ph_batch_y = tf.sparse_placeholder(tf.int32)
 
-             feed_dict = {"batch_x:0": batch_x,
-                          "batch_x_lens:0": batch_x_lens}
+             #feed_dict = {"batch_x:0": batch_x,
+             #             "batch_x_lens:0": batch_x_lens}
+             feed_dict = {"Placeholder:0": batch_x,
+                          "Placeholder_1:0": batch_x_lens}
 
-             [dense_decoded] = sess.run(["hyp_dense_decoded:0"],
+             #[dense_decoded] = sess.run(["hyp_dense_decoded:0"],
+             #                         feed_dict=feed_dict)
+             [dense_decoded] = sess.run(["SparseToDense:0"],
                                       feed_dict=feed_dict)
              print(dense_decoded)
              hyps = na_reader.human_readable(dense_decoded)
              print(hyps)
+             print(na_reader.corpus.INDEX_TO_LABEL)
