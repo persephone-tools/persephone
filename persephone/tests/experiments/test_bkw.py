@@ -1,9 +1,11 @@
 """ Testing Persephone on Alex/Steven's Kunwinjku data. """
 
+import collections
 import copy
 import logging
 import os
 from os.path import splitext
+from os.path import join
 from pathlib import Path
 import pprint
 import random
@@ -16,6 +18,7 @@ from pympi.Elan import Eaf
 
 from persephone import config
 from persephone import corpus
+from persephone import distance
 from persephone import utterance
 from persephone.utterance import Utterance
 from persephone.datasets import bkw
@@ -445,10 +448,17 @@ class TestBKW:
 
         for fold_corpus in self.random_cross_validation_corpora(corp, 20):
             sub_exp_dir = prep_sub_exp_dir(exp_dir)
+            with open(join(sub_exp_dir, "valid_prefixes.txt"), "w") as f:
+                for prefix in fold_corpus.valid_prefixes:
+                    print(prefix, file=f)
+            with open(join(sub_exp_dir, "test_prefixes.txt"), "w") as f:
+                for prefix in fold_corpus.test_prefixes:
+                    print(prefix, file=f)
             cr = CorpusReader(fold_corpus)
             model = rnn_ctc.Model(sub_exp_dir, cr, num_layers=2, hidden_size=250)
             model.train(min_epochs=30)
 
+    @staticmethod
     def context_errors(hyps: Sequence[Sequence[str]],
                        refs: Sequence[Sequence[str]],
                        n: int) -> str:
@@ -459,6 +469,25 @@ class TestBKW:
 
         alignments = [distance.min_edit_distance_align(ref, hyp)
                       for hyp, ref in zip(hyps, refs)]
+
+        def ngram_alignment(alignment, n):
+
+            # Make the n-gram alignments
+            alignment_ = []
+            for i in range(len(alignment)-n+1):
+                alignment_.append(tuple(alignment[i:i+n]))
+
+            # Normalize each arrow into the form (ref_string, hyp_string)
+            alignment_1 = [list(zip(*arrow)) for arrow in alignment_]
+            return [("".join(arrow[0]), "".join(arrow[1]))
+                    for arrow in alignment_1]
+
+        errors = collections.Counter()
+        for alignment in alignments:
+            alignment__ = ngram_alignment(alignment, n)
+            errors.update(alignment__)
+
+        return sorted(errors.items(), key=lambda x:x[1], reverse=True)
 
     @staticmethod
     def fetch_xv_valid_hyps_refs():
@@ -498,25 +527,56 @@ class TestBKW:
         # Get all the validation (ref, hyp)s.
         hyps, refs = self.fetch_xv_valid_hyps_refs()
 
-        # Find the prefix by searching the utterances.
         corp = preprocessed_corpus
-        utters = list(corp.utterances)
-        text2prefix = dict()
-        for utter in utters:
-            text2prefix[utter.text] = utter.prefix
-        hyps_refs_prefixes = []
-        for hyp, ref in zip(hyps, refs):
-            text = " ".join(ref)
-            hyps_refs_prefixes.append((hyp, ref, text2prefix[text]))
+        #prefixes = []
+        ## Get the prefixes in the same order
+        # NOTE can't do this because getting the random xv corpora involves
+        # shuffling, so I can't replicate how it was done.
+        ##for fold_corpus in self.random_cross_validation_corpora(corp, 20):
+        ##    prefixes.extend(fold_corpus.valid_prefixes)
 
-        def split_utter_id(hyp_ref_prefix_tup):
-            _, _, prefix = hyp_ref_prefix_tup
-            story_prefix, utter_id = splitext(prefix)
-            utter_id = int(utter_id[1:])
-            return story_prefix, utter_id
+        #assert len(hyps) == len(refs)
+        #assert len(hyps) == len(prefixes)
+        #hyps_refs_prefixes = zip(hyps, refs, prefixes)
+        #print(pprint.pformat(list(hyps_refs_prefixes)))
+        #return
+
+        # Find the prefix by searching the utterances.
+        # NOTE This is better, but there are plenty of utterances with
+        # duplicate text, so it's not perfect.
+        #utters = list(corp.utterances)
+        #text2prefix = dict()
+        #for utter in utters:
+        #    text2prefix[utter.text] = utter.prefix
+        #hyps_refs_prefixes = []
+        #for hyp, ref in zip(hyps, refs):
+        #    text = " ".join(ref)
+        #    hyps_refs_prefixes.append((hyp, ref, text2prefix[text]))
+
+        #def split_utter_id(hyp_ref_prefix_tup):
+        #    _, _, prefix = hyp_ref_prefix_tup
+        #    story_prefix, utter_id = splitext(prefix)
+        #    utter_id = int(utter_id[1:])
+        #    return story_prefix, utter_id
 
         # Sort by the prefix by number.
-        hyps_refs_prefixes.sort(key=lambda entry: split_utter_id(entry))
-        print(pprint.pformat(hyps_refs_prefixes))
+        #hyps_refs_prefixes.sort(key=lambda entry: split_utter_id(entry))
+        #print(pprint.pformat(hyps_refs_prefixes))
 
         # Output latex.
+        # NOTE Gah, can't do this unless I re-run the cross validation and store
+        # the prefixes.
+        # TODO It should be standard to store prefixes when doing an
+        # experiment.
+
+        # Calculate error stats by n-gram context.
+        for n in range(2,8):
+            print("n = {}".format(n))
+            align_counts = self.context_errors(hyps, refs, n)
+            align_errs = [align_item for align_item in align_counts
+                          if align_item[0][0] != align_item[0][1]]
+            print(pprint.pformat(align_errs[:20]))
+
+        # TODO Find the sentences that these errors occurred in?
+        # TODO Can also just count the references that have errors; tha would
+        # be interesting too.
