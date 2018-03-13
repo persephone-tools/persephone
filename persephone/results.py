@@ -205,6 +205,19 @@ def symbol_f1(exp_num, symbol):
 
     return f1
 
+def latex_header() -> str:
+    """ Produces a LaTeX header for the fmt_latex_*() functions to use. """
+
+    return ("\documentclass[10pt]{article}\n"
+              "\\usepackage[a4paper,margin=0.5in,landscape]{geometry}\n"
+              "\\usepackage[utf8]{inputenc}\n"
+              "\\usepackage{xcolor}\n"
+              "\\usepackage{polyglossia}\n"
+              "\\usepackage{booktabs}\n"
+              "\\usepackage{longtable}\n"
+              "\setmainfont[Mapping=tex-text,Ligatures=Common,Scale=MatchLowercase]{Doulos SIL}\n"
+              "\DeclareRobustCommand{\hl}[1]{{\\textcolor{red}{#1}}}\n")
+
 def fmt_latex_output(hyps: Sequence[Sequence[str]],
                      refs: Sequence[Sequence[str]],
                      prefixes: Sequence[str],
@@ -218,19 +231,10 @@ def fmt_latex_output(hyps: Sequence[Sequence[str]],
                   for hyp, ref in zip(hyps, refs)]
 
     with out_fn.open("w") as out_f:
-        print("\documentclass[10pt]{article}\n"
-              "\\usepackage[a4paper,margin=0.5in,landscape]{geometry}\n"
-              "\\usepackage[utf8]{inputenc}\n"
-              "\\usepackage{xcolor}\n"
-              "\\usepackage{polyglossia}\n"
-              "\\usepackage{booktabs}\n"
-              "\\usepackage{longtable}\n"
-              "\setmainfont[Mapping=tex-text,Ligatures=Common,Scale=MatchLowercase]{Doulos SIL}\n"
-              "\DeclareRobustCommand{\hl}[1]{{\\textcolor{red}{#1}}}\n"
-              #"% Hyps path: " + hyps_path +
-              "\\begin{document}\n"
-              "\\begin{longtable}{ll}", file=out_f)
+        print(latex_header(), file=out_f)
 
+        print("\\begin{document}\n"
+              "\\begin{longtable}{ll}", file=out_f)
         print("\\toprule", file=out_f)
         for sent in zip(prefixes, alignments_):
             prefix = sent[0]
@@ -324,3 +328,27 @@ def fmt_confusion_matrix(hyps: Sequence[Sequence[str]],
         format_pieces.append(fmt.format(ref, *ref_results))
 
     return "\n".join(format_pieces)
+
+def fmt_latex_untranscribed(hyps: Sequence[Sequence[str]],
+                            prefixes: Sequence[str],
+                            out_fn: Path) -> None:
+    """ Formats automatic hypotheses that have not previously been
+    transcribed in LaTeX. """
+
+    hyps_prefixes = list(zip(hyps, prefixes))
+    def utter_id_key(hyp_prefix):
+        hyp, prefix = hyp_prefix
+        return prefix.split(".")[-1]
+    hyps_prefixes.sort(key=utter_id_key)
+
+    with out_fn.open("w") as out_f:
+        print(latex_header(), file=out_f)
+        print("\\begin{document}\n"
+              "\\begin{longtable}{ll}", file=out_f)
+        print("\\toprule", file=out_f)
+        for hyp, prefix in hyps_prefixes:
+            print("Utterance ID: &", prefix.strip().replace("_", "\_"), "\\\\", file=out_f)
+            print("Hypothesis: &", hyp, "\\\\", file=out_f)
+            print("\\midrule", file=out_f)
+        print("\end{longtable}", file=out_f)
+        print("\end{document}", file=out_f)

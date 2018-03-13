@@ -10,6 +10,7 @@ import tensorflow as tf
 
 from persephone import corpus
 from persephone import config
+from persephone import results
 from persephone import run
 from persephone.run import prep_exp_dir
 from persephone import corpus_reader
@@ -315,6 +316,8 @@ def test_load_meta():
         for batch_i, batch in enumerate(na_reader.untranscribed_batch_gen()):
 
              batch_x, batch_x_lens, feat_fn_batch = batch
+             prefixes = [fn.split("/")[-1].split(".")[:2]
+                         for fn in feat_fn_batch]
 
              #ph_batch_x = tf.placeholder(
              #   tf.float32, [None, None, na_reader.corpus.num_feats])
@@ -334,3 +337,6 @@ def test_load_meta():
              hyps = na_reader.human_readable(dense_decoded)
              print(hyps)
              print(na_reader.corpus.INDEX_TO_LABEL)
+             hyps = ["".join(hyp) for hyp in hyps]
+             prefixes = [".".join(prefix) for prefix in prefixes]
+             print(results.fmt_latex_untranscribed(hyps, prefixes, Path("benevolence_and_funeral_custom.tex")))
