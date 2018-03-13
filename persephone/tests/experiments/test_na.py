@@ -313,30 +313,34 @@ def test_load_meta():
                        if "Placeholder" in op.type])
         pprint.pprint([repr(op) for op in tf.get_default_graph().get_operations()
                        if "SparseToDense" in op.type])
+
+        all_prefixes = []
+        all_hyps = []
         for batch_i, batch in enumerate(na_reader.untranscribed_batch_gen()):
 
-             batch_x, batch_x_lens, feat_fn_batch = batch
-             prefixes = [fn.split("/")[-1].split(".")[:2]
-                         for fn in feat_fn_batch]
+            batch_x, batch_x_lens, feat_fn_batch = batch
+            prefixes = [fn.split("/")[-1].split(".")[:2]
+                     for fn in feat_fn_batch]
 
-             #ph_batch_x = tf.placeholder(
-             #   tf.float32, [None, None, na_reader.corpus.num_feats])
-             #ph_batch_x_lens = tf.placeholder(tf.int32, [None])
-             #ph_batch_y = tf.sparse_placeholder(tf.int32)
+#ph_batch_x = tf.placeholder(
+#   tf.float32, [None, None, na_reader.corpus.num_feats])
+#ph_batch_x_lens = tf.placeholder(tf.int32, [None])
+#ph_batch_y = tf.sparse_placeholder(tf.int32)
 
-             #feed_dict = {"batch_x:0": batch_x,
-             #             "batch_x_lens:0": batch_x_lens}
-             feed_dict = {"Placeholder:0": batch_x,
-                          "Placeholder_1:0": batch_x_lens}
+#feed_dict = {"batch_x:0": batch_x,
+#             "batch_x_lens:0": batch_x_lens}
+            feed_dict = {"Placeholder:0": batch_x,
+                      "Placeholder_1:0": batch_x_lens}
 
-             #[dense_decoded] = sess.run(["hyp_dense_decoded:0"],
-             #                         feed_dict=feed_dict)
-             [dense_decoded] = sess.run(["SparseToDense:0"],
-                                      feed_dict=feed_dict)
-             print(dense_decoded)
-             hyps = na_reader.human_readable(dense_decoded)
-             print(hyps)
-             print(na_reader.corpus.INDEX_TO_LABEL)
-             hyps = ["".join(hyp) for hyp in hyps]
-             prefixes = [".".join(prefix) for prefix in prefixes]
-             print(results.fmt_latex_untranscribed(hyps, prefixes, Path("benevolence_and_funeral_custom.tex")))
+#[dense_decoded] = sess.run(["hyp_dense_decoded:0"],
+#                         feed_dict=feed_dict)
+            [dense_decoded] = sess.run(["SparseToDense:0"],
+                                  feed_dict=feed_dict)
+            print(dense_decoded)
+            hyps = na_reader.human_readable(dense_decoded)
+            print(hyps)
+            print(na_reader.corpus.INDEX_TO_LABEL)
+            all_hyps.extend(["".join(hyp) for hyp in hyps])
+            all_prefixes.extend([".".join(prefix) for prefix in prefixes])
+        print(results.fmt_latex_untranscribed(all_hyps, all_prefixes,
+        Path("benevolence_and_funeral_custom.tex")))
