@@ -8,7 +8,7 @@ from pathlib import Path
 import pprint
 import random
 import subprocess
-from typing import List
+from typing import List, Sequence
 
 import pint
 import pytest
@@ -460,12 +460,10 @@ class TestBKW:
         alignments = [distance.min_edit_distance_align(ref, hyp)
                       for hyp, ref in zip(hyps, refs)]
 
-
-    def test_xv_error_stats(self):
-        """ Statistics for Task 1 of Steven's: Gathering statistics of the
-        types of errors that occur across the whole corpus based on phonemic
-        context. Using results of cross-validation run found in
-        slug:code/persephone/testing/exp/28/"""
+    @staticmethod
+    def fetch_xv_valid_hyps_refs():
+        """ Fetches the cross validation results on the validation sets and
+        adds it together."""
 
         refs = []
         hyps = []
@@ -478,9 +476,47 @@ class TestBKW:
                 with (path / "test" / "hyps").open() as f:
                     hyps.extend(line.strip().split() for line in f.readlines())
 
+        return hyps, refs
+
+    def test_xv_error_stats(self):
+        """ Statistics for Task 1 of Steven's: Gathering statistics of the
+        types of errors that occur across the whole corpus based on phonemic
+        context. Using results of cross-validation run found in
+        slug:code/persephone/testing/exp/28/"""
+
+        hyps, refs = self.fetch_xv_valid_hyps_refs()
+
         #print(list(zip(refs, hyps)))
         #print(len(refs))
         print(results.filtered_error_rate(hyps, refs))
 
         print(results.fmt_confusion_matrix(hyps, refs))
 
+    def test_xv_latex_output(self, preprocessed_corpus):
+        """ Stitches together the data from each fold and sorts by prefix."""
+
+        # Get all the validation (ref, hyp)s.
+        hyps, refs = self.fetch_xv_valid_hyps_refs()
+
+        # Find the prefix by searching the utterances.
+        corp = preprocessed_corpus
+        utters = list(corp.utterances)
+        text2prefix = dict()
+        for utter in utters:
+            text2prefix[utter.text] = utter.prefix
+        hyps_refs_prefixes = []
+        for hyp, ref in zip(hyps, refs):
+            text = " ".join(ref)
+            hyps_refs_prefixes.append((hyp, ref, text2prefix[text]))
+
+        def split_utter_id(hyp_ref_prefix_tup):
+            _, _, prefix = hyp_ref_prefix_tup
+            story_prefix, utter_id = splitext(prefix)
+            utter_id = int(utter_id[1:])
+            return story_prefix, utter_id
+
+        # Sort by the prefix by number.
+        hyps_refs_prefixes.sort(key=lambda entry: split_utter_id(entry))
+        print(pprint.pformat(hyps_refs_prefixes))
+
+        # Output latex.
