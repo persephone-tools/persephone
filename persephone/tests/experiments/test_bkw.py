@@ -490,22 +490,25 @@ class TestBKW:
         return sorted(errors.items(), key=lambda x:x[1], reverse=True)
 
     @staticmethod
-    def fetch_xv_valid_hyps_refs():
+    def fetch_xv_valid_hyps_refs_prefixes():
         """ Fetches the cross validation results on the validation sets and
         adds it together."""
 
         refs = []
         hyps = []
+        prefixes = []
 
-        exp_path = Path("testing/exp/28/")
+        exp_path = Path("testing/exp/41/")
         for path in exp_path.iterdir():
             if path.is_dir():
                 with (path / "test" / "refs").open() as f:
                     refs.extend(line.strip().split() for line in f.readlines())
                 with (path / "test" / "hyps").open() as f:
                     hyps.extend(line.strip().split() for line in f.readlines())
+                with (path / "valid_prefixes.txt").open() as f:
+                    prefixes.extend(line.strip() for line in f.readlines())
 
-        return hyps, refs
+        return hyps, refs, prefixes
 
     def test_xv_error_stats(self):
         """ Statistics for Task 1 of Steven's: Gathering statistics of the
@@ -513,7 +516,7 @@ class TestBKW:
         context. Using results of cross-validation run found in
         slug:code/persephone/testing/exp/28/"""
 
-        hyps, refs = self.fetch_xv_valid_hyps_refs()
+        hyps, refs, _ = self.fetch_xv_valid_hyps_refs_prefixes()
 
         #print(list(zip(refs, hyps)))
         #print(len(refs))
@@ -525,7 +528,8 @@ class TestBKW:
         """ Stitches together the data from each fold and sorts by prefix."""
 
         # Get all the validation (ref, hyp)s.
-        hyps, refs = self.fetch_xv_valid_hyps_refs()
+        hyps, refs, prefixes = self.fetch_xv_valid_hyps_refs_prefixes()
+        hyps_refs_prefixes = list(zip(hyps, refs, prefixes))
 
         corp = preprocessed_corpus
         #prefixes = []
@@ -553,15 +557,17 @@ class TestBKW:
         #    text = " ".join(ref)
         #    hyps_refs_prefixes.append((hyp, ref, text2prefix[text]))
 
-        #def split_utter_id(hyp_ref_prefix_tup):
-        #    _, _, prefix = hyp_ref_prefix_tup
-        #    story_prefix, utter_id = splitext(prefix)
-        #    utter_id = int(utter_id[1:])
-        #    return story_prefix, utter_id
+        def split_utter_id(hyp_ref_prefix_tup):
+            _, _, prefix = hyp_ref_prefix_tup
+            story_prefix, utter_id = splitext(prefix)
+            utter_id = int(utter_id[1:])
+            return story_prefix, utter_id
 
         # Sort by the prefix by number.
-        #hyps_refs_prefixes.sort(key=lambda entry: split_utter_id(entry))
-        #print(pprint.pformat(hyps_refs_prefixes))
+        hyps_refs_prefixes.sort(key=lambda entry: split_utter_id(entry))
+        hyps, refs, prefixes = zip(*hyps_refs_prefixes)
+        results.fmt_latex_output(hyps, refs, prefixes, Path("xv_output.tex"))
+        #print(pprint.pformat([prefix for _, _, prefix in hyps_refs_prefixes]))
 
         # Output latex.
         # NOTE Gah, can't do this unless I re-run the cross validation and store
@@ -570,12 +576,20 @@ class TestBKW:
         # experiment.
 
         # Calculate error stats by n-gram context.
-        for n in range(2,8):
-            print("n = {}".format(n))
-            align_counts = self.context_errors(hyps, refs, n)
-            align_errs = [align_item for align_item in align_counts
-                          if align_item[0][0] != align_item[0][1]]
-            print(pprint.pformat(align_errs[:20]))
+        with open("xv_errors.txt", "w") as f:
+            for n in range(2,8):
+                print("{}-gram references:".format(n), file=f)
+                align_counts = self.context_errors(hyps, refs, n)
+                align_errs = [align_item for align_item in align_counts
+                              if align_item[0][0] != align_item[0][1]]
+                fmt = "{:>12} {:>12} {:>5}"
+                print("", file=f)
+                print(fmt.format("Reference", "Hypothesis", "Count"), file=f)
+                print("   " + "-"*28, file=f)
+                for err in align_errs[:30]:
+                    print(fmt.format(err[0][0], err[0][1], err[1]), file=f)
+                #print(pprint.pformat(align_errs[:20]))
+                print("", file=f)
 
         # TODO Find the sentences that these errors occurred in?
         # TODO Can also just count the references that have errors; tha would
