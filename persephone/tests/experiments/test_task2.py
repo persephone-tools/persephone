@@ -6,6 +6,9 @@ import logging
 from pathlib import Path
 import regex
 import time
+import fuzzysearch
+
+from persephone.distance import min_edit_distance
 
 logging.basicConfig(filename="task2_log.txt", level=logging.DEBUG)
 
@@ -26,8 +29,18 @@ def fuzzy_align(data: str, substring: str):
     #logging.info("len(substring): {}".format(len(substring)))
     # (?b) gives the BESTMATCH
     search_str = "(?b)(?:{})".format(substring)
-    match = regex.search(search_str+"{e}", data)
+    ed_threshold = int(0.5*len(substring))
+    match = regex.search(search_str+"{e<=" + str(ed_threshold) + "}", data)
     return match
+
+@clock
+def difflib_fuzzy_align(data: str, substring: str):
+    matches = fuzzysearch.find_near_matches(
+        substring, data, max_l_dist=int(0.5*len(substring)))
+    if matches:
+        return data[matches[0].start:matches[0].end]#, matches[0].start, matches[0].end
+    else:
+        return None
 
 def get_hyps_refs():
     exp_dir = Path("testing/exp/41/0")
@@ -57,7 +70,15 @@ def test_fuzzy_align_time_complexity():
     hyps, refs = get_hyps_refs()
     reference = " ".join(refs)
     hyps.sort(key=lambda hyp: len(hyp))
-    for hyp in hyps:
-        time, res = fuzzy_align(reference, hyp)
-        logging.info("Took {} seconds for len({}) input.".format(
-            time, len(hyp)))
+    fmt1 = "{:>15} {:>10} {:>15} {:>10}\n"
+    logging.info(fmt1.format("Seconds", "Length", "Edit distance",
+                            "Hyp ID"))
+    fmt2 = "{:15.4f} {:>10d} {:>15} {:>10}\n"
+    for i, hyp in enumerate(hyps):
+        #time, match = fuzzy_align(reference, hyp)
+        time, match = difflib_fuzzy_align(reference, hyp)
+        if match:
+            ed = min_edit_distance(match.split(), hyp.split())
+            logging.info(fmt2.format(time, len(hyp), ed, i))
+        else:
+            logging.info(fmt1.format("-", "-", "-", "-", "-", "-"))
