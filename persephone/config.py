@@ -47,4 +47,8 @@ KALDI_ROOT = config_file.get("PATHS", "KALDI_ROOT_PATH", fallback="/home/oadams/
 # Used for lattice output
 OPENFST_BIN_PATH = config_file.get("PATHS", "OPEN_FST_BIN_PATH", fallback="/home/oadams/tools/openfst-1.6.2/src/bin")
 
-LOGGING_INI_PATH = config_file.get("PATHS", "log_ini_path", fallback="./logging.ini")
+# Fetch the path of the logging.ini file installed by setuptools.
+from pkg_resources import Requirement, resource_filename
+logging_ini_path = resource_filename(Requirement.parse("persephone"), "logging.ini")
+
+LOGGING_INI_PATH = config_file.get("PATHS", "log_ini_path", fallback=logging_ini_path)
