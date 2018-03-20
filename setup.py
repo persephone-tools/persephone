@@ -32,5 +32,5 @@ setup(name='persephone',
            'pydub==0.20.0',
            'pint==0.8.1',
       ],
-      package_data = {"logging_config": ["logging.ini"]}
+      include_package_data = True,
 )

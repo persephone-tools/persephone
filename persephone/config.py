@@ -49,6 +49,6 @@ OPENFST_BIN_PATH = config_file.get("PATHS", "OPEN_FST_BIN_PATH", fallback="/home
 
 # Fetch the path of the logging.ini file installed by setuptools.
 from pkg_resources import Requirement, resource_filename
-logging_ini_path = resource_filename(Requirement.parse("persephone"), "logging.ini")
+logging_ini_path = resource_filename(Requirement.parse("persephone"), "persephone/logging.ini")
 
 LOGGING_INI_PATH = config_file.get("PATHS", "log_ini_path", fallback=logging_ini_path)
