@@ -60,7 +60,7 @@ def prep_exp_dir(directory=EXP_DIR):
         repo = Repo(dirname, search_parent_directories=True)
         with open(os.path.join(exp_dir, "git_hash.txt"), "w") as f:
             print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
-    except git.exc.InvalidGitRepositoryError:
+    except git.exc.InvalidGitRepositoryError: # pylint: disable=no-member
         # Then the package was probably installed via pypi. Get the version
         # number instead.
         with open(os.path.join(exp_dir, "version.txt"), "w") as f:
