@@ -6,7 +6,8 @@ RUN apt-get update && apt-get -y install \
 	ffmpeg \
 	wget \
 	unzip \
-	vim
+	vim \
+	sox
 
 RUN pip3 install -U pip
 RUN pip3 install persephone
