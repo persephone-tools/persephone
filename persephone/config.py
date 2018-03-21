@@ -10,7 +10,6 @@ EXPERIMENTS = /path/to/experiment/output
 """
 import configparser
 import os
-from pathlib import Path
 
 config_file = configparser.ConfigParser()
 config_file.read('settings.ini')
