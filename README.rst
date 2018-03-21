@@ -1,4 +1,4 @@
-Persephone v0.1.9 (beta version)
+Persephone v0.2.0 (beta version)
 ================================
 
 Persephone (/pərˈsɛfəni/) is an automatic phoneme transcription tool.
@@ -111,7 +111,7 @@ Ensure Python 3 is installed.
 
 You will also need to install some system dependencies. For your
 convienence we have an install script for dependencies for Ubuntu. To
-install the Ubuntu binaries, run ``./bootstrap_ubuntu.sh`` to install
+install the Ubuntu binaries, run ``./ubuntu_bootstrap.sh`` to install
 ffmpeg packages. On MacOS we suggest installing via Homebrew with
 ``brew install ffmpeg``.
 

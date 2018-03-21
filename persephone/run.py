@@ -4,8 +4,10 @@ from os.path import join
 import shutil
 import sys
 
+import git
 from git import Repo
 
+import persephone
 from . import config
 from . import rnn_ctc
 from .datasets import na
@@ -52,9 +54,17 @@ def prep_exp_dir(directory=EXP_DIR):
     if not os.path.isdir(directory):
         os.makedirs(directory)
     exp_dir = _prepare_directory(directory)
-    repo = Repo(".", search_parent_directories=True)
-    with open(os.path.join(exp_dir, "git_hash.txt"), "w") as f:
-        print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
+    try:
+        # Get the directory this file is in, so we can grab the git repo.
+        dirname = os.path.dirname(os.path.realpath(__file__))
+        repo = Repo(dirname, search_parent_directories=True)
+        with open(os.path.join(exp_dir, "git_hash.txt"), "w") as f:
+            print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
+    except git.exc.InvalidGitRepositoryError: # pylint: disable=no-member
+        # Then the package was probably installed via pypi. Get the version
+        # number instead.
+        with open(os.path.join(exp_dir, "version.txt"), "w") as f:
+            print("Persphone version {}".format(persephone.__version__), file=f)
 
     return exp_dir
 
