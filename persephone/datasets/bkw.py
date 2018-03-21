@@ -156,4 +156,4 @@ def create_corpus(org_dir: Path = Path(config.BKW_PATH),
                      feat_type=feat_type, label_type=label_type,
                      utterance_filter=bkw_filter,
                      label_segmenter=bkw_label_segmenter,
-                     speakers=speakers, tier_prefixes=["xv", "rf"])
+                     speakers=speakers, tier_prefixes=("xv", "rf"))

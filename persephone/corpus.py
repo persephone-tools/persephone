@@ -11,7 +11,7 @@ import pickle
 from os.path import join
 import random
 import subprocess
-from typing import List, Callable, Type, TypeVar
+from typing import List, Callable, Tuple, Type, TypeVar
 
 import numpy as np
 
@@ -88,17 +88,17 @@ class Corpus:
         # TODO Need to contemplate whether Corpus objects have Utterance
         # objects or # not. Some of the TestBKW tests currently rely on this
         # for testing.
-        self.utterances = None # type: List[Utterance]
+        self.utterances = None  # type: List[Utterance]
 
         self.pickle()
 
     @classmethod
     def from_elan(cls: Type[CorpusT], org_dir: Path, tgt_dir: Path,
-                 feat_type: str = "fbank", label_type: str = "phonemes",
-                 utterance_filter: Callable[[Utterance], bool] = None,
-                 label_segmenter: LabelSegmenter = None,
-                 speakers: List[str] = None, lazy: bool = True,
-                 tier_prefixes: List[str] = ["xv", "rf"]) -> CorpusT:
+                  feat_type: str = "fbank", label_type: str = "phonemes",
+                  utterance_filter: Callable[[Utterance], bool] = None,
+                  label_segmenter: LabelSegmenter = None,
+                  speakers: List[str] = None, lazy: bool = True,
+                  tier_prefixes: Tuple[str, ...] = ("xv", "rf")) -> CorpusT:
 
         # Read utterances from org_dir.
         utterances = elan.utterances_from_dir(org_dir,
