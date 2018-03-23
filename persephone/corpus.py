@@ -38,6 +38,7 @@ class Corpus:
     WAVs will have been performed, with feature files in tgt_dir/feat/.
     Transcriptions will have been segmented into appropriate tokens (labels)
     and will be stored in tgt_dir/label/.
+
     """
 
     def __init__(self, feat_type, label_type, tgt_dir, labels,

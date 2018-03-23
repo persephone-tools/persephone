@@ -5,14 +5,31 @@ Fundamental classes
 -------------------
 
 .. autoclass:: persephone.utterance.Utterance
+
 .. autoclass:: persephone.corpus.Corpus
+   :members:
+
+.. autoclass:: persephone.corpus.ReadyCorpus
+   :members:
+
+.. autoclass:: persephone.corpus_reader.CorpusReader
+   :members:
+
+.. autoclass:: persephone.model.Model
    :members:
 
 Preprocessing
 -------------
 
 .. autofunction:: persephone.preprocess.elan.utterances_from_dir
+.. autoclass:: persephone.preprocess.labels.LabelSegmenter
 .. autofunction:: persephone.preprocess.wav.extract_wavs
+
+Models
+------
+
+.. autoclass:: persephone.rnn_ctc.Model
+   :members:
 
 Distance measurements
 ---------------------
