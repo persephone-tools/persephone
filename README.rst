@@ -35,6 +35,11 @@ We are also very welcome to thoughts, constructive criticism, help with
 design, development and documentation, along with any bug reports or
 pull requests you may have.
 
+Documentation
+=============
+
+Documentation can be found at [here](http://persephone.readthedocs.io/en/latest/)
+
 Contributors
 ============
 
@@ -49,6 +54,9 @@ If you use this code in a publication, please cite `Evaluating Phonemic
 Transcription of Low-Resource Tonal Languages for Language
 Documentation <https://halshs.archives-ouvertes.fr/halshs-01709648/document>`_:
 
+Citation
+========
+
 ::
 
     @inproceedings{adams18evaluating,
@@ -57,5 +65,3 @@ Documentation <https://halshs.archives-ouvertes.fr/halshs-01709648/document>`_:
     booktitle = {Proceedings of LREC 2018},
     year = {2018}
     }
-
-.. include:: docs/quickstart.rst
