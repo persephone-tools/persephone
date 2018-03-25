@@ -51,7 +51,7 @@ Ensure Python 3 is installed.
 
 You will also need to install some system dependencies. For your
 convienence we have an install script for dependencies for Ubuntu. To
-install the Ubuntu binaries, run ``./bootstrap_ubuntu.sh`` to install
+install the Ubuntu binaries, run ``./ubuntu_bootstrap.sh`` to install
 ffmpeg packages. On MacOS we suggest installing via Homebrew with
 ``brew install ffmpeg``.
 
@@ -177,34 +177,24 @@ recognition systems. Providing a simple and flexible interface to your
 data is currently the most important priority for Persephone at the
 moment. This is a work in progress.
 
-Current data formatting requirements: \* Audio files are stored in
-``<your-corpus>/wav/``. The WAV format is supported. Persephone will
-automatically convert wavs to be 16bit mono 16000Hz. \* Transcriptions
-are stored in text files in ``<your-corpus>/label/`` \* Each audio file
-is short (ideally no longer than 10 seconds). There is a script added by
-Ben Foley, ``persephone/scripts/split_eafs.py``, to split audio files
-into utterance-length units based on ELAN input files. \* Each audio
-file in ``wav/`` has a corresponding transcription file in ``label/``
-with the same *prefix* (the bit of the filename before the extension).
-For example, if there is ``wav/utterance_one.wav`` then there should be
-``label/utterance_one.<extension>``. ``<extension>`` can be whatever you
-want, but it should describe how the labelling is done. For example, if
-it is phonemic then ``wav/utterance_one.phonemes`` is a meaningful
-filename. \* Each transcript file includes a space-delimited list of
-*labels* to the model should learn to transcribe. For example: \*
-``data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.phonemes`` contains
-``l e dz ɯ z e l e dz ɯ z e`` \*
-``data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.phonemes_and_tones``
-might contain: ``l e ˧ dz ɯ ˥ z e ˩ | l e ˧ dz ɯ ˥ z e ˩`` \* Persephone
-is agnostic to what your chosen labels are. It simply tries to figure
-out how to map speech to that labelling. These labels can be multiple
-characters long: the spaces demarcate labels. Labels can be any unicode
-character(s). \* Spaces are used to delimit the units that the tool
-predicts. Typically these units are phonemes or tones, however they
-could also just be orthographic characters (though performance is likely
-to be a bit lower: consider trying to transcribe "$100"). The model
-can't tell the difference between digraphs and unigraphs as long as
-they're tokenized in this format, demarcated with spaces.
+Current data formatting requirements:
+
+* Audio files are stored in ``<your-corpus>/wav/``. The WAV format is supported. Persephone will automatically convert wavs to be 16bit mono 16000Hz.
+
+* Transcriptions are stored in text files in ``<your-corpus>/label/``
+
+* Each audio file is short (ideally no longer than 10 seconds). There is a script added by Ben Foley, ``persephone/scripts/split_eafs.py``, to split audio files into utterance-length units based on ELAN input files. 
+
+* Each audio file in ``wav/`` has a corresponding transcription file in ``label/`` with the same *prefix* (the bit of the filename before the extension). For example, if there is ``wav/utterance_one.wav`` then there should be ``label/utterance_one.<extension>``. ``<extension>`` can be whatever you want, but it should describe how the labelling is done. For example, if it is phonemic then ``wav/utterance_one.phonemes`` is a meaningful filename.
+
+* Each transcript file includes a space-delimited list of *labels* to the model should learn to transcribe. For example:
+
+  - ``data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.phonemes`` contains ``l e dz ɯ z e l e dz ɯ z e``
+  - ``data/na_example/label/crdo-NRU_F4_ACCOMP_PFV.0.phonemes_and_tones`` might contain: ``l e ˧ dz ɯ ˥ z e ˩ | l e ˧ dz ɯ ˥ z e ˩``
+
+* Persephone is agnostic to what your chosen labels are. It simply tries to figure out how to map speech to that labelling. These labels can be multiple characters long: the spaces demarcate labels. Labels can be any unicode character(s).
+
+* Spaces are used to delimit the units that the tool predicts. Typically these units are phonemes or tones, however they could also just be orthographic characters (though performance is likely to be a bit lower: consider trying to transcribe "$100"). The model can't tell the difference between digraphs and unigraphs as long as they're tokenized in this format, demarcated with spaces.
 
 If your data observes this format then you can load it via the
 ``ReadyCorpus`` class. If your data does not observe this format, you
@@ -248,11 +238,15 @@ the available utterances in neither of these text files.
 On choosing an appropriate label granularity
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Question: Suprasegmentals like tone, glottalizzation, nasalization, and
-length are all phonemic in the language I am using. Do they belong in
-one grouping or separately?
+Question:
 
-Answer: I'm wary of making sweeping claims about the best approach to
+    Suprasegmentals like tone, glottalization, nasalization, and
+    length are all phonemic in the language I am using. Do they belong in
+    one grouping or separately?
+
+Answer:
+
+I'm wary of making sweeping claims about the best approach to
 handle all these sorts of phenomena that will realise themselves
 differently between languages, since I'm neither a linguist nor do I
 have strong understanding for what features the model will learn each
