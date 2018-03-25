@@ -52,7 +52,6 @@ classes. `Utterance` instances comprise `Corpus` instances, which are loaded by
 .. autoclass:: persephone.utterance.Utterance
 
 .. autoclass:: persephone.corpus.Corpus
-   :members: __init__, from_elan
 
 .. There is support for creating Corpus objects from ELAN files::
 
@@ -65,7 +64,7 @@ classes. `Utterance` instances comprise `Corpus` instances, which are loaded by
 ..                             tier_prefixes=("xv", "rf"))
 
 .. autoclass:: persephone.corpus.ReadyCorpus
-   :members: __init__, determine_labels
+   :members:
 
 .. autoclass:: persephone.corpus_reader.CorpusReader
    :members: __init__, 
