@@ -49,7 +49,7 @@ class Corpus:
     """
 
     def __init__(self, feat_type, label_type, tgt_dir, labels,
-                 max_samples=1000):
+                 max_samples=1000, speakers = None):
         """ Construct a `Corpus` instance from preprocessed data.
 
         Assumes that the corpus data has been preprocessed and is
