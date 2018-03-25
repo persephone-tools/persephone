@@ -38,7 +38,7 @@ pull requests you may have.
 Documentation
 =============
 
-Documentation can be found at [here](http://persephone.readthedocs.io/en/latest/)
+Documentation can be found `here <http://persephone.readthedocs.io/en/latest/>`_
 
 Contributors
 ============
