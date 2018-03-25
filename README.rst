@@ -38,7 +38,7 @@ pull requests you may have.
 Documentation
 =============
 
-Documentation can be found `here <http://persephone.readthedocs.io/en/latest/>`_
+Documentation can be found `here <http://persephone.readthedocs.io/en/latest/>`_.
 
 Contributors
 ============
@@ -50,12 +50,12 @@ Persephone has been built based on the code contributions of:
 * Ben Foley
 * Nay San
 
+Citation
+========
+
 If you use this code in a publication, please cite `Evaluating Phonemic
 Transcription of Low-Resource Tonal Languages for Language
 Documentation <https://halshs.archives-ouvertes.fr/halshs-01709648/document>`_:
-
-Citation
-========
 
 ::
 
