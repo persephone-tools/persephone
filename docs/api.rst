@@ -52,7 +52,7 @@ classes. `Utterance` instances comprise `Corpus` instances, which are loaded by
 .. autoclass:: persephone.utterance.Utterance
 
 .. autoclass:: persephone.corpus.Corpus
-   :members:
+   :members: feat_type, __init__, from_elan
 
 There is support for creating Corpus objects from ELAN files::
 

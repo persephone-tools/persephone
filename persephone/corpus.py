@@ -32,27 +32,53 @@ class Corpus:
     """ Represents a preprocessed corpus that is ready to be used in model
     training.
 
-    Construction of a Corpus object involves preprocessing data if the data has
-    not previously already been preprocessed. Once a Corpus object is created
-    it should be considered immutable. At this point feature extraction from
-    WAVs will have been performed, with feature files in tgt_dir/feat/.
-    Transcriptions will have been segmented into appropriate tokens (labels)
-    and will be stored in tgt_dir/label/.
+    Construction of a `Corpus` instance involves preprocessing data if the data has
+    not previously already been preprocessed. The extent of the preprocessing
+    depends on which constructor is used. If the default constructor,
+    `__init__()` is used, transcriptions are assumed to already be preprocessed
+    and only speech feature extraction from WAV files is performed. In other
+    constructors such as `from_elan()`, preprocessing of the transcriptions is
+    performed. See the documentation of the relevant constructors for more
+    information.
+
+    Once a Corpus object is created it should be considered immutable. At this
+    point feature extraction from WAVs will have been performed, with feature
+    files in `tgt_dir/feat/`.  Transcriptions will have been segmented into
+    appropriate tokens (labels) and will be stored in `tgt_dir/label/`.
 
     """
 
     def __init__(self, feat_type, label_type, tgt_dir, labels,
-                 max_samples=1000, speakers=None):
-        """ feat_type: A string describing the input features. For
-                       example, 'log_mel_filterbank'.
-            target_type: A string describing the targets. For example,
-                         'phonemes' or 'tones'.
-            labels: A set of tokens used in transcription. Typically units such
-                    as phonemes or characters.
-            max_samples: The maximum length in samples of a train, valid, or
-                         test utterance. Used to save memory in exchange for
-                         reducing the number of effective training examples.
-        """
+                 max_samples=1000):
+        """ Construct a `Corpus` instance from preprocessed data.
+
+        Assumes that the corpus data has been preprocessed and is
+        structured as follows: (1) WAVs for each utterance are found in
+        `<tgt_dir>/wav/` with the filename `<prefix>.wav`, where `prefix` is
+        some string uniquely identifying the utterance; (2) For each WAV file,
+        there is a corresponding transcription found in `<tgt_dir>/label/` with
+        the filename `<prefix>.<label_type>`, where `label_type` is some string
+        describing the type of label used (for example, "phonemes" or "tones").
+
+        If the data is found in the format, WAV normalization and speech
+        feature extraction will be performed during `Corpus` construction, and
+        the utterances will be randomly divided into training, validation and
+        test_sets. If you would like to define these datasets yourself, include
+        files named `train_prefixes.txt`, `valid_prefixes.txt` and
+        `test_prefixes.txt` in `<tgt_dir>`. Each file should be a list of
+        prefixes (utterance IDs), one per line. If these are found during
+        `Corpus` construction, those sets will be used instead.
+
+        Attributes:
+            feat_type: A string describing the input speech features. For
+                       example, "fbank" for log Mel filterbank features.
+            label_type: A string describing the transcription labels. For example,
+                         "phonemes" or "tones".
+            labels: A set of strings representing labels (tokens) used in
+                transcription. For example: {"a", "o", "th", ...}
+            max_samples: The maximum number of samples an utterance in the
+                corpus may have. If an utterance is longer than this, it is not
+                included in the corpus."""
 
         #: A string representing the type of speech feature (eg. "fbank"
         #: for log filterbank energies).
@@ -100,6 +126,7 @@ class Corpus:
                   label_segmenter: LabelSegmenter = None,
                   speakers: List[str] = None, lazy: bool = True,
                   tier_prefixes: Tuple[str, ...] = ("xv", "rf")) -> CorpusT:
+        """ Construct a `Corpus` from ELAN files."""
 
         # Read utterances from org_dir.
         utterances = elan.utterances_from_dir(org_dir,
