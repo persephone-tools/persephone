@@ -152,6 +152,10 @@ def create_corpus(org_dir: Path = Path(config.BKW_PATH),
         raise NotImplementedError(
             "label_type {} not implemented.".format(label_type))
 
+    # If there is a way to sub-divide utterances, the BKW data would increase
+    # significantly. This from_elan call will result in quite a few filtered
+    # utterances.
+
     return corpus.Corpus.from_elan(org_dir, tgt_dir,
                      feat_type=feat_type, label_type=label_type,
                      utterance_filter=bkw_filter,
