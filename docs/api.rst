@@ -52,26 +52,26 @@ classes. `Utterance` instances comprise `Corpus` instances, which are loaded by
 .. autoclass:: persephone.utterance.Utterance
 
 .. autoclass:: persephone.corpus.Corpus
-   :members: feat_type, __init__, from_elan
+   :members: __init__, from_elan
 
-There is support for creating Corpus objects from ELAN files::
+.. There is support for creating Corpus objects from ELAN files::
 
-   # Create a corpus from ELAN input files.
-   from persephone.corpus import Corpus
-   corpus = Corpus.from_elan(org_dir="/path/to/input/data",
-                             tgt_dir="/path/to/preprocessed/data",
-                             utterance_filter=function_to_call,
-                             label_segmenter=something,
-                             tier_prefixes=("xv", "rf"))
+..   # Create a corpus from ELAN input files.
+..   from persephone.corpus import Corpus
+..   corpus = Corpus.from_elan(org_dir="/path/to/input/data",
+..                             tgt_dir="/path/to/preprocessed/data",
+..                             utterance_filter=function_to_call,
+..                             label_segmenter=something,
+..                             tier_prefixes=("xv", "rf"))
 
 .. autoclass:: persephone.corpus.ReadyCorpus
-   :members:
+   :members: __init__, determine_labels
 
 .. autoclass:: persephone.corpus_reader.CorpusReader
-   :members:
+   :members: __init__, 
 
 .. autoclass:: persephone.model.Model
-   :members:
+   :members: __init__, train, transcribe
 
 Preprocessing
 -------------

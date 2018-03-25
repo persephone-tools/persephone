@@ -69,7 +69,7 @@ class Corpus:
         prefixes (utterance IDs), one per line. If these are found during
         `Corpus` construction, those sets will be used instead.
 
-        Attributes:
+        Args:
             feat_type: A string describing the input speech features. For
                        example, "fbank" for log Mel filterbank features.
             label_type: A string describing the transcription labels. For example,
@@ -78,7 +78,9 @@ class Corpus:
                 transcription. For example: {"a", "o", "th", ...}
             max_samples: The maximum number of samples an utterance in the
                 corpus may have. If an utterance is longer than this, it is not
-                included in the corpus."""
+                included in the corpus.
+
+        """
 
         #: A string representing the type of speech feature (eg. "fbank"
         #: for log filterbank energies).
@@ -126,7 +128,35 @@ class Corpus:
                   label_segmenter: LabelSegmenter = None,
                   speakers: List[str] = None, lazy: bool = True,
                   tier_prefixes: Tuple[str, ...] = ("xv", "rf")) -> CorpusT:
-        """ Construct a `Corpus` from ELAN files."""
+        """ Construct a `Corpus` from ELAN files.
+
+        Args:
+            org_dir: A path to the directory containing the unpreprocessed
+                data.
+            tgt_dir: A path to the directory where the preprocessed data will
+                be stored.
+            feat_type: A string describing the input speech features. For
+                       example, "fbank" for log Mel filterbank features.
+            label_type: A string describing the transcription labels. For example,
+                         "phonemes" or "tones".
+            utterance_filter: A function that returns False if an utterance
+                should not be included in the corpus and True otherwise. This
+                can be used to remove undesirable utterances for training, such as
+                codeswitched utterances.
+            label_segmenter: An object that has an attribute `segment_labels`,
+                which is creates new `Utterance` instances from old ones,
+                by segmenting the tokens in their `text attribute. Note,
+                `LabelSegmenter` might be better as a function, the only issue
+                is it needs to carry with it a list of labels. This could
+                potentially be a function attribute.
+            speakers: A list of speakers to filter for. If None, utterances
+                from speakers are.
+            tier_prefixes: A collection of strings that prefix ELAN tiers to
+                filter for. For example, if this is ("xv", "rf"), then tiers
+                named "xv", "xv@Mark", "rf@Rose" would be extracted if they
+                existed.
+
+        """
 
         # Read utterances from org_dir.
         utterances = elan.utterances_from_dir(org_dir,
