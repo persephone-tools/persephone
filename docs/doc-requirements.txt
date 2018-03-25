@@ -2,3 +2,4 @@ sphinx-autodoc-typehints==1.2.5
 sphinx_rtd_theme
 numpy
 scipy
+tensorflow
