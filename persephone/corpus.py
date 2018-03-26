@@ -25,6 +25,7 @@ from .utterance import Utterance
 from .preprocess.labels import LabelSegmenter
 
 logging.config.fileConfig(config.LOGGING_INI_PATH)
+logger = logging.getLogger(__name__)
 
 CorpusT = TypeVar("CorpusT", bound="Corpus")
 
@@ -95,7 +96,7 @@ class Corpus:
 
         # Label-related stuff
         self.initialize_labels(labels)
-        logging.info("Corpus label set: \n\t{}".format(labels))
+        logger.info("Corpus label set: \n\t{}".format(labels))
 
         # This is a lazy function that assumes wavs are already in the WAV dir
         # but only creates features if necessary
