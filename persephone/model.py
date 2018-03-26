@@ -5,8 +5,10 @@ import itertools
 import logging
 import logging.config
 import os
+from pathlib import Path
 import subprocess
 import sys
+from typing import Union
 
 import numpy as np
 import tensorflow as tf
@@ -22,6 +24,14 @@ allow_growth_config = tf.ConfigProto(log_device_placement=False)
 allow_growth_config.gpu_options.allow_growth=True #pylint: disable=no-member
 
 logging.config.fileConfig(config.LOGGING_INI_PATH)
+
+def load_graph(model_prefix_path: Union[str, Path]) -> tf.Graph:
+    model_prefix_path = str(model_prefix_path)
+    loaded_graph = tf.Graph()
+    with tf.Session(graph=loaded_graph) as sess:
+        imported_meta = tf.train.import_meta_graph(model_prefix_path + ".meta")
+        imported_meta.restore(sess, model_prefix_path)
+        return loaded_graph
 
 class Model:
     """ Generic model for our ASR tasks. """
@@ -42,6 +52,18 @@ class Model:
         self.exp_dir = exp_dir
         self.corpus_reader = corpus_reader
         self.log_softmax = None
+
+    @classmethod
+    def from_ckpt(cls, model_prefix_path):# Union[str, Path]):
+        """ Loads an existing model from checkpoint files."""
+
+        graph = load_graph(model_prefix_path)
+        print("here we go")
+        print(graph)
+        print(dir(graph))
+        import pprint
+        pprint.pprint([repr(op) for op in graph.get_operations() if
+                       "SparseToDense" in op.name])
 
     def transcribe(self, restore_model_path=None):
         """ Transcribes an untranscribed dataset. Similar to eval() except

@@ -17,6 +17,7 @@ from persephone import corpus
 from persephone import utterance
 from persephone.utterance import Utterance
 from persephone.datasets import bkw
+from persephone.model import Model
 from persephone.preprocess import elan
 from persephone.corpus_reader import CorpusReader
 from persephone.run import prep_exp_dir
@@ -384,3 +385,7 @@ class TestBKW:
         retrieved_corp = corpus.Corpus.from_pickle(corp.tgt_dir)
         assert corp.utterances == retrieved_corp.utterances
         print(len(retrieved_corp.utterances))
+
+@pytest.mark.experiment
+def test_load_model():
+    Model.from_ckpt("testing/exp/41/0/model/model_best.ckpt")
