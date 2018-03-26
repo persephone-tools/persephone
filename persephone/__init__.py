@@ -3,6 +3,10 @@ __version__ = "0.2.0"
 import sys
 import logging
 
+from .config import LOGGING_INI_PATH
+
+import logging.config
+logging.config.fileConfig(LOGGING_INI_PATH)
 
 def handle_unhandled_exception(exc_type, exc_value, exc_traceback):
     """Handler for unhandled exceptions that will write to the logs"""
@@ -10,7 +14,7 @@ def handle_unhandled_exception(exc_type, exc_value, exc_traceback):
         # call the default excepthook saved at __excepthook__
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__) # type: ignore
     logger.critical("Unhandled exception", exc_info=(exc_type, exc_value, exc_traceback))
 
 sys.excepthook = handle_unhandled_exception
