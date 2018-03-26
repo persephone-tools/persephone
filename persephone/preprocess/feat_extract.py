@@ -89,7 +89,7 @@ def combine_fbank_and_pitch(feat_dir, prefix):
     # features goes anyway). But I'm currently keeping it this way for
     # experimental consistency.
     if diff > 2:
-        logger.warn("Excessive difference in number of frames. %d", diff)
+        logger.warning("Excessive difference in number of frames. %d", diff)
         raise PersephoneException("Excessive difference in number of frames. %d" % diff)
     elif diff > 0:
         pitches = np.concatenate((np.array([[0,0]]*(len(fbanks) - len(pitches))), pitches))
@@ -148,7 +148,7 @@ def from_dir(dirpath: Path, feat_type: str) -> None:
             elif feat_type == "mfcc13_d":
                 mfcc(path)
             else:
-                logger.warn("Feature type not found: %s", feat_type)
+                logger.warning("Feature type not found: %s", feat_type)
                 raise PersephoneException("Feature type not found: %s" % feat_type)
 
 def convert_wav(org_wav_fn: Path, tgt_wav_fn: Path) -> None:
