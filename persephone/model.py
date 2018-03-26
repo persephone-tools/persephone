@@ -21,7 +21,7 @@ allow_growth_config = tf.ConfigProto(log_device_placement=False)
 allow_growth_config.gpu_options.allow_growth=True #pylint: disable=no-member
 
 logging.config.fileConfig(config.LOGGING_INI_PATH)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__) # type: ignore
 
 class Model:
     """ Generic model for our ASR tasks. """
