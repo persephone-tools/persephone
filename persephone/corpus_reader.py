@@ -13,6 +13,7 @@ from . import utils
 from .exceptions import PersephoneException
 
 logging.config.fileConfig(config.LOGGING_INI_PATH)
+logger = logging.getLogger(__name__)
 
 class CorpusReader:
     """ Interfaces to the preprocessed corpora to read in train, valid, and
@@ -37,6 +38,7 @@ class CorpusReader:
         self.corpus = corpus
 
         if max_samples:
+            logger.critical("max_samples not yet implemented in CorpusReader")
             raise NotImplementedError("Not yet implemented.")
 
         if not num_train:
@@ -46,6 +48,9 @@ class CorpusReader:
             num_batches = int(num_train / batch_size)
             num_train = num_batches * batch_size
         self.num_train = num_train
+        logger.info("Number of training utterances: {}".format(num_train))
+        logger.info("Batch size: {}".format(batch_size))
+        logger.info("Batches per epoch: {}".format(int(num_train/batch_size)))
         print("Number of training utterances: {}".format(num_train))
         print("Batch size: {}".format(batch_size))
         print("Batches per epoch: {}".format(int(num_train/batch_size)))
@@ -122,7 +127,7 @@ class CorpusReader:
             random.shuffle(fn_batches)
 
         for fn_batch in fn_batches:
-            logging.debug("Batch of training filenames: " +
+            logger.debug("Batch of training filenames: " +
                           pprint.pformat(fn_batch))
             yield self.load_batch(fn_batch)
 
@@ -178,8 +183,6 @@ class CorpusReader:
             transcripts.append(transcript)
 
         return transcripts
-
-    #def __init__(self, corpus, num_train=None, batch_size=None, max_samples=None, rand_seed=0):
 
     def __repr__(self):
         return ("%s(" % self.__class__.__name__ +
