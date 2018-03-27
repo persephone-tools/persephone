@@ -1,11 +1,9 @@
 import logging
 import os
-from os.path import join
 import shutil
 import sys
 
 import git
-from git import Repo
 
 import persephone
 from . import config
@@ -59,7 +57,7 @@ def prep_exp_dir(directory=EXP_DIR):
     try:
         # Get the directory this file is in, so we can grab the git repo.
         dirname = os.path.dirname(os.path.realpath(__file__))
-        repo = Repo(dirname, search_parent_directories=True)
+        repo = git.Repo(dirname, search_parent_directories=True)
         with open(os.path.join(exp_dir, "git_hash.txt"), "w") as f:
             logger.info("Writing current git hash of persepone library to %s", os.path.join(exp_dir, "git_hash.txt"))
             print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
