@@ -11,6 +11,7 @@ from .. import config
 from ..utterance import Utterance
 
 logging.config.fileConfig(config.LOGGING_INI_PATH)
+logger = logging.getLogger(__name__) # type: ignore
 
 def millisecs_to_secs(millisecs: int) -> float:
     return millisecs / 1000
@@ -76,13 +77,15 @@ def trim_wav_sox(in_path: Path, out_path: Path,
     """
 
     if out_path.is_file():
+        logger.info("Output path %s already exists, not trimming file", out_path)
         return
 
     start_time_secs = millisecs_to_secs(start_time)
     end_time_secs = millisecs_to_secs(end_time)
     args = [config.SOX_PATH, str(in_path), str(out_path),
             "trim", str(start_time_secs), "=" + str(end_time_secs)]
-    # TODO Use logging here
+    logger.info("Cropping file %s, from start time %d (seconds) to end time %d (seconds), outputting to %s",
+                in_path, start_time_secs, end_time_secs, out_path)
     subprocess.run(args, check=True)
 
 def extract_wavs(utterances: List[Utterance], tgt_dir: Path,
@@ -103,10 +106,10 @@ def extract_wavs(utterances: List[Utterance], tgt_dir: Path,
         wav_fn = "{}.{}".format(utter.prefix, "wav")
         out_wav_path = tgt_dir / wav_fn
         if lazy and out_wav_path.is_file():
-            logging.info("File {} already exists and lazy == {}; not " \
+            logger.info("File {} already exists and lazy == {}; not " \
                          "writing.".format(out_wav_path, lazy))
             continue
-        logging.info("File {} does not exist and lazy == {}; creating " \
+        logger.info("File {} does not exist and lazy == {}; creating " \
                      "it.".format(out_wav_path, lazy))
         trim_wav_ms(utter.org_media_path, out_wav_path,
                     utter.start_time, utter.end_time)
