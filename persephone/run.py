@@ -15,6 +15,7 @@ from .corpus_reader import CorpusReader
 from .exceptions import PersephoneException, DirtyRepoException
 from .utils import is_git_directory_clean
 
+logger = logging.getLogger(__name__) # type: ignore
 EXP_DIR = config.EXP_DIR
 
 def get_exp_dir_num(parent_dir):
@@ -28,6 +29,7 @@ def _prepare_directory(directory_path):
     Prepare the directory structure required for the experiement
     :returns: returns the name of the newly created directory
     """
+    logger.info("Preparing directory %s for experiment", directory_path)
     exp_num = get_exp_dir_num(directory_path)
     exp_num = exp_num + 1
     exp_dir = os.path.join(directory_path, str(exp_num))
