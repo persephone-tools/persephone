@@ -47,7 +47,7 @@ def trim_wav_pydub(in_path: Path, out_path: Path,
                 start_time: int, end_time: int) -> None:
     """ Crops the wav file. """
 
-    logging.info(
+    logger.info(
         "Using pydub/ffmpeg to create {} from {}".format(out_path, in_path) +
         " using a start_time of {} and an end_time of {}".format(start_time,
                                                                  end_time))
