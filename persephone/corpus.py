@@ -83,6 +83,9 @@ class Corpus:
 
         """
 
+        logger.debug("Creating a new Corpus object with feature type %s, label type %s,"
+                     "target directory %s, label set %s, max_samples %d, speakers %s",
+                     feat_type, label_type, tgt_dir, labels, max_samples, speakers)   
         #: A string representing the type of speech feature (eg. "fbank"
         #: for log filterbank energies).
         self.feat_type = feat_type
@@ -92,6 +95,7 @@ class Corpus:
         self.label_type = label_type
 
         # Setting up directories
+        logger.debug("Setting up directories for this Corpus object at %s", tgt_dir)
         self.set_and_check_directories(tgt_dir)
 
         # Label-related stuff
@@ -100,6 +104,7 @@ class Corpus:
 
         # This is a lazy function that assumes wavs are already in the WAV dir
         # but only creates features if necessary
+        logger.debug("Preparing features")
         self.prepare_feats()
         self._num_feats = None
 
@@ -107,6 +112,7 @@ class Corpus:
         self.make_data_splits(max_samples=max_samples)
 
         # Sort the training prefixes by size for more efficient training
+        logger.debug("Training prefixes")
         self.train_prefixes = utils.sort_by_size(
             self.feat_dir, self.train_prefixes, feat_type)
 
@@ -455,6 +461,7 @@ class Corpus:
     def ensure_no_set_overlap(self) -> None:
         """ Ensures no test set data has creeped into the training set."""
 
+        logger.debug("Ensuring that the training, validation and test data sets have no overlap")
         train = set(self.get_train_fns()[0])
         valid = set(self.get_valid_fns()[0])
         test = set(self.get_test_fns()[0])
@@ -476,12 +483,14 @@ class Corpus:
         """ Pickles the Corpus object in a file in tgt_dir. """
 
         pickle_path = self.tgt_dir / "corpus.p"
+        logger.debug("pickling %r object and saving it to path %s", self, pickle_path)
         with pickle_path.open("wb") as f:
             pickle.dump(self, f)
 
     @classmethod
     def from_pickle(cls: Type[CorpusT], tgt_dir: Path) -> CorpusT:
         pickle_path = tgt_dir / "corpus.p"
+        logger.debug("Creating Corpus object from pickle file path %s", pickle_path)
         with pickle_path.open("rb") as f:
             return pickle.load(f)
 
