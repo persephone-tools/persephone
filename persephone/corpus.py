@@ -218,6 +218,7 @@ class Corpus:
 
     def set_and_check_directories(self, tgt_dir: Path) -> None:
 
+        logger.info("Setting up directories for corpus in %s", tgt_dir)
         # Set the directory names
         self.tgt_dir = tgt_dir
         self.feat_dir = self.get_feat_dir()
@@ -451,7 +452,7 @@ class Corpus:
             print("Transcription: {}".format(transcript))
             subprocess.run(["play", str(wav_fn)])
 
-    def ensure_no_set_overlap(self):
+    def ensure_no_set_overlap(self) -> None:
         """ Ensures no test set data has creeped into the training set."""
 
         train = set(self.get_train_fns()[0])
@@ -463,6 +464,13 @@ class Corpus:
         assert valid - test == valid
         assert test - train == test
         assert test - valid == test
+
+        if train & valid:
+            logger.warning("train and valid have overlapping items: {}".format(train & valid))
+        if train & test:
+            logger.warning("train and test have overlapping items: {}".format(train & test))
+        if valid & test:
+            logger.warning("valid and test have overlapping items: {}".format(valid & test))
 
     def pickle(self):
         """ Pickles the Corpus object in a file in tgt_dir. """
@@ -491,6 +499,7 @@ class ReadyCorpus(Corpus):
     @staticmethod
     def determine_labels(tgt_dir, label_type):
         """ Returns a set of phonemes found in the corpus. """
+        logger.info("Finding phonemes of type %s in directory %s", label_type, tgt_dir)
 
         label_dir = os.path.join(tgt_dir, "label/")
         if not os.path.isdir(label_dir):
@@ -504,6 +513,7 @@ class ReadyCorpus(Corpus):
                     try:
                         line_phonemes = set(f.readline().split())
                     except UnicodeDecodeError:
+                        logger.error("Unicode decode error on file %s", fn)
                         print("Unicode decode error on file {}".format(fn))
                         raise
                     phonemes = phonemes.union(line_phonemes)
