@@ -61,11 +61,13 @@ def prep_exp_dir(directory=EXP_DIR):
         dirname = os.path.dirname(os.path.realpath(__file__))
         repo = Repo(dirname, search_parent_directories=True)
         with open(os.path.join(exp_dir, "git_hash.txt"), "w") as f:
+            logger.info("Writing current git hash of persepone library to %s", os.path.join(exp_dir, "git_hash.txt"))
             print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
     except git.exc.InvalidGitRepositoryError: # pylint: disable=no-member
         # Then the package was probably installed via pypi. Get the version
         # number instead.
         with open(os.path.join(exp_dir, "version.txt"), "w") as f:
+            logger.info("Couldn't find git hash so writing the persphone version to %s instead", os.path.join(exp_dir, "version.txt"))
             print("Persphone version {}".format(persephone.__version__), file=f)
 
     return exp_dir
