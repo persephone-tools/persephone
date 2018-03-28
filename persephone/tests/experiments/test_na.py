@@ -10,6 +10,7 @@ import tensorflow as tf
 
 from persephone import corpus
 from persephone import config
+from persephone import model
 from persephone import results
 from persephone import run
 from persephone.run import prep_exp_dir
@@ -273,6 +274,15 @@ def test_reuse_model(preprocess_na):
     model.transcribe(restore_model_path="/home/oadams/code/mam/exp/252/model/model_best.ckpt")
 
 @pytest.mark.experiment
+def test_load_saver():
+    tgt_dir = Path(config.TEST_DATA_PATH) / "na"
+    na_corpus = na.Corpus("fbank_and_pitch", "phonemes_and_tones",
+                          tgt_dir=tgt_dir)
+    na_reader = corpus_reader.CorpusReader(na_corpus)
+    model_prefix_path = "/home/oadams/code/mam/exp/252/model/model_best.ckpt"
+    saver = tf.train.Saver()
+
+@pytest.mark.experiment
 def test_load_meta():
     tgt_dir = Path(config.TEST_DATA_PATH) / "na"
     na_corpus = na.Corpus("fbank_and_pitch", "phonemes_and_tones",
@@ -281,10 +291,17 @@ def test_load_meta():
 
     tf.reset_default_graph()
     model_prefix_path = "/home/oadams/code/mam/exp/252/model/model_best.ckpt"
+
     #model_prefix_path = "/home/oadams/code/persephone/testing/exp/39/model/model_best.ckpt"
-    imported_meta = tf.train.import_meta_graph(model_prefix_path + ".meta")
-    print(dir(imported_meta))
-    print(dir(imported_meta.restore))
+    
+    #loaded_graph = model.load_graph(model_prefix_path)
+
+    metagraph = model.load_metagraph(model_prefix_path)
+    #imported_meta = tf.train.import_meta_graph(model_prefix_path + ".meta")
+    #print(type(imported_meta))
+    #print(dir(imported_meta))
+    #print(dir(imported_meta))
+    #print(dir(imported_meta.restore))
 
     #exp_dir = prep_exp_dir(directory=config.TEST_EXP_PATH)
     #new_mod = rnn_ctc.Model(exp_dir, na_reader)
@@ -293,10 +310,14 @@ def test_load_meta():
     #    for v in tf.get_default_graph().get_collection("train_op"):
     #        print(v)
     #    return
+    #with tf.Session(graph=loaded_graph) as sess:
     with tf.Session() as sess:
+        with tf.device("/cpu:0"):
+            metagraph.restore(sess, model_prefix_path)
         #imported_meta.restore(sess, tf.train.latest_checkpoint('./'))
-        imported_meta.restore(sess, model_prefix_path)
-        print([x for x in tf.get_default_graph().get_operations() if "Placeholder" in x.type])
+        #imported_meta.restore(sess, model_prefix_path)
+        #print([x for x in tf.get_default_graph().get_operations() if "Placeholder" in x.type])
+        print([x for x in sess.graph.get_operations() if "Placeholder" in x.type])
         print(dir(sess))
         print(sess.graph)
         print(dir(sess.graph))
@@ -344,3 +365,14 @@ def test_load_meta():
             all_prefixes.extend([".".join(prefix) for prefix in prefixes])
         print(results.fmt_latex_untranscribed(all_hyps, all_prefixes,
         Path("benevolence_and_funeral_custom.tex")))
+
+@pytest.mark.experiment
+def test_feed_batch():
+    tgt_dir = Path(config.TEST_DATA_PATH) / "na"
+    na_corpus = na.Corpus("fbank_and_pitch", "phonemes_and_tones",
+                          tgt_dir=tgt_dir)
+    na_reader = corpus_reader.CorpusReader(na_corpus)
+    model_path = "/home/oadams/code/mam/exp/252/model/model_best.ckpt"
+    graph = model.load_graph(model_path)
+    batch = next(na_reader.untranscribed_batch_gen())
+    print(model.decode(graph, batch))

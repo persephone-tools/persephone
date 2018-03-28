@@ -14,6 +14,7 @@ from pympi.Elan import Eaf
 
 from persephone import config
 from persephone import corpus
+from persephone import model
 from persephone import utterance
 from persephone.utterance import Utterance
 from persephone.datasets import bkw
@@ -62,58 +63,58 @@ class TestBKWExperiment:
         """ Trains a multispeaker BKW system using default settings. """
         self.train_bkw(num_layers=3)
 
+tgt_dir = Path(config.TEST_DATA_PATH) / "bkw"
+en_words_path = Path(config.EN_WORDS_PATH)
+NUM_UTTERS = 1004 # Or 1006?
+NUM_SPEAKERS = 19
+
+@pytest.fixture(scope="module")
+def prep_org_data():
+    """ Ensure the un-preprocessed data is available. """
+
+    # Ensure the BKW data is all there
+    bkw_path = Path(config.BKW_PATH)
+    if not bkw_path.is_dir():
+        raise NotImplementedError(
+            "Data isn't available in {} and I haven't figured out how authentication".format(bkw_path) +
+            " should best work for datasets that aren't yet public.")
+    assert bkw_path.is_dir()
+
+    # Ensure english-words/words.txt is there.
+    assert en_words_path.is_file()
+
+    return bkw_path
+
+@pytest.fixture
+def clean_tgt_dir():
+    """ Clears the target testing directory. """
+
+    if tgt_dir.is_dir():
+        import shutil
+        shutil.rmtree(str(tgt_dir))
+
+    assert not tgt_dir.is_dir()
+
+@pytest.fixture
+def preprocessed_corpus(prep_org_data):
+    """ Ensure's corpus preprocessing happens before any of the tests
+    run that rely on it"""
+    return bkw.create_corpus(tgt_dir=tgt_dir)
+
 @pytest.mark.experiment
 class TestBKW:
 
-    tgt_dir = Path(config.TEST_DATA_PATH) / "bkw"
-    en_words_path = Path(config.EN_WORDS_PATH)
-    NUM_UTTERS = 1004 # Or 1006?
-    NUM_SPEAKERS = 19
-
-    @pytest.fixture(scope="class")
-    def prep_org_data(self):
-        """ Ensure the un-preprocessed data is available. """
-
-        # Ensure the BKW data is all there
-        bkw_path = Path(config.BKW_PATH)
-        if not bkw_path.is_dir():
-            raise NotImplementedError(
-                "Data isn't available in {} and I haven't figured out how authentication".format(bkw_path) +
-                " should best work for datasets that aren't yet public.")
-        assert bkw_path.is_dir()
-
-        # Ensure english-words/words.txt is there.
-        assert self.en_words_path.is_file()
-
-        return bkw_path
-
-    @pytest.fixture
-    def clean_tgt_dir(self):
-        """ Clears the target testing directory. """
-
-        if self.tgt_dir.is_dir():
-            import shutil
-            shutil.rmtree(str(self.tgt_dir))
-
-        assert not self.tgt_dir.is_dir()
-
-    @pytest.fixture
-    def preprocessed_corpus(self, prep_org_data):
-        """ Ensure's corpus preprocessing happens before any of the tests
-        run that rely on it"""
-        return bkw.create_corpus(tgt_dir=self.tgt_dir)
-
     def check_corpus(self, corp):
 
-        assert len(corp.utterances) == self.NUM_UTTERS
+        assert len(corp.utterances) == NUM_UTTERS
 
         # Below tests might not work since filtering of utterances by size 
         #assert len(corp.get_train_fns()[0] +
         #           corp.get_valid_fns()[0] +
-        #           corp.get_test_fns()[0]) == self.NUM_UTTERS
-        #assert len(corp.determine_prefixes()) == self.NUM_UTTERS
+        #           corp.get_test_fns()[0]) == NUM_UTTERS
+        #assert len(corp.determine_prefixes()) == NUM_UTTERS
         #assert (self.tgt_dir / "wav").is_dir()
-        #assert len(list(corp.wav_dir.iterdir())) == self.NUM_UTTERS
+        #assert len(list(corp.wav_dir.iterdir())) == NUM_UTTERS
 
     @pytest.mark.slow
     def test_bkw_preprocess(self, prep_org_data, clean_tgt_dir, preprocessed_corpus):
@@ -194,7 +195,7 @@ class TestBKW:
         utterances = elan.utterances_from_dir(bkw_org_path, ["rf", "xv"])
         utterances = utterance.remove_empty_text(
                      utterance.remove_duplicates(utterances))
-        codeswitched_path = self.tgt_dir / "codeswitched.txt"
+        codeswitched_path = tgt_dir / "codeswitched.txt"
         bkw.explore_code_switching(utterances, codeswitched_path)
 
     def test_speaker_id(self, prep_org_data):
@@ -212,7 +213,7 @@ class TestBKW:
                 speakers.add(utter.speaker)
 
         assert len(no_speaker_tiers) == 0
-        assert len(speakers) == self.NUM_SPEAKERS
+        assert len(speakers) == NUM_SPEAKERS
 
     def test_overlapping_utters(self, prep_org_data):
         tier1 = "rf"
@@ -322,12 +323,12 @@ class TestBKW:
 
     @pytest.mark.skip
     def test_utt2spk(self, prep_org_data):
-        corp = bkw.create_corpus(tgt_dir=self.tgt_dir, speakers=["Mark Djandiomerr"])
+        corp = bkw.create_corpus(tgt_dir=tgt_dir, speakers=["Mark Djandiomerr"])
         assert len(corp.speakers) == 1
-        assert len(corp.get_train_fns()) < self.NUM_UTTERS / 2
-        corp = bkw.create_corpus(tgt_dir=self.tgt_dir)
-        assert len(corp.speakers) == self.NUM_SPEAKERS
-        assert len(corp.get_train_fns()) == self.NUM_UTTERS
+        assert len(corp.get_train_fns()) < NUM_UTTERS / 2
+        corp = bkw.create_corpus(tgt_dir=tgt_dir)
+        assert len(corp.speakers) == NUM_SPEAKERS
+        assert len(corp.get_train_fns()) == NUM_UTTERS
 
     def test_deterministic(self, prep_org_data):
         """ Ensures loading and processing utterences from ELAN files is
@@ -351,15 +352,15 @@ class TestBKW:
         assert utterances_1 == utterances_2
 
     def test_deterministic_2(self, prep_org_data):
-        corp_1 = bkw.create_corpus(tgt_dir=self.tgt_dir)
+        corp_1 = bkw.create_corpus(tgt_dir=tgt_dir)
         # Remove the prefix files.
         os.remove(str(corp_1.train_prefix_fn))
         os.remove(str(corp_1.valid_prefix_fn))
         os.remove(str(corp_1.test_prefix_fn))
-        corp_2 = bkw.create_corpus(tgt_dir=self.tgt_dir)
+        corp_2 = bkw.create_corpus(tgt_dir=tgt_dir)
         assert corp_1.utterances != None
         assert corp_1.utterances == corp_2.utterances
-        assert len(corp_1.utterances) == self.NUM_UTTERS
+        assert len(corp_1.utterances) == NUM_UTTERS
         assert set(corp_1.get_train_fns()[0]) == set(corp_2.get_train_fns()[0])
         assert set(corp_1.get_valid_fns()[0]) == set(corp_2.get_valid_fns()[0])
         assert set(corp_1.get_test_fns()[0]) == set(corp_2.get_test_fns()[0])
@@ -389,3 +390,15 @@ class TestBKW:
 @pytest.mark.experiment
 def test_load_model():
     Model.from_ckpt("testing/exp/41/0/model/model_best.ckpt")
+
+@pytest.mark.experiment
+def test_feed_batch(preprocessed_corpus):
+    logging.debug("test_feed_batch()")
+    model_path = "testing/exp/41/0/model/model_best.ckpt"
+    logging.debug("model_path: {}".format(model_path))
+    graph = model.load_graph(model_path)
+    print([x for x in graph.get_operations()])
+    return
+    bkw_reader = CorpusReader(preprocessed_corpus)
+    test_batch = bkw_reader.test_batch()
+    print(model.decode(graph, test_batch))

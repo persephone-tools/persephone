@@ -25,13 +25,30 @@ allow_growth_config.gpu_options.allow_growth=True #pylint: disable=no-member
 
 logging.config.fileConfig(config.LOGGING_INI_PATH)
 
-def load_graph(model_prefix_path: Union[str, Path]) -> tf.Graph:
+def load_metagraph(model_prefix_path: Union[str, Path]) -> tf.train.Saver:
+    """ Given the path to a model on disk (these will typically be found in
+    directories such as exp/<exp_num>/model/model_best.*) creates a Saver
+    object that can then be used to restore the graph inside a tf.Session.
+    """
+
     model_prefix_path = str(model_prefix_path)
-    loaded_graph = tf.Graph()
-    with tf.Session(graph=loaded_graph) as sess:
-        imported_meta = tf.train.import_meta_graph(model_prefix_path + ".meta")
-        imported_meta.restore(sess, model_prefix_path)
-        return loaded_graph
+    metagraph = tf.train.import_meta_graph(model_prefix_path + ".meta")
+    return metagraph
+
+#def decode(metagraph: tf.train.Saver, batch):
+#    """ Inputs a batch of utterances (in the form of speech features) into the
+#    neural network.
+#    """
+#
+#    batch_x, batch_x_lens, feat_fn_batch = batch
+#    # TODO These placeholder names should be a backup if names from a newer
+#    # naming scheme aren't present.
+#    feed_dict = {"Placeholder:0": batch_x,
+#                 "Placeholder_1:0": batch_x_lens}
+#    with tf.Session() as sess:
+#        metagraph.restore(sess, model_prefix_path)
+#        [dense_decoded] = sess.run(["SparseToDense:0"], feed_dict=feed_dict)
+#    return dense_decoded
 
 class Model:
     """ Generic model for our ASR tasks. """
