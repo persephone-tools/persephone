@@ -71,18 +71,6 @@ class Model:
         self.corpus_reader = corpus_reader
         self.log_softmax = None
 
-    @classmethod
-    def from_ckpt(cls, model_prefix_path):# Union[str, Path]):
-        """ Loads an existing model from checkpoint files."""
-
-        graph = load_graph(model_prefix_path)
-        print("here we go")
-        print(graph)
-        print(dir(graph))
-        import pprint
-        pprint.pprint([repr(op) for op in graph.get_operations() if
-                       "SparseToDense" in op.name])
-
     def transcribe(self, restore_model_path=None):
         """ Transcribes an untranscribed dataset. Similar to eval() except
         no reference translation is assumed, thus no LER is calculated.
