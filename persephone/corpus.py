@@ -24,7 +24,6 @@ from . import utterance
 from .utterance import Utterance
 from .preprocess.labels import LabelSegmenter
 
-logging.config.fileConfig(config.LOGGING_INI_PATH)
 logger = logging.getLogger(__name__) # type: ignore
 
 CorpusT = TypeVar("CorpusT", bound="Corpus")

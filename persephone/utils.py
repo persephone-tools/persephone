@@ -14,7 +14,6 @@ from nltk.metrics import distance
 from . import config
 from .exceptions import DirtyRepoException
 
-logging.config.fileConfig(config.LOGGING_INI_PATH)
 logger = logging.getLogger(__name__) # type: ignore
 
 T = TypeVar("T")

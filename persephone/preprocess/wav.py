@@ -10,7 +10,6 @@ from pydub import AudioSegment # type: ignore
 from .. import config
 from ..utterance import Utterance
 
-logging.config.fileConfig(config.LOGGING_INI_PATH)
 logger = logging.getLogger(__name__) # type: ignore
 
 def millisecs_to_secs(millisecs: int) -> float:
