@@ -20,7 +20,6 @@ OPENFST_PATH = config.OPENFST_BIN_PATH
 allow_growth_config = tf.ConfigProto(log_device_placement=False)
 allow_growth_config.gpu_options.allow_growth=True #pylint: disable=no-member
 
-logging.config.fileConfig(config.LOGGING_INI_PATH)
 logger = logging.getLogger(__name__) # type: ignore
 
 class Model:
@@ -244,7 +243,7 @@ class Model:
             save_n: Whether to save the model at every n epochs.
             restore_model_path: The path to restore a model from.
         """
-
+        logger.info("Training model")
         best_valid_ler = 2.0
         steps_since_last_record = 0
 
@@ -273,6 +272,7 @@ class Model:
         sess = tf.Session(config=allow_growth_config)
 
         if restore_model_path:
+            logger.info("Restoring model from path %s", restore_model_path)
             saver.restore(sess, restore_model_path)
         else:
             sess.run(tf.global_variables_initializer())
