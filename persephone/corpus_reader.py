@@ -102,15 +102,11 @@ class CorpusReader:
 
         return batch_inputs, batch_inputs_lens, batch_targets
 
+
     def make_batches(self, utterance_fns):
         """ Group utterances into batches for decoding.  """
 
-        # Create batches of batch_size and shuffle them.
-        fn_batches = [utterance_fns[i:i+self.batch_size]
-                          for i in range(0, len(utterance_fns),
-                                         self.batch_size)]
-
-        return fn_batches
+        return utils.make_batches(utterance_fns, self.batch_size)
 
     def train_batch_gen(self):
         """ Returns a generator that outputs batches in the training data."""

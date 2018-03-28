@@ -78,11 +78,16 @@ def collapse(batch_x, time_major=False):
         new_batch_x = np.transpose(new_batch_x, (1, 0, 2))
     return new_batch_x
 
-def load_batch_x(path_batch, flatten, time_major=False):
-    """ Loads a batch given a list of filenames to numpy arrays in that batch."""
+#def load_batch_x(path_batch: Sequence[Path],
+#                 flatten: bool = False,
+#                 time_major: bool = False):
+def load_batch_x(path_batch,
+                 flatten = False,
+                 time_major = False):
+    """ Loads a batch of input features given a list of paths to numpy
+    arrays in that batch."""
 
-    utterances = [np.load(path) for path in path_batch]
-    # The maximum length of an utterance in the batch
+    utterances = [np.load(str(path)) for path in path_batch]
     utter_lens = [utterance.shape[0] for utterance in utterances]
     max_len = max(utter_lens)
     batch_size = len(path_batch)
@@ -187,3 +192,9 @@ def calc_time(wav_paths):
 
     total_mins = total_secs / 60
     return total_mins
+
+def make_batches(paths: Sequence[Path], batch_size: int) -> List[Sequence[Path]]:
+    """ Group utterances into batches for decoding.  """
+
+    return [paths[i:i+batch_size]
+            for i in range(0, len(paths), batch_size)]

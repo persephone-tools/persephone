@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-from typing import Union
+from typing import Union, Sequence, Set, List
 
 import numpy as np
 import tensorflow as tf
@@ -35,22 +35,57 @@ def load_metagraph(model_path_prefix: Union[str, Path]) -> tf.train.Saver:
     metagraph = tf.train.import_meta_graph(model_path_prefix + ".meta")
     return metagraph
 
-def decode(model_path_prefix: Union[str, Path], batch):
-    """ Inputs a batch of utterances (in the form of speech features) into the
-    neural network.
-    """
+#def decode(model_path_prefix: Union[str, Path], batch):
+#    """ Inputs a batch of utterances (in the form of speech features) into the
+#    neural network.
+#    """
+#
+#    model_path_prefix = str(model_path_prefix)
+#    metagraph = load_metagraph(model_path_prefix)
+#    batch_x, batch_x_lens, feat_fn_batch = batch
+#    # TODO These placeholder names should be a backup if names from a newer
+#    # naming scheme aren't present.
+#    feed_dict = {"Placeholder:0": batch_x,
+#                 "Placeholder_1:0": batch_x_lens}
+#    with tf.Session() as sess:
+#        metagraph.restore(sess, model_path_prefix)
+#        dense_decoded = sess.run("SparseToDense:0", feed_dict=feed_dict)
+#    return dense_decoded
+
+def decode(model_path_prefix: Union[str, Path],
+           input_paths: Sequence[Path],
+           labels: Set[str]) -> List[List[str]]:
 
     model_path_prefix = str(model_path_prefix)
+
+    # Confirm that that WAVs exist.
+
+    # Confirm that the feature files exist. Create them if they don't.
+
+    # TODO Change the second argument to have some upper bound. If the caller
+    # requests 1000 WAVs be transcribed, they shouldn't all go in one batch.
+    fn_batches = utils.make_batches(input_paths, len(input_paths))
+    # Load the model and perform decoding.
     metagraph = load_metagraph(model_path_prefix)
-    batch_x, batch_x_lens, feat_fn_batch = batch
-    # TODO These placeholder names should be a backup if names from a newer
-    # naming scheme aren't present.
-    feed_dict = {"Placeholder:0": batch_x,
-                 "Placeholder_1:0": batch_x_lens}
     with tf.Session() as sess:
         metagraph.restore(sess, model_path_prefix)
-        [dense_decoded] = sess.run(["SparseToDense:0"], feed_dict=feed_dict)
-    return dense_decoded
+
+        for fn_batch in fn_batches:
+            batch_x, batch_x_lens = utils.load_batch_x(fn_batch)
+
+        # TODO These placeholder names should be a backup if names from a newer
+        # naming scheme aren't present. Otherwise this won't generalize to
+        # different architectures.
+        feed_dict = {"Placeholder:0": batch_x,
+                     "Placeholder_1:0": batch_x_lens}
+
+        dense_decoded = sess.run("SparseToDense:0", feed_dict=feed_dict)
+
+    # Create a human-readable representation of the decoded.
+    indices_to_labels = make_indices_to_labels(labels)
+    human_readable = dense_to_human_readable(dense_decoded, indices_to_labels)
+
+    return human_readable
 
 class Model:
     """ Generic model for our ASR tasks. """

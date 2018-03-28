@@ -396,10 +396,10 @@ def test_feed_batch(preprocessed_corpus):
     logging.debug("test_feed_batch()")
     model_path_prefix = "testing/exp/41/0/model/model_best.ckpt"
     logging.debug("model_path_prefix: {}".format(model_path_prefix))
-    bkw_reader = CorpusReader(preprocessed_corpus)
-    print(preprocessed_corpus.get_test_fns())
-    return
+    bkw_reader = CorpusReader(preprocessed_corpus, batch_size=1)
+    #print(preprocessed_corpus.get_test_fns())
     batch = bkw_reader.test_batch()
+    batch = next(bkw_reader.train_batch_gen())
     import tensorflow as tf
     with tf.device("/cpu:0"):
         dense_decoded = model.decode(model_path_prefix, batch)
