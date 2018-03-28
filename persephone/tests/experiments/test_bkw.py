@@ -394,11 +394,11 @@ def test_load_model():
 @pytest.mark.experiment
 def test_feed_batch(preprocessed_corpus):
     logging.debug("test_feed_batch()")
-    model_path = "testing/exp/41/0/model/model_best.ckpt"
-    logging.debug("model_path: {}".format(model_path))
-    graph = model.load_graph(model_path)
-    print([x for x in graph.get_operations()])
-    return
+    model_path_prefix = "testing/exp/41/0/model/model_best.ckpt"
+    logging.debug("model_path_prefix: {}".format(model_path_prefix))
     bkw_reader = CorpusReader(preprocessed_corpus)
-    test_batch = bkw_reader.test_batch()
-    print(model.decode(graph, test_batch))
+    batch = bkw_reader.test_batch()
+    import tensorflow as tf
+    with tf.device("/cpu:0"):
+        dense_decoded = model.decode(model_path_prefix, batch)
+        print(dense_decoded)
