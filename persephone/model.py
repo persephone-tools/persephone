@@ -40,6 +40,7 @@ def decode(model_path_prefix: Union[str, Path], batch):
     neural network.
     """
 
+    model_path_prefix = str(model_path_prefix)
     metagraph = load_metagraph(model_path_prefix)
     batch_x, batch_x_lens, feat_fn_batch = batch
     # TODO These placeholder names should be a backup if names from a newer
