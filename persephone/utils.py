@@ -158,10 +158,6 @@ def is_number(string):
     except ValueError:
         return False
 
-def remove_multi(to_remove, target_list):
-    """ Removes instances of an item from a list."""
-    return list(filter(lambda x: x != to_remove, target_list))
-
 def wav_length(fn):
     """ Returns the length of the WAV file in seconds."""
 
@@ -173,17 +169,3 @@ def wav_length(fn):
     assert length_line[0] == "Length"
     return float(length_line[-1])
 
-def calc_time(wav_paths):
-    """ Calculates the total spoken time a given number of utterances
-    corresponds to. """
-
-    import scipy.io.wavfile as wav
-
-    total_secs = 0
-    for path in wav_paths:
-        print(path)
-        rate, sig = wav.read(path)
-        total_secs += (len(sig) / rate)
-
-    total_mins = total_secs / 60
-    return total_mins
