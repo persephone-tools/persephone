@@ -2,15 +2,13 @@
 
 import logging
 from pathlib import Path
-from typing import List, Union, Dict, Tuple, Callable, Set
+from typing import List, Dict, Tuple
 
 import pympi.Elan
 
-from .. import corpus
-from .. import utterance
 from ..utterance import Utterance
-from ..preprocess.wav import extract_wavs
-from ..preprocess.labels import LabelSegmenter
+
+logger = logging.getLogger(__name__) # type: ignore
 
 class Eaf(pympi.Elan.Eaf):
     """ This subclass exists because eaf MEDIA_DESCRIPTOR elements typically
@@ -60,10 +58,12 @@ class Eaf(pympi.Elan.Eaf):
             """.format(self.eaf_path, [self.get_media_path(md)
                                        for md in self.media_descriptors]))
 
+
 def sort_annotations(annotations: List[Tuple[int, int, str]]
                      ) -> List[Tuple[int, int, str]]:
     """ Sorts the annotations by their start_time. """
     return sorted(annotations, key=lambda x: x[0])
+
 
 def utterances_from_tier(eafob: Eaf, tier_name: str) -> List[Utterance]:
     """ Returns utterances found in the given Eaf object in the given tier."""
@@ -90,7 +90,8 @@ def utterances_from_tier(eafob: Eaf, tier_name: str) -> List[Utterance]:
 
     return tier_utterances
 
-def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> List[Utterance]:
+
+def utterances_from_eaf(eaf_path: Path, tier_prefixes: Tuple[str, ...]) -> List[Utterance]:
     """
     Extracts utterances in tiers that start with tier_prefixes found in the ELAN .eaf XML file
     at eaf_path.
@@ -111,8 +112,9 @@ def utterances_from_eaf(eaf_path: Path, tier_prefixes: List[str]) -> List[Uttera
                 break
     return utterances
 
+
 def utterances_from_dir(eaf_dir: Path,
-                        tier_prefixes: List[str]) -> List[Utterance]:
+                        tier_prefixes: Tuple[str, ...]) -> List[Utterance]:
     """ Returns the utterances found in ELAN files in a directory.
 
     Recursively explores the directory, gathering ELAN files and extracting
@@ -129,7 +131,7 @@ def utterances_from_dir(eaf_dir: Path,
 
     """
 
-    logging.info(
+    logger.info(
         "EAF from directory: {}, searching with tier_prefixes {}".format(
             eaf_dir, tier_prefixes))
 

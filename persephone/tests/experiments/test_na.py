@@ -64,6 +64,8 @@ def get_test_ler(exp_dir):
 
     return ler
 
+# Only the tutorial test actually should need to pull the data; the rest can be
+# lazy and assume the data hasn't changed (which is pretty reasonable)
 @pytest.mark.experiment
 def test_tutorial():
     """ Tests running the example described in the tutorial in README.md """

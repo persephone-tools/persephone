@@ -10,6 +10,20 @@ from ..utterance import Utterance
 LabelSegmenter = NamedTuple("LabelSegmenter",
                             [("segment_labels", Callable[[Utterance], Utterance]),
                             ("labels", Set[str])])
+LabelSegmenter.__doc__ = (
+    """ An immutable object that segments the phonemes of an utterance. This
+    could probably actually have a __call__ implementation. That won't work
+    because namedtuples can't have special methods. Perhaps it could instead
+    just be a function which we give a labels attribute. Perhaps that
+    obfuscates things a bit, but it could be okay.
+
+    Attributes:
+        segment_labels: A function that takes an Utterance and returns another
+            Utterance where the text field has changed to be phonemically
+            segmented, using spaces as delimiters. Eg "this is" -> "th i s i s".
+        labels: A set of labels (eg. phonemes or tones) relevant for segmenting.
+    """)
+
 
 def segment_into_chars(utterance: str) -> str:
     """ Segments an utterance into space delimited characters. """

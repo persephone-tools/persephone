@@ -13,21 +13,33 @@ Utterance = NamedTuple("Utterance", [("org_media_path", Path),
 Utterance.__doc__= (
     """ An immutable object that represents a single utterance.
 
+    `Utterance` instances capture key data about short segments of speech in
+    the corpus.  Their most important role is in representing transcriptions
+    invarious states of preprocessing. For instance, `Utterance` instances may
+    be created when reading from a linguists transcription files, in which case
+    their `text` attribute is a raw unpreprocessed transcription. These
+    `Utterance` instances may then be fed to a function that preprocesses the
+    text, returning new `Utterance` instances with, say, phonemes delimited
+    with spaces so that they are in an appropriate format for model training.
+
+    Note that `Utterance` instances are not required as arguments to `Corpus`
+    constructors. They exist to aid in preprocessing.
+
     Attributes:
-        org_media_path: A pathlib.Path the original source audio that contains the
-            utterance, which may comprise many utterances.
-        org_transcription_path: A pathlib.Path to the source of the transcription of
-            the utterance, which may comprise many utterances (say, in the
-            case of ELAN files).
+        org_media_path: A `pathlib.Path` to the original source audio that contains the
+            utterance (which may comprise many utterances).
+        org_transcription_path: A `pathlib.Path` to the source of the transcription of
+            the utterance (which may comprise many utterances in the
+            case of, say, ELAN files).
         prefix: A string identifier for the utterance which is used to prefix the
-            target wav and transcription files, which are called <prefix>.wav,
-            <prefix>.phonemes, etc.
+            target wav and transcription files, which are called `<prefix>.wav`,
+            `<prefix>.phonemes`, etc.
         start_time: An integer denoting the offset, in milliseconds, of the
-            utterance in the original media file.
+            utterance in the original media file found in `org_media_path`.
         end_time: An integer denoting the endpoint, in milliseconds, of the
-            utterance in the original media file.
+            utterance in the original media file found in `org_media_path`.
         text: A string representation of the transcription.
-        speaker: A string identifier for the speaker of the utterance.
+        speaker: A string representation of the speaker of the utterance.
 
     """)
 

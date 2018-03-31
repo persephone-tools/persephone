@@ -14,7 +14,7 @@ from nltk.metrics import distance
 from . import config
 from .exceptions import DirtyRepoException
 
-logging.config.fileConfig(config.LOGGING_INI_PATH)
+logger = logging.getLogger(__name__) # type: ignore
 
 T = TypeVar("T")
 
@@ -27,7 +27,7 @@ def is_git_directory_clean(path_to_repo: Path,
     :path_to_repo: The path of the git repo
     """
     repo = Repo(str(path_to_repo), search_parent_directories=search_parent_dirs)
-    logging.debug("is_git_directory_clean check for repo in path={} from "\
+    logger.debug("is_git_directory_clean check for repo in path={} from "\
                   "cwd={} with search_parent_directories={}".format(
                         path_to_repo, os.getcwd(), search_parent_dirs))
 

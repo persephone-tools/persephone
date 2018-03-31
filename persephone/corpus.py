@@ -11,7 +11,7 @@ import pickle
 from os.path import join
 import random
 import subprocess
-from typing import List, Callable, Type, TypeVar
+from typing import List, Callable, Tuple, Type, TypeVar
 
 import numpy as np
 
@@ -24,7 +24,7 @@ from . import utterance
 from .utterance import Utterance
 from .preprocess.labels import LabelSegmenter
 
-logging.config.fileConfig(config.LOGGING_INI_PATH)
+logger = logging.getLogger(__name__) # type: ignore
 
 CorpusT = TypeVar("CorpusT", bound="Corpus")
 
@@ -32,27 +32,59 @@ class Corpus:
     """ Represents a preprocessed corpus that is ready to be used in model
     training.
 
-    Construction of a Corpus object involves preprocessing data if the data has
-    not previously already been preprocessed. Once a Corpus object is created
-    it should be considered immutable. At this point feature extraction from
-    WAVs will have been performed, with feature files in tgt_dir/feat/.
-    Transcriptions will have been segmented into appropriate tokens (labels)
-    and will be stored in tgt_dir/label/.
+    Construction of a `Corpus` instance involves preprocessing data if the data has
+    not previously already been preprocessed. The extent of the preprocessing
+    depends on which constructor is used. If the default constructor,
+    `__init__()` is used, transcriptions are assumed to already be preprocessed
+    and only speech feature extraction from WAV files is performed. In other
+    constructors such as `from_elan()`, preprocessing of the transcriptions is
+    performed. See the documentation of the relevant constructors for more
+    information.
+
+    Once a Corpus object is created it should be considered immutable. At this
+    point feature extraction from WAVs will have been performed, with feature
+    files in `tgt_dir/feat/`.  Transcriptions will have been segmented into
+    appropriate tokens (labels) and will be stored in `tgt_dir/label/`.
+
     """
 
     def __init__(self, feat_type, label_type, tgt_dir, labels,
-                 max_samples=1000, speakers=None):
-        """ feat_type: A string describing the input features. For
-                       example, 'log_mel_filterbank'.
-            target_type: A string describing the targets. For example,
-                         'phonemes' or 'tones'.
-            labels: A set of tokens used in transcription. Typically units such
-                    as phonemes or characters.
-            max_samples: The maximum length in samples of a train, valid, or
-                         test utterance. Used to save memory in exchange for
-                         reducing the number of effective training examples.
+                 max_samples=1000, speakers = None):
+        """ Construct a `Corpus` instance from preprocessed data.
+
+        Assumes that the corpus data has been preprocessed and is
+        structured as follows: (1) WAVs for each utterance are found in
+        `<tgt_dir>/wav/` with the filename `<prefix>.wav`, where `prefix` is
+        some string uniquely identifying the utterance; (2) For each WAV file,
+        there is a corresponding transcription found in `<tgt_dir>/label/` with
+        the filename `<prefix>.<label_type>`, where `label_type` is some string
+        describing the type of label used (for example, "phonemes" or "tones").
+
+        If the data is found in the format, WAV normalization and speech
+        feature extraction will be performed during `Corpus` construction, and
+        the utterances will be randomly divided into training, validation and
+        test_sets. If you would like to define these datasets yourself, include
+        files named `train_prefixes.txt`, `valid_prefixes.txt` and
+        `test_prefixes.txt` in `<tgt_dir>`. Each file should be a list of
+        prefixes (utterance IDs), one per line. If these are found during
+        `Corpus` construction, those sets will be used instead.
+
+        Args:
+            feat_type: A string describing the input speech features. For
+                       example, "fbank" for log Mel filterbank features.
+            label_type: A string describing the transcription labels. For example,
+                         "phonemes" or "tones".
+            labels: A set of strings representing labels (tokens) used in
+                transcription. For example: {"a", "o", "th", ...}
+            max_samples: The maximum number of samples an utterance in the
+                corpus may have. If an utterance is longer than this, it is not
+                included in the corpus.
+
         """
 
+        logger.debug("Creating a new Corpus object with feature type %s, label type %s,"
+                     "target directory %s, label set %s, max_samples %d, speakers %s",
+                     feat_type, label_type, tgt_dir, labels, max_samples, speakers)   
         #: A string representing the type of speech feature (eg. "fbank"
         #: for log filterbank energies).
         self.feat_type = feat_type
@@ -62,14 +94,16 @@ class Corpus:
         self.label_type = label_type
 
         # Setting up directories
+        logger.debug("Setting up directories for this Corpus object at %s", tgt_dir)
         self.set_and_check_directories(tgt_dir)
 
         # Label-related stuff
         self.initialize_labels(labels)
-        logging.info("Corpus label set: \n\t{}".format(labels))
+        logger.info("Corpus label set: \n\t{}".format(labels))
 
         # This is a lazy function that assumes wavs are already in the WAV dir
         # but only creates features if necessary
+        logger.debug("Preparing features")
         self.prepare_feats()
         self._num_feats = None
 
@@ -77,6 +111,7 @@ class Corpus:
         self.make_data_splits(max_samples=max_samples)
 
         # Sort the training prefixes by size for more efficient training
+        logger.debug("Training prefixes")
         self.train_prefixes = utils.sort_by_size(
             self.feat_dir, self.train_prefixes, feat_type)
 
@@ -88,17 +123,46 @@ class Corpus:
         # TODO Need to contemplate whether Corpus objects have Utterance
         # objects or # not. Some of the TestBKW tests currently rely on this
         # for testing.
-        self.utterances = None # type: List[Utterance]
+        self.utterances = None  # type: List[Utterance]
 
         self.pickle()
 
     @classmethod
     def from_elan(cls: Type[CorpusT], org_dir: Path, tgt_dir: Path,
-                 feat_type: str = "fbank", label_type: str = "phonemes",
-                 utterance_filter: Callable[[Utterance], bool] = None,
-                 label_segmenter: LabelSegmenter = None,
-                 speakers: List[str] = None, lazy: bool = True,
-                 tier_prefixes: List[str] = ["xv", "rf"]) -> CorpusT:
+                  feat_type: str = "fbank", label_type: str = "phonemes",
+                  utterance_filter: Callable[[Utterance], bool] = None,
+                  label_segmenter: LabelSegmenter = None,
+                  speakers: List[str] = None, lazy: bool = True,
+                  tier_prefixes: Tuple[str, ...] = ("xv", "rf")) -> CorpusT:
+        """ Construct a `Corpus` from ELAN files.
+
+        Args:
+            org_dir: A path to the directory containing the unpreprocessed
+                data.
+            tgt_dir: A path to the directory where the preprocessed data will
+                be stored.
+            feat_type: A string describing the input speech features. For
+                       example, "fbank" for log Mel filterbank features.
+            label_type: A string describing the transcription labels. For example,
+                         "phonemes" or "tones".
+            utterance_filter: A function that returns False if an utterance
+                should not be included in the corpus and True otherwise. This
+                can be used to remove undesirable utterances for training, such as
+                codeswitched utterances.
+            label_segmenter: An object that has an attribute `segment_labels`,
+                which is creates new `Utterance` instances from old ones,
+                by segmenting the tokens in their `text attribute. Note,
+                `LabelSegmenter` might be better as a function, the only issue
+                is it needs to carry with it a list of labels. This could
+                potentially be a function attribute.
+            speakers: A list of speakers to filter for. If None, utterances
+                from speakers are.
+            tier_prefixes: A collection of strings that prefix ELAN tiers to
+                filter for. For example, if this is ("xv", "rf"), then tiers
+                named "xv", "xv@Mark", "rf@Rose" would be extracted if they
+                existed.
+
+        """
 
         # Read utterances from org_dir.
         utterances = elan.utterances_from_dir(org_dir,
@@ -159,6 +223,7 @@ class Corpus:
 
     def set_and_check_directories(self, tgt_dir: Path) -> None:
 
+        logger.info("Setting up directories for corpus in %s", tgt_dir)
         # Set the directory names
         self.tgt_dir = tgt_dir
         self.feat_dir = self.get_feat_dir()
@@ -392,9 +457,10 @@ class Corpus:
             print("Transcription: {}".format(transcript))
             subprocess.run(["play", str(wav_fn)])
 
-    def ensure_no_set_overlap(self):
+    def ensure_no_set_overlap(self) -> None:
         """ Ensures no test set data has creeped into the training set."""
 
+        logger.debug("Ensuring that the training, validation and test data sets have no overlap")
         train = set(self.get_train_fns()[0])
         valid = set(self.get_valid_fns()[0])
         test = set(self.get_test_fns()[0])
@@ -405,16 +471,25 @@ class Corpus:
         assert test - train == test
         assert test - valid == test
 
+        if train & valid:
+            logger.warning("train and valid have overlapping items: {}".format(train & valid))
+        if train & test:
+            logger.warning("train and test have overlapping items: {}".format(train & test))
+        if valid & test:
+            logger.warning("valid and test have overlapping items: {}".format(valid & test))
+
     def pickle(self):
         """ Pickles the Corpus object in a file in tgt_dir. """
 
         pickle_path = self.tgt_dir / "corpus.p"
+        logger.debug("pickling %r object and saving it to path %s", self, pickle_path)
         with pickle_path.open("wb") as f:
             pickle.dump(self, f)
 
     @classmethod
     def from_pickle(cls: Type[CorpusT], tgt_dir: Path) -> CorpusT:
         pickle_path = tgt_dir / "corpus.p"
+        logger.debug("Creating Corpus object from pickle file path %s", pickle_path)
         with pickle_path.open("rb") as f:
             return pickle.load(f)
 
@@ -432,6 +507,7 @@ class ReadyCorpus(Corpus):
     @staticmethod
     def determine_labels(tgt_dir, label_type):
         """ Returns a set of phonemes found in the corpus. """
+        logger.info("Finding phonemes of type %s in directory %s", label_type, tgt_dir)
 
         label_dir = os.path.join(tgt_dir, "label/")
         if not os.path.isdir(label_dir):
@@ -445,6 +521,7 @@ class ReadyCorpus(Corpus):
                     try:
                         line_phonemes = set(f.readline().split())
                     except UnicodeDecodeError:
+                        logger.error("Unicode decode error on file %s", fn)
                         print("Unicode decode error on file {}".format(fn))
                         raise
                     phonemes = phonemes.union(line_phonemes)

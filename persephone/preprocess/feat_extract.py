@@ -1,5 +1,5 @@
 """ Performs feature extraction of WAV files for acoustic modelling."""
-
+import logging
 import os
 from pathlib import Path
 import subprocess
@@ -10,6 +10,8 @@ import scipy.io.wavfile as wav
 
 from .. import config
 from ..exceptions import PersephoneException
+
+logger = logging.getLogger(__name__) #type: ignore
 
 def extract_energy(rate, sig):
     """ Extracts the energy of frames. """
@@ -74,6 +76,7 @@ def combine_fbank_and_pitch(feat_dir, prefix):
     elif len(fbanks.shape) == 2:
         pass
     else:
+        logger.error("Invalid fbank array shape %s", (str(fbanks.shape)))
         raise PersephoneException("Invalid fbank array shape %s" % (str(fbanks.shape)))
 
     diff = len(fbanks) - len(pitches)
@@ -86,6 +89,7 @@ def combine_fbank_and_pitch(feat_dir, prefix):
     # features goes anyway). But I'm currently keeping it this way for
     # experimental consistency.
     if diff > 2:
+        logger.warning("Excessive difference in number of frames. %d", diff)
         raise PersephoneException("Excessive difference in number of frames. %d" % diff)
     elif diff > 0:
         pitches = np.concatenate((np.array([[0,0]]*(len(fbanks) - len(pitches))), pitches))
@@ -129,7 +133,7 @@ def from_dir(dirpath: Path, feat_type: str) -> None:
 
     # Then apply file-wise feature extraction
     for filename in os.listdir(dirname):
-        print("Preparing %s features for %s" % (feat_type, filename))
+        logger.info("Preparing %s features for %s", feat_type, filename)
         path = os.path.join(dirname, filename)
         if path.endswith(".wav"):
             if feat_type == "fbank":
@@ -144,6 +148,7 @@ def from_dir(dirpath: Path, feat_type: str) -> None:
             elif feat_type == "mfcc13_d":
                 mfcc(path)
             else:
+                logger.warning("Feature type not found: %s", feat_type)
                 raise PersephoneException("Feature type not found: %s" % feat_type)
 
 def convert_wav(org_wav_fn: Path, tgt_wav_fn: Path) -> None:
@@ -155,6 +160,7 @@ def convert_wav(org_wav_fn: Path, tgt_wav_fn: Path) -> None:
 def kaldi_pitch(wav_dir, feat_dir):
     """ Extract Kaldi pitch features. Assumes 16k mono wav files."""
 
+    logger.debug("Make wav.scp and pitch.scp files")
     # Make wav.scp and pitch.scp files
     prefixes = []
     for fn in os.listdir(wav_dir):
@@ -165,11 +171,13 @@ def kaldi_pitch(wav_dir, feat_dir):
     wav_scp_path = os.path.join(feat_dir, "wavs.scp")
     with open(wav_scp_path, "w") as wav_scp:
         for prefix in prefixes:
+            logger.info("Writing wav file: %s", os.path.join(wav_dir, prefix + ".wav"))
             print(prefix, os.path.join(wav_dir, prefix + ".wav"), file=wav_scp)
 
     pitch_scp_path = os.path.join(feat_dir, "pitch_feats.scp")
     with open(pitch_scp_path, "w") as pitch_scp:
         for prefix in prefixes:
+            logger.info("Writing scp file: %s", os.path.join(feat_dir, prefix + ".pitch.txt"))
             print(prefix, os.path.join(feat_dir, prefix + ".pitch.txt"), file=pitch_scp)
 
     # Call Kaldi pitch feat extraction
