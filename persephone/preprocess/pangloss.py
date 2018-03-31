@@ -1,6 +1,9 @@
 """ Some functions to interface with the Pangloss """
+import logging
 
 from xml.etree import ElementTree
+
+logger = logging.getLogger(__name__) #type: ignore
 
 def get_sents_times_and_translations(xml_fn):
     """ Given an XML filename, loads the transcriptions, their start/end times,
@@ -24,7 +27,7 @@ def get_sents_times_and_translations(xml_fn):
                 else:
                     transcription = child.find("FORM").text
                 audio_info = child.find("AUDIO")
-                if audio_info != None:
+                if audio_info is not None:
                     start_time = float(audio_info.attrib["start"])
                     end_time = float(audio_info.attrib["end"])
                     time = (start_time, end_time)
@@ -34,8 +37,8 @@ def get_sents_times_and_translations(xml_fn):
                     translations.append(translation)
 
         return root.tag, transcriptions, times, translations
-    print(root.tag)
-    assert False
+    logger.critical('the root tag, %s, does not contain "WORDLIST", and is not "TEXT"', root.tag)
+    assert False, root.tag
 
 def remove_content_in_brackets(sentence, brackets="[]"):
     out_sentence = ''

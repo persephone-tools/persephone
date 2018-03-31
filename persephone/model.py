@@ -3,7 +3,6 @@
 import inspect
 import itertools
 import logging
-import logging.config
 import os
 import subprocess
 import sys
@@ -21,7 +20,7 @@ OPENFST_PATH = config.OPENFST_BIN_PATH
 allow_growth_config = tf.ConfigProto(log_device_placement=False)
 allow_growth_config.gpu_options.allow_growth=True #pylint: disable=no-member
 
-logging.config.fileConfig(config.LOGGING_INI_PATH)
+logger = logging.getLogger(__name__) # type: ignore
 
 class Model:
     """ Generic model for our ASR tasks. """
@@ -187,8 +186,8 @@ class Model:
                             prefix + ".projection.bin", prefix + ".rmepsilon.bin"]
                 subprocess.run(run_args)
             except FileNotFoundError:
-                print("Make sure you have OpenFST binaries installed and "
-                      "available on the path")
+                logger.error("Make sure you have OpenFST binaries installed and "
+                              "available on the path")
                 raise
 
     def eval(self, restore_model_path=None):
@@ -197,9 +196,11 @@ class Model:
         saver = tf.train.Saver()
         with tf.Session(config=allow_growth_config) as sess:
             if restore_model_path:
+                logger.info("restoring model from %s", restore_model_path)
                 saver.restore(sess, restore_model_path)
             else:
                 assert self.saved_model_path
+                logger.info("restoring model from %s", self.saved_model_path)
                 saver.restore(sess, self.saved_model_path)
 
             test_x, test_x_lens, test_y = self.corpus_reader.test_batch()
@@ -242,7 +243,7 @@ class Model:
             save_n: Whether to save the model at every n epochs.
             restore_model_path: The path to restore a model from.
         """
-
+        logger.info("Training model")
         best_valid_ler = 2.0
         steps_since_last_record = 0
 
@@ -271,6 +272,7 @@ class Model:
         sess = tf.Session(config=allow_growth_config)
 
         if restore_model_path:
+            logger.info("Restoring model from path %s", restore_model_path)
             saver.restore(sess, restore_model_path)
         else:
             sess.run(tf.global_variables_initializer())
@@ -311,9 +313,10 @@ class Model:
                     [self.ler, self.dense_decoded, self.dense_ref],
                     feed_dict=feed_dict)
             except tf.errors.ResourceExhaustedError:
-                print("Ran out of memory allocating a batch:")
                 import pprint
+                print("Ran out of memory allocating a batch:")
                 pprint.pprint(feed_dict)
+                logger.critical("Ran out of memory allocating a batch: %s", pprint.pformat(feed_dict))
                 raise
             hyps, refs = self.corpus_reader.human_readable_hyp_ref(
                 dense_decoded, dense_ref)

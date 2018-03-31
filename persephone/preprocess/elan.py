@@ -8,6 +8,7 @@ import pympi.Elan
 
 from ..utterance import Utterance
 
+logger = logging.getLogger(__name__) # type: ignore
 
 class Eaf(pympi.Elan.Eaf):
     """ This subclass exists because eaf MEDIA_DESCRIPTOR elements typically
@@ -130,7 +131,7 @@ def utterances_from_dir(eaf_dir: Path,
 
     """
 
-    logging.info(
+    logger.info(
         "EAF from directory: {}, searching with tier_prefixes {}".format(
             eaf_dir, tier_prefixes))
 

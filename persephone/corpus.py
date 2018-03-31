@@ -24,7 +24,7 @@ from . import utterance
 from .utterance import Utterance
 from .preprocess.labels import LabelSegmenter
 
-logging.config.fileConfig(config.LOGGING_INI_PATH)
+logger = logging.getLogger(__name__) # type: ignore
 
 CorpusT = TypeVar("CorpusT", bound="Corpus")
 
@@ -82,6 +82,9 @@ class Corpus:
 
         """
 
+        logger.debug("Creating a new Corpus object with feature type %s, label type %s,"
+                     "target directory %s, label set %s, max_samples %d, speakers %s",
+                     feat_type, label_type, tgt_dir, labels, max_samples, speakers)   
         #: A string representing the type of speech feature (eg. "fbank"
         #: for log filterbank energies).
         self.feat_type = feat_type
@@ -91,14 +94,16 @@ class Corpus:
         self.label_type = label_type
 
         # Setting up directories
+        logger.debug("Setting up directories for this Corpus object at %s", tgt_dir)
         self.set_and_check_directories(tgt_dir)
 
         # Label-related stuff
         self.initialize_labels(labels)
-        logging.info("Corpus label set: \n\t{}".format(labels))
+        logger.info("Corpus label set: \n\t{}".format(labels))
 
         # This is a lazy function that assumes wavs are already in the WAV dir
         # but only creates features if necessary
+        logger.debug("Preparing features")
         self.prepare_feats()
         self._num_feats = None
 
@@ -106,6 +111,7 @@ class Corpus:
         self.make_data_splits(max_samples=max_samples)
 
         # Sort the training prefixes by size for more efficient training
+        logger.debug("Training prefixes")
         self.train_prefixes = utils.sort_by_size(
             self.feat_dir, self.train_prefixes, feat_type)
 
@@ -217,6 +223,7 @@ class Corpus:
 
     def set_and_check_directories(self, tgt_dir: Path) -> None:
 
+        logger.info("Setting up directories for corpus in %s", tgt_dir)
         # Set the directory names
         self.tgt_dir = tgt_dir
         self.feat_dir = self.get_feat_dir()
@@ -450,9 +457,10 @@ class Corpus:
             print("Transcription: {}".format(transcript))
             subprocess.run(["play", str(wav_fn)])
 
-    def ensure_no_set_overlap(self):
+    def ensure_no_set_overlap(self) -> None:
         """ Ensures no test set data has creeped into the training set."""
 
+        logger.debug("Ensuring that the training, validation and test data sets have no overlap")
         train = set(self.get_train_fns()[0])
         valid = set(self.get_valid_fns()[0])
         test = set(self.get_test_fns()[0])
@@ -463,16 +471,25 @@ class Corpus:
         assert test - train == test
         assert test - valid == test
 
+        if train & valid:
+            logger.warning("train and valid have overlapping items: {}".format(train & valid))
+        if train & test:
+            logger.warning("train and test have overlapping items: {}".format(train & test))
+        if valid & test:
+            logger.warning("valid and test have overlapping items: {}".format(valid & test))
+
     def pickle(self):
         """ Pickles the Corpus object in a file in tgt_dir. """
 
         pickle_path = self.tgt_dir / "corpus.p"
+        logger.debug("pickling %r object and saving it to path %s", self, pickle_path)
         with pickle_path.open("wb") as f:
             pickle.dump(self, f)
 
     @classmethod
     def from_pickle(cls: Type[CorpusT], tgt_dir: Path) -> CorpusT:
         pickle_path = tgt_dir / "corpus.p"
+        logger.debug("Creating Corpus object from pickle file path %s", pickle_path)
         with pickle_path.open("rb") as f:
             return pickle.load(f)
 
@@ -490,6 +507,7 @@ class ReadyCorpus(Corpus):
     @staticmethod
     def determine_labels(tgt_dir, label_type):
         """ Returns a set of phonemes found in the corpus. """
+        logger.info("Finding phonemes of type %s in directory %s", label_type, tgt_dir)
 
         label_dir = os.path.join(tgt_dir, "label/")
         if not os.path.isdir(label_dir):
@@ -503,6 +521,7 @@ class ReadyCorpus(Corpus):
                     try:
                         line_phonemes = set(f.readline().split())
                     except UnicodeDecodeError:
+                        logger.error("Unicode decode error on file %s", fn)
                         print("Unicode decode error on file {}".format(fn))
                         raise
                     phonemes = phonemes.union(line_phonemes)

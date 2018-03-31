@@ -1,11 +1,9 @@
 import logging
 import os
-from os.path import join
 import shutil
 import sys
 
 import git
-from git import Repo
 
 import persephone
 from . import config
@@ -15,6 +13,7 @@ from .corpus_reader import CorpusReader
 from .exceptions import PersephoneException, DirtyRepoException
 from .utils import is_git_directory_clean
 
+logger = logging.getLogger(__name__) # type: ignore
 EXP_DIR = config.EXP_DIR
 
 def get_exp_dir_num(parent_dir):
@@ -28,6 +27,7 @@ def _prepare_directory(directory_path):
     Prepare the directory structure required for the experiement
     :returns: returns the name of the newly created directory
     """
+    logger.info("Preparing directory %s for experiment", directory_path)
     exp_num = get_exp_dir_num(directory_path)
     exp_num = exp_num + 1
     exp_dir = os.path.join(directory_path, str(exp_num))
@@ -57,13 +57,15 @@ def prep_exp_dir(directory=EXP_DIR):
     try:
         # Get the directory this file is in, so we can grab the git repo.
         dirname = os.path.dirname(os.path.realpath(__file__))
-        repo = Repo(dirname, search_parent_directories=True)
+        repo = git.Repo(dirname, search_parent_directories=True)
         with open(os.path.join(exp_dir, "git_hash.txt"), "w") as f:
+            logger.info("Writing current git hash of persepone library to %s", os.path.join(exp_dir, "git_hash.txt"))
             print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
     except git.exc.InvalidGitRepositoryError: # pylint: disable=no-member
         # Then the package was probably installed via pypi. Get the version
         # number instead.
         with open(os.path.join(exp_dir, "version.txt"), "w") as f:
+            logger.info("Couldn't find git hash so writing the persphone version to %s instead", os.path.join(exp_dir, "version.txt"))
             print("Persphone version {}".format(persephone.__version__), file=f)
 
     return exp_dir
