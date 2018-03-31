@@ -5,9 +5,9 @@ import pytest
 import subprocess
 
 from persephone import corpus
-from persephone import run
 from persephone import corpus_reader
 from persephone import rnn_ctc
+from persephone import experiment
 from persephone.context_manager import cd
 from persephone.datasets import na
 
@@ -77,7 +77,7 @@ def test_tutorial():
 
     # Test the first setup encouraged in the tutorial
     corp = corpus.ReadyCorpus(na_example_dir)
-    exp_dir = run.train_ready(corp, directory=EXP_BASE_DIR)
+    exp_dir = experiment.train_ready(corp, directory=EXP_BASE_DIR)
 
     # Assert the convergence of the model at the end by reading the test scores
     ler = get_test_ler(exp_dir)
@@ -100,8 +100,8 @@ def test_fast():
 
     corp = corpus.ReadyCorpus(tiny_example_dir)
 
-    exp_dir = run.prep_exp_dir(directory=EXP_BASE_DIR)
-    model = run.get_simple_model(exp_dir, corp)
+    exp_dir = experiment.prep_exp_dir(directory=EXP_BASE_DIR)
+    model = experiment.get_simple_model(exp_dir, corp)
     model.train(min_epochs=2, max_epochs=5)
 
     # Assert the convergence of the model at the end by reading the test scores
@@ -158,7 +158,7 @@ def test_full_na():
     na.make_data_splits(label_type, train_rec_type="text", tgt_dir=na_dir)
 
     # Training with texts
-    exp_dir = run.prep_exp_dir(directory=EXP_BASE_DIR)
+    exp_dir = experiment.prep_exp_dir(directory=EXP_BASE_DIR)
     na_corpus = na.Corpus(feat_type, label_type,
                           train_rec_type="text",
                           tgt_dir=na_dir)

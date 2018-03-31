@@ -22,6 +22,18 @@ logging.config.fileConfig(config.LOGGING_INI_PATH)
 class Model:
     """ Generic model for our ASR tasks. """
 
+    # TODO Delete these, because they're not meant to be class variables.
+    # They were just here to placate pylint, but the way scoping of graph variables
+    # needs to change. They shouldn't really be instance variables either.
+    batch_x = None
+    batch_x_lens = None
+    batch_y = None
+    optimizer = None
+    ler = None
+    dense_decoded = None
+    dense_ref = None
+    saved_model_path = None
+
     def __init__(self, exp_dir, corpus_reader):
         self.exp_dir = exp_dir
         self.corpus_reader = corpus_reader

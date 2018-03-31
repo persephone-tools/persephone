@@ -161,8 +161,8 @@ interpreter. Back to the terminal:
     $ ipython
     > from persephone import corpus
     > corp = corpus.ReadyCorpus("data/na_example")
-    > from persephone import run
-    > run.train_ready(corp)
+    > from persephone import experiment
+    > experiment.train_ready(corp)
 
 You'll should now see something like:
 
@@ -335,7 +335,7 @@ performance improvements).
 
 So far, the tutorial described how to load a ``Corpus`` object, and
 perform training and testing with a single function
-``run.train_ready(corpus)``, which hid some details. This section
+``experiment.train_ready(corpus)``, which hid some details. This section
 exposes more of the interface so that you can describe models more
 fully, save and load models, and apply it to untranscribed data. I'd
 like to hear people's thoughts on this interface.

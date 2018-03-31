@@ -19,7 +19,7 @@ from persephone.utterance import Utterance
 from persephone.datasets import bkw
 from persephone.preprocess import elan
 from persephone.corpus_reader import CorpusReader
-from persephone.run import prep_exp_dir
+from persephone.experiment import prep_exp_dir
 from persephone import rnn_ctc
 from persephone import utils
 
