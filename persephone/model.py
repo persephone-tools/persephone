@@ -2,41 +2,25 @@
 
 import inspect
 import itertools
-import logging
 import logging.config
 import os
-import subprocess
 import sys
 
-import numpy as np
 import tensorflow as tf
 
 from . import utils
-from . import lattice
 from . import config
 from .exceptions import PersephoneException
 
 OPENFST_PATH = config.OPENFST_BIN_PATH
 
 allow_growth_config = tf.ConfigProto(log_device_placement=False)
-allow_growth_config.gpu_options.allow_growth=True #pylint: disable=no-member
+allow_growth_config.gpu_options.allow_growth = True #pylint: disable=no-member
 
 logging.config.fileConfig(config.LOGGING_INI_PATH)
 
 class Model:
     """ Generic model for our ASR tasks. """
-
-    # Subclasses should instantiate these variables:
-    exp_dir = None
-    batch_x = None
-    batch_x_lens = None
-    batch_y = None
-    optimizer = None
-    ler = None
-    dense_decoded = None
-    dense_ref = None
-    corpus_reader = None
-    saved_model_path = None
 
     def __init__(self, exp_dir, corpus_reader):
         self.exp_dir = exp_dir
@@ -84,112 +68,6 @@ class Model:
                         print(fn, file=hyps_f)
                         print(" ".join(hyp), file=hyps_f)
                         print("", file=hyps_f)
-
-            """
-            # TODO This sorting is Na-corpus centric and won't generalize. It
-            # is to sort by recording name (ie. Benevolence) then by utterance
-            # id within that (Benevolence.0, benevolence.1, ...)
-            utters = [(hyps, feat_fn, feat_fn.split(".")[0], int(feat_fn.split(".")[1]))
-                      for hyps, feat_fn in zip(hyps, feat_fn_batch)]
-            print(utters)
-            utters.sort(key=itemgetter(2,3))
-            print(utters)
-            with open(os.path.join(hyps_dir, "hyps"), "w") as hyps_f:
-                for hyp, fn, _, _ in utters:
-                    fn = "_".join(os.path.basename(fn).split(".")[:2])
-                    print(fn + ": ", file=hyps_f)
-                    print(" ".join(hyp), file=hyps_f)
-            """
-
-    def output_lattices(self, batch, restore_model_path=None):
-        """ Outputs the logits from the model, given an input batch, so that
-            lattices can ultimately be extracted."""
-
-        saver = tf.train.Saver()
-        with tf.Session(config=allow_growth_config) as sess:
-            if restore_model_path:
-                saver.restore(sess, restore_model_path)
-            else:
-                assert self.saved_model_path
-                saver.restore(sess, self.saved_model_path)
-
-            batch_x, batch_x_lens, batch_y = batch
-
-            feed_dict = {self.batch_x: batch_x,
-                         self.batch_x_lens: batch_x_lens,
-                         self.batch_y: batch_y}
-
-            # Get the log_softmax matrices
-            log_softmax = sess.run([self.log_softmax], feed_dict=feed_dict)
-            log_softmax = log_softmax[0]
-            log_softmax = np.swapaxes(log_softmax, 0, 1)
-            out_dir = os.path.join(self.exp_dir, "lattice")
-            if not os.path.exists(out_dir):
-                os.makedirs(out_dir)
-            for i, example in enumerate(log_softmax):
-                length = batch_x_lens[i]
-                np.save(os.path.join(out_dir, "utterance_%d_log_softmax" % i),
-                        example[:length])
-
-        ### Create the lattices.###
-        index_to_token = self.corpus_reader.corpus.INDEX_TO_PHONEME
-
-        # Create symbol table.
-        syms_fn = os.path.join(out_dir, "symbols.txt")
-        lattice.create_symbol_table(index_to_token, syms_fn)
-
-        # Create the FST that removes blanks and repeated tokens.
-        lattice.create_collapse_fst(index_to_token,
-                                    os.path.join(out_dir, "collapse_fst.txt"))
-        lattice.compile_fst(os.path.join(out_dir, "collapse_fst"), syms_fn)
-
-        for i, log_softmax_example in enumerate(log_softmax):
-            # Create a confusion network
-            length = batch_x_lens[i]
-            lattice.logsoftmax2confusion(log_softmax_example[:length],
-                                         index_to_token,
-                                         os.path.join(out_dir, "utterance_%d" % i),
-                                         beam_size=4)
-            lattice.compile_fst(os.path.join(out_dir, "utterance_%d.confusion" % i),
-                                syms_fn)
-
-            prefix = os.path.join(out_dir, "utterance_%d" % i)
-
-            try:
-                run_args = [os.path.join(OPENFST_PATH, "fstarcsort"),
-                            prefix + ".confusion.bin",
-                            prefix + ".confusion.sort.bin"]
-                subprocess.run(run_args)
-
-                # Compose the confusion network with the FST that removes blanks
-                # and repetitions, expanding to a larger lattice-like FST.
-                run_args = [os.path.join(OPENFST_PATH, "fstcompose"),
-                            prefix + ".confusion.sort.bin",
-                            os.path.join(out_dir, "collapse_fst.bin"),
-                            prefix + ".collapsed.bin"]
-                subprocess.run(run_args)
-
-                # Take the output projection of the FST.
-                run_args = [os.path.join(OPENFST_PATH, "fstproject"),
-                            "--project_output",
-                            prefix + ".collapsed.bin", prefix + ".projection.bin"]
-                subprocess.run(run_args)
-
-                # Push weights
-#               run_args = [os.path.join(OPENFST_PATH, "fstpush"),
-#                           "--push_weights",
-#                           prefix + ".projection.bin", prefix + ".pushed.bin"]
-#               subprocess.run(run_args)
-
-                # Remove epsilons
-                run_args = [os.path.join(OPENFST_PATH, "fstrmepsilon"),
-                            "--reverse=true",
-                            prefix + ".projection.bin", prefix + ".rmepsilon.bin"]
-                subprocess.run(run_args)
-            except FileNotFoundError:
-                print("Make sure you have OpenFST binaries installed and "
-                      "available on the path")
-                raise
 
     def eval(self, restore_model_path=None):
         """ Evaluates the model on a test set."""

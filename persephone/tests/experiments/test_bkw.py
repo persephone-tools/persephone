@@ -66,7 +66,7 @@ class TestBKW:
 
     tgt_dir = Path(config.TEST_DATA_PATH) / "bkw"
     en_words_path = Path(config.EN_WORDS_PATH)
-    NUM_UTTERS = 1004 # Or 1006?
+    NUM_UTTERS = 1004  # Or 1006?
     NUM_SPEAKERS = 19
 
     @pytest.fixture(scope="class")
@@ -107,12 +107,12 @@ class TestBKW:
         assert len(corp.utterances) == self.NUM_UTTERS
 
         # Below tests might not work since filtering of utterances by size 
-        #assert len(corp.get_train_fns()[0] +
-        #           corp.get_valid_fns()[0] +
-        #           corp.get_test_fns()[0]) == self.NUM_UTTERS
-        #assert len(corp.determine_prefixes()) == self.NUM_UTTERS
-        #assert (self.tgt_dir / "wav").is_dir()
-        #assert len(list(corp.wav_dir.iterdir())) == self.NUM_UTTERS
+        # assert len(corp.get_train_fns()[0] +
+        #            corp.get_valid_fns()[0] +
+        #            corp.get_test_fns()[0]) == self.NUM_UTTERS
+        # assert len(corp.determine_prefixes()) == self.NUM_UTTERS
+        # assert (self.tgt_dir / "wav").is_dir()
+        # assert len(list(corp.wav_dir.iterdir())) == self.NUM_UTTERS
 
     @pytest.mark.slow
     def test_bkw_preprocess(self, prep_org_data, clean_tgt_dir, preprocessed_corpus):

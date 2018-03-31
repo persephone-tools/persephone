@@ -1,4 +1,4 @@
-""" Script for formatting results of experiments """
+""" Miscellaneous functions relating to reporting experimental results."""
 
 from pathlib import Path
 from typing import Set, Dict, Tuple, Sequence, List, Union
@@ -89,6 +89,7 @@ def fmt_latex_output(hyps: Sequence[Sequence[str]],
 def fmt_error_types(hyps: Sequence[Sequence[str]],
                     refs: Sequence[Sequence[str]]
                    ) -> str:
+    """ Format some information about different error types: insertions, deletions and substitutions."""
 
     alignments = [min_edit_distance_align(ref, hyp)
                   for hyp, ref in zip(hyps, refs)]
