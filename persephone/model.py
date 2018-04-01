@@ -13,6 +13,7 @@ from typing import Union, Sequence, Set, List
 import numpy as np
 import tensorflow as tf
 
+from . import preprocess
 from . import utils
 from . import lattice
 from . import config
@@ -52,15 +53,27 @@ def load_metagraph(model_path_prefix: Union[str, Path]) -> tf.train.Saver:
 #        dense_decoded = sess.run("SparseToDense:0", feed_dict=feed_dict)
 #    return dense_decoded
 
+def dense_to_human_readable(dense_repr, index_to_label):
+    """ Converts a dense representation of model decoded output into human
+    readable, using a mapping from indices to labels. """
+
+    transcripts = []
+    for i in range(len(dense_repr)):
+        transcript = [phn_i for phn_i in dense_repr[i] if phn_i != 0]
+        transcript = [index_to_label[index] for index in transcript]
+        transcripts.append(transcript)
+
+    return transcripts
+
 def decode(model_path_prefix: Union[str, Path],
            input_paths: Sequence[Path],
            labels: Set[str]) -> List[List[str]]:
 
     model_path_prefix = str(model_path_prefix)
 
-    # Confirm that that WAVs exist.
+    # TODO Confirm that that WAVs exist.
 
-    # Confirm that the feature files exist. Create them if they don't.
+    # TODO Confirm that the feature files exist. Create them if they don't.
 
     # TODO Change the second argument to have some upper bound. If the caller
     # requests 1000 WAVs be transcribed, they shouldn't all go in one batch.
@@ -82,7 +95,7 @@ def decode(model_path_prefix: Union[str, Path],
         dense_decoded = sess.run("SparseToDense:0", feed_dict=feed_dict)
 
     # Create a human-readable representation of the decoded.
-    indices_to_labels = make_indices_to_labels(labels)
+    indices_to_labels = preprocess.labels.make_indices_to_labels(labels)
     human_readable = dense_to_human_readable(dense_decoded, indices_to_labels)
 
     return human_readable

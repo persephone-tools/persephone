@@ -406,3 +406,20 @@ def test_feed_batch(preprocessed_corpus):
         print(dense_decoded)
     hyps = bkw_reader.human_readable(dense_decoded)
     print(hyps)
+
+@pytest.mark.experiment
+def test_decode(preprocessed_corpus):
+    model_path_prefix = "testing/exp/41/0/model/model_best.ckpt"
+    bkw_reader = CorpusReader(preprocessed_corpus, batch_size=1)
+    labels = bkw_reader.corpus.labels
+    logging.debug("labels: {}".format(labels))
+    test_prefixes = bkw_reader.corpus.test_prefixes
+    logging.debug("test_fns: {}".format(test_prefixes[:10]))
+    test_feat_paths = ["testing/data/bkw/feat/{}.fbank.npy".format(prefix)
+                      for prefix in test_prefixes]
+    logging.debug("test_fns: {}".format(test_feat_paths[:10]))
+    transcripts = model.decode(model_path_prefix,
+                               test_feat_paths,
+                               labels)
+    logging.debug("transcripts: {}".format(pprint.pformat(
+        [" ".join(transcript) for transcript in transcripts])))

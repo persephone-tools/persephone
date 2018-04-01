@@ -3,7 +3,7 @@ Offers functions for tokenizing utterances into phonemes, characters or
 other symbols.
 """
 
-from typing import Callable, Iterable, NamedTuple, Set
+from typing import Callable, Iterable, NamedTuple, Set, Dict
 
 from ..utterance import Utterance
 
@@ -63,3 +63,9 @@ def segment_into_tokens(utterance: str, token_inventory: Iterable[str]):
     tokens = [tok for tok in tokens if tok != ""]
 
     return " ".join(tokens)
+
+def make_indices_to_labels(labels: Set[str]) -> Dict[int, str]:
+    """ Creates a mapping from indices to labels. """
+
+    return {index: label for index, label in
+            enumerate(["pad"] + sorted(list(labels)))}
