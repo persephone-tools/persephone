@@ -10,7 +10,7 @@ EXPERIMENTS = /path/to/experiment/output
 """
 import configparser
 import os
-from pathlib import Path
+from pkg_resources import Requirement, resource_filename
 
 config_file = configparser.ConfigParser()
 config_file.read('settings.ini')
@@ -23,9 +23,9 @@ NA_PATH = config_file.get("PATHS", "NA_PATH", fallback=os.path.join(CORPORA_BASE
 
 # For Kunwinjku data:
 BKW_PATH = config_file.get("PATHS", "BKW_PATH",
-    fallback=os.path.join(CORPORA_BASE_PATH, "BKW-speaker-ids_2/"))
+                           fallback=os.path.join(CORPORA_BASE_PATH, "BKW-speaker-ids_2/"))
 EN_WORDS_PATH = config_file.get("PATHS", "EN_WORDS_PATH",
-    fallback=os.path.join(CORPORA_BASE_PATH, "english-words/words.txt"))
+                                fallback=os.path.join(CORPORA_BASE_PATH, "english-words/words.txt"))
 
 # The directory where the preprocessed data will be held.
 TGT_DIR = config_file.get("PATHS", "TARGET", fallback="./data")
@@ -47,4 +47,7 @@ KALDI_ROOT = config_file.get("PATHS", "KALDI_ROOT_PATH", fallback="/home/oadams/
 # Used for lattice output
 OPENFST_BIN_PATH = config_file.get("PATHS", "OPEN_FST_BIN_PATH", fallback="/home/oadams/tools/openfst-1.6.2/src/bin")
 
-LOGGING_INI_PATH = config_file.get("PATHS", "log_ini_path", fallback="./logging.ini")
+# Fetch the path of the logging.ini file installed by setuptools.
+logging_ini_path = resource_filename(Requirement.parse("persephone"), "persephone/logging.ini")
+
+LOGGING_INI_PATH = config_file.get("PATHS", "log_ini_path", fallback=logging_ini_path)

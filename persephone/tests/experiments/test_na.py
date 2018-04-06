@@ -13,9 +13,9 @@ from persephone import config
 from persephone import model
 from persephone import results
 from persephone import run
-from persephone.run import prep_exp_dir
 from persephone import corpus_reader
 from persephone import rnn_ctc
+from persephone import experiment
 from persephone.context_manager import cd
 from persephone.datasets import na
 
@@ -27,9 +27,7 @@ DATA_BASE_DIR = "testing/data/"
 # it should have a txt extension.
 TEST_PER_FN = "test/test_per" 
 
-logging.config.fileConfig(config.LOGGING_INI_PATH)
-
-def set_up_base_testing_dir(data_base_dir=DATA_BASE_DIR):
+def set_up_base_testing_dir():
     """ Creates a directory to store corpora and experimental directories used
     in testing. """
 
@@ -74,6 +72,8 @@ def get_test_ler(exp_dir):
 
     return ler
 
+# Only the tutorial test actually should need to pull the data; the rest can be
+# lazy and assume the data hasn't changed (which is pretty reasonable)
 @pytest.mark.experiment
 def test_tutorial():
     """ Tests running the example described in the tutorial in README.md """
@@ -87,7 +87,7 @@ def test_tutorial():
 
     # Test the first setup encouraged in the tutorial
     corp = corpus.ReadyCorpus(na_example_dir)
-    exp_dir = run.train_ready(corp, directory=EXP_BASE_DIR)
+    exp_dir = experiment.train_ready(corp, directory=EXP_BASE_DIR)
 
     # Assert the convergence of the model at the end by reading the test scores
     ler = get_test_ler(exp_dir)
@@ -110,8 +110,8 @@ def test_fast():
 
     corp = corpus.ReadyCorpus(tiny_example_dir)
 
-    exp_dir = run.prep_exp_dir(directory=EXP_BASE_DIR)
-    model = run.get_simple_model(exp_dir, corp)
+    exp_dir = experiment.prep_exp_dir(directory=EXP_BASE_DIR)
+    model = experiment.get_simple_model(exp_dir, corp)
     model.train(min_epochs=2, max_epochs=5)
 
     # Assert the convergence of the model at the end by reading the test scores
@@ -168,7 +168,7 @@ def test_full_na():
     na.make_data_splits(label_type, train_rec_type="text", tgt_dir=na_dir)
 
     # Training with texts
-    exp_dir = run.prep_exp_dir(directory=EXP_BASE_DIR)
+    exp_dir = experiment.prep_exp_dir(directory=EXP_BASE_DIR)
     na_corpus = na.Corpus(feat_type, label_type,
                           train_rec_type="text",
                           tgt_dir=na_dir)
@@ -293,7 +293,7 @@ def test_load_meta():
     model_prefix_path = "/home/oadams/code/mam/exp/252/model/model_best.ckpt"
 
     #model_prefix_path = "/home/oadams/code/persephone/testing/exp/39/model/model_best.ckpt"
-    
+
     #loaded_graph = model.load_graph(model_prefix_path)
 
     metagraph = model.load_metagraph(model_prefix_path)

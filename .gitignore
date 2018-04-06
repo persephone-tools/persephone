@@ -18,3 +18,4 @@ log.txt
 .mypy_cache/
 .coverage
 settings.ini
+.idea/
