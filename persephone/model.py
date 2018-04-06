@@ -11,7 +11,7 @@ from typing import Union, Sequence, Set, List
 
 import tensorflow as tf
 
-from . import preprocess
+from .preprocess import labels
 from . import utils
 from . import config
 from .exceptions import PersephoneException
@@ -47,7 +47,7 @@ def dense_to_human_readable(dense_repr, index_to_label):
 
 def decode(model_path_prefix: Union[str, Path],
            input_paths: Sequence[Path],
-           labels: Set[str]) -> List[List[str]]:
+           label_set: Set[str]) -> List[List[str]]:
 
     model_path_prefix = str(model_path_prefix)
 
@@ -75,7 +75,7 @@ def decode(model_path_prefix: Union[str, Path],
         dense_decoded = sess.run("SparseToDense:0", feed_dict=feed_dict)
 
     # Create a human-readable representation of the decoded.
-    indices_to_labels = preprocess.labels.make_indices_to_labels(labels)
+    indices_to_labels = labels.make_indices_to_labels(label_set)
     human_readable = dense_to_human_readable(dense_decoded, indices_to_labels)
 
     return human_readable

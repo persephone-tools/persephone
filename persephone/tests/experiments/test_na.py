@@ -12,7 +12,6 @@ from persephone import corpus
 from persephone import config
 from persephone import model
 from persephone import results
-from persephone import run
 from persephone import corpus_reader
 from persephone import rnn_ctc
 from persephone import experiment
@@ -27,7 +26,7 @@ DATA_BASE_DIR = "testing/data/"
 # it should have a txt extension.
 TEST_PER_FN = "test/test_per" 
 
-def set_up_base_testing_dir():
+def set_up_base_testing_dir(data_base_dir=DATA_BASE_DIR):
     """ Creates a directory to store corpora and experimental directories used
     in testing. """
 
