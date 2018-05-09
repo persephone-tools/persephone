@@ -222,6 +222,10 @@ class Corpus:
         return self.tgt_dir / "test_prefixes.txt"
 
     def set_and_check_directories(self, tgt_dir: Path) -> None:
+        """
+        Make sure that the required directories exist in the target directory.
+        set variables accordingly.
+        """
 
         logger.info("Setting up directories for corpus in %s", tgt_dir)
         # Set the directory names
@@ -339,6 +343,7 @@ class Corpus:
 
     @staticmethod
     def divide_prefixes(prefixes, seed=0):
+        """Divide data into training, validation and test subsets"""
         Ratios = namedtuple("Ratios", ["train", "valid", "test"])
         ratios=Ratios(.90, .05, .05)
         train_end = int(ratios.train*len(prefixes))
@@ -404,9 +409,11 @@ class Corpus:
         return self.prefixes_to_fns(self.train_prefixes)
 
     def get_valid_fns(self):
+        """ Fetches the validation set of the corpus."""
         return self.prefixes_to_fns(self.valid_prefixes)
 
     def get_test_fns(self):
+        """ Fetches the test set of the corpus."""
         return self.prefixes_to_fns(self.test_prefixes)
 
     def get_untranscribed_prefixes(self):
