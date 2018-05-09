@@ -330,6 +330,9 @@ class Corpus:
 
     @staticmethod
     def read_prefixes(prefix_fn: Path) -> List[str]:
+        if not prefix_fn.is_file():
+            logger.warning("Expected a prefix file at path {}, but this path is"
+                           " not a file".format(prefix_fn))
         assert prefix_fn.is_file()
         with prefix_fn.open() as prefix_f:
             prefixes = [line.strip() for line in prefix_f]
