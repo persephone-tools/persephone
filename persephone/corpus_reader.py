@@ -69,7 +69,9 @@ class CorpusReader:
                 self.batch_size = 64
             # For now we hope that training numbers are powers of two or
             # something... If not, crash before anything else happens.
-            assert num_train % self.batch_size == 0
+            if num_train % self.batch_size != 0:
+                logger.critical("Invalid batch size {} provided".format(self.batch_size))
+            assert num_train % self.batch_size == 0, "Invalid batch size"
 
         random.seed(rand_seed)
 
