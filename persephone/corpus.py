@@ -247,6 +247,8 @@ class Corpus:
                 "The supplied path requires a 'label' subdirectory.")
 
     def initialize_labels(self, labels):
+
+        logger.debug("Creating mappings for labels")
         self.labels = labels
         self.vocab_size = len(self.labels)
         self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
@@ -257,11 +259,13 @@ class Corpus:
     def prepare_feats(self):
         """ Prepares input features"""
 
+        logger.debug("Preparing input features")
         self.feat_dir.mkdir(parents=True, exist_ok=True)
 
         should_extract_feats = False
         for path in self.wav_dir.iterdir():
             if not path.suffix == ".wav":
+                logger.info("Non wav file found in wav directory: %s", path)
                 continue
             prefix = os.path.basename(os.path.splitext(str(path))[0])
             mono16k_wav_path = self.feat_dir / "{}.wav".format(prefix)
@@ -286,6 +290,7 @@ class Corpus:
         test_f_exists = self.test_prefix_fn.is_file()
 
         if train_f_exists and valid_f_exists and test_f_exists:
+            logger.debug("Split for training, validation and tests specficied by files")
             self.train_prefixes = self.read_prefixes(self.train_prefix_fn)
             self.valid_prefixes = self.read_prefixes(self.valid_prefix_fn)
             self.test_prefixes = self.read_prefixes(self.test_prefix_fn)
@@ -298,6 +303,8 @@ class Corpus:
             self.feat_dir, prefixes, self.feat_type, max_samples)
 
         if not train_f_exists and not valid_f_exists and not test_f_exists:
+            logger.debug("No files supplied to define the split for training, validation"
+                         " and tests. Using default.")
             train_prefixes, valid_prefixes, test_prefixes = self.divide_prefixes(prefixes)
             self.train_prefixes = train_prefixes
             self.valid_prefixes = valid_prefixes
