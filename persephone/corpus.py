@@ -333,7 +333,7 @@ class Corpus:
         assert prefix_fn.is_file()
         with prefix_fn.open() as prefix_f:
             prefixes = [line.strip() for line in prefix_f]
-        if prefixes == []:
+        if not prefixes:
             raise PersephoneException(
                 "Empty prefix file {}. Either delete it\
                 or put something in it".format(prefix_fn))
@@ -341,7 +341,7 @@ class Corpus:
 
     @staticmethod
     def write_prefixes(prefixes: List[str], prefix_fn: Path) -> None:
-        if prefixes == []:
+        if not prefixes:
             raise PersephoneException(
                 "No prefixes. Will not write {}".format(prefix_fn))
         with prefix_fn.open("w") as prefix_f:
@@ -451,7 +451,7 @@ class Corpus:
         # Take the intersection; sort for determinism.
         prefixes = sorted(list(set(label_prefixes) & set(wav_prefixes)))
 
-        if prefixes == []:
+        if not prefixes:
             raise PersephoneException("""WARNING: Corpus object has no data. Are you sure
             it's in the correct directories? WAVs should be in {} and
             transcriptions in {} with the extension .{}""".format(
