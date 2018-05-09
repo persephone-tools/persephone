@@ -435,6 +435,9 @@ class Corpus:
                 prefixes = f.readlines()
 
             return [prefix.strip() for prefix in prefixes]
+        else:
+            logger.warning("Attempting to get untranscribed prefixes but the file ({})"
+                           " that should specify these does not exist".format(untranscribed_prefix_fn))
 
         return None
 
