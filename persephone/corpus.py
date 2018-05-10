@@ -333,7 +333,7 @@ class Corpus:
         if not prefix_fn.is_file():
             logger.critical("Expected a prefix file at path {}, but this path is"
                            " not a file".format(prefix_fn))
-        assert prefix_fn.is_file(), "Path was not a file"
+        assert prefix_fn.is_file(), "Path {} was not a file".format(prefix_fn)
         with prefix_fn.open() as prefix_f:
             prefixes = [line.strip() for line in prefix_f]
         if not prefixes:
