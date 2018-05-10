@@ -331,9 +331,9 @@ class Corpus:
     @staticmethod
     def read_prefixes(prefix_fn: Path) -> List[str]:
         if not prefix_fn.is_file():
-            logger.warning("Expected a prefix file at path {}, but this path is"
+            logger.critical("Expected a prefix file at path {}, but this path is"
                            " not a file".format(prefix_fn))
-        assert prefix_fn.is_file()
+        assert prefix_fn.is_file(), "Path was not a file"
         with prefix_fn.open() as prefix_f:
             prefixes = [line.strip() for line in prefix_f]
         if not prefixes:
@@ -367,9 +367,9 @@ class Corpus:
 
         # TODO Adjust code to cope properly with toy datasets where these
         # subsets might actually be empty.
-        assert train_prefixes
-        assert valid_prefixes
-        assert test_prefixes
+        assert train_prefixes, "Got empty set for training data"
+        assert valid_prefixes, "Got empty set for validation data"
+        assert test_prefixes, "Got empty set for testing data"
 
         return train_prefixes, valid_prefixes, test_prefixes
 
