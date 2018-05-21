@@ -60,7 +60,7 @@ def zero_pad(matrix, to_length):
     x is of length to_length."""
 
     assert matrix.shape[0] <= to_length
-    if matrix.shape[0] <= to_length:
+    if not matrix.shape[0] <= to_length:
         logger.error("zero_pad cannot be performed on matrix with shape {}"
                      " to length {}".format(matrix.shape[0], to_length))
         raise ValueError
