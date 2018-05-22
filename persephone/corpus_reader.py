@@ -71,7 +71,7 @@ class CorpusReader:
                 self.batch_size = 64
             # For now we hope that training numbers are powers of two or
             # something... If not, crash before anything else happens.
-            assert num_train % self.batch_size == 0
+
             if num_train % self.batch_size != 0:
                 logger.error("Number of training examples {} not divisible"
                              " by batch size {}.".format(num_train, self.batch_size))
