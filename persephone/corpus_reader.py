@@ -57,8 +57,10 @@ class CorpusReader:
         if batch_size:
             self.batch_size = batch_size
             if num_train % batch_size != 0:
-                raise PersephoneException("""Number of training examples %d not divisible
-                                   by batch size %d.""" % (num_train, batch_size))
+                logger.error("Number of training examples {} not divisible"
+                             " by batch size {}.".format(num_train, batch_size))
+                raise PersephoneException("Number of training examples {} not divisible"
+                                          " by batch size {}.".format(num_train, batch_size))
         else:
             # Dynamically change batch size based on number of training
             # examples.
@@ -69,9 +71,12 @@ class CorpusReader:
                 self.batch_size = 64
             # For now we hope that training numbers are powers of two or
             # something... If not, crash before anything else happens.
+
             if num_train % self.batch_size != 0:
-                logger.critical("Invalid batch size {} provided".format(self.batch_size))
-            assert num_train % self.batch_size == 0, "Invalid batch size"
+                logger.error("Number of training examples {} not divisible"
+                             " by batch size {}.".format(num_train, self.batch_size))
+                raise PersephoneException("Number of training examples {} not divisible"
+                                          " by batch size {}.".format(num_train, batch_size))
 
         random.seed(rand_seed)
 
