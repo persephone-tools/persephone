@@ -473,10 +473,13 @@ class Corpus:
 
         if train & valid:
             logger.warning("train and valid have overlapping items: {}".format(train & valid))
+            raise PersephoneException("train and valid have overlapping items: {}".format(train & valid))
         if train & test:
             logger.warning("train and test have overlapping items: {}".format(train & test))
+            raise PersephoneException("train and test have overlapping items: {}".format(train & test))
         if valid & test:
             logger.warning("valid and test have overlapping items: {}".format(valid & test))
+            raise PersephoneException("valid and test have overlapping items: {}".format(valid & test))
 
     def pickle(self):
         """ Pickles the Corpus object in a file in tgt_dir. """
