@@ -197,13 +197,6 @@ class Model:
                            Training will continue until this is met or another
                            stopping condition occus.
             batch_size: The number of utterances in each batch.
-            total_size: The number of TIMIT training examples to use.
-            num_epochs: The number of times to iterate over all the training
-                        examples.
-            feat_type:  Is the identifier for the type of features we're using.
-                        'mfcc13_d' means MFCCs of 13 dimensions with their first
-                        derivatives.
-            save_n: Whether to save the model at every n epochs.
             restore_model_path: The path to restore a model from.
         """
         logger.info("Training model")
