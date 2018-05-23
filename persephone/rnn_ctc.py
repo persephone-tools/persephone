@@ -23,8 +23,9 @@ class Model(model.Model):
             for key, val in self.__dict__.items():
                 print("%s=%s" % (key, val), file=desc_f)
 
-    def __init__(self, exp_dir, corpus_reader, num_layers=3: int,
-                 hidden_size=250: int, beam_width=100: int, decoding_merge_repeated=True: bool):
+    def __init__(self, exp_dir, corpus_reader, num_layers: int = 3,
+                 hidden_size: int=250, beam_width: int = 100,
+                 decoding_merge_repeated: bool = True):
         super().__init__(exp_dir, corpus_reader)
 
         if not os.path.isdir(exp_dir):
