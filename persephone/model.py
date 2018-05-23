@@ -186,6 +186,16 @@ class Model:
               max_epochs: int = 100, restore_model_path=None):
         """ Train the model.
 
+            min_epochs: minimum number of epochs to run training for.
+            max_epochs: maximum number of epochs to run training for.
+            early_stopping_steps: Stop training after this number of steps
+                                  if no LER improvement has been made.
+            max_valid_ler: Maximum LER for the validation set.
+                           Training will continue until this is met or another
+                           stopping condition occus.
+            max_train_ler: Maximum LER for the training set.
+                           Training will continue until this is met or another
+                           stopping condition occus.
             batch_size: The number of utterances in each batch.
             total_size: The number of TIMIT training examples to use.
             num_epochs: The number of times to iterate over all the training
