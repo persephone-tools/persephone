@@ -151,14 +151,14 @@ class Corpus:
                 codeswitched utterances.
             label_segmenter: An object that has an attribute `segment_labels`,
                 which is creates new `Utterance` instances from old ones,
-                by segmenting the tokens in their `text attribute. Note,
+                by segmenting the tokens in their `text` attribute. Note,
                 `LabelSegmenter` might be better as a function, the only issue
                 is it needs to carry with it a list of labels. This could
                 potentially be a function attribute.
-            speakers: A list of speakers to filter for. If None, utterances
+            speakers: A list of speakers to filter for. If `None`, utterances
                 from speakers are.
             tier_prefixes: A collection of strings that prefix ELAN tiers to
-                filter for. For example, if this is ("xv", "rf"), then tiers
+                filter for. For example, if this is `("xv", "rf")`, then tiers
                 named "xv", "xv@Mark", "rf@Rose" would be extracted if they
                 existed.
 
