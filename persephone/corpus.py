@@ -426,7 +426,7 @@ class Corpus:
         """ Fetches the test set of the corpus."""
         return self.prefixes_to_fns(self.test_prefixes)
 
-    def get_untranscribed_prefixes(self):
+    def get_untranscribed_prefixes(self) -> List[str]:
 
         # TODO Change to pathlib.Path
         untranscribed_prefix_fn = join(str(self.tgt_dir), "untranscribed_prefixes.txt")
@@ -438,10 +438,9 @@ class Corpus:
         else:
             logger.warning("Attempting to get untranscribed prefixes but the file ({})"
                            " that should specify these does not exist".format(untranscribed_prefix_fn))
+        return []
 
-        return None
-
-    def get_untranscribed_fns(self):
+    def get_untranscribed_fns(self) -> List[str]:
         feat_fns = [os.path.join(str(self.feat_dir), "untranscribed", "%s.%s.npy" % (prefix, self.feat_type))
                     for prefix in self.untranscribed_prefixes]
         return feat_fns
