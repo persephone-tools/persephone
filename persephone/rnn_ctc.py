@@ -15,7 +15,7 @@ def lstm_cell(hidden_size):
 class Model(model.Model):
     """ An acoustic model with a LSTM/CTC architecture. """
 
-    def write_desc(self):
+    def write_desc(self) -> None:
         """ Writes a description of the model to the exp_dir. """
 
         path = os.path.join(self.exp_dir, "model_description.txt")
@@ -25,7 +25,7 @@ class Model(model.Model):
 
     def __init__(self, exp_dir, corpus_reader, num_layers: int = 3,
                  hidden_size: int=250, beam_width: int = 100,
-                 decoding_merge_repeated: bool = True):
+                 decoding_merge_repeated: bool = True) -> None:
         super().__init__(exp_dir, corpus_reader)
 
         if not os.path.isdir(exp_dir):

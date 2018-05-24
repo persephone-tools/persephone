@@ -95,12 +95,12 @@ class Model:
     dense_ref = None
     saved_model_path = None
 
-    def __init__(self, exp_dir, corpus_reader):
+    def __init__(self, exp_dir, corpus_reader) -> None:
         self.exp_dir = exp_dir
         self.corpus_reader = corpus_reader
         self.log_softmax = None
 
-    def transcribe(self, restore_model_path=None):
+    def transcribe(self, restore_model_path=None) -> None:
         """ Transcribes an untranscribed dataset. Similar to eval() except
         no reference translation is assumed, thus no LER is calculated.
         """
@@ -142,7 +142,7 @@ class Model:
                         print(" ".join(hyp), file=hyps_f)
                         print("", file=hyps_f)
 
-    def eval(self, restore_model_path=None):
+    def eval(self, restore_model_path=None) -> None:
         """ Evaluates the model on a test set."""
 
         saver = tf.train.Saver()
@@ -183,7 +183,7 @@ class Model:
 
     def train(self, early_stopping_steps: int = 10, min_epochs: int = 30,
               max_valid_ler: float = 1.0, max_train_ler: float = 0.3,
-              max_epochs: int = 100, restore_model_path=None):
+              max_epochs: int = 100, restore_model_path=None) -> None:
         """ Train the model.
 
             min_epochs: minimum number of epochs to run training for.
