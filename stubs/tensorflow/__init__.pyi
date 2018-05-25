@@ -1,7 +1,8 @@
 from typing import Any, Dict, Optional
 
-from . import train
 from . import errors
+from . import train
+from . import nn
 
 class dtype: ...
 
