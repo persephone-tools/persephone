@@ -84,14 +84,20 @@ class Model:
     """ Generic model for our ASR tasks.
 
     Attributes:
-        batch_x
-        batch_x_lens
-        batch_y
-        optimizer
-        ler
-        dense_decoded
-        dense_ref
-        saved_model_path
+        batch_x: A batch of input features. ("x" is the typical notation in ML
+                 papers on this topic denoting model input)
+        batch_x_lens: The lengths of each utterance. This is used by Tensorflow
+                      to know how much to pad utterances that are shorter than
+                      this length.
+        batch_y: Reference labels for a batch ("y" is the typical notation in ML
+                 papers on this topic denoting training labels)
+        optimizer: The gradient descent method being used. (Typically we use Adam
+                   because it has provided good results but any stochastic gradient
+                   descent method could be substituted here)
+        ler: Label error rate.
+        dense_decoded: Dense representation of the model transcription output.
+        dense_ref: Dense representation of the reference transcription.
+        saved_model_path: Path to where the Tensorflow model is being saved on disk.
     """
 
     def __init__(self, exp_dir, corpus_reader) -> None:
