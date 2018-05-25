@@ -81,24 +81,31 @@ def decode(model_path_prefix: Union[str, Path],
     return human_readable
 
 class Model:
-    """ Generic model for our ASR tasks. """
+    """ Generic model for our ASR tasks.
 
-    # TODO Delete these, because they're not meant to be class variables.
-    # They were just here to placate pylint, but the way scoping of graph variables
-    # needs to change. They shouldn't really be instance variables either.
-    batch_x = None
-    batch_x_lens = None
-    batch_y = None
-    optimizer = None
-    ler = None
-    dense_decoded = None
-    dense_ref = None
-    saved_model_path = None
+    Attributes:
+        batch_x
+        batch_x_lens
+        batch_y
+        optimizer
+        ler
+        dense_decoded
+        dense_ref
+        saved_model_path
+    """
 
     def __init__(self, exp_dir, corpus_reader) -> None:
         self.exp_dir = exp_dir
         self.corpus_reader = corpus_reader
         self.log_softmax = None
+        self.batch_x = None
+        self.batch_x_lens = None
+        self.batch_y = None
+        self.optimizer = None
+        self.ler = None
+        self.dense_decoded = None
+        self.dense_ref = None
+        self.saved_model_path = None
 
     def transcribe(self, restore_model_path=None) -> None:
         """ Transcribes an untranscribed dataset. Similar to eval() except
