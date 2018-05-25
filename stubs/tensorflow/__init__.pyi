@@ -21,3 +21,4 @@ class Session:
         pass
     def __exit__(self, type, value, traceback):
         pass
+    def close(self) -> None: ...
