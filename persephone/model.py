@@ -219,16 +219,19 @@ class Model:
         frame = inspect.currentframe()
         # pylint: disable=deprecated-method
         # It was a mistake to deprecate this in Python 3.5
-        args, _, _, values = inspect.getargvalues(frame)
-        with open(os.path.join(self.exp_dir, "train_description.txt"), "w") as desc_f:
-            for arg in args:
-                if type(values[arg]) in [str, int, float] or isinstance(
-                        values[arg], type(None)):
-                    print("%s=%s" % (arg, values[arg]), file=desc_f)
-                else:
-                    print("%s=%s" % (arg, values[arg].__dict__), file=desc_f)
-            print("num_train=%s" % (self.corpus_reader.num_train), file=desc_f)
-            print("batch_size=%s" % (self.corpus_reader.batch_size), file=desc_f)
+        if frame:
+            args, _, _, values = inspect.getargvalues(frame)
+            with open(os.path.join(self.exp_dir, "train_description.txt"), "w") as desc_f:
+                for arg in args:
+                    if type(values[arg]) in [str, int, float] or isinstance(
+                            values[arg], type(None)):
+                        print("%s=%s" % (arg, values[arg]), file=desc_f)
+                    else:
+                        print("%s=%s" % (arg, values[arg].__dict__), file=desc_f)
+                print("num_train=%s" % (self.corpus_reader.num_train), file=desc_f)
+                print("batch_size=%s" % (self.corpus_reader.batch_size), file=desc_f)
+        else:
+            logger.error("Couldn't find frame information, failed to write train_description.txt")
 
         out_file = open(os.path.join(self.exp_dir, "train_log.txt"), "w")
 
