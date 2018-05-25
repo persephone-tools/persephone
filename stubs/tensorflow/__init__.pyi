@@ -42,3 +42,9 @@ def global_variables_initializer() -> Any: ...
 # Original function definition for reset_default_graph here:
 # https://github.com/tensorflow/tensorflow/blob/28340a4b12e286fe14bb7ac08aebe325c3e150b4/tensorflow/python/framework/ops.py#L5531
 def reset_default_graph() -> Graph: ...
+
+
+# Original function definition for placeholder here:
+# https://github.com/tensorflow/tensorflow/blob/28340a4b12e286fe14bb7ac08aebe325c3e150b4/tensorflow/python/ops/array_ops.py#L1693
+# TODO: improve types
+def placeholder(dtype: Any, shape: Any = None, name: Optional[str] = None) -> Any: ...
