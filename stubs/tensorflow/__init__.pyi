@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional
 
 from . import train
+from . import errors
 
 class gpu_options:
     def __init__(self):
