@@ -169,7 +169,8 @@ class Corpus:
                                               tier_prefixes=tier_prefixes)
 
         # Filter utterances based on some criteria (such as codeswitching).
-        utterances = [utter for utter in utterances if utterance_filter(utter)]
+        if utterance_filter:
+            utterances = [utter for utter in utterances if utterance_filter(utter)]
         utterances = utterance.remove_duplicates(utterances)
 
         # Segment the labels in the utterances appropriately
