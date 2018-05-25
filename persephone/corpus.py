@@ -163,6 +163,9 @@ class Corpus:
                 existed.
 
         """
+        # This currently bails out if label_segmenter is not provided
+        if not label_segmenter:
+            raise ValueError("A label segmenter must be provided via label_segmenter")
 
         # Read utterances from org_dir.
         utterances = elan.utterances_from_dir(org_dir,
