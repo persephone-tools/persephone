@@ -15,7 +15,7 @@ class Graph:
     pass
 
 class Session:
-    def __init__(self, graph: Graph = None) -> None:
+    def __init__(self, graph: Graph = None, config: ConfigProto = None) -> None:
         pass
     def __enter__(self):
         pass
