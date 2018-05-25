@@ -205,10 +205,10 @@ class Model:
                                   if no LER improvement has been made.
             max_valid_ler: Maximum LER for the validation set.
                            Training will continue until this is met or another
-                           stopping condition occus.
+                           stopping condition occurs.
             max_train_ler: Maximum LER for the training set.
                            Training will continue until this is met or another
-                           stopping condition occus.
+                           stopping condition occurs.
             restore_model_path: The path to restore a model from.
         """
         logger.info("Training model")
