@@ -64,6 +64,21 @@ class Session(BaseSession):
         pass
     def close(self) -> None: ...
 
+# defined here https://github.com/tensorflow/tensorflow/blob/d8f9538ab48e3c677aaf532769d29bc29a05b76e/tensorflow/python/ops/variables.py#L40
+class Variable:
+    def __init__(self,
+                initial_value: Any=None,
+                trainable: Optional[bool]=True,
+                collections: Optional[Any]=None,
+                validate_shape: Optional[bool]=True,
+                caching_device: Optional[Any]=None,
+                name: Optional[str]=None,
+                variable_def: Optional[Any]=None,
+                dtype: Optional[Any]=None,
+                expected_shape: Optional[Any]=None,
+                import_scope: Optional[str]=None,
+                constraint: Optional[Any]=None) -> None : ...
+
 
 # Original function definition for edit_distance here:
 # https://github.com/tensorflow/tensorflow/blob/faff6f2a60a01dba57cf3a3ab832279dbe174798/tensorflow/python/ops/array_ops.py#L2049
