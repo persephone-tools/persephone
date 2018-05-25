@@ -196,7 +196,6 @@ class Model:
             max_train_ler: Maximum LER for the training set.
                            Training will continue until this is met or another
                            stopping condition occus.
-            batch_size: The number of utterances in each batch.
             restore_model_path: The path to restore a model from.
         """
         logger.info("Training model")
