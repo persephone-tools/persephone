@@ -10,6 +10,14 @@ def ctc_beam_search_decoder(inputs : Any , sequence_length: Any, beam_width: int
 # TODO: types
 # scope VariableScope
 def bidirectional_dynamic_rnn(cell_fw: Any, cell_bw: Any, inputs: Any, sequence_length: Any = None,
-                          initial_state_fw: Any = None, initial_state_bw: Any =None,
+                          initial_state_fw: Any = None, initial_state_bw: Any = None,
                           dtype: Any = None, parallel_iterations: Optional[int] = None,
                           swap_memory: Optional[bool]=False, time_major:Optional[bool]=False, scope: Any=None) -> Tuple[Any, Any]: ...
+
+# ctc_loss implemented here:
+# https://github.com/tensorflow/tensorflow/blob/bb4e724f429ae5c9afad3a343dc1f483ecde1f74/tensorflow/python/ops/ctc_ops.py#L32
+# TODO: types
+def ctc_loss(labels: Any, inputs: Any, sequence_length: Any,
+             preprocess_collapse_repeated: bool=False,
+             ctc_merge_repeated: bool=True, ignore_longer_outputs_than_inputs: bool=False,
+             time_major: bool=True) -> Any: ...
