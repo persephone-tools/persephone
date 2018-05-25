@@ -76,3 +76,12 @@ def placeholder(dtype: Any, shape: Any = None, name: Optional[str] = None) -> An
 # https://github.com/tensorflow/tensorflow/blob/28340a4b12e286fe14bb7ac08aebe325c3e150b4/tensorflow/python/ops/array_ops.py#L1749
 # TODO: improve types
 def sparse_placeholder(dtype: Any, shape: Any = None, name: Optional[str] = None) -> Any: ...
+
+
+# Original function definition for shape here:
+# https://github.com/tensorflow/tensorflow/blob/28340a4b12e286fe14bb7ac08aebe325c3e150b4/tensorflow/python/ops/array_ops.py#L197
+# TODO: improve types. return type of None here is a hack
+# input is `Tensor` or `SparsTensor`
+# out_type is an optional integral data-type (`int32` or `int64`).
+# returns a `Tensor` of type specified by `out_type`
+def shape(input: Any, name: Optional[str] = None, out_type: Any = None) -> Any: ...
