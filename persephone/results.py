@@ -33,8 +33,9 @@ def filtered_error_rate(hyps_path: Union[str, Path], refs_path: Union[str, Path]
     # For the case where there are no tokens left after filtering.
     only_empty = True
     for entry in hyps:
-        if entry != []:
+        if entry is not []:
             only_empty = False
+            break # found something so can move on immediately
     if only_empty:
         return -1
 
