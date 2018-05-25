@@ -32,6 +32,9 @@ class dtypes:
     float32 = float32
 
 
+class Tensor:
+    pass
+
 class gpu_options:
     def __init__(self):
         self.allow_growth: bool
@@ -118,6 +121,11 @@ def sparse_tensor_to_dense(sp_input: Any, default_value: Any=0, validate_indices
 # returns a `Tensor` of type specified by `out_type`
 def shape(input: Any, name: Optional[str] = None, out_type: Any = None) -> Any: ...
 
-# # Original function definition for truncated_normal here:
+# Original function definition for truncated_normal here:
 # https://github.com/tensorflow/tensorflow/blob/70cd9ed2d2ea37a6da6f813a99b32c03e90736a4/tensorflow/python/ops/random_ops.py#L139
-def truncated_normal(shape, mean: Any=0.0, stddev: Any=1.0, dtype: Any=dtypes.float32, seed: Any=None, name: Optional[str]=None) -> Any: ...
+def truncated_normal(shape: Any, mean: Any=0.0, stddev: Any=1.0, dtype: Any=dtypes.float32, seed: Any=None, name: Optional[str]=None) -> Any: ...
+
+# Original function definition for reduce_mean here:
+# https://github.com/tensorflow/tensorflow/blob/3f8febf04b075eef0950a18c7e122f0addeacfe9/tensorflow/python/ops/math_ops.py#L1384
+# Returns Tensor
+def reduce_mean(input_tensor: Any, axis: Any=None, keepdims: Any=None, name: Optional[str]=None, reduction_indices: Any=None, keep_dims: Any=None) -> Any: ...
