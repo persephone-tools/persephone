@@ -174,7 +174,8 @@ class Corpus:
         utterances = utterance.remove_duplicates(utterances)
 
         # Segment the labels in the utterances appropriately
-        utterances = [label_segmenter.segment_labels(utter) for utter in utterances]
+        if label_segmenter:
+            utterances = [label_segmenter.segment_labels(utter) for utter in utterances]
 
         # Remove utterances without transcriptions.
         utterances = utterance.remove_empty_text(utterances)
