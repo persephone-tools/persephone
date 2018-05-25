@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from . import train
 
@@ -21,7 +21,7 @@ class BaseSession:
     # list of graph elements if fetches is a list of single graph elements OR
     # a dictionary
     # Leaving it as Any for now
-    def run(self, fetches: Any, feed_dict: Dict[str, Any] = None, run_options: Any = None, run_metadata: Any = None) -> Any: ...
+    def run(self, fetches: Any, feed_dict: Optional[Dict[Any, Any]] = None, run_options: Any = None, run_metadata: Any = None) -> Any: ...
 
     def close(self) -> None: ...
 
