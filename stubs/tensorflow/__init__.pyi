@@ -59,6 +59,12 @@ class Session(BaseSession):
         pass
     def close(self) -> None: ...
 
+
+# Original function definition for edit_distance here:
+# https://github.com/tensorflow/tensorflow/blob/faff6f2a60a01dba57cf3a3ab832279dbe174798/tensorflow/python/ops/array_ops.py#L2049
+# return type is Tensor
+def edit_distance(hypothesis: Any, truth: Any, normalize: Optional[bool]=True, name: Optional[str]="edit_distance") -> Any: ...
+
 # Original function definition for global_variables_initializer here:
 # https://github.com/tensorflow/tensorflow/blob/28340a4b12e286fe14bb7ac08aebe325c3e150b4/tensorflow/python/ops/variables.py#L1565
 def global_variables_initializer() -> Any: ...
