@@ -27,6 +27,11 @@ class float16(floating): ...
 class float32(floating): ...
 class float64(floating): ...
 
+
+class dtypes:
+    float32 = float32
+
+
 class gpu_options:
     def __init__(self):
         self.allow_growth: bool
@@ -92,3 +97,7 @@ def sparse_placeholder(dtype: Any, shape: Any = None, name: Optional[str] = None
 # out_type is an optional integral data-type (`int32` or `int64`).
 # returns a `Tensor` of type specified by `out_type`
 def shape(input: Any, name: Optional[str] = None, out_type: Any = None) -> Any: ...
+
+# # Original function definition for truncated_normal here:
+# https://github.com/tensorflow/tensorflow/blob/70cd9ed2d2ea37a6da6f813a99b32c03e90736a4/tensorflow/python/ops/random_ops.py#L139
+def truncated_normal(shape, mean: Any=0.0, stddev: Any=1.0, dtype: Any=dtypes.float32, seed: Any=None, name: Optional[str]=None) -> Any: ...
