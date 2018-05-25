@@ -130,7 +130,7 @@ class Corpus:
     @classmethod
     def from_elan(cls: Type[CorpusT], org_dir: Path, tgt_dir: Path,
                   feat_type: str = "fbank", label_type: str = "phonemes",
-                  utterance_filter: Callable[[Utterance], bool] = None,
+                  utterance_filter: Callable[[Utterance], bool] = lambda x: True,
                   label_segmenter: LabelSegmenter = None,
                   speakers: List[str] = None, lazy: bool = True,
                   tier_prefixes: Tuple[str, ...] = ("xv", "rf")) -> CorpusT:
