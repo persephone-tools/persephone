@@ -33,3 +33,7 @@ class Session(BaseSession):
     def __exit__(self, type, value, traceback):
         pass
     def close(self) -> None: ...
+
+# Original function definition for global_variables_initializer here:
+# https://github.com/tensorflow/tensorflow/blob/28340a4b12e286fe14bb7ac08aebe325c3e150b4/tensorflow/python/ops/variables.py#L1565
+def global_variables_initializer() -> Any: ...
