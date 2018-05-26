@@ -81,6 +81,8 @@ class Corpus:
                 included in the corpus.
 
         """
+        if speaker:
+            raise NotImplementedError("Speakers not implemented")
 
         logger.debug("Creating a new Corpus object with feature type %s, label type %s,"
                      "target directory %s, label set %s, max_samples %d, speakers %s",
