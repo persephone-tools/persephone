@@ -352,10 +352,10 @@ class Model:
                             if valid_ler <= max_valid_ler and ler <= max_train_ler:
                                 # Then training error has moved sufficiently
                                 # towards convergence.
-                                print("""Stopping since best validation score hasn't been
-                                    beaten in %d epochs and at least %d have been
-                                    done. The valid ler (%d) is below %d and 
-                                    the train ler (%d) is below %d.""" %
+                                print("Stopping since best validation score hasn't been"
+                                     " beaten in %d epochs and at least %d have been"
+                                     " done. The valid ler (%d) is below %d and"
+                                     " the train ler (%d) is below %d." %
                                     (early_stopping_steps, min_epochs, valid_ler,
                                     max_valid_ler, ler, max_train_ler),
                                     file=out_file, flush=True)
