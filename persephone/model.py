@@ -198,6 +198,12 @@ class Model:
             with open(os.path.join(hyps_dir, "test_per"), "w") as per_f:
                 print("Test PER: %f, tf LER: %f" % (test_per, test_ler), file=per_f)
 
+    def output_best_scores(self, best_epoch_str):
+        """Output best scores to the filesystem"""
+        BEST_SCORES_FILENAME = "best_scores.txt"
+        with open(os.path.join(self.exp_dir, BEST_SCORES_FILENAME), "w") as best_f:
+            print(best_epoch_str, file=best_f, flush=True)
+
     def train(self, early_stopping_steps: int = 10, min_epochs: int = 30,
               max_valid_ler: float = 1.0, max_train_ler: float = 0.3,
               max_epochs: int = 100, restore_model_path=None) -> None:
@@ -337,11 +343,10 @@ class Model:
                 print("Steps since last best valid_ler: %d" % (steps_since_last_record), file=out_file)
                 steps_since_last_record += 1
                 if epoch >= max_epochs:
-                    with open(os.path.join(self.exp_dir, "best_scores.txt"), "w") as best_f:
-                        print(best_epoch_str, file=best_f, flush=True)
-                        sess.close()
-                        out_file.close()
-                        break
+                    self.output_best_scores(best_epoch_str)
+                    sess.close()
+                    out_file.close()
+                    break
                 if steps_since_last_record >= early_stopping_steps:
                     if epoch >= min_epochs:
                         # Then we've done the minimum number of epochs.
@@ -355,11 +360,10 @@ class Model:
                                   (early_stopping_steps, min_epochs, valid_ler,
                                   max_valid_ler, ler, max_train_ler),
                                   file=out_file, flush=True)
-                            with open(os.path.join(self.exp_dir, "best_scores.txt"), "w") as best_f:
-                                print(best_epoch_str, file=best_f, flush=True)
-                                sess.close()
-                                out_file.close()
-                                break
+                            self.output_best_scores(best_epoch_str)
+                            sess.close()
+                            out_file.close()
+                            break
                         else:
                             # Keep training because we haven't achieved
                             # convergence.
