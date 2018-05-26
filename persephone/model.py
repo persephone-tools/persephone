@@ -243,7 +243,7 @@ class Model:
         else:
             logger.error("Couldn't find frame information, failed to write train_description.txt")
 
-        out_file = open(os.path.join(self.exp_dir, "train_log.txt"), "w")
+        training_log_path = os.path.join(self.exp_dir, "train_log.txt")
 
         # Load the validation set
         valid_x, valid_x_lens, valid_y = self.corpus_reader.valid_batch()
@@ -316,13 +316,15 @@ class Model:
 
                 epoch_str = "Epoch %d. Training LER: %f, validation LER: %f, validation PER: %f" % (
                     epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per)
-                print(epoch_str, flush=True, file=out_file)
+                with open(training_log_path, "w") as out_file:
+                    print(epoch_str, flush=True, file=out_file)
                 if best_epoch_str == None:
                     best_epoch_str = epoch_str
 
                 # Implement early stopping.
                 if valid_ler < best_valid_ler:
-                    print("New best valid_ler", file=out_file)
+                    with open(training_log_path, "w") as out_file:
+                        print("New best valid_ler", file=out_file)
                     best_valid_ler = valid_ler
                     best_epoch_str = epoch_str
                     steps_since_last_record = 0
@@ -340,11 +342,11 @@ class Model:
                             print(" ".join(hyp), file=hyps_f)
 
                 else:
-                    print("Steps since last best valid_ler: %d" % (steps_since_last_record), file=out_file)
+                    with open(training_log_path, "w") as out_file:
+                        print("Steps since last best valid_ler: %d" % (steps_since_last_record), file=out_file)
                     steps_since_last_record += 1
                     if epoch >= max_epochs:
                         self.output_best_scores(best_epoch_str)
-                        out_file.close()
                         break
                     if steps_since_last_record >= early_stopping_steps:
                         if epoch >= min_epochs:
@@ -352,15 +354,15 @@ class Model:
                             if valid_ler <= max_valid_ler and ler <= max_train_ler:
                                 # Then training error has moved sufficiently
                                 # towards convergence.
-                                print("Stopping since best validation score hasn't been"
-                                     " beaten in %d epochs and at least %d have been"
-                                     " done. The valid ler (%d) is below %d and"
-                                     " the train ler (%d) is below %d." %
-                                    (early_stopping_steps, min_epochs, valid_ler,
-                                    max_valid_ler, ler, max_train_ler),
-                                    file=out_file, flush=True)
+                                with open(training_log_path, "w") as out_file:
+                                    print("Stopping since best validation score hasn't been"
+                                        " beaten in %d epochs and at least %d have been"
+                                        " done. The valid ler (%d) is below %d and"
+                                        " the train ler (%d) is below %d." %
+                                        (early_stopping_steps, min_epochs, valid_ler,
+                                        max_valid_ler, ler, max_train_ler),
+                                        file=out_file, flush=True)
                                 self.output_best_scores(best_epoch_str)
-                                out_file.close()
                                 break
                             else:
                                 # Keep training because we haven't achieved
@@ -373,5 +375,3 @@ class Model:
 
             # Finally, run evaluation on the test set.
             self.eval(restore_model_path=self.saved_model_path)
-
-            out_file.close()
