@@ -21,3 +21,9 @@ def ctc_loss(labels: Any, inputs: Any, sequence_length: Any,
              preprocess_collapse_repeated: bool=False,
              ctc_merge_repeated: bool=True, ignore_longer_outputs_than_inputs: bool=False,
              time_major: bool=True) -> Any: ...
+
+# log_softmax implemented here:
+# https://github.com/tensorflow/tensorflow/blob/95c8f92947c6a420b70759d9d0d7825f2f5de368/tensorflow/python/ops/nn_ops.py#L1741
+# TODO: types
+# Returns Tensor
+def log_softmax(logits: Any, axis: Optional[int] = None, name: Optional[str]=None, dim: Optional[int]=None) -> Any: ...

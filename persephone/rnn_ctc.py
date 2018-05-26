@@ -84,7 +84,7 @@ class Model(model.Model):
         self.logits = tf.transpose(self.logits, (1, 0, 2), name="logits") #type: ignore
 
         # For lattice construction
-        self.log_softmax = tf.nn.log_softmax(self.logits)#type: ignore
+        self.log_softmax = tf.nn.log_softmax(self.logits)
 
         self.decoded, self.log_prob = tf.nn.ctc_beam_search_decoder(
                 self.logits, self.batch_x_lens, beam_width=beam_width,
