@@ -252,129 +252,126 @@ class Model:
 
         export_dir = os.path.join(self.exp_dir, "export_dir")
 
-        sess = tf.Session(config=allow_growth_config)
+        with tf.Session(config=allow_growth_config) as sess:
 
-        if restore_model_path:
-            logger.info("Restoring model from path %s", restore_model_path)
-            saver.restore(sess, restore_model_path)
-        else:
-            sess.run(tf.global_variables_initializer())
+            if restore_model_path:
+                logger.info("Restoring model from path %s", restore_model_path)
+                saver.restore(sess, restore_model_path)
+            else:
+                sess.run(tf.global_variables_initializer())
 
-        # Prepare directory to output hypotheses to
-        hyps_dir = os.path.join(self.exp_dir, "decoded")
-        if not os.path.isdir(hyps_dir):
-            os.mkdir(hyps_dir)
+            # Prepare directory to output hypotheses to
+            hyps_dir = os.path.join(self.exp_dir, "decoded")
+            if not os.path.isdir(hyps_dir):
+                os.mkdir(hyps_dir)
 
-        best_epoch_str = None
-        for epoch in itertools.count():
-            print("\nexp_dir %s, epoch %d" % (self.exp_dir, epoch))
-            batch_gen = self.corpus_reader.train_batch_gen()
+            best_epoch_str = None
+            for epoch in itertools.count():
+                print("\nexp_dir %s, epoch %d" % (self.exp_dir, epoch))
+                batch_gen = self.corpus_reader.train_batch_gen()
 
-            train_ler_total = 0
-            batch_i = None
-            print("\tBatch...", end="")
-            for batch_i, batch in enumerate(batch_gen):
-                print("%d..." % batch_i, end="")
-                sys.stdout.flush()
-                batch_x, batch_x_lens, batch_y = batch
+                train_ler_total = 0
+                batch_i = None
+                print("\tBatch...", end="")
+                for batch_i, batch in enumerate(batch_gen):
+                    print("%d..." % batch_i, end="")
+                    sys.stdout.flush()
+                    batch_x, batch_x_lens, batch_y = batch
 
-                feed_dict = {self.batch_x: batch_x,
-                             self.batch_x_lens: batch_x_lens,
-                             self.batch_y: batch_y}
+                    feed_dict = {self.batch_x: batch_x,
+                                self.batch_x_lens: batch_x_lens,
+                                self.batch_y: batch_y}
 
-                _, ler, = sess.run([self.optimizer, self.ler],
-                                   feed_dict=feed_dict)
+                    _, ler, = sess.run([self.optimizer, self.ler],
+                                    feed_dict=feed_dict)
 
-                train_ler_total += ler
+                    train_ler_total += ler
 
-            feed_dict = {self.batch_x: valid_x,
-                         self.batch_x_lens: valid_x_lens,
-                         self.batch_y: valid_y}
+                feed_dict = {self.batch_x: valid_x,
+                            self.batch_x_lens: valid_x_lens,
+                            self.batch_y: valid_y}
 
-            try:
-                valid_ler, dense_decoded, dense_ref = sess.run(
-                    [self.ler, self.dense_decoded, self.dense_ref],
-                    feed_dict=feed_dict)
-            except tf.errors.ResourceExhaustedError:
-                import pprint
-                print("Ran out of memory allocating a batch:")
-                pprint.pprint(feed_dict)
-                logger.critical("Ran out of memory allocating a batch: %s", pprint.pformat(feed_dict))
-                raise
-            hyps, refs = self.corpus_reader.human_readable_hyp_ref(
-                dense_decoded, dense_ref)
-            # Log hypotheses
-            with open(os.path.join(hyps_dir, "epoch%d_hyps" % epoch), "w") as hyps_f:
-                for hyp in hyps:
-                    print(" ".join(hyp), file=hyps_f)
-            if epoch == 0:
-                with open(os.path.join(hyps_dir, "refs"), "w") as refs_f:
-                    for ref in refs:
-                        print(" ".join(ref), file=refs_f)
-
-            valid_per = utils.batch_per(hyps, refs)
-
-            epoch_str = "Epoch %d. Training LER: %f, validation LER: %f, validation PER: %f" % (
-                epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per)
-            print(epoch_str, flush=True, file=out_file)
-            if best_epoch_str == None:
-                best_epoch_str = epoch_str
-
-            # Implement early stopping.
-            if valid_ler < best_valid_ler:
-                print("New best valid_ler", file=out_file)
-                best_valid_ler = valid_ler
-                best_epoch_str = epoch_str
-                steps_since_last_record = 0
-
-                # Save the model.
-                path = os.path.join(self.exp_dir, "model", "model_best.ckpt")
-                if not os.path.exists(os.path.dirname(path)):
-                    os.mkdir(os.path.dirname(path))
-                saver.save(sess, path)
-                self.saved_model_path = path
-
-                # Output best hyps
-                with open(os.path.join(hyps_dir, "best_hyps"), "w") as hyps_f:
+                try:
+                    valid_ler, dense_decoded, dense_ref = sess.run(
+                        [self.ler, self.dense_decoded, self.dense_ref],
+                        feed_dict=feed_dict)
+                except tf.errors.ResourceExhaustedError:
+                    import pprint
+                    print("Ran out of memory allocating a batch:")
+                    pprint.pprint(feed_dict)
+                    logger.critical("Ran out of memory allocating a batch: %s", pprint.pformat(feed_dict))
+                    raise
+                hyps, refs = self.corpus_reader.human_readable_hyp_ref(
+                    dense_decoded, dense_ref)
+                # Log hypotheses
+                with open(os.path.join(hyps_dir, "epoch%d_hyps" % epoch), "w") as hyps_f:
                     for hyp in hyps:
                         print(" ".join(hyp), file=hyps_f)
+                if epoch == 0:
+                    with open(os.path.join(hyps_dir, "refs"), "w") as refs_f:
+                        for ref in refs:
+                            print(" ".join(ref), file=refs_f)
 
-            else:
-                print("Steps since last best valid_ler: %d" % (steps_since_last_record), file=out_file)
-                steps_since_last_record += 1
-                if epoch >= max_epochs:
-                    self.output_best_scores(best_epoch_str)
-                    sess.close()
-                    out_file.close()
-                    break
-                if steps_since_last_record >= early_stopping_steps:
-                    if epoch >= min_epochs:
-                        # Then we've done the minimum number of epochs.
-                        if valid_ler <= max_valid_ler and ler <= max_train_ler:
-                            # Then training error has moved sufficiently
-                            # towards convergence.
-                            print("""Stopping since best validation score hasn't been
-                                  beaten in %d epochs and at least %d have been
-                                  done. The valid ler (%d) is below %d and 
-                                  the train ler (%d) is below %d.""" %
-                                  (early_stopping_steps, min_epochs, valid_ler,
-                                  max_valid_ler, ler, max_train_ler),
-                                  file=out_file, flush=True)
-                            self.output_best_scores(best_epoch_str)
-                            sess.close()
-                            out_file.close()
-                            break
+                valid_per = utils.batch_per(hyps, refs)
+
+                epoch_str = "Epoch %d. Training LER: %f, validation LER: %f, validation PER: %f" % (
+                    epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per)
+                print(epoch_str, flush=True, file=out_file)
+                if best_epoch_str == None:
+                    best_epoch_str = epoch_str
+
+                # Implement early stopping.
+                if valid_ler < best_valid_ler:
+                    print("New best valid_ler", file=out_file)
+                    best_valid_ler = valid_ler
+                    best_epoch_str = epoch_str
+                    steps_since_last_record = 0
+
+                    # Save the model.
+                    path = os.path.join(self.exp_dir, "model", "model_best.ckpt")
+                    if not os.path.exists(os.path.dirname(path)):
+                        os.mkdir(os.path.dirname(path))
+                    saver.save(sess, path)
+                    self.saved_model_path = path
+
+                    # Output best hyps
+                    with open(os.path.join(hyps_dir, "best_hyps"), "w") as hyps_f:
+                        for hyp in hyps:
+                            print(" ".join(hyp), file=hyps_f)
+
+                else:
+                    print("Steps since last best valid_ler: %d" % (steps_since_last_record), file=out_file)
+                    steps_since_last_record += 1
+                    if epoch >= max_epochs:
+                        self.output_best_scores(best_epoch_str)
+                        out_file.close()
+                        break
+                    if steps_since_last_record >= early_stopping_steps:
+                        if epoch >= min_epochs:
+                            # Then we've done the minimum number of epochs.
+                            if valid_ler <= max_valid_ler and ler <= max_train_ler:
+                                # Then training error has moved sufficiently
+                                # towards convergence.
+                                print("""Stopping since best validation score hasn't been
+                                    beaten in %d epochs and at least %d have been
+                                    done. The valid ler (%d) is below %d and 
+                                    the train ler (%d) is below %d.""" %
+                                    (early_stopping_steps, min_epochs, valid_ler,
+                                    max_valid_ler, ler, max_train_ler),
+                                    file=out_file, flush=True)
+                                self.output_best_scores(best_epoch_str)
+                                out_file.close()
+                                break
+                            else:
+                                # Keep training because we haven't achieved
+                                # convergence.
+                                continue
                         else:
-                            # Keep training because we haven't achieved
-                            # convergence.
+                            # Keep training because we haven't done the minimum
+                            # numper of epochs.
                             continue
-                    else:
-                        # Keep training because we haven't done the minimum
-                        # numper of epochs.
-                        continue
 
-        # Finally, run evaluation on the test set.
-        self.eval(restore_model_path=self.saved_model_path)
+            # Finally, run evaluation on the test set.
+            self.eval(restore_model_path=self.saved_model_path)
 
-        sess.close()
-        out_file.close()
+            out_file.close()
