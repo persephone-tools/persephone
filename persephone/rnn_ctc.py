@@ -56,7 +56,7 @@ class Model(model.Model):
 
         for i in range(num_layers):
 
-            with tf.variable_scope("layer_%d" % i):
+            with tf.variable_scope("layer_%d" % i): #type: ignore
 
                 cell_fw = lstm_cell(self.hidden_size)
                 cell_bw = lstm_cell(self.hidden_size)
@@ -66,25 +66,25 @@ class Model(model.Model):
                         time_major=False)
 
                 # Self outputs now becomes [batch_num, time, hidden_size*2]
-                self.outputs_concat = tf.concat((self.out_fw, self.out_bw), 2)
+                self.outputs_concat = tf.concat((self.out_fw, self.out_bw), 2) #type: ignore
 
                 # For feeding into the next layer
                 layer_input = self.outputs_concat
 
-        self.outputs = tf.reshape(self.outputs_concat, [-1, self.hidden_size*2])
+        self.outputs = tf.reshape(self.outputs_concat, [-1, self.hidden_size*2]) #type: ignore
 
         # Single-variable names are appropriate for weights an biases.
         # pylint: disable=invalid-name
         W = tf.Variable(tf.truncated_normal([hidden_size*2, vocab_size],
-                stddev=np.sqrt(2.0 / (2*hidden_size))))
-        b = tf.Variable(tf.zeros([vocab_size]))
-        self.logits = tf.matmul(self.outputs, W) + b
-        self.logits = tf.reshape(self.logits, [batch_size, -1, vocab_size])
+                stddev=np.sqrt(2.0 / (2*hidden_size)))) #type: ignore
+        b = tf.Variable(tf.zeros([vocab_size])) #type: ignore
+        self.logits = tf.matmul(self.outputs, W) + b #type: ignore
+        self.logits = tf.reshape(self.logits, [batch_size, -1, vocab_size]) #type: ignore
         # igormq made it time major, because of an optimization in ctc_loss.
-        self.logits = tf.transpose(self.logits, (1, 0, 2), name="logits")
+        self.logits = tf.transpose(self.logits, (1, 0, 2), name="logits") #type: ignore
 
         # For lattice construction
-        self.log_softmax = tf.nn.log_softmax(self.logits)
+        self.log_softmax = tf.nn.log_softmax(self.logits)#type: ignore
 
         self.decoded, self.log_prob = tf.nn.ctc_beam_search_decoder(
                 self.logits, self.batch_x_lens, beam_width=beam_width,
@@ -98,9 +98,9 @@ class Model(model.Model):
         self.loss = tf.nn.ctc_loss(self.batch_y, self.logits, self.batch_x_lens,
                 preprocess_collapse_repeated=False, ctc_merge_repeated=True)
         self.cost = tf.reduce_mean(self.loss)
-        self.optimizer = tf.train.AdamOptimizer().minimize(self.cost)
+        self.optimizer = tf.train.AdamOptimizer().minimize(self.cost) #type: ignore
 
         self.ler = tf.reduce_mean(tf.edit_distance(
-                tf.cast(self.decoded[0], tf.int32), self.batch_y))
+                tf.cast(self.decoded[0], tf.int32), self.batch_y)) #type: ignore
 
         self.write_desc()
