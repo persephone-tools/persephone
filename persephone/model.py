@@ -330,11 +330,11 @@ class Model:
                     steps_since_last_record = 0
 
                     # Save the model.
-                    path = os.path.join(self.exp_dir, "model", "model_best.ckpt")
-                    if not os.path.exists(os.path.dirname(path)):
-                        os.mkdir(os.path.dirname(path))
-                    saver.save(sess, path)
-                    self.saved_model_path = path
+                    checkpoint_path = os.path.join(self.exp_dir, "model", "model_best.ckpt")
+                    if not os.path.exists(os.path.dirname(checkpoint_path)):
+                        os.mkdir(os.path.dirname(checkpoint_path))
+                    saver.save(sess, checkpoint_path)
+                    self.saved_model_path = checkpoint_path
 
                     # Output best hyps
                     with open(os.path.join(hyps_dir, "best_hyps"), "w") as hyps_f:
