@@ -84,6 +84,10 @@ class Model:
     """ Generic model for our ASR tasks.
 
     Attributes:
+        exp_dir: Path that the experiment directory is located
+        corpus_reader: `CorpusReader` object that provides access to the corpus
+                       this model is being trained on.
+        log_softmax: log softmax function
         batch_x: A batch of input features. ("x" is the typical notation in ML
                  papers on this topic denoting model input)
         batch_x_lens: The lengths of each utterance. This is used by Tensorflow
