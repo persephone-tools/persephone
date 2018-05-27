@@ -105,8 +105,8 @@ def batch_per(hyps: Sequence[Sequence[T]],
 
     macro_per = 0.0
     for i in range(len(hyps)):
-        ref = [phn_i for phn_i in refs[i] if phn_i != 0]
-        hyp = [phn_i for phn_i in hyps[i] if phn_i != 0]
+        ref = [phn_i for phn_i in refs[i]]
+        hyp = [phn_i for phn_i in hyps[i]]
         macro_per += distance.edit_distance(ref, hyp)/len(ref)
     return macro_per/len(hyps)
 

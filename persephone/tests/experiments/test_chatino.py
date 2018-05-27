@@ -124,9 +124,9 @@ def test_transcribe_joes_data(joes_data):
     logging.debug("hyps refs: {}".format(list(zip(hyps, refs))))
     ler = persephone.results.filtered_error_rate("hyps.txt", "refs.txt", labels)
     per = persephone.results.filtered_error_rate("hyps.txt", "refs.txt", chatino_phonemes())
-    #ter = persephone.results.filtered_error_rate("hyps.txt", "refs.txt", chatino_tones())
+    ter = persephone.results.filtered_error_rate("hyps.txt", "refs.txt", chatino_tones())
     logging.debug("LER: {}".format(ler))
     logging.debug("PER: {}".format(per))
-    #logging.debug("TER: {}".format(ter))
+    logging.debug("TER: {}".format(ter))
     persephone.results.fmt_latex_output(hyps, refs, prefixes, Path("fmt_output.tex"))
 

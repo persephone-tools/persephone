@@ -34,6 +34,10 @@ def filtered_error_rate(hyps_path: Union[str, Path], refs_path: Union[str, Path]
     if only_empty:
         return -1
 
+    hyps_refs = [hyp_ref for hyp_ref in zip(hyps, refs)
+                 if len(hyp_ref[1]) != 0]
+    hyps, refs = zip(*hyps_refs)
+
     return utils.batch_per(hyps, refs)
 
 def latex_header() -> str:
@@ -53,6 +57,7 @@ def fmt_latex_output(hyps: Sequence[Sequence[str]],
                      refs: Sequence[Sequence[str]],
                      prefixes: Sequence[str],
                      out_fn: Path,
+                     sort: bool = False
                     ) -> None:
     """ Output the hypotheses and references to a LaTeX source file for
     pretty printing.
@@ -61,14 +66,23 @@ def fmt_latex_output(hyps: Sequence[Sequence[str]],
     alignments_ = [min_edit_distance_align(ref, hyp)
                   for hyp, ref in zip(hyps, refs)]
 
+    prefixes_and_alignments = list(zip(prefixes, alignments_))
+
+    def sort_by_prefix_num(prefix_and_alignment):
+        sp = prefix_and_alignment[0].split(".")
+        return sp[0], int(sp[-1])
+
+    prefixes_and_alignments.sort(key=sort_by_prefix_num)
+
     with out_fn.open("w") as out_f:
         print(latex_header(), file=out_f)
 
         print("\\begin{document}\n"
               "\\begin{longtable}{ll}", file=out_f)
         print("\\toprule", file=out_f)
-        for sent in zip(prefixes, alignments_):
+        for sent in prefixes_and_alignments:
             prefix = sent[0]
+            prefix.split(".")
             alignments = sent[1:]
             print("Utterance ID: &", prefix.strip().replace("_", "\_"), "\\\\", file=out_f)
             for i, alignment in enumerate(alignments):
