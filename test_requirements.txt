@@ -1,0 +1,4 @@
+tox
+pylint>1.8
+pytest
+mypy>=0.6

@@ -18,6 +18,10 @@ def filter_labels(sent: Sequence[str], labels: Set[str] = None) -> List[str]:
 def filtered_error_rate(hyps_path: Union[str, Path], refs_path: Union[str, Path], labels: Set[str]) -> float:
     """ Returns the error rate of hypotheses in hyps_path against references in refs_path after filtering only for labels in labels.
     """
+    if isinstance(hyps_path, Path):
+        hyps_path = str(hyps_path)
+    if isinstance(refs_path, Path):
+        refs_path = str(refs_path)
 
     with open(hyps_path) as hyps_f:
         lines = hyps_f.readlines()
@@ -29,8 +33,9 @@ def filtered_error_rate(hyps_path: Union[str, Path], refs_path: Union[str, Path]
     # For the case where there are no tokens left after filtering.
     only_empty = True
     for entry in hyps:
-        if entry != []:
+        if entry is not []:
             only_empty = False
+            break # found something so can move on immediately
     if only_empty:
         return -1
 

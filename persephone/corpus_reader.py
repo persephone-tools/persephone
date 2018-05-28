@@ -24,7 +24,9 @@ class CorpusReader:
     rand = True
 
     def __init__(self, corpus, num_train=None, batch_size=None, max_samples=None, rand_seed=0):
-        """ corpus: The Corpus object that interfaces with a given corpus.
+        """ Construct a new `CorpusReader` instance.
+            
+            corpus: The Corpus object that interfaces with a given corpus.
             num_train: The number of training instances from the corpus used.
             batch_size: The size of the batches to yield. If None, then it is
                         num_train / 32.0.

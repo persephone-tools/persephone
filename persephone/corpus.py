@@ -81,6 +81,8 @@ class Corpus:
                 included in the corpus.
 
         """
+        if speakers:
+            raise NotImplementedError("Speakers not implemented")
 
         logger.debug("Creating a new Corpus object with feature type %s, label type %s,"
                      "target directory %s, label set %s, max_samples %d, speakers %s",
@@ -151,29 +153,34 @@ class Corpus:
                 codeswitched utterances.
             label_segmenter: An object that has an attribute `segment_labels`,
                 which is creates new `Utterance` instances from old ones,
-                by segmenting the tokens in their `text attribute. Note,
+                by segmenting the tokens in their `text` attribute. Note,
                 `LabelSegmenter` might be better as a function, the only issue
                 is it needs to carry with it a list of labels. This could
                 potentially be a function attribute.
-            speakers: A list of speakers to filter for. If None, utterances
+            speakers: A list of speakers to filter for. If `None`, utterances
                 from speakers are.
             tier_prefixes: A collection of strings that prefix ELAN tiers to
-                filter for. For example, if this is ("xv", "rf"), then tiers
+                filter for. For example, if this is `("xv", "rf")`, then tiers
                 named "xv", "xv@Mark", "rf@Rose" would be extracted if they
                 existed.
 
         """
+        # This currently bails out if label_segmenter is not provided
+        if not label_segmenter:
+            raise ValueError("A label segmenter must be provided via label_segmenter")
 
         # Read utterances from org_dir.
         utterances = elan.utterances_from_dir(org_dir,
                                               tier_prefixes=tier_prefixes)
 
         # Filter utterances based on some criteria (such as codeswitching).
-        utterances = [utter for utter in utterances if utterance_filter(utter)]
+        if utterance_filter:
+            utterances = [utter for utter in utterances if utterance_filter(utter)]
         utterances = utterance.remove_duplicates(utterances)
 
         # Segment the labels in the utterances appropriately
-        utterances = [label_segmenter.segment_labels(utter) for utter in utterances]
+        if label_segmenter:
+            utterances = [label_segmenter.segment_labels(utter) for utter in utterances]
 
         # Remove utterances without transcriptions.
         utterances = utterance.remove_empty_text(utterances)

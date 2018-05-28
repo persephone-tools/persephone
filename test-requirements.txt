@@ -1,6 +1,0 @@
-tox
-pylint
-pytest
-mypy
-# Sytem-wide:
-python3-dev (On Ubuntu)
