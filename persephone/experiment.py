@@ -21,7 +21,7 @@ def get_exp_dir_num(parent_dir):
 
 def _prepare_directory(directory_path):
     """
-    Prepare the directory structure required for the experiement
+    Prepare the directory structure required for the experiment
     :returns: returns the name of the newly created directory
     """
     exp_num = get_exp_dir_num(directory_path)
@@ -60,7 +60,7 @@ def prep_exp_dir(directory=EXP_DIR):
         # Then the package was probably installed via pypi. Get the version
         # number instead.
         with open(os.path.join(exp_dir, "version.txt"), "w") as f:
-            print("Persphone version {}".format(persephone.__version__), file=f)
+            print("Persephone version {}".format(persephone.__version__), file=f)
 
     return exp_dir
 
