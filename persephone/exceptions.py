@@ -17,6 +17,6 @@ class DirtyRepoException(PersephoneException):
 
 class EmptyReferenceException(PersephoneException):
     """
-    When calculating word error rates, the reference string must be of 
+    When calculating word error rates, the reference string must be of
     length >= 1. Otherwise, this exception will be thrown.
     """

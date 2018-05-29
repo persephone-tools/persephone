@@ -85,8 +85,7 @@ class Corpus:
             raise NotImplementedError("Speakers not implemented")
 
         logger.debug("Creating a new Corpus object with feature type %s, label type %s,"
-                     "target directory %s, label set %s, max_samples %d, speakers %s",
-                     feat_type, label_type, tgt_dir, labels, max_samples, speakers)   
+                     "target directory %s, label set %s, ms, max_samples, speakers")
         #: A string representing the type of speech feature (eg. "fbank"
         #: for log filterbank energies).
         self.feat_type = feat_type
@@ -297,7 +296,7 @@ class Corpus:
         test_f_exists = self.test_prefix_fn.is_file()
 
         if train_f_exists and valid_f_exists and test_f_exists:
-            logger.debug("Split for training, validation and tests specficied by files")
+            logger.debug("Split for training, validation and tests specified by files")
             self.train_prefixes = self.read_prefixes(self.train_prefix_fn)
             self.valid_prefixes = self.read_prefixes(self.valid_prefix_fn)
             self.test_prefixes = self.read_prefixes(self.test_prefix_fn)

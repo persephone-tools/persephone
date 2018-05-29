@@ -105,7 +105,7 @@ def fmt_error_types(hyps: Sequence[Sequence[str]],
 
     arrow_counter = Counter() # type: Dict[Tuple[str, str], int]
     for alignment in alignments:
-        arrow_counter.update(alignment) 
+        arrow_counter.update(alignment)
     sub_count = sum([count for arrow, count in arrow_counter.items()
                 if arrow[0] != arrow[1] and arrow[0] != "" and arrow[1] != ""])
     dels = [(arrow[0], count) for arrow, count in arrow_counter.items()

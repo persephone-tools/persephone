@@ -97,7 +97,7 @@ def clean_tgt_dir():
 
 @pytest.fixture
 def preprocessed_corpus(prep_org_data):
-    """ Ensure's corpus preprocessing happens before any of the tests
+    """ Ensures corpus preprocessing happens before any of the tests
     run that rely on it"""
     return bkw.create_corpus(tgt_dir=tgt_dir)
 
@@ -331,7 +331,7 @@ class TestBKW:
         assert len(corp.get_train_fns()) == NUM_UTTERS
 
     def test_deterministic(self, prep_org_data):
-        """ Ensures loading and processing utterences from ELAN files is
+        """ Ensures loading and processing utterances from ELAN files is
         deterministic.
         """
         bkw_org_path = prep_org_data
