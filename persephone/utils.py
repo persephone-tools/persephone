@@ -172,7 +172,7 @@ def wav_length(fn):
 
     args = [config.SOX_PATH, fn, "-n", "stat"]
     p = subprocess.Popen(
-        [config.SOX_PATH, fn, "-n", "stat"], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     length_line = str(p.communicate()[1]).split("\\n")[1].split()
     print(length_line)
     assert length_line[0] == "Length"
