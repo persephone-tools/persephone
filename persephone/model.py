@@ -5,7 +5,6 @@ import itertools
 import logging
 import os
 from pathlib import Path
-import subprocess
 import sys
 from typing import Union, Sequence, Set, List
 
