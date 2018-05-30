@@ -381,7 +381,7 @@ def prepare_feats(feat_type, org_wav_dir=ORG_WAV_DIR, feat_dir=FEAT_DIR, tgt_wav
             except FileNotFoundError:
                 continue
             indices = [PHONEMES_TO_INDICES[label] for label in labels]
-            one_hots = one_hots = [[0]*len(PHONEMES) for _ in labels]
+            one_hots = [[0]*len(PHONEMES) for _ in labels]
             for i, index in enumerate(indices):
                 one_hots[i][index] = 1
                 one_hots = np.array(one_hots)
