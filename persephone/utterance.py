@@ -80,6 +80,10 @@ def remove_duplicates(utterances: List[Utterance]) -> List[Utterance]:
     return filtered_utters
 
 def remove_empty_text(utterances: List[Utterance]) -> List[Utterance]:
+    """Remove empty utterances from a list of utterances
+    Args:
+        utterances: The list of utterance we are processing
+    """
     return [utter for utter in utterances if utter.text.strip() != ""]
 
 # Doing everything in milliseconds now; other units are only for reporting to
