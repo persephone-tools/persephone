@@ -65,7 +65,11 @@ INDICES_TO_PHONEMES = {index: phn for index, phn in enumerate(PHONEMES)}
 #INDICES2TONES = {index: tone for index, tone in enumerate(TONES)}
 
 def preprocess_na(sent, label_type):
+    """Preprocess Na sentences
 
+        sent: A sentence
+        label_type: The type of label provided
+    """
     if label_type == "phonemes_and_tones":
         phonemes = True
         tones = True
@@ -529,6 +533,7 @@ class Corpus(corpus.Corpus):
         super().__init__(feat_type, label_type, tgt_dir, self.labels, max_samples=max_samples)
 
     def make_data_splits(self, max_samples, valid_story=None, test_story=None):
+        """Split data into train, valid and test groups"""
         # TODO Make this also work with wordlists.
         if valid_story or test_story:
             if not (valid_story and test_story):
