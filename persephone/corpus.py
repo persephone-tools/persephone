@@ -15,7 +15,6 @@ from typing import List, Callable, Tuple, Type, TypeVar
 
 import numpy as np
 
-from . import config
 from .preprocess import feat_extract
 from . import utils
 from .exceptions import PersephoneException

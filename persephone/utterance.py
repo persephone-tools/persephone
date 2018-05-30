@@ -1,5 +1,4 @@
 from collections import defaultdict
-import json
 from pathlib import Path
 from typing import List, NamedTuple, Set, Sequence, Tuple, DefaultDict, Dict
 

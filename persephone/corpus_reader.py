@@ -5,10 +5,8 @@ import logging.config
 import pprint
 import random
 
-from nltk.metrics import distance
 import numpy as np
 
-from . import config
 from . import utils
 from .exceptions import PersephoneException
 
