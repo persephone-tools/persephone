@@ -85,9 +85,17 @@ def remove_empty_text(utterances: List[Utterance]) -> List[Utterance]:
 # Doing everything in milliseconds now; other units are only for reporting to
 # users
 def duration(utter: Utterance) -> int:
+    """Get the duration of an utterance in milliseconds
+    Args:
+        utter: The utterance we are finding the duration of
+    """
     return utter.end_time - utter.start_time
 
 def total_duration(utterances: List[Utterance]) -> int:
+    """Get the duration of an entire list of utterances in milliseconds
+    Args:
+        utterances: The list of utterance we are finding the duration of
+    """
     return sum([duration(utter) for utter in utterances])
 
 def make_speaker_utters(utterances: List[Utterance]) -> Dict[str, List[Utterance]]:
