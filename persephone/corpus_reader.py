@@ -129,7 +129,7 @@ class CorpusReader:
             random.shuffle(fn_batches)
 
         for fn_batch in fn_batches:
-            logger.debug("Batch of training filenames: " +
+            logger.debug("Batch of training filenames: %s",
                           pprint.pformat(fn_batch))
             yield self.load_batch(fn_batch)
 
