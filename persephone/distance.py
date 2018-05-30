@@ -183,7 +183,7 @@ def word_error_rate(ref: Sequence[T], hyp: Sequence[T]) -> float:
         hyp: The hypothesis to be evaluated against the reference.
 
     Returns:
-        The word error rate of the supplied hypthesis with respect to the
+        The word error rate of the supplied hypothesis with respect to the
         reference string.
 
     Raises:

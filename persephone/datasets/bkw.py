@@ -14,7 +14,6 @@ from .. import corpus
 from .. import config
 from ..preprocess.labels import segment_into_tokens
 from ..utterance import Utterance
-from ..preprocess import elan
 from ..preprocess.labels import LabelSegmenter
 from ..corpus import Corpus
 

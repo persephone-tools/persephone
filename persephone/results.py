@@ -44,15 +44,15 @@ def filtered_error_rate(hyps_path: Union[str, Path], refs_path: Union[str, Path]
 def latex_header() -> str:
     """ Produces a LaTeX header for the fmt_latex_*() functions to use. """
 
-    return ("\documentclass[10pt]{article}\n"
-              "\\usepackage[a4paper,margin=0.5in,landscape]{geometry}\n"
-              "\\usepackage[utf8]{inputenc}\n"
-              "\\usepackage{xcolor}\n"
-              "\\usepackage{polyglossia}\n"
-              "\\usepackage{booktabs}\n"
-              "\\usepackage{longtable}\n"
-              "\setmainfont[Mapping=tex-text,Ligatures=Common,Scale=MatchLowercase]{Doulos SIL}\n"
-              "\DeclareRobustCommand{\hl}[1]{{\\textcolor{red}{#1}}}\n")
+    return (r"""\documentclass[10pt]{article}
+\usepackage[a4paper,margin=0.5in,landscape]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{xcolor}"
+\usepackage{polyglossia}
+\usepackage{booktabs}
+\usepackage{longtable}
+\setmainfont[Mapping=tex-text,Ligatures=Common,Scale=MatchLowercase]{Doulos SIL}"
+\DeclareRobustCommand{hl}[1]{{\textcolor{red}{#1}}}""")
 
 def fmt_latex_output(hyps: Sequence[Sequence[str]],
                      refs: Sequence[Sequence[str]],
@@ -71,11 +71,11 @@ def fmt_latex_output(hyps: Sequence[Sequence[str]],
 
         print("\\begin{document}\n"
               "\\begin{longtable}{ll}", file=out_f)
-        print("\\toprule", file=out_f)
+        print(r"\toprule", file=out_f)
         for sent in zip(prefixes, alignments_):
             prefix = sent[0]
             alignments = sent[1:]
-            print("Utterance ID: &", prefix.strip().replace("_", "\_"), "\\\\", file=out_f)
+            print("Utterance ID: &", prefix.strip().replace(r"_", r"\_"), r"\\", file=out_f)
             for i, alignment in enumerate(alignments):
                 ref_list = []
                 hyp_list = []
@@ -86,14 +86,14 @@ def fmt_latex_output(hyps: Sequence[Sequence[str]],
                         hyp_list.append(arrow[1])
                     else:
                         # Then highlight the errors.
-                        ref_list.append("\hl{%s}" % arrow[0])
-                        hyp_list.append("\hl{%s}" % arrow[1])
-                print("Ref: &", "".join(ref_list), "\\\\", file=out_f)
-                print("Hyp: &", "".join(hyp_list), "\\\\", file=out_f)
-            print("\\midrule", file=out_f)
+                        ref_list.append("\\hl{%s}" % arrow[0])
+                        hyp_list.append("\\hl{%s}" % arrow[1])
+                print("Ref: &", "".join(ref_list), r"\\", file=out_f)
+                print("Hyp: &", "".join(hyp_list), r"\\", file=out_f)
+            print(r"\midrule", file=out_f)
 
-        print("\end{longtable}", file=out_f)
-        print("\end{document}", file=out_f)
+        print(r"\end{longtable}", file=out_f)
+        print(r"\end{document}", file=out_f)
 
 def fmt_error_types(hyps: Sequence[Sequence[str]],
                     refs: Sequence[Sequence[str]]
@@ -105,7 +105,7 @@ def fmt_error_types(hyps: Sequence[Sequence[str]],
 
     arrow_counter = Counter() # type: Dict[Tuple[str, str], int]
     for alignment in alignments:
-        arrow_counter.update(alignment) 
+        arrow_counter.update(alignment)
     sub_count = sum([count for arrow, count in arrow_counter.items()
                 if arrow[0] != arrow[1] and arrow[0] != "" and arrow[1] != ""])
     dels = [(arrow[0], count) for arrow, count in arrow_counter.items()
@@ -183,10 +183,10 @@ def fmt_latex_untranscribed(hyps: Sequence[Sequence[str]],
         print(latex_header(), file=out_f)
         print("\\begin{document}\n"
               "\\begin{longtable}{ll}", file=out_f)
-        print("\\toprule", file=out_f)
+        print(r"\toprule", file=out_f)
         for hyp, prefix in hyps_prefixes:
-            print("Utterance ID: &", prefix.strip().replace("_", "\_"), "\\\\", file=out_f)
-            print("Hypothesis: &", hyp, "\\\\", file=out_f)
+            print("Utterance ID: &", prefix.strip().replace(r"_", r"\_"), "\\\\", file=out_f)
+            print("Hypothesis: &", hyp, r"\\", file=out_f)
             print("\\midrule", file=out_f)
-        print("\end{longtable}", file=out_f)
-        print("\end{document}", file=out_f)
+        print(r"\end{longtable}", file=out_f)
+        print(r"\end{document}", file=out_f)
