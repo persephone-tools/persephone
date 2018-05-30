@@ -114,11 +114,11 @@ def speaker_durations(utterances: List[Utterance]) -> List[Tuple[str, int]]:
 
     speaker_utters = make_speaker_utters(utterances)
 
-    speaker_durations = []
+    speaker_duration_tuples = [] # type: List[Tuple[str, int]]
     for speaker in speaker_utters:
-        speaker_durations.append((speaker, total_duration(speaker_utters[speaker])))
+        speaker_duration_tuples.append((speaker, total_duration(speaker_utters[speaker])))
 
-    return speaker_durations
+    return speaker_duration_tuples
 
 def remove_too_short(utterances: List[Utterance],
                      _winlen=25, winstep=10) -> List[Utterance]:
