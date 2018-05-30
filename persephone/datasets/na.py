@@ -67,6 +67,7 @@ INDICES_TO_PHONEMES = {index: phn for index, phn in enumerate(PHONEMES)}
 def preprocess_na(sent, label_type):
     """Preprocess Na sentences
 
+    Args:
         sent: A sentence
         label_type: The type of label provided
     """
@@ -94,6 +95,7 @@ def preprocess_na(sent, label_type):
         raise ValueError("Unrecognized label type: %s" % label_type)
 
     def pop_phoneme(sentence):
+        """Pop phonemes off a sentence one at a time"""
         # TODO desperately needs refactoring
 
         # Treating fillers as single tokens; normalizing to əəə and mmm
