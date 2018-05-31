@@ -521,6 +521,29 @@ class Corpus:
             return pickle.load(f)
 
 
+def determine_labels(tgt_dir, label_type):
+    """ Returns a set of phonemes found in the corpus. """
+    logger.info("Finding phonemes of type %s in directory %s", label_type, tgt_dir)
+
+    label_dir = os.path.join(tgt_dir, "label/")
+    if not os.path.isdir(label_dir):
+        raise FileNotFoundError(
+            "The directory {} does not exist.".format(tgt_dir))
+
+    phonemes = set()
+    for fn in os.listdir(label_dir):
+        if fn.endswith(label_type):
+            with open(join(label_dir, fn)) as f:
+                try:
+                    line_phonemes = set(f.readline().split())
+                except UnicodeDecodeError:
+                    logger.error("Unicode decode error on file %s", fn)
+                    print("Unicode decode error on file {}".format(fn))
+                    raise
+                phonemes = phonemes.union(line_phonemes)
+    return phonemes
+
+
 class ReadyCorpus(Corpus):
     """ Interface to a corpus that has WAV files and label files split into
     utterances and segregated in a directory with a "wav" and "label" dir. """
@@ -531,29 +554,8 @@ class ReadyCorpus(Corpus):
             "ReadyCorpus is deprecated, use Corpus instead",
             DeprecationWarning
         )
-        labels = self.determine_labels(tgt_dir, label_type)
+        labels = determine_labels(tgt_dir, label_type)
 
         super().__init__(feat_type, label_type, Path(tgt_dir), labels)
 
-    @staticmethod
-    def determine_labels(tgt_dir, label_type):
-        """ Returns a set of phonemes found in the corpus. """
-        logger.info("Finding phonemes of type %s in directory %s", label_type, tgt_dir)
 
-        label_dir = os.path.join(tgt_dir, "label/")
-        if not os.path.isdir(label_dir):
-            raise FileNotFoundError(
-                "The directory {} does not exist.".format(tgt_dir))
-
-        phonemes = set()
-        for fn in os.listdir(label_dir):
-            if fn.endswith(label_type):
-                with open(join(label_dir, fn)) as f:
-                    try:
-                        line_phonemes = set(f.readline().split())
-                    except UnicodeDecodeError:
-                        logger.error("Unicode decode error on file %s", fn)
-                        print("Unicode decode error on file {}".format(fn))
-                        raise
-                    phonemes = phonemes.union(line_phonemes)
-        return phonemes
