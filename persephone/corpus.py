@@ -526,7 +526,11 @@ class ReadyCorpus(Corpus):
     utterances and segregated in a directory with a "wav" and "label" dir. """
 
     def __init__(self, tgt_dir, feat_type="fbank", label_type="phonemes"):
-
+        import warnings
+        warnings.warn(
+            "ReadyCorpus is deprecated, use Corpus instead",
+            DeprecationWarning
+        )
         labels = self.determine_labels(tgt_dir, label_type)
 
         super().__init__(feat_type, label_type, Path(tgt_dir), labels)
