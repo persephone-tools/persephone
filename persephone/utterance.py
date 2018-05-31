@@ -96,6 +96,7 @@ def duration(utter: Utterance) -> int:
     return utter.end_time - utter.start_time
 
 def total_duration(utterances: List[Utterance]) -> int:
+
     """Get the duration of an entire list of utterances in milliseconds
     Args:
         utterances: The list of utterance we are finding the duration of
