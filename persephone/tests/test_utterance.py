@@ -101,3 +101,63 @@ def test_utterance_durations():
     utterance_group = [utter_a1, utter_a2]
     group_duration = total_duration(utterance_group)
     assert group_duration == duration_a1 + duration_a2
+
+def test_make_speaker_utters():
+    """Test that we can make an associative mapping between speak names
+    and the utterances that they made"""
+
+    from persephone.utterance import Utterance, make_speaker_utters
+    utter_a = Utterance(
+        org_media_path=Path(
+            'test.wav'),
+        org_transcription_path=Path(
+            'test.txt'),
+        prefix='test',
+        start_time=1,
+        end_time=2,
+        text='a text', speaker='a'
+    )
+
+    utter_b = Utterance(
+        org_media_path=Path(
+            'test.wav'),
+        org_transcription_path=Path(
+            'test.txt'),
+        prefix='test',
+        start_time=1,
+        end_time=2,
+        text='b text', speaker='b'
+    )
+
+    utter_c = Utterance(
+        org_media_path=Path(
+            'test.wav'),
+        org_transcription_path=Path(
+            'test.txt'),
+        prefix='test',
+        start_time=1,
+        end_time=2,
+        text='the first thing c said', speaker='c'
+    )
+
+    utter_c1 = Utterance(
+        org_media_path=Path(
+            'test.wav'),
+        org_transcription_path=Path(
+            'test.txt'),
+        prefix='test',
+        start_time=6,
+        end_time=10,
+        text='the second thing c said', speaker='c'
+    )
+
+    all_utterances = [utter_a, utter_b, utter_c, utter_c1]
+
+    speakers_to_utterances = make_speaker_utters(all_utterances)
+    assert 'a' in speakers_to_utterances
+    assert 'b' in speakers_to_utterances
+    assert 'c' in speakers_to_utterances
+    assert 'NotValidSpeaker' not in speakers_to_utterances
+    assert len(speakers_to_utterances['a']) == 1
+    assert len(speakers_to_utterances['b']) == 1
+    assert len(speakers_to_utterances['c']) == 2
