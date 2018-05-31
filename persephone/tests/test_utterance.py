@@ -161,3 +161,63 @@ def test_make_speaker_utters():
     assert len(speakers_to_utterances['a']) == 1
     assert len(speakers_to_utterances['b']) == 1
     assert len(speakers_to_utterances['c']) == 2
+
+def test_speaker_durations():
+    """Test that we can extract how long speakers spoke for in the utterances"""
+
+    from persephone.utterance import Utterance, speaker_durations
+    utter_a = Utterance(
+        org_media_path=Path(
+            'test.wav'),
+        org_transcription_path=Path(
+            'test.txt'),
+        prefix='test',
+        start_time=1,
+        end_time=2,
+        text='a text', speaker='a'
+    )
+    utter_a_duration = 2-1
+
+    utter_b = Utterance(
+        org_media_path=Path(
+            'test.wav'),
+        org_transcription_path=Path(
+            'test.txt'),
+        prefix='test',
+        start_time=1,
+        end_time=2,
+        text='b text', speaker='b'
+    )
+    utter_b_duration = 2-1
+
+    utter_c = Utterance(
+        org_media_path=Path(
+            'test.wav'),
+        org_transcription_path=Path(
+            'test.txt'),
+        prefix='test',
+        start_time=0,
+        end_time=20,
+        text='the first thing c said', speaker='c'
+    )
+
+    utter_c_duration = 20-0
+
+    utter_c1 = Utterance(
+        org_media_path=Path(
+            'test.wav'),
+        org_transcription_path=Path(
+            'test.txt'),
+        prefix='test',
+        start_time=400,
+        end_time=900,
+        text='the second thing c said', speaker='c'
+    )
+    utter_c1_duration = 900-400
+
+    all_utterances = [utter_a, utter_b, utter_c, utter_c1]
+    durations_by_speaker = speaker_durations(all_utterances)
+    assert durations_by_speaker
+    assert ('a', utter_a_duration) in durations_by_speaker
+    assert ('b', utter_b_duration) in durations_by_speaker
+    assert ('c', utter_c_duration+utter_c1_duration) in durations_by_speaker
