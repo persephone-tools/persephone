@@ -1,5 +1,4 @@
 from collections import defaultdict
-import json
 from pathlib import Path
 from typing import List, NamedTuple, Set, Sequence, Tuple, DefaultDict, Dict
 
@@ -81,23 +80,26 @@ def remove_duplicates(utterances: List[Utterance]) -> List[Utterance]:
     return filtered_utters
 
 def remove_empty_text(utterances: List[Utterance]) -> List[Utterance]:
+    """Remove empty utterances from a list of utterances
+    Args:
+        utterances: The list of utterance we are processing
+    """
     return [utter for utter in utterances if utter.text.strip() != ""]
 
 # Doing everything in milliseconds now; other units are only for reporting to
 # users
 def duration(utter: Utterance) -> int:
-    """Calculate the duration of an utterance
-
-    Arguments:
-        utter: The utterance we are calculating the duration of
+    """Get the duration of an utterance in milliseconds
+    Args:
+        utter: The utterance we are finding the duration of
     """
     return utter.end_time - utter.start_time
 
 def total_duration(utterances: List[Utterance]) -> int:
-    """Calculate the duration of a list of utterances
 
-    Arguments:
-        utter: The utterance we are calculating the duration of
+    """Get the duration of an entire list of utterances in milliseconds
+    Args:
+        utterances: The list of utterance we are finding the duration of
     """
     return sum([duration(utter) for utter in utterances])
 
@@ -117,11 +119,11 @@ def speaker_durations(utterances: List[Utterance]) -> List[Tuple[str, int]]:
 
     speaker_utters = make_speaker_utters(utterances)
 
-    speaker_durations = []
+    speaker_duration_tuples = [] # type: List[Tuple[str, int]]
     for speaker in speaker_utters:
-        speaker_durations.append((speaker, total_duration(speaker_utters[speaker])))
+        speaker_duration_tuples.append((speaker, total_duration(speaker_utters[speaker])))
 
-    return speaker_durations
+    return speaker_duration_tuples
 
 def remove_too_short(utterances: List[Utterance],
                      _winlen=25, winstep=10) -> List[Utterance]:

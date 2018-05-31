@@ -32,7 +32,7 @@ def fbank(wav_path, flat=True):
     delta_feat = python_speech_features.delta(feat, 2)
     delta_delta_feat = python_speech_features.delta(delta_feat, 2)
     all_feats = [feat, delta_feat, delta_delta_feat]
-    if flat == False:
+    if not flat:
         all_feats = np.array(all_feats)
         # Make time the first dimension for easy length normalization padding
         # later.

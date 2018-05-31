@@ -5,10 +5,8 @@ import logging.config
 import pprint
 import random
 
-from nltk.metrics import distance
 import numpy as np
 
-from . import config
 from . import utils
 from .exceptions import PersephoneException
 
@@ -25,7 +23,7 @@ class CorpusReader:
 
     def __init__(self, corpus, num_train=None, batch_size=None, max_samples=None, rand_seed=0):
         """ Construct a new `CorpusReader` instance.
-            
+
             corpus: The Corpus object that interfaces with a given corpus.
             num_train: The number of training instances from the corpus used.
             batch_size: The size of the batches to yield. If None, then it is
@@ -131,7 +129,7 @@ class CorpusReader:
             random.shuffle(fn_batches)
 
         for fn_batch in fn_batches:
-            logger.debug("Batch of training filenames: " +
+            logger.debug("Batch of training filenames: %s",
                           pprint.pformat(fn_batch))
             yield self.load_batch(fn_batch)
 
