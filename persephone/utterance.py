@@ -15,7 +15,7 @@ Utterance.__doc__= (
 
     `Utterance` instances capture key data about short segments of speech in
     the corpus.  Their most important role is in representing transcriptions
-    invarious states of preprocessing. For instance, `Utterance` instances may
+    in various states of preprocessing. For instance, `Utterance` instances may
     be created when reading from a linguists transcription files, in which case
     their `text` attribute is a raw unpreprocessed transcription. These
     `Utterance` instances may then be fed to a function that preprocesses the
