@@ -67,3 +67,37 @@ def test_remove_duplicates_same_time():
     assert len(result) == 2
     assert utter_b in result
     assert (utter_a1 in result or utter_a2 in result)
+
+def test_utterance_durations():
+    from persephone.utterance import Utterance, duration
+    utter_a1 = Utterance(
+        org_media_path=Path(
+            'test.wav'),
+        org_transcription_path=Path(
+            'test.txt'),
+        prefix='test',
+        start_time=1,
+        end_time=2,
+        text='test text', speaker='Unit tester'
+    )
+
+    duration_a1 = duration(utter_a1)
+    assert duration_a1 == 2 - 1
+
+    utter_a2 = Utterance(
+        org_media_path=Path(
+            'test.wav'),
+        org_transcription_path=Path(
+            'test.txt'),
+        prefix='test',
+        start_time=1,
+        end_time=15,
+        text='test text', speaker='Unit tester'
+    )
+    duration_a2 = duration(utter_a2)
+    assert duration_a2 == 15 - 1
+
+    from persephone.utterance import total_duration
+    utterance_group = [utter_a1, utter_a2]
+    group_duration = total_duration(utterance_group)
+    assert group_duration == duration_a1 + duration_a2
