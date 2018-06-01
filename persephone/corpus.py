@@ -98,8 +98,10 @@ class Corpus:
         self.set_and_check_directories(tgt_dir)
 
         # Label-related stuff
-        self.initialize_labels(labels)
-        logger.info("Corpus label set: \n\t{}".format(labels))
+        self.labels = labels
+        self.vocab_size = len(self.labels)
+        self.initialize_labels(self.labels)
+        logger.info("Corpus label set: \n\t{}".format(self.labels))
 
         # This is a lazy function that assumes wavs are already in the WAV dir
         # but only creates features if necessary
@@ -156,7 +158,7 @@ class Corpus:
                 is it needs to carry with it a list of labels. This could
                 potentially be a function attribute.
             speakers: A list of speakers to filter for. If `None`, utterances
-                from speakers are.
+                from all speakers are included.
             tier_prefixes: A collection of strings that prefix ELAN tiers to
                 filter for. For example, if this is `("xv", "rf")`, then tiers
                 named "xv", "xv@Mark", "rf@Rose" would be extracted if they
@@ -252,10 +254,9 @@ class Corpus:
                 "The supplied path requires a 'label' subdirectory.")
 
     def initialize_labels(self, labels):
-
+        """Create mappings from label to index and index to label"""
         logger.debug("Creating mappings for labels")
-        self.labels = labels
-        self.vocab_size = len(self.labels)
+
         self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
                                  ["pad"] + sorted(list(self.labels)))}
         self.INDEX_TO_LABEL = {index: phn for index, phn in enumerate(
