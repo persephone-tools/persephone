@@ -49,3 +49,23 @@ def test_determine_labels(fs): #fs is the fake filesystem fixture
 
     phoneme_and_tones_labels = determine_labels(base_dir, "phonemes_and_tones")
     assert phoneme_and_tones_labels
+
+
+def test_data_overlap():
+    """Tests that the overlap detection function works as advertised"""
+    train = set(["a", "b", "c"])
+    valid = set(["d", "e", "f"])
+    test = set(["g", "h", "i"])
+    from persephone.corpus import ensure_no_set_overlap
+    from persephone.exceptions import PersephoneException
+    ensure_no_set_overlap(train, valid, test)
+
+    overlap_with_train = set(["a"])
+    with pytest.raises(PersephoneException):
+        ensure_no_set_overlap(train, valid|overlap_with_train, test)
+    overlap_with_valid = set(["d"])
+    with pytest.raises(PersephoneException):
+        ensure_no_set_overlap(train, valid, test|overlap_with_valid)
+    overlap_with_test = set(["g"])
+    with pytest.raises(PersephoneException):
+        ensure_no_set_overlap(train|overlap_with_test, valid, test)
