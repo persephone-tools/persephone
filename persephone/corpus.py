@@ -138,11 +138,15 @@ class Corpus:
             self.feat_dir, self.train_prefixes, feat_type)
 
         # Ensure no overlap between training and test sets
-        ensure_no_set_overlap(
-            self.get_train_fns()[0],
-            self.get_valid_fns()[0],
-            self.get_test_fns()[0]
-        )
+        try:
+            ensure_no_set_overlap(
+                self.get_train_fns()[0],
+                self.get_valid_fns()[0],
+                self.get_test_fns()[0]
+            )
+        except PersephoneException:
+            logger.error("Got overlap between train valid and test data sets")
+            raise
 
         self.untranscribed_prefixes = self.get_untranscribed_prefixes()
 
