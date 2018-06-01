@@ -107,8 +107,9 @@ def test_fast():
 
     download_example_data(TINY_EXAMPLE_LINK)
 
-    corp = corpus.ReadyCorpus(tiny_example_dir)
+    labels = corpus.determine_labels(tiny_example_dir, "phonemes")
 
+    corp = corpus.Corpus("fbank", "phonemes", Path(tiny_example_dir), labels)
     exp_dir = experiment.prep_exp_dir(directory=EXP_BASE_DIR)
     model = experiment.get_simple_model(exp_dir, corp)
     model.train(min_epochs=2, max_epochs=5)
