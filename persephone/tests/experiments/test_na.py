@@ -85,7 +85,9 @@ def test_tutorial():
     download_example_data(NA_EXAMPLE_LINK)
 
     # Test the first setup encouraged in the tutorial
-    corp = corpus.ReadyCorpus(na_example_dir)
+    labels = corpus.determine_labels(na_example_dir, "phonemes")
+    corp = corpus.Corpus("fbank", "phonemes", Path(na_example_dir), labels)
+
     exp_dir = experiment.train_ready(corp, directory=EXP_BASE_DIR)
 
     # Assert the convergence of the model at the end by reading the test scores
