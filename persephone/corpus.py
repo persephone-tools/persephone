@@ -34,12 +34,6 @@ def ensure_no_set_overlap(train, valid, test) -> None:
     train = set(train)
     valid = set(valid)
     test = set(test)
-    assert train - valid == train
-    assert train - test == train
-    assert valid - train == valid
-    assert valid - test == valid
-    assert test - train == test
-    assert test - valid == test
 
     if train & valid:
         logger.warning("train and valid have overlapping items: {}".format(train & valid))
