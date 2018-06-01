@@ -100,7 +100,7 @@ class Corpus:
         # Label-related stuff
         self.labels = labels
         self.vocab_size = len(self.labels)
-        self.initialize_labels(self.labels)
+        self.LABEL_TO_INDEX, self.INDEX_TO_LABEL = self.initialize_labels(self.labels)
         logger.info("Corpus label set: \n\t{}".format(self.labels))
 
         # This is a lazy function that assumes wavs are already in the WAV dir
@@ -257,10 +257,12 @@ class Corpus:
         """Create mappings from label to index and index to label"""
         logger.debug("Creating mappings for labels")
 
-        self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
-                                 ["pad"] + sorted(list(self.labels)))}
-        self.INDEX_TO_LABEL = {index: phn for index, phn in enumerate(
-                                 ["pad"] + sorted(list(self.labels)))}
+        label_to_index = {label: index for index, label in enumerate(
+                                 ["pad"] + sorted(list(labels)))}
+        index_to_label = {index: phn for index, phn in enumerate(
+                                 ["pad"] + sorted(list(labels)))}
+
+        return label_to_index, index_to_label
 
     def prepare_feats(self):
         """ Prepares input features"""
