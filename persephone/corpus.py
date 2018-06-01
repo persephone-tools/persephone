@@ -27,6 +27,32 @@ logger = logging.getLogger(__name__) # type: ignore
 
 CorpusT = TypeVar("CorpusT", bound="Corpus")
 
+def ensure_no_set_overlap(train, valid, test) -> None:
+    """ Ensures no test set data has creeped into the training set."""
+
+    logger.debug("Ensuring that the training, validation and test data sets have no overlap")
+    train = set(train)
+    valid = set(valid)
+    test = set(test)
+    assert train - valid == train
+    assert train - test == train
+    assert valid - train == valid
+    assert valid - test == valid
+    assert test - train == test
+    assert test - valid == test
+
+    if train & valid:
+        logger.warning("train and valid have overlapping items: {}".format(train & valid))
+        raise PersephoneException("train and valid have overlapping items: {}".format(train & valid))
+    if train & test:
+        logger.warning("train and test have overlapping items: {}".format(train & test))
+        raise PersephoneException("train and test have overlapping items: {}".format(train & test))
+    if valid & test:
+        logger.warning("valid and test have overlapping items: {}".format(valid & test))
+        raise PersephoneException("valid and test have overlapping items: {}".format(valid & test))
+
+
+
 class Corpus:
     """ Represents a preprocessed corpus that is ready to be used in model
     training.
@@ -118,7 +144,11 @@ class Corpus:
             self.feat_dir, self.train_prefixes, feat_type)
 
         # Ensure no overlap between training and test sets
-        self.ensure_no_set_overlap()
+        ensure_no_set_overlap(
+            self.get_train_fns()[0],
+            self.get_valid_fns()[0],
+            self.get_test_fns()[0]
+        )
 
         self.untranscribed_prefixes = self.get_untranscribed_prefixes()
 
@@ -483,30 +513,6 @@ class Corpus:
                 transcript = f.read().strip()
             print("Transcription: {}".format(transcript))
             subprocess.run(["play", str(wav_fn)])
-
-    def ensure_no_set_overlap(self) -> None:
-        """ Ensures no test set data has creeped into the training set."""
-
-        logger.debug("Ensuring that the training, validation and test data sets have no overlap")
-        train = set(self.get_train_fns()[0])
-        valid = set(self.get_valid_fns()[0])
-        test = set(self.get_test_fns()[0])
-        assert train - valid == train
-        assert train - test == train
-        assert valid - train == valid
-        assert valid - test == valid
-        assert test - train == test
-        assert test - valid == test
-
-        if train & valid:
-            logger.warning("train and valid have overlapping items: {}".format(train & valid))
-            raise PersephoneException("train and valid have overlapping items: {}".format(train & valid))
-        if train & test:
-            logger.warning("train and test have overlapping items: {}".format(train & test))
-            raise PersephoneException("train and test have overlapping items: {}".format(train & test))
-        if valid & test:
-            logger.warning("valid and test have overlapping items: {}".format(valid & test))
-            raise PersephoneException("valid and test have overlapping items: {}".format(valid & test))
 
     def pickle(self):
         """ Pickles the Corpus object in a file in tgt_dir. """
