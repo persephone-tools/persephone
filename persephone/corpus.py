@@ -45,7 +45,16 @@ def ensure_no_set_overlap(train, valid, test) -> None:
         logger.warning("valid and test have overlapping items: {}".format(valid & test))
         raise PersephoneException("valid and test have overlapping items: {}".format(valid & test))
 
-
+def find_untranscribed_wavs(wav_path: Path, transcription_path: Path, label_type: str) -> List[str]:
+    """Find the prefixes for all the wav files that do not have an associated transcription
+    Args:
+        wav_path: Path to search for wav files in
+        transcription_path: Path to search for transcriptions in
+        label_type: The type of labels for transcriptions. Eg "phonemes" "ponemes_and_tones"
+    Returns:
+        A list of all untranscribed prefixes
+    """
+    raise NotImplementedError
 
 class Corpus:
     """ Represents a preprocessed corpus that is ready to be used in model

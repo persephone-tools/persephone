@@ -1,7 +1,7 @@
 """Tests for corpus related items"""
 import pytest
 
-from pyfakefs.pytest_plugin import fs
+#from pyfakefs.pytest_plugin import fs
 
 def test_ready_corpus_deprecation():
     from persephone.corpus import ReadyCorpus
@@ -69,3 +69,20 @@ def test_data_overlap():
     overlap_with_test = set(["g"])
     with pytest.raises(PersephoneException):
         ensure_no_set_overlap(train|overlap_with_test, valid, test)
+
+def test_untranscribed_wavs(tmpdir):
+    """test that untranscribed wav files are found"""
+    from pathlib import Path
+    from persephone.corpus import find_untranscribed_wavs
+
+    wav_dir = tmpdir.mkdir("wav")
+    label_dir = tmpdir.mkdir("label")
+
+    wav_untranscribed = wav_dir.join("untranscribed1.wav")
+
+    wav_1 = wav_dir.join("1.wav")
+    transcription_1 = label_dir.join("1.phonemes")
+
+    untranscribed_prefixes = find_untranscribed_wavs(Path(str(wav_dir)), Path(str(label_dir)), "phonemes")
+    assert untranscribed_prefixes
+    assert "untranscribed1" in untranscribed_prefixes
