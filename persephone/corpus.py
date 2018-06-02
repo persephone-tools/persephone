@@ -50,11 +50,21 @@ def find_untranscribed_wavs(wav_path: Path, transcription_path: Path, label_type
     Args:
         wav_path: Path to search for wav files in
         transcription_path: Path to search for transcriptions in
-        label_type: The type of labels for transcriptions. Eg "phonemes" "ponemes_and_tones"
+        label_type: The type of labels for transcriptions. Eg "phonemes" "phonemes_and_tones"
     Returns:
         A list of all untranscribed prefixes
     """
-    raise NotImplementedError
+    audio_files = sorted(wav_path.glob("**/*.wav"))
+    transcription_files = sorted(transcription_path.glob("**/*.{}".format(label_type)))
+    
+    transcription_file_prefixes = [t_file.stem for t_file in transcription_files]
+
+    import pdb; pdb.set_trace()
+    untranscribed_prefixes = [] # type: List[str]
+    for a_file in audio_files:
+        if a_file.stem not in transcription_file_prefixes:
+            untranscribed_prefixes.append(a_file.stem)
+    return untranscribed_prefixes
 
 class Corpus:
     """ Represents a preprocessed corpus that is ready to be used in model
