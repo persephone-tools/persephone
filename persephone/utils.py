@@ -153,7 +153,7 @@ def filter_by_size(feat_dir: Path, prefixes: List[str], feat_type: str,
                 if length <= max_samples]
     return prefixes
 
-def sort_by_size(feat_dir, prefixes, feat_type):
+def sort_by_size(feat_dir, prefixes, feat_type) -> List[str]:
     prefix_lens = get_prefix_lens(feat_dir, prefixes, feat_type)
     prefix_lens.sort(key=lambda prefix_len: prefix_len[1])
     prefixes = [prefix for prefix, _ in prefix_lens]

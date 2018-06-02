@@ -11,7 +11,7 @@ import pickle
 from os.path import join
 import random
 import subprocess
-from typing import List, Callable, Tuple, Type, TypeVar, Sequence
+from typing import Any, List, Callable, Optional, Set, Sequence, Tuple, Type, TypeVar
 
 import numpy as np
 
@@ -27,23 +27,23 @@ logger = logging.getLogger(__name__) # type: ignore
 
 CorpusT = TypeVar("CorpusT", bound="Corpus")
 
-def ensure_no_set_overlap(train, valid, test) -> None:
+def ensure_no_set_overlap(train: Sequence[str], valid: Sequence[str], test: Sequence[str]) -> None:
     """ Ensures no test set data has creeped into the training set."""
 
     logger.debug("Ensuring that the training, validation and test data sets have no overlap")
-    train = set(train)
-    valid = set(valid)
-    test = set(test)
+    train_s = set(train)
+    valid_s = set(valid)
+    test_s = set(test)
 
-    if train & valid:
-        logger.warning("train and valid have overlapping items: {}".format(train & valid))
-        raise PersephoneException("train and valid have overlapping items: {}".format(train & valid))
-    if train & test:
-        logger.warning("train and test have overlapping items: {}".format(train & test))
-        raise PersephoneException("train and test have overlapping items: {}".format(train & test))
-    if valid & test:
-        logger.warning("valid and test have overlapping items: {}".format(valid & test))
-        raise PersephoneException("valid and test have overlapping items: {}".format(valid & test))
+    if train_s & valid_s:
+        logger.warning("train and valid have overlapping items: {}".format(train_s & valid_s))
+        raise PersephoneException("train and valid have overlapping items: {}".format(train_s & valid_s))
+    if train_s & test_s:
+        logger.warning("train and test have overlapping items: {}".format(train_s & test_s))
+        raise PersephoneException("train and test have overlapping items: {}".format(train_s & test_s))
+    if valid_s & test_s:
+        logger.warning("valid and test have overlapping items: {}".format(valid_s & test_s))
+        raise PersephoneException("valid and test have overlapping items: {}".format(valid_s & test_s))
 
 def find_untranscribed_wavs(wav_path: Path, transcription_path: Path, label_type: str) -> List[str]:
     """Find the prefixes for all the wav files that do not have an associated transcription
@@ -112,8 +112,8 @@ class Corpus:
 
     """
 
-    def __init__(self, feat_type, label_type, tgt_dir, labels,
-                 max_samples=1000, speakers = None):
+    def __init__(self, feat_type: str, label_type: str, tgt_dir: Path, labels: Any,
+                 max_samples:int=1000, speakers: Optional[Sequence[str]] = None) -> None:
         """ Construct a `Corpus` instance from preprocessed data.
 
         Assumes that the corpus data has been preprocessed and is
@@ -174,8 +174,13 @@ class Corpus:
         self.prepare_feats()
         self._num_feats = None
 
+        self.train_prefixes = [] # type: List[str]
+        self.valid_prefixes = [] # type: List[str]
+        self.test_prefixes = [] # type: List[str]
         # This is also lazy if the {train,valid,test}_prefixes.txt files exist.
         self.make_data_splits(max_samples=max_samples)
+
+
 
         # Sort the training prefixes by size for more efficient training
         logger.debug("Training prefixes")
@@ -201,7 +206,7 @@ class Corpus:
         # TODO Need to contemplate whether Corpus objects have Utterance
         # objects or # not. Some of the TestBKW tests currently rely on this
         # for testing.
-        self.utterances = None  # type: List[Utterance]
+        self.utterances = []  # type: List[Utterance]
 
         self.pickle()
 
