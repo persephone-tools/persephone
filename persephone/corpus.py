@@ -193,7 +193,10 @@ class Corpus:
             logger.error("Got overlap between train valid and test data sets")
             raise
 
-        self.untranscribed_prefixes = self.get_untranscribed_prefixes()
+        untranscribed_from_file = self.get_untranscribed_prefixes()
+        untranscribed_found = find_untranscribed_wavs(self.get_wav_dir(), self.get_label_dir(), self.label_type)
+
+        self.untranscribed_prefixes = list(set(untranscribed_from_file) & set(untranscribed_found))
 
         # TODO Need to contemplate whether Corpus objects have Utterance
         # objects or # not. Some of the TestBKW tests currently rely on this
