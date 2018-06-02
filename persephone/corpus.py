@@ -65,6 +65,34 @@ def find_untranscribed_wavs(wav_path: Path, transcription_path: Path, label_type
             untranscribed_prefixes.append(a_file.stem)
     return untranscribed_prefixes
 
+def get_untranscribed_prefixes_from_file(target_directory: Path) -> List[str]:
+    """
+    The file "untranscribed_prefixes.txt" will specify prefixes which
+    do not have an associated transcription file if placed in the target directory.
+
+    This will fetch those prefixes from that file and will return an empty
+    list if that file does not exist.
+
+    See find_untranscribed_wavs function for finding untranscribed prefixes in an
+    experiment directory.
+
+    Returns:
+        A list of all untranscribed prefixes as specified in the file
+    """
+    # TODO Change to pathlib.Path
+    untranscribed_prefix_fn = join(str(target_directory), "untranscribed_prefixes.txt")
+    if os.path.exists(untranscribed_prefix_fn):
+        with open(untranscribed_prefix_fn) as f:
+            prefixes = f.readlines()
+
+        return [prefix.strip() for prefix in prefixes]
+    else:
+        logger.warning("Attempting to get untranscribed prefixes but the file ({})"
+                        " that should specify these does not exist".format(untranscribed_prefix_fn))
+    return []
+
+
+
 class Corpus:
     """ Represents a preprocessed corpus that is ready to be used in model
     training.
