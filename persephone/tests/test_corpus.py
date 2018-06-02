@@ -3,6 +3,25 @@ import pytest
 
 #from pyfakefs.pytest_plugin import fs
 
+def test_corpus_import():
+    """Test we can import Corpus"""
+    from persephone.corpus import Corpus
+
+def test_missing_experiment_dir():
+    """A Corpus needs an experiment directory, check an exception is thrown
+    if the directory doesn't exist"""
+    from pathlib import Path
+    from persephone.corpus import Corpus
+
+    with pytest.raises(FileNotFoundError):
+        Corpus(
+            feat_type='fbank',
+            label_type='phonemes',
+            tgt_dir=Path("thisDoesNotExist"),
+            labels=["a", "b", "c"]
+        )
+
+
 def test_ready_corpus_deprecation():
     from persephone.corpus import ReadyCorpus
     with pytest.warns(DeprecationWarning):
