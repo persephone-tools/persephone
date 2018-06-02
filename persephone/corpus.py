@@ -79,10 +79,10 @@ def get_untranscribed_prefixes_from_file(target_directory: Path) -> List[str]:
     Returns:
         A list of all untranscribed prefixes as specified in the file
     """
-    # TODO Change to pathlib.Path
-    untranscribed_prefix_fn = join(str(target_directory), "untranscribed_prefixes.txt")
-    if os.path.exists(untranscribed_prefix_fn):
-        with open(untranscribed_prefix_fn) as f:
+
+    untranscribed_prefix_fn = target_directory / "untranscribed_prefixes.txt"
+    if untranscribed_prefix_fn.exists():
+        with untranscribed_prefix_fn.open() as f:
             prefixes = f.readlines()
 
         return [prefix.strip() for prefix in prefixes]
