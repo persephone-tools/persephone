@@ -35,6 +35,24 @@ def test_missing_wav_dir(tmpdir):
             labels=["a", "b", "c"]
         )
 
+def test_create_corpus_no_data(tmpdir):
+    """Test that an attempt to create a Corpus object with no data raises an
+    exception warning us that there's no data"""
+    from persephone.corpus import Corpus
+    from pathlib import Path
+
+    wav_dir = tmpdir.mkdir("wav")
+    label_dir = tmpdir.mkdir("label")
+
+    from persephone.exceptions import PersephoneException
+
+    with pytest.raises(PersephoneException):
+        c = Corpus(
+                feat_type='fbank',
+                label_type='phonemes',
+                tgt_dir=Path(str(tmpdir)),
+                labels=["a", "b", "c"]
+            )
 
 
 def test_ready_corpus_deprecation():
