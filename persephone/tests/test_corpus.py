@@ -85,9 +85,10 @@ def test_create_corpus_basic(tmpdir):
 
 def test_ready_corpus_deprecation():
     from persephone.corpus import ReadyCorpus
+    from pathlib import Path
     with pytest.warns(DeprecationWarning):
         try:
-            ReadyCorpus(tgt_dir="test_dir")
+            ReadyCorpus(tgt_dir=Path("test_dir"))
         except FileNotFoundError:
             pass
 
