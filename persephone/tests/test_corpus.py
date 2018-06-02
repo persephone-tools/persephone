@@ -85,4 +85,11 @@ def test_untranscribed_wavs(tmpdir):
 
     untranscribed_prefixes = find_untranscribed_wavs(Path(str(wav_dir)), Path(str(label_dir)), "phonemes")
     assert untranscribed_prefixes
+    assert len(untranscribed_prefixes) == 1
     assert "untranscribed1" in untranscribed_prefixes
+
+    untranscribed_prefixes_phonemes_and_tones = find_untranscribed_wavs(Path(str(wav_dir)), Path(str(label_dir)), "phonemes_and_tones")
+    assert untranscribed_prefixes_phonemes_and_tones
+    assert len(untranscribed_prefixes_phonemes_and_tones) == 2
+    assert "untranscribed1" in untranscribed_prefixes_phonemes_and_tones
+    assert "1" in untranscribed_prefixes_phonemes_and_tones
