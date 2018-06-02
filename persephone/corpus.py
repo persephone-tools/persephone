@@ -92,7 +92,6 @@ def get_untranscribed_prefixes_from_file(target_directory: Path) -> List[str]:
     return []
 
 
-
 class Corpus:
     """ Represents a preprocessed corpus that is ready to be used in model
     training.
@@ -519,17 +518,7 @@ class Corpus:
         See find_untranscribed_wavs function for finding untranscribed prefixes in an
         experiment directory.
         """
-        # TODO Change to pathlib.Path
-        untranscribed_prefix_fn = join(str(self.tgt_dir), "untranscribed_prefixes.txt")
-        if os.path.exists(untranscribed_prefix_fn):
-            with open(untranscribed_prefix_fn) as f:
-                prefixes = f.readlines()
-
-            return [prefix.strip() for prefix in prefixes]
-        else:
-            logger.warning("Attempting to get untranscribed prefixes but the file ({})"
-                           " that should specify these does not exist".format(untranscribed_prefix_fn))
-        return []
+        return get_untranscribed_prefixes_from_file(self.tgt_dir)
 
     def get_untranscribed_fns(self) -> List[str]:
         feat_fns = [os.path.join(str(self.feat_dir), "untranscribed", "%s.%s.npy" % (prefix, self.feat_type))
