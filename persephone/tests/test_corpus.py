@@ -54,6 +54,34 @@ def test_create_corpus_no_data(tmpdir):
                 labels=["a", "b", "c"]
             )
 
+@pytest.mark.skip("Need to make some wav data that ffmpeg can actually open "
+                  "then do something like base64 encode the data so we can make "
+                  "fixtures for wav data to supply for the test case")
+def test_create_corpus_basic(tmpdir):
+    """Test that an attempt to create a Corpus object with a minimal data set"""
+    from persephone.corpus import Corpus
+    from pathlib import Path
+
+    wav_dir = tmpdir.mkdir("wav")
+    label_dir = tmpdir.mkdir("label")
+
+    wav_test = wav_dir.join("test.wav").write("")
+    wav_train = wav_dir.join("train.wav").write("")
+    wav_valid = wav_dir.join("valid.wav").write("")
+
+    label_test = wav_dir.join("valid.phonemes").write("a")
+    label_train = wav_dir.join("valid.phonemes").write("b")
+    label_valid = wav_dir.join("valid.phonemes").write("c")
+
+    c = Corpus(
+        feat_type='fbank',
+        label_type='phonemes',
+        tgt_dir=Path(str(tmpdir)),
+        labels=["a", "b", "c"]
+    )
+    assert c
+
+
 
 def test_ready_corpus_deprecation():
     from persephone.corpus import ReadyCorpus
