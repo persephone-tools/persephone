@@ -54,12 +54,11 @@ def find_untranscribed_wavs(wav_path: Path, transcription_path: Path, label_type
     Returns:
         A list of all untranscribed prefixes
     """
-    audio_files = sorted(wav_path.glob("**/*.wav"))
-    transcription_files = sorted(transcription_path.glob("**/*.{}".format(label_type)))
+    audio_files = wav_path.glob("**/*.wav")
+    transcription_files = transcription_path.glob("**/*.{}".format(label_type))
     
     transcription_file_prefixes = [t_file.stem for t_file in transcription_files]
 
-    import pdb; pdb.set_trace()
     untranscribed_prefixes = [] # type: List[str]
     for a_file in audio_files:
         if a_file.stem not in transcription_file_prefixes:
