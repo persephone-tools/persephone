@@ -21,6 +21,21 @@ def test_missing_experiment_dir():
             labels=["a", "b", "c"]
         )
 
+def test_missing_wav_dir(tmpdir):
+    """Test that a missing wav dir raises an error"""
+    from pathlib import Path
+    from persephone.corpus import Corpus
+    from persephone.exceptions import PersephoneException
+
+    with pytest.raises(PersephoneException):
+        Corpus(
+            feat_type='fbank',
+            label_type='phonemes',
+            tgt_dir=Path(str(tmpdir)),
+            labels=["a", "b", "c"]
+        )
+
+
 
 def test_ready_corpus_deprecation():
     from persephone.corpus import ReadyCorpus
