@@ -159,6 +159,12 @@ class Corpus:
         self.label_type = label_type
 
         # Setting up directories
+        # Set the directory names
+        self.tgt_dir = tgt_dir
+        self.feat_dir = self.get_feat_dir()
+        self.wav_dir = self.get_wav_dir()
+        self.label_dir = self.get_label_dir()
+        
         logger.debug("Setting up directories for this Corpus object at %s", tgt_dir)
         self.set_and_check_directories(tgt_dir)
 
@@ -179,8 +185,6 @@ class Corpus:
         self.test_prefixes = [] # type: List[str]
         # This is also lazy if the {train,valid,test}_prefixes.txt files exist.
         self.make_data_splits(max_samples=max_samples)
-
-
 
         # Sort the training prefixes by size for more efficient training
         logger.debug("Training prefixes")
@@ -314,13 +318,7 @@ class Corpus:
         Make sure that the required directories exist in the target directory.
         set variables accordingly.
         """
-
         logger.info("Setting up directories for corpus in %s", tgt_dir)
-        # Set the directory names
-        self.tgt_dir = tgt_dir
-        self.feat_dir = self.get_feat_dir()
-        self.wav_dir = self.get_wav_dir()
-        self.label_dir = self.get_label_dir()
 
         # Check directories exist.
         if not tgt_dir.is_dir():
@@ -371,7 +369,7 @@ class Corpus:
         if should_extract_feats:
             feat_extract.from_dir(self.feat_dir, self.feat_type)
 
-    def make_data_splits(self, max_samples) -> None:
+    def make_data_splits(self, max_samples: int) -> None:
         """ Splits the utterances into training, validation and test sets."""
 
         train_f_exists = self.train_prefix_fn.is_file()
