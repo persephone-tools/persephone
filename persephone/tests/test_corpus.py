@@ -78,10 +78,10 @@ def test_untranscribed_wavs(tmpdir):
     wav_dir = tmpdir.mkdir("wav")
     label_dir = tmpdir.mkdir("label")
 
-    wav_untranscribed = wav_dir.join("untranscribed1.wav")
+    wav_untranscribed = wav_dir.join("untranscribed1.wav").write("")
 
-    wav_1 = wav_dir.join("1.wav")
-    transcription_1 = label_dir.join("1.phonemes")
+    wav_1 = wav_dir.join("1.wav").write("")
+    transcription_1 = label_dir.join("1.phonemes").write("")
 
     untranscribed_prefixes = find_untranscribed_wavs(Path(str(wav_dir)), Path(str(label_dir)), "phonemes")
     assert untranscribed_prefixes
