@@ -481,7 +481,16 @@ class Corpus:
         return self.prefixes_to_fns(self.test_prefixes)
 
     def get_untranscribed_prefixes(self) -> List[str]:
-        """Find which prefixes do not have an associated transcription file"""
+        """
+        The file "untranscribed_prefixes.txt" will specify prefixes which
+        do not have an associated transcription file if placed in the target directory.
+
+        This will fetch those prefixes from that file and will return an empty
+        list if that file does not exist.
+
+        See find_untranscribed_wavs function for finding untranscribed prefixes in an
+        experiment directory.
+        """
         # TODO Change to pathlib.Path
         untranscribed_prefix_fn = join(str(self.tgt_dir), "untranscribed_prefixes.txt")
         if os.path.exists(untranscribed_prefix_fn):
