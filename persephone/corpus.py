@@ -589,16 +589,15 @@ def determine_labels(target_dir: Path, label_type: str) -> set:
     """
     logger.info("Finding phonemes of type %s in directory %s", label_type, target_dir)
 
-    tgt_dir = str(target_dir)
-    label_dir = str(target_dir / "label/")
-    if not os.path.isdir(label_dir):
+    label_dir = target_dir / "label/"
+    if not label_dir.is_dir():
         raise FileNotFoundError(
-            "The directory {} does not exist.".format(tgt_dir))
+            "The directory {} does not exist.".format(target_dir))
 
     phonemes = set() # type: set
-    for fn in os.listdir(label_dir):
-        if fn.endswith(label_type):
-            with open(os.path.join(label_dir, fn)) as f:
+    for fn in os.listdir(str(label_dir)):
+        if fn.endswith(str(label_type)):
+            with (label_dir / fn).open("r") as f:
                 try:
                     line_phonemes = set(f.readline().split())
                 except UnicodeDecodeError:
