@@ -11,7 +11,7 @@ import pickle
 from os.path import join
 import random
 import subprocess
-from typing import List, Callable, Tuple, Type, TypeVar
+from typing import List, Callable, Tuple, Type, TypeVar, Sequence
 
 import numpy as np
 
@@ -329,7 +329,7 @@ class Corpus:
             raise PersephoneException(
                 "The supplied path requires a 'label' subdirectory.")
 
-    def initialize_labels(self, labels):
+    def initialize_labels(self, labels: Sequence[str]) -> Tuple[dict, dict]:
         """Create mappings from label to index and index to label"""
         logger.debug("Creating mappings for labels")
 
@@ -340,7 +340,7 @@ class Corpus:
 
         return label_to_index, index_to_label
 
-    def prepare_feats(self):
+    def prepare_feats(self) -> None:
         """ Prepares input features"""
 
         logger.debug("Preparing input features")
@@ -366,7 +366,7 @@ class Corpus:
         if should_extract_feats:
             feat_extract.from_dir(self.feat_dir, self.feat_type)
 
-    def make_data_splits(self, max_samples):
+    def make_data_splits(self, max_samples) -> None:
         """ Splits the utterances into training, validation and test sets."""
 
         train_f_exists = self.train_prefix_fn.is_file()
@@ -436,7 +436,7 @@ class Corpus:
                 print(prefix, file=prefix_f)
 
     @staticmethod
-    def divide_prefixes(prefixes, seed=0):
+    def divide_prefixes(prefixes: List[str], seed:int=0) -> Tuple[List[str], List[str], List[str]]:
         """Divide data into training, validation and test subsets"""
         Ratios = namedtuple("Ratios", ["train", "valid", "test"])
         ratios=Ratios(.90, .05, .05)
