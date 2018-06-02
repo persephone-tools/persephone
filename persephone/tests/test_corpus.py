@@ -93,3 +93,20 @@ def test_untranscribed_wavs(tmpdir):
     assert len(untranscribed_prefixes_phonemes_and_tones) == 2
     assert "untranscribed1" in untranscribed_prefixes_phonemes_and_tones
     assert "1" in untranscribed_prefixes_phonemes_and_tones
+
+def test_untranscribed_prefixes_from_file(tmpdir):
+    """Test that extracting prefixes from an "untranscribed_prefixes.txt" file
+    will behave as advertised"""
+    from pathlib import Path
+    from persephone.corpus import get_untranscribed_prefixes_from_file
+    untranscribed_prefix_content = """foo
+bar
+baz"""
+    untranscribed_prefix_file = tmpdir.join("untranscribed_prefixes.txt").write(untranscribed_prefix_content)
+
+    untranscribed_prefixes = get_untranscribed_prefixes_from_file(Path(str(tmpdir)))
+    assert untranscribed_prefixes
+    assert len(untranscribed_prefixes) == 3
+    assert "foo" in untranscribed_prefixes
+    assert "bar" in untranscribed_prefixes
+    assert "baz" in untranscribed_prefixes
