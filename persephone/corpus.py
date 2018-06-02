@@ -606,20 +606,3 @@ def determine_labels(target_dir: Path, label_type: str) -> set:
                     raise
                 phonemes = phonemes.union(line_phonemes)
     return phonemes
-
-
-class ReadyCorpus(Corpus):
-    """ Interface to a corpus that has WAV files and label files split into
-    utterances and segregated in a directory with a "wav" and "label" dir. """
-
-    def __init__(self, tgt_dir, feat_type="fbank", label_type="phonemes"):
-        import warnings
-        warnings.warn(
-            "ReadyCorpus is deprecated, use Corpus instead",
-            DeprecationWarning
-        )
-        labels = determine_labels(tgt_dir, label_type)
-
-        super().__init__(feat_type, label_type, Path(tgt_dir), labels)
-
-

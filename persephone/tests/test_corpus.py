@@ -81,18 +81,6 @@ def test_create_corpus_basic(tmpdir):
     )
     assert c
 
-
-
-def test_ready_corpus_deprecation():
-    from persephone.corpus import ReadyCorpus
-    from pathlib import Path
-    with pytest.warns(DeprecationWarning):
-        try:
-            ReadyCorpus(tgt_dir=Path("test_dir"))
-        except FileNotFoundError:
-            pass
-
-
 def test_determine_labels_throws():
     """Test that a non existant directory will throw"""
     import pathlib
