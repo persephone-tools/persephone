@@ -578,16 +578,17 @@ class Corpus:
             return pickle.load(f)
 
 
-def determine_labels(tgt_dir, label_type):
+def determine_labels(target_dir: Path, label_type: str) -> set:
     """ Returns a set of phonemes found in the corpus. """
-    logger.info("Finding phonemes of type %s in directory %s", label_type, tgt_dir)
+    logger.info("Finding phonemes of type %s in directory %s", label_type, target_dir)
 
+    tgt_dir = str(target_dir)
     label_dir = os.path.join(tgt_dir, "label/")
     if not os.path.isdir(label_dir):
         raise FileNotFoundError(
             "The directory {} does not exist.".format(tgt_dir))
 
-    phonemes = set()
+    phonemes = set() # type: set
     for fn in os.listdir(label_dir):
         if fn.endswith(label_type):
             with open(join(label_dir, fn)) as f:

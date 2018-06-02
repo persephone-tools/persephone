@@ -85,7 +85,7 @@ def test_tutorial():
     download_example_data(NA_EXAMPLE_LINK)
 
     # Test the first setup encouraged in the tutorial
-    labels = corpus.determine_labels(na_example_dir, "phonemes")
+    labels = corpus.determine_labels(Path(na_example_dir), "phonemes")
     corp = corpus.Corpus("fbank", "phonemes", Path(na_example_dir), labels)
 
     exp_dir = experiment.train_ready(corp, directory=EXP_BASE_DIR)
@@ -109,7 +109,7 @@ def test_fast():
 
     download_example_data(TINY_EXAMPLE_LINK)
 
-    labels = corpus.determine_labels(tiny_example_dir, "phonemes")
+    labels = corpus.determine_labels(Path(tiny_example_dir), "phonemes")
 
     corp = corpus.Corpus("fbank", "phonemes", Path(tiny_example_dir), labels)
     exp_dir = experiment.prep_exp_dir(directory=EXP_BASE_DIR)
