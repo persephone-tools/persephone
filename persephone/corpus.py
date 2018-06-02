@@ -8,7 +8,6 @@ import logging.config
 import os
 from pathlib import Path
 import pickle
-from os.path import join
 import random
 import subprocess
 from typing import Any, List, Callable, Optional, Set, Sequence, Tuple, Type, TypeVar
@@ -579,11 +578,19 @@ class Corpus:
 
 
 def determine_labels(target_dir: Path, label_type: str) -> set:
-    """ Returns a set of phonemes found in the corpus. """
+    """ Returns a set of all phonemes found in the corpus. Assumes that WAV files and
+    label files are split into utterances and segregated in a directory which contains a
+    "wav" subdirectory and "label" subdirectory.
+
+    Arguments:
+        target_dir: A `Path` to the directory where the corpus data is found
+        label_type: The type of label we are creating the label set from. For example
+                    "phonemes" would only search for labels for that type.
+    """
     logger.info("Finding phonemes of type %s in directory %s", label_type, target_dir)
 
     tgt_dir = str(target_dir)
-    label_dir = os.path.join(tgt_dir, "label/")
+    label_dir = str(target_dir / "label/")
     if not os.path.isdir(label_dir):
         raise FileNotFoundError(
             "The directory {} does not exist.".format(tgt_dir))
@@ -591,7 +598,7 @@ def determine_labels(target_dir: Path, label_type: str) -> set:
     phonemes = set() # type: set
     for fn in os.listdir(label_dir):
         if fn.endswith(label_type):
-            with open(join(label_dir, fn)) as f:
+            with open(os.path.join(label_dir, fn)) as f:
                 try:
                     line_phonemes = set(f.readline().split())
                 except UnicodeDecodeError:
