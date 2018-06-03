@@ -487,7 +487,7 @@ class Corpus:
                     "Feature matrix of shape %s unexpected" % str(feats.shape))
         return self._num_feats
 
-    def prefixes_to_fns(self, prefixes):
+    def prefixes_to_fns(self, prefixes: List[str]) -> Tuple[List[str], List[str]]:
         # TODO Return pathlib.Paths
         feat_fns = [str(self.feat_dir / ("%s.%s.npy" % (prefix, self.feat_type)))
                     for prefix in prefixes]
@@ -549,7 +549,7 @@ class Corpus:
 
         return prefixes
 
-    def review(self):
+    def review(self) -> None:
         """ Used to play the WAV files and compare with the transcription. """
 
         for prefix in self.determine_prefixes():
@@ -561,7 +561,7 @@ class Corpus:
             print("Transcription: {}".format(transcript))
             subprocess.run(["play", str(wav_fn)])
 
-    def pickle(self):
+    def pickle(self) -> None:
         """ Pickles the Corpus object in a file in tgt_dir. """
 
         pickle_path = self.tgt_dir / "corpus.p"
