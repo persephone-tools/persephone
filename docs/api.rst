@@ -10,10 +10,10 @@ works::
    # Create a corpus from data that has already been preprocessed.
    # Among other things, this will divide the corpus into training,
    # validation and test sets.
-   from persephone.corpus import Corpus, ReadyCorpus
-   corpus = ReadyCorpus(tgt_dir="/path/to/preprocessed/data",
-                        feat_type="fbank",
-                        label_type="phonemes")
+   from persephone.corpus import Corpus
+   corpus = Corpus(feat_type="fbank",
+                    label_type="phonemes",
+                    tgt_dir="/path/to/preprocessed/data")
 
    # Create an object that reads the corpus data in batches.
    from persephone.corpus_reader import CorpusReader
@@ -63,9 +63,6 @@ classes. `Utterance` instances comprise `Corpus` instances, which are loaded by
 ..                             utterance_filter=function_to_call,
 ..                             label_segmenter=something,
 ..                             tier_prefixes=("xv", "rf"))
-
-.. autoclass:: persephone.corpus.ReadyCorpus
-   :members: __init__, determine_labels
 
 .. autoclass:: persephone.corpus_reader.CorpusReader
    :members: __init__, 
