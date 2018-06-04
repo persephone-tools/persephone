@@ -100,7 +100,7 @@ interpreter. Back to the terminal:
 
     $ ipython
     > from persephone import corpus
-    > corp = corpus.ReadyCorpus("data/na_example")
+    > corp = corpus.Corpus("fbank", "phonemes", "data/na_example")
     > from persephone import run
     > run.train_ready(corp)
 
@@ -149,7 +149,7 @@ format your data in the same way, you can create your own Persephone
 
 .. code:: python
 
-    corp = corpus.ReadyCorpus("<your-corpus-directory>", label_type="extension")
+    corp = corpus.Corpus("fbank", "phonemes", "<your-corpus-directory>")
 
 where extension is "txt", "phonemes", "tones", or whatever your file has
 after the dot.
@@ -197,7 +197,7 @@ Current data formatting requirements:
 * Spaces are used to delimit the units that the tool predicts. Typically these units are phonemes or tones, however they could also just be orthographic characters (though performance is likely to be a bit lower: consider trying to transcribe "$100"). The model can't tell the difference between digraphs and unigraphs as long as they're tokenized in this format, demarcated with spaces.
 
 If your data observes this format then you can load it via the
-``ReadyCorpus`` class. If your data does not observe this format, you
+``Corpus`` class. If your data does not observe this format, you
 have two options:
 
 1. Do your own separate preprocessing to get the data in this format. If
@@ -205,27 +205,26 @@ have two options:
    you have ELAN files, this probably means using
    ``persephone/scripts/split_eaf.py``.
 2. Create a Python class that inherits from ``persephone.corpus.Corpus``
-   (as does ``ReadyCorpus``) and does all your preprocessing. The API
+   and does all your preprocessing. The API
    (and thus documentation) for this is work in progress, but the key
    point is that ``<corpusobject>.train_prefixes``,
    ``<corpusobject>.valid_prefixes``, and
    ``<corpusobject>.test_prefixes`` are lists of prefixes for the
-   relevant subset of the data. For now, look at ``ReadyCorpus`` in
-   ``persephone/corpus.py`` for an example. For an example on a full
+   relevant subset of the data. For an example on a full
    dataset, see at ``persephone/datasets/na.py`` (beware: here be
    dragons).
 
 Creating validation and test sets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Currently ``ReadyCorpus`` splits the supplied data into three sets
+Currently ``Corpus`` splits the supplied data into three sets
 (training, validation and test) in a 95:5:5 ratio. The training set is
 what your model is exposed to during training. Validation is a held-out
 set that is used to gauge during training how well the model is
 performing. Testing is what is used to quantitatively assess model
 performance after training is complete.
 
-When you first load your corpus, ``ReadyCorpus`` randomly allocates
+When you first load your corpus, ``Corpus`` randomly allocates
 files to each of these subsets. If you'd like to do change the prefixes
 of which utterances are in in each set, modify
 ``<your-corpus>/valid_prefixes.txt`` and
@@ -283,7 +282,7 @@ like to hear people's thoughts on this interface.
 CorpusReaders and Models
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``Corpus`` object (of which ``ReadyCorpus`` is a subclass), is an
+The ``Corpus`` object, is an
 object that exposes the files in the corpus (among several other
 things). Of relevance here is the ``.get_train_fns()``,
 ``.get_valid_fns()``, ``.get_test_fns()`` methods, which provide lists
@@ -304,7 +303,7 @@ example na\_corpus):
 .. code:: python
 
     from persephone import corpus
-    na_corpus = corpus.ReadyCorpus("data/na_example/")
+    na_corpus = corpus.Corpus("fbank", "phonemes", "data/na_example/")
     from persephone import corpus_reader
     na_reader = corpus_reader.CorpusReader(na_corpus, num_train=512, batch_size=16)
 

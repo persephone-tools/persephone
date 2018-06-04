@@ -81,7 +81,7 @@ class CorpusReader:
         random.seed(rand_seed)
 
         # Make a copy of the training prefixes, randomize their order, and take
-        # a subset. Doing random slection of a subset of training now ensures
+        # a subset. Doing random selection of a subset of training now ensures
         # the selection of of training sentences is invariant between calls to
         # train_batch_gen()
         self.train_fns = list(zip(*corpus.get_train_fns()))

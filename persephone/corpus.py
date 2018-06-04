@@ -8,10 +8,9 @@ import logging.config
 import os
 from pathlib import Path
 import pickle
-from os.path import join
 import random
 import subprocess
-from typing import List, Callable, Tuple, Type, TypeVar
+from typing import Any, List, Callable, Optional, Set, Sequence, Tuple, Type, TypeVar
 
 import numpy as np
 
@@ -26,6 +25,71 @@ from .preprocess.labels import LabelSegmenter
 logger = logging.getLogger(__name__) # type: ignore
 
 CorpusT = TypeVar("CorpusT", bound="Corpus")
+
+def ensure_no_set_overlap(train: Sequence[str], valid: Sequence[str], test: Sequence[str]) -> None:
+    """ Ensures no test set data has creeped into the training set."""
+
+    logger.debug("Ensuring that the training, validation and test data sets have no overlap")
+    train_s = set(train)
+    valid_s = set(valid)
+    test_s = set(test)
+
+    if train_s & valid_s:
+        logger.warning("train and valid have overlapping items: {}".format(train_s & valid_s))
+        raise PersephoneException("train and valid have overlapping items: {}".format(train_s & valid_s))
+    if train_s & test_s:
+        logger.warning("train and test have overlapping items: {}".format(train_s & test_s))
+        raise PersephoneException("train and test have overlapping items: {}".format(train_s & test_s))
+    if valid_s & test_s:
+        logger.warning("valid and test have overlapping items: {}".format(valid_s & test_s))
+        raise PersephoneException("valid and test have overlapping items: {}".format(valid_s & test_s))
+
+def find_untranscribed_wavs(wav_path: Path, transcription_path: Path, label_type: str) -> List[str]:
+    """Find the prefixes for all the wav files that do not have an associated transcription
+    Args:
+        wav_path: Path to search for wav files in
+        transcription_path: Path to search for transcriptions in
+        label_type: The type of labels for transcriptions. Eg "phonemes" "phonemes_and_tones"
+    Returns:
+        A list of all untranscribed prefixes
+    """
+    audio_files = wav_path.glob("**/*.wav")
+    transcription_files = transcription_path.glob("**/*.{}".format(label_type))
+    
+    transcription_file_prefixes = [t_file.stem for t_file in transcription_files]
+
+    untranscribed_prefixes = [] # type: List[str]
+    for a_file in audio_files:
+        if a_file.stem not in transcription_file_prefixes:
+            untranscribed_prefixes.append(a_file.stem)
+    return untranscribed_prefixes
+
+def get_untranscribed_prefixes_from_file(target_directory: Path) -> List[str]:
+    """
+    The file "untranscribed_prefixes.txt" will specify prefixes which
+    do not have an associated transcription file if placed in the target directory.
+
+    This will fetch those prefixes from that file and will return an empty
+    list if that file does not exist.
+
+    See find_untranscribed_wavs function for finding untranscribed prefixes in an
+    experiment directory.
+
+    Returns:
+        A list of all untranscribed prefixes as specified in the file
+    """
+
+    untranscribed_prefix_fn = target_directory / "untranscribed_prefixes.txt"
+    if untranscribed_prefix_fn.exists():
+        with untranscribed_prefix_fn.open() as f:
+            prefixes = f.readlines()
+
+        return [prefix.strip() for prefix in prefixes]
+    else:
+        logger.warning("Attempting to get untranscribed prefixes but the file ({})"
+                        " that should specify these does not exist".format(untranscribed_prefix_fn))
+    return []
+
 
 class Corpus:
     """ Represents a preprocessed corpus that is ready to be used in model
@@ -47,8 +111,8 @@ class Corpus:
 
     """
 
-    def __init__(self, feat_type, label_type, tgt_dir, labels,
-                 max_samples=1000, speakers = None):
+    def __init__(self, feat_type: str, label_type: str, tgt_dir: Path, labels: Any,
+                 max_samples:int=1000, speakers: Optional[Sequence[str]] = None) -> None:
         """ Construct a `Corpus` instance from preprocessed data.
 
         Assumes that the corpus data has been preprocessed and is
@@ -94,12 +158,20 @@ class Corpus:
         self.label_type = label_type
 
         # Setting up directories
+        # Set the directory names
+        self.tgt_dir = tgt_dir
+        self.feat_dir = self.get_feat_dir()
+        self.wav_dir = self.get_wav_dir()
+        self.label_dir = self.get_label_dir()
+        
         logger.debug("Setting up directories for this Corpus object at %s", tgt_dir)
         self.set_and_check_directories(tgt_dir)
 
         # Label-related stuff
-        self.initialize_labels(labels)
-        logger.info("Corpus label set: \n\t{}".format(labels))
+        self.labels = labels
+        self.vocab_size = len(self.labels)
+        self.LABEL_TO_INDEX, self.INDEX_TO_LABEL = self.initialize_labels(self.labels)
+        logger.info("Corpus label set: \n\t{}".format(self.labels))
 
         # This is a lazy function that assumes wavs are already in the WAV dir
         # but only creates features if necessary
@@ -107,6 +179,9 @@ class Corpus:
         self.prepare_feats()
         self._num_feats = None
 
+        self.train_prefixes = [] # type: List[str]
+        self.valid_prefixes = [] # type: List[str]
+        self.test_prefixes = [] # type: List[str]
         # This is also lazy if the {train,valid,test}_prefixes.txt files exist.
         self.make_data_splits(max_samples=max_samples)
 
@@ -116,14 +191,25 @@ class Corpus:
             self.feat_dir, self.train_prefixes, feat_type)
 
         # Ensure no overlap between training and test sets
-        self.ensure_no_set_overlap()
+        try:
+            ensure_no_set_overlap(
+                self.get_train_fns()[0],
+                self.get_valid_fns()[0],
+                self.get_test_fns()[0]
+            )
+        except PersephoneException:
+            logger.error("Got overlap between train valid and test data sets")
+            raise
 
-        self.untranscribed_prefixes = self.get_untranscribed_prefixes()
+        untranscribed_from_file = self.get_untranscribed_prefixes()
+        untranscribed_found = find_untranscribed_wavs(self.get_wav_dir(), self.get_label_dir(), self.label_type)
+
+        self.untranscribed_prefixes = list(set(untranscribed_from_file) & set(untranscribed_found))
 
         # TODO Need to contemplate whether Corpus objects have Utterance
         # objects or # not. Some of the TestBKW tests currently rely on this
         # for testing.
-        self.utterances = None  # type: List[Utterance]
+        self.utterances = []  # type: List[Utterance]
 
         self.pickle()
 
@@ -156,7 +242,7 @@ class Corpus:
                 is it needs to carry with it a list of labels. This could
                 potentially be a function attribute.
             speakers: A list of speakers to filter for. If `None`, utterances
-                from speakers are.
+                from all speakers are included.
             tier_prefixes: A collection of strings that prefix ELAN tiers to
                 filter for. For example, if this is `("xv", "rf")`, then tiers
                 named "xv", "xv@Mark", "rf@Rose" would be extracted if they
@@ -231,13 +317,7 @@ class Corpus:
         Make sure that the required directories exist in the target directory.
         set variables accordingly.
         """
-
         logger.info("Setting up directories for corpus in %s", tgt_dir)
-        # Set the directory names
-        self.tgt_dir = tgt_dir
-        self.feat_dir = self.get_feat_dir()
-        self.wav_dir = self.get_wav_dir()
-        self.label_dir = self.get_label_dir()
 
         # Check directories exist.
         if not tgt_dir.is_dir():
@@ -251,17 +331,18 @@ class Corpus:
             raise PersephoneException(
                 "The supplied path requires a 'label' subdirectory.")
 
-    def initialize_labels(self, labels):
-
+    def initialize_labels(self, labels: Sequence[str]) -> Tuple[dict, dict]:
+        """Create mappings from label to index and index to label"""
         logger.debug("Creating mappings for labels")
-        self.labels = labels
-        self.vocab_size = len(self.labels)
-        self.LABEL_TO_INDEX = {label: index for index, label in enumerate(
-                                 ["pad"] + sorted(list(self.labels)))}
-        self.INDEX_TO_LABEL = {index: phn for index, phn in enumerate(
-                                 ["pad"] + sorted(list(self.labels)))}
 
-    def prepare_feats(self):
+        label_to_index = {label: index for index, label in enumerate(
+                                 ["pad"] + sorted(list(labels)))}
+        index_to_label = {index: phn for index, phn in enumerate(
+                                 ["pad"] + sorted(list(labels)))}
+
+        return label_to_index, index_to_label
+
+    def prepare_feats(self) -> None:
         """ Prepares input features"""
 
         logger.debug("Preparing input features")
@@ -287,7 +368,7 @@ class Corpus:
         if should_extract_feats:
             feat_extract.from_dir(self.feat_dir, self.feat_type)
 
-    def make_data_splits(self, max_samples):
+    def make_data_splits(self, max_samples: int) -> None:
         """ Splits the utterances into training, validation and test sets."""
 
         train_f_exists = self.train_prefix_fn.is_file()
@@ -357,7 +438,7 @@ class Corpus:
                 print(prefix, file=prefix_f)
 
     @staticmethod
-    def divide_prefixes(prefixes, seed=0):
+    def divide_prefixes(prefixes: List[str], seed:int=0) -> Tuple[List[str], List[str], List[str]]:
         """Divide data into training, validation and test subsets"""
         Ratios = namedtuple("Ratios", ["train", "valid", "test"])
         ratios=Ratios(.90, .05, .05)
@@ -406,7 +487,7 @@ class Corpus:
                     "Feature matrix of shape %s unexpected" % str(feats.shape))
         return self._num_feats
 
-    def prefixes_to_fns(self, prefixes):
+    def prefixes_to_fns(self, prefixes: List[str]) -> Tuple[List[str], List[str]]:
         # TODO Return pathlib.Paths
         feat_fns = [str(self.feat_dir / ("%s.%s.npy" % (prefix, self.feat_type)))
                     for prefix in prefixes]
@@ -432,18 +513,17 @@ class Corpus:
         return self.prefixes_to_fns(self.test_prefixes)
 
     def get_untranscribed_prefixes(self) -> List[str]:
+        """
+        The file "untranscribed_prefixes.txt" will specify prefixes which
+        do not have an associated transcription file if placed in the target directory.
 
-        # TODO Change to pathlib.Path
-        untranscribed_prefix_fn = join(str(self.tgt_dir), "untranscribed_prefixes.txt")
-        if os.path.exists(untranscribed_prefix_fn):
-            with open(untranscribed_prefix_fn) as f:
-                prefixes = f.readlines()
+        This will fetch those prefixes from that file and will return an empty
+        list if that file does not exist.
 
-            return [prefix.strip() for prefix in prefixes]
-        else:
-            logger.warning("Attempting to get untranscribed prefixes but the file ({})"
-                           " that should specify these does not exist".format(untranscribed_prefix_fn))
-        return []
+        See find_untranscribed_wavs function for finding untranscribed prefixes in an
+        experiment directory.
+        """
+        return get_untranscribed_prefixes_from_file(self.tgt_dir)
 
     def get_untranscribed_fns(self) -> List[str]:
         feat_fns = [os.path.join(str(self.feat_dir), "untranscribed", "%s.%s.npy" % (prefix, self.feat_type))
@@ -469,7 +549,7 @@ class Corpus:
 
         return prefixes
 
-    def review(self):
+    def review(self) -> None:
         """ Used to play the WAV files and compare with the transcription. """
 
         for prefix in self.determine_prefixes():
@@ -481,31 +561,7 @@ class Corpus:
             print("Transcription: {}".format(transcript))
             subprocess.run(["play", str(wav_fn)])
 
-    def ensure_no_set_overlap(self) -> None:
-        """ Ensures no test set data has creeped into the training set."""
-
-        logger.debug("Ensuring that the training, validation and test data sets have no overlap")
-        train = set(self.get_train_fns()[0])
-        valid = set(self.get_valid_fns()[0])
-        test = set(self.get_test_fns()[0])
-        assert train - valid == train
-        assert train - test == train
-        assert valid - train == valid
-        assert valid - test == valid
-        assert test - train == test
-        assert test - valid == test
-
-        if train & valid:
-            logger.warning("train and valid have overlapping items: {}".format(train & valid))
-            raise PersephoneException("train and valid have overlapping items: {}".format(train & valid))
-        if train & test:
-            logger.warning("train and test have overlapping items: {}".format(train & test))
-            raise PersephoneException("train and test have overlapping items: {}".format(train & test))
-        if valid & test:
-            logger.warning("valid and test have overlapping items: {}".format(valid & test))
-            raise PersephoneException("valid and test have overlapping items: {}".format(valid & test))
-
-    def pickle(self):
+    def pickle(self) -> None:
         """ Pickles the Corpus object in a file in tgt_dir. """
 
         pickle_path = self.tgt_dir / "corpus.p"
@@ -521,35 +577,32 @@ class Corpus:
             return pickle.load(f)
 
 
-class ReadyCorpus(Corpus):
-    """ Interface to a corpus that has WAV files and label files split into
-    utterances and segregated in a directory with a "wav" and "label" dir. """
+def determine_labels(target_dir: Path, label_type: str) -> set:
+    """ Returns a set of all phonemes found in the corpus. Assumes that WAV files and
+    label files are split into utterances and segregated in a directory which contains a
+    "wav" subdirectory and "label" subdirectory.
 
-    def __init__(self, tgt_dir, feat_type="fbank", label_type="phonemes"):
+    Arguments:
+        target_dir: A `Path` to the directory where the corpus data is found
+        label_type: The type of label we are creating the label set from. For example
+                    "phonemes" would only search for labels for that type.
+    """
+    logger.info("Finding phonemes of type %s in directory %s", label_type, target_dir)
 
-        labels = self.determine_labels(tgt_dir, label_type)
+    label_dir = target_dir / "label/"
+    if not label_dir.is_dir():
+        raise FileNotFoundError(
+            "The directory {} does not exist.".format(target_dir))
 
-        super().__init__(feat_type, label_type, Path(tgt_dir), labels)
-
-    @staticmethod
-    def determine_labels(tgt_dir, label_type):
-        """ Returns a set of phonemes found in the corpus. """
-        logger.info("Finding phonemes of type %s in directory %s", label_type, tgt_dir)
-
-        label_dir = os.path.join(tgt_dir, "label/")
-        if not os.path.isdir(label_dir):
-            raise FileNotFoundError(
-                "The directory {} does not exist.".format(tgt_dir))
-
-        phonemes = set()
-        for fn in os.listdir(label_dir):
-            if fn.endswith(label_type):
-                with open(join(label_dir, fn)) as f:
-                    try:
-                        line_phonemes = set(f.readline().split())
-                    except UnicodeDecodeError:
-                        logger.error("Unicode decode error on file %s", fn)
-                        print("Unicode decode error on file {}".format(fn))
-                        raise
-                    phonemes = phonemes.union(line_phonemes)
-        return phonemes
+    phonemes = set() # type: set
+    for fn in os.listdir(str(label_dir)):
+        if fn.endswith(str(label_type)):
+            with (label_dir / fn).open("r") as f:
+                try:
+                    line_phonemes = set(f.readline().split())
+                except UnicodeDecodeError:
+                    logger.error("Unicode decode error on file %s", fn)
+                    print("Unicode decode error on file {}".format(fn))
+                    raise
+                phonemes = phonemes.union(line_phonemes)
+    return phonemes
