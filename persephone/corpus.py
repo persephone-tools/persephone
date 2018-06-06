@@ -111,7 +111,7 @@ class Corpus:
 
     """
 
-    def __init__(self, feat_type: str, label_type: str, tgt_dir: Path, labels: Any,
+    def __init__(self, feat_type: str, label_type: str, tgt_dir: Path, labels: Optional[Any] = None,
                  max_samples:int=1000, speakers: Optional[Sequence[str]] = None) -> None:
         """ Construct a `Corpus` instance from preprocessed data.
 
@@ -138,7 +138,9 @@ class Corpus:
             label_type: A string describing the transcription labels. For example,
                          "phonemes" or "tones".
             labels: A set of strings representing labels (tokens) used in
-                transcription. For example: {"a", "o", "th", ...}
+                    transcription. For example: {"a", "o", "th", ...}.
+                    If this parameter is not provided the experiment directory is
+                    scanned for labels present in the transcription files.
             max_samples: The maximum number of samples an utterance in the
                 corpus may have. If an utterance is longer than this, it is not
                 included in the corpus.
@@ -168,7 +170,10 @@ class Corpus:
         self.set_and_check_directories(tgt_dir)
 
         # Label-related stuff
-        self.labels = labels
+        if labels is not None:
+            self.labels = labels
+        else:
+            self.labels = determine_labels(self.tgt_dir, label_type)
         self.vocab_size = len(self.labels)
         self.LABEL_TO_INDEX, self.INDEX_TO_LABEL = self.initialize_labels(self.labels)
         logger.info("Corpus label set: \n\t{}".format(self.labels))
