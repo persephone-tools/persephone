@@ -86,10 +86,10 @@ def get_untranscribed_prefixes_from_file(target_directory: Path) -> List[str]:
 
         return [prefix.strip() for prefix in prefixes]
     else:
-        logger.warning("Attempting to get untranscribed prefixes but the file ({})"
-                        " that should specify these does not exist".format(untranscribed_prefix_fn))
+        #logger.warning("Attempting to get untranscribed prefixes but the file ({})"
+        #                " that should specify these does not exist".format(untranscribed_prefix_fn))
+        pass
     return []
-
 
 class Corpus:
     """ Represents a preprocessed corpus that is ready to be used in model
@@ -146,11 +146,16 @@ class Corpus:
                 included in the corpus.
 
         """
+
         if speakers:
             raise NotImplementedError("Speakers not implemented")
 
         logger.debug("Creating a new Corpus object with feature type %s, label type %s,"
                      "target directory %s, label set %s, ms, max_samples, speakers")
+
+        # In case path is supplied as a string, make it a Path
+        self.tgt_dir = Path(tgt_dir)
+
         #: A string representing the type of speech feature (eg. "fbank"
         #: for log filterbank energies).
         self.feat_type = feat_type
@@ -161,13 +166,12 @@ class Corpus:
 
         # Setting up directories
         # Set the directory names
-        self.tgt_dir = tgt_dir
         self.feat_dir = self.get_feat_dir()
         self.wav_dir = self.get_wav_dir()
         self.label_dir = self.get_label_dir()
-        
-        logger.debug("Setting up directories for this Corpus object at %s", tgt_dir)
-        self.set_and_check_directories(tgt_dir)
+
+        logger.debug("Setting up directories for this Corpus object at %s", self.tgt_dir)
+        self.set_and_check_directories(self.tgt_dir)
 
         # Label-related stuff
         if labels is not None:
@@ -257,6 +261,9 @@ class Corpus:
         # This currently bails out if label_segmenter is not provided
         if not label_segmenter:
             raise ValueError("A label segmenter must be provided via label_segmenter")
+
+        # In case path is supplied as a string, make it a Path
+        self.tgt_dir = Path(tgt_dir)
 
         # Read utterances from org_dir.
         utterances = elan.utterances_from_dir(org_dir,

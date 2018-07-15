@@ -101,8 +101,8 @@ interpreter. Back to the terminal:
     $ ipython
     > from persephone import corpus
     > corp = corpus.Corpus("fbank", "phonemes", "data/na_example")
-    > from persephone import run
-    > run.train_ready(corp)
+    > from persephone import experiment
+    > experiment.train_ready(corp)
 
 You'll should now see something like:
 
