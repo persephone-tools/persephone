@@ -6,7 +6,7 @@ import logging
 import os
 from pathlib import Path
 import sys
-from typing import Union, Sequence, Set, List
+from typing import Optional, Union, Sequence, Set, List
 
 import tensorflow as tf
 
@@ -209,7 +209,7 @@ class Model:
 
     def train(self, early_stopping_steps: int = 10, min_epochs: int = 30,
               max_valid_ler: float = 1.0, max_train_ler: float = 0.3,
-              max_epochs: int = 100, restore_model_path=None) -> None:
+              max_epochs: int = 100, restore_model_path: Optional[str]=None) -> None:
         """ Train the model.
 
             min_epochs: minimum number of epochs to run training for.
