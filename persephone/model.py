@@ -14,6 +14,7 @@ from .preprocess import labels
 from . import utils
 from . import config
 from .exceptions import PersephoneException
+from .corpus_reader import CorpusReader
 
 OPENFST_PATH = config.OPENFST_BIN_PATH
 
@@ -103,8 +104,11 @@ class Model:
         saved_model_path: Path to where the Tensorflow model is being saved on disk.
     """
 
-    def __init__(self, exp_dir, corpus_reader) -> None:
-        self.exp_dir = exp_dir
+    def __init__(self, exp_dir: Union[Path, str], corpus_reader: CorpusReader) -> None:
+        if isinstance(exp_dir, Path):
+            self.exp_dir = str(exp_dir) # type: str
+        else:
+            self.exp_dir = exp_dir # type: str
         self.corpus_reader = corpus_reader
         self.log_softmax = None
         self.batch_x = None
