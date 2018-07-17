@@ -118,7 +118,7 @@ class Model:
         self.ler = None
         self.dense_decoded = None
         self.dense_ref = None
-        self.saved_model_path = None
+        self.saved_model_path = "" # type: str
 
     def transcribe(self, restore_model_path=None) -> None:
         """ Transcribes an untranscribed dataset. Similar to eval() except
