@@ -263,7 +263,8 @@ class Corpus:
             raise ValueError("A label segmenter must be provided via label_segmenter")
 
         # In case path is supplied as a string, make it a Path
-        self.tgt_dir = Path(tgt_dir)
+        if isinstance(tgt_dir, str):
+            tgt_dir = Path(tgt_dir)
 
         # Read utterances from org_dir.
         utterances = elan.utterances_from_dir(org_dir,

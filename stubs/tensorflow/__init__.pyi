@@ -129,3 +129,7 @@ def truncated_normal(shape: Any, mean: Any=0.0, stddev: Any=1.0, dtype: Any=dtyp
 # https://github.com/tensorflow/tensorflow/blob/3f8febf04b075eef0950a18c7e122f0addeacfe9/tensorflow/python/ops/math_ops.py#L1384
 # Returns Tensor
 def reduce_mean(input_tensor: Any, axis: Any=None, keepdims: Any=None, name: Optional[str]=None, reduction_indices: Any=None, keep_dims: Any=None) -> Any: ...
+
+
+# See https://www.tensorflow.org/api_docs/python/tf/reshape
+def reshape(tensor: Tensor, shape: Any, name: Optional[str]=None) -> Tensor : ...

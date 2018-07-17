@@ -6,7 +6,7 @@ import logging
 import os
 from pathlib import Path
 import sys
-from typing import Union, Sequence, Set, List
+from typing import Optional, Union, Sequence, Set, List
 
 import tensorflow as tf
 
@@ -14,6 +14,7 @@ from .preprocess import labels
 from . import utils
 from . import config
 from .exceptions import PersephoneException
+from .corpus_reader import CorpusReader
 
 OPENFST_PATH = config.OPENFST_BIN_PATH
 
@@ -103,8 +104,11 @@ class Model:
         saved_model_path: Path to where the Tensorflow model is being saved on disk.
     """
 
-    def __init__(self, exp_dir, corpus_reader) -> None:
-        self.exp_dir = exp_dir
+    def __init__(self, exp_dir: Union[Path, str], corpus_reader: CorpusReader) -> None:
+        if isinstance(exp_dir, Path):
+            self.exp_dir = str(exp_dir) # type: str
+        else:
+            self.exp_dir = exp_dir # type: str
         self.corpus_reader = corpus_reader
         self.log_softmax = None
         self.batch_x = None
@@ -114,9 +118,9 @@ class Model:
         self.ler = None
         self.dense_decoded = None
         self.dense_ref = None
-        self.saved_model_path = None
+        self.saved_model_path = "" # type: str
 
-    def transcribe(self, restore_model_path=None) -> None:
+    def transcribe(self, restore_model_path: Optional[str]=None) -> None:
         """ Transcribes an untranscribed dataset. Similar to eval() except
         no reference translation is assumed, thus no LER is calculated.
         """
@@ -158,7 +162,7 @@ class Model:
                         print(" ".join(hyp), file=hyps_f)
                         print("", file=hyps_f)
 
-    def eval(self, restore_model_path=None) -> None:
+    def eval(self, restore_model_path: Optional[str]=None) -> None:
         """ Evaluates the model on a test set."""
 
         saver = tf.train.Saver()
@@ -197,7 +201,7 @@ class Model:
             with open(os.path.join(hyps_dir, "test_per"), "w") as per_f:
                 print("Test PER: %f, tf LER: %f" % (test_per, test_ler), file=per_f)
 
-    def output_best_scores(self, best_epoch_str):
+    def output_best_scores(self, best_epoch_str: str) -> None:
         """Output best scores to the filesystem"""
         BEST_SCORES_FILENAME = "best_scores.txt"
         with open(os.path.join(self.exp_dir, BEST_SCORES_FILENAME), "w") as best_f:
@@ -205,7 +209,7 @@ class Model:
 
     def train(self, early_stopping_steps: int = 10, min_epochs: int = 30,
               max_valid_ler: float = 1.0, max_train_ler: float = 0.3,
-              max_epochs: int = 100, restore_model_path=None) -> None:
+              max_epochs: int = 100, restore_model_path: Optional[str]=None) -> None:
         """ Train the model.
 
             min_epochs: minimum number of epochs to run training for.

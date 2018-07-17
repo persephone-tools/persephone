@@ -5,21 +5,23 @@ import os
 import git
 from git import Repo
 
+from typing import Optional
+
 import persephone
 from . import config
 from . import rnn_ctc
 from .corpus_reader import CorpusReader
 from .utils import is_git_directory_clean
 
-EXP_DIR = config.EXP_DIR
+EXP_DIR = config.EXP_DIR # type: str
 
-def get_exp_dir_num(parent_dir):
+def get_exp_dir_num(parent_dir: str) -> int:
     """ Gets the number of the current experiment directory."""
     return max([int(fn.split(".")[0])
                 for fn in os.listdir(parent_dir) if fn.split(".")[0].isdigit()]
                     + [-1])
 
-def _prepare_directory(directory_path):
+def _prepare_directory(directory_path: str) -> str:
     """
     Prepare the directory structure required for the experiment
     :returns: returns the name of the newly created directory
@@ -31,7 +33,7 @@ def _prepare_directory(directory_path):
         os.makedirs(exp_dir)
     return exp_dir
 
-def prep_sub_exp_dir(parent_dir):
+def prep_sub_exp_dir(parent_dir: str) -> str:
     """ Prepares an experiment subdirectory
     :parent_dir: the parent directory
     :returns: returns the name of the newly created subdirectory
