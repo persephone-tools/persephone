@@ -120,7 +120,7 @@ class Model:
         self.dense_ref = None
         self.saved_model_path = "" # type: str
 
-    def transcribe(self, restore_model_path=None) -> None:
+    def transcribe(self, restore_model_path: Optional[str]=None) -> None:
         """ Transcribes an untranscribed dataset. Similar to eval() except
         no reference translation is assumed, thus no LER is calculated.
         """
@@ -162,7 +162,7 @@ class Model:
                         print(" ".join(hyp), file=hyps_f)
                         print("", file=hyps_f)
 
-    def eval(self, restore_model_path=None) -> None:
+    def eval(self, restore_model_path: Optional[str]=None) -> None:
         """ Evaluates the model on a test set."""
 
         saver = tf.train.Saver()
@@ -201,7 +201,7 @@ class Model:
             with open(os.path.join(hyps_dir, "test_per"), "w") as per_f:
                 print("Test PER: %f, tf LER: %f" % (test_per, test_ler), file=per_f)
 
-    def output_best_scores(self, best_epoch_str):
+    def output_best_scores(self, best_epoch_str: str) -> None:
         """Output best scores to the filesystem"""
         BEST_SCORES_FILENAME = "best_scores.txt"
         with open(os.path.join(self.exp_dir, BEST_SCORES_FILENAME), "w") as best_f:
