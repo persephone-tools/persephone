@@ -71,7 +71,7 @@ class Model(model.Model):
                 # For feeding into the next layer
                 layer_input = self.outputs_concat
 
-        self.outputs = tf.reshape(self.outputs_concat, [-1, self.hidden_size*2]) #type: ignore
+        self.outputs = tf.reshape(self.outputs_concat, [-1, self.hidden_size*2]) # pylint: disable=no-member
 
         # Single-variable names are appropriate for weights an biases.
         # pylint: disable=invalid-name
@@ -79,7 +79,7 @@ class Model(model.Model):
                 stddev=np.sqrt(2.0 / (2*hidden_size)))) #type: ignore
         b = tf.Variable(tf.zeros([vocab_size])) #type: ignore
         self.logits = tf.matmul(self.outputs, W) + b #type: ignore
-        self.logits = tf.reshape(self.logits, [batch_size, -1, vocab_size]) #type: ignore
+        self.logits = tf.reshape(self.logits, [batch_size, -1, vocab_size]) # pylint: disable=no-member
         # igormq made it time major, because of an optimization in ctc_loss.
         self.logits = tf.transpose(self.logits, (1, 0, 2), name="logits") #type: ignore
 
