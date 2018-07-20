@@ -78,7 +78,7 @@ def get_simple_model(exp_dir, corpus):
             else:
                 batch_size = 4
         else:
-            batch_size = num_train / 32
+            batch_size = int(num_train / 32)
 
         return batch_size
 
