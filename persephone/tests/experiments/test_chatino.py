@@ -99,9 +99,15 @@ def test_transcribe_joes_data(joes_data):
                      joe_corpus.get_test_fns()[0])
     #joe_corpus_fbank = joe_corpus.
     logging.debug("joe_fbank_fns: {}".format(joe_fbank_fns))
+    #hyps = model.decode(model_path_prefix,
+    #                           joe_fbank_fns,
+    #                           labels)
+    #with open("labels.txt", "w") as f:
+    #    for label in labels:
+    #        print(label, file=f)
     hyps = model.decode(model_path_prefix,
                                joe_fbank_fns,
-                               labels)
+                               label_set=None)
     logging.debug("transcripts: {}".format(pprint.pformat(
         [" ".join(transcript) for transcript in hyps])))
     label_fns = (joe_corpus.get_train_fns()[1] +

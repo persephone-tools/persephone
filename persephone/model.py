@@ -47,7 +47,17 @@ def dense_to_human_readable(dense_repr, index_to_label):
 
 def decode(model_path_prefix: Union[str, Path],
            input_paths: Sequence[Path],
-           label_set: Set[str]) -> List[List[str]]:
+           label_set: Set[str] = None) -> List[List[str]]:
+
+    if label_set is None:
+        "Load label set from model dir."
+        model_dir = Path(model_path_prefix).parent
+        label_path = model_dir / "labels.txt"
+        try:
+            with label_path.open("r") as f:
+                label_set = set([line.strip() for line in f.readlines()])
+        except FileNotFoundError:
+            raise FileNotFoundError("Couldn't find labels.txt in {}. Either provide a list of files there or supply a label_set keyword argument to decode()".format(model_dir))
 
     model_path_prefix = str(model_path_prefix)
 
@@ -57,6 +67,7 @@ def decode(model_path_prefix: Union[str, Path],
 
     # TODO Change the second argument to have some upper bound. If the caller
     # requests 1000 WAVs be transcribed, they shouldn't all go in one batch.
+    # Could call decide_batch_size here.
     fn_batches = utils.make_batches(input_paths, len(input_paths))
     # Load the model and perform decoding.
     metagraph = load_metagraph(model_path_prefix)
