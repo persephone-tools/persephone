@@ -315,7 +315,7 @@ We can now feed data to a ``Model``:
 .. code:: python
 
     from persephone import rnn_ctc
-    model = rnn_ctc.Model(exp_dir, na_reader, num_layers=2, hidden_size=250)
+    my_model = rnn_ctc.Model(exp_dir, na_reader, num_layers=2, hidden_size=250)
 
 where ``exp_dir`` is a directory in which experimental results and
 logging will be stored. In creating an ``rnn_ctc.Model`` (recurrent
@@ -326,13 +326,13 @@ those layers. We can now train the model with:
 
 .. code:: python
 
-    model.train()
+    my_model.train()
 
 After training, we can transcribe untranscribed data with:
 
 .. code:: python
 
-    model.transcribe()
+    my_model.transcribe()
 
 which depends on ``untranscribed_prefixes.txt`` existing before corpus
 creation (though there's no reason why this can't be changed to simply
@@ -342,13 +342,14 @@ that don't have corresponding transcriptions in ``<data-dir>/label/``).
 During training, the model will store the model that performs best on
 the validation set in ``<exp_dir>/model``, across a few different files
 prefixed with ``model_best.ckpt``. If you later want to load this model
-to transcribe untranscribed data, you create a model with the same
-hyperparameters and call ``model.transcribe()`` with the
-``restore_model_path`` keyword argument:
+to transcribe untranscribed data, you can call model.decode():
 
 .. code:: python
+    from persephone import model
+    model.decode("<old-exp-dir>/model/model_best.ckpt", input_paths)
 
-    model = rnn_ctc.Model(<new-exp-dir>, na_reader, num_layers=2, hidden_size=250)
-    model.transcribe(restore_model_path="<old-exp-dir>/model/model_best.ckpt")
+Note that this does not create a ``model`` object, but uses a stored model to
+perform transcription.
 
-This will load a previous model and perform transcription with it.
+This will load a previous model and perform transcription with it, returning a
+list of strings representing the transcribed utterances.

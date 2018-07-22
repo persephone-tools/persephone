@@ -46,7 +46,7 @@ def dense_to_human_readable(dense_repr, index_to_label):
     return transcripts
 
 def decode(model_path_prefix: Union[str, Path],
-           input_paths: Sequence[Path],
+           input_paths: Sequence[Union[str, Path]],
            label_set: Set[str] = None) -> List[List[str]]:
 
     if label_set is None:
@@ -59,35 +59,35 @@ def decode(model_path_prefix: Union[str, Path],
         except FileNotFoundError:
             raise FileNotFoundError("Couldn't find labels.txt in {}. Either provide a list of files there or supply a label_set keyword argument to decode()".format(model_dir))
 
+    indices_to_labels = labels.make_indices_to_labels(label_set)
+
     model_path_prefix = str(model_path_prefix)
 
     # TODO Confirm that that WAVs exist.
 
     # TODO Confirm that the feature files exist. Create them if they don't.
 
-    # TODO Change the second argument to have some upper bound. If the caller
-    # requests 1000 WAVs be transcribed, they shouldn't all go in one batch.
-    # Could call decide_batch_size here.
-    fn_batches = utils.make_batches(input_paths, len(input_paths))
+    fn_batches = utils.make_batches(input_paths, 16)
     # Load the model and perform decoding.
     metagraph = load_metagraph(model_path_prefix)
+    human_readable = []
     with tf.Session() as sess:
         metagraph.restore(sess, model_path_prefix)
 
         for fn_batch in fn_batches:
             batch_x, batch_x_lens = utils.load_batch_x(fn_batch)
 
-        # TODO These placeholder names should be a backup if names from a newer
-        # naming scheme aren't present. Otherwise this won't generalize to
-        # different architectures.
-        feed_dict = {"Placeholder:0": batch_x,
-                     "Placeholder_1:0": batch_x_lens}
+            # TODO These placeholder names should be a backup if names from a newer
+            # naming scheme aren't present. Otherwise this won't generalize to
+            # different architectures.
+            feed_dict = {"Placeholder:0": batch_x,
+                         "Placeholder_1:0": batch_x_lens}
 
-        dense_decoded = sess.run("SparseToDense:0", feed_dict=feed_dict)
+            dense_decoded = sess.run("SparseToDense:0", feed_dict=feed_dict)
 
-    # Create a human-readable representation of the decoded.
-    indices_to_labels = labels.make_indices_to_labels(label_set)
-    human_readable = dense_to_human_readable(dense_decoded, indices_to_labels)
+            # Create a human-readable representation of the decoded.
+            hr_batch = dense_to_human_readable(dense_decoded, indices_to_labels)
+            human_readable.extend(hr_batch)
 
     return human_readable
 
