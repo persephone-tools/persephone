@@ -54,7 +54,7 @@ def decode(model_path_prefix: Union[str, Path],
         model_dir = Path(model_path_prefix).parent
         label_path = model_dir / "labels.txt"
         try:
-            with label_path.open("r") as f:
+            with label_path.open("r") as f: # pylint: disable=no-member
                 label_set = set([line.strip() for line in f.readlines()])
         except FileNotFoundError:
             raise FileNotFoundError("Couldn't find labels.txt in {}. Either provide a list of files there or supply a label_set keyword argument to decode()".format(model_dir))
@@ -110,6 +110,15 @@ class Model:
         self.exp_dir = exp_dir
         self.corpus_reader = corpus_reader
         self.log_softmax = None
+
+    def save_label_set(self, model_dir):
+        """ Stores the label set used to train the model so that decode() can
+        use it later without reference to the Corpus object."""
+
+        labels_path = model_dir / "labels.txt"
+        with labels_path.open("w") as f:
+            for label in self.corpus_reader.corpus.labels:
+                print(label, file=f)
 
     def transcribe(self, restore_model_path=None):
         """ Transcribes an untranscribed dataset. Similar to eval() except
@@ -314,6 +323,7 @@ class Model:
                 if not os.path.exists(os.path.dirname(path)):
                     os.mkdir(os.path.dirname(path))
                 saver.save(sess, path)
+                self.save_label_set(Path(path).parent)
                 self.saved_model_path = path
 
                 # Output best hyps
