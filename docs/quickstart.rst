@@ -50,7 +50,7 @@ Installation option 2: A "native" install
 Ensure Python 3 is installed.
 
 You will also need to install some system dependencies. For your
-convienence we have an install script for dependencies for Ubuntu. To
+convenience we have an install script for dependencies for Ubuntu. To
 install the Ubuntu binaries, run ``./ubuntu_bootstrap.sh`` to install
 ffmpeg packages. On MacOS we suggest installing via Homebrew with
 ``brew install ffmpeg``.
@@ -85,7 +85,7 @@ Get the data
 `here <https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download>`_
 
 Unzip ``na_example_small.zip``. There should now be a directory
-``na_example/``, with subdirfectories ``wav/`` and ``label/``. You can
+``na_example/``, with subdirectories ``wav/`` and ``label/``. You can
 put ``na_example`` anywhere, but for the rest of this tutorial I assume
 it is in the working directory:
 ``persephone-tutorial/data/na_example/``.
