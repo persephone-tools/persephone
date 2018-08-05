@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - Fixed bug where batch sizes were not integers
+- Corpus construction from Elan regression was fixed
 
 ## [0.3.1] - 2018-07-14
 
