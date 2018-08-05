@@ -81,6 +81,31 @@ def test_create_corpus_basic(tmpdir):
     )
     assert c
 
+def test_create_corpus_label_mismatch(tmpdir):
+    """Test that an attempt to create a Corpus object with a minimal data set"""
+    from persephone.corpus import Corpus
+    from persephone.exceptions import LabelMismatchException
+    from pathlib import Path
+
+    wav_dir = tmpdir.mkdir("wav")
+    label_dir = tmpdir.mkdir("label")
+
+    wav_test = wav_dir.join("test.wav").write("")
+    wav_train = wav_dir.join("train.wav").write("")
+    wav_valid = wav_dir.join("valid.wav").write("")
+
+    label_test = wav_dir.join("valid.phonemes").write("a")
+    label_train = wav_dir.join("valid.phonemes").write("b")
+    label_valid = wav_dir.join("valid.phonemes").write("c")
+
+    with pytest.raises(LabelMismatchException):
+        c = Corpus(
+            feat_type='fbank',
+            label_type='phonemes',
+            tgt_dir=Path(str(tmpdir)),
+            labels=["a", "b", "c"]
+        )
+
 def test_determine_labels_throws():
     """Test that a non existant directory will throw"""
     import pathlib
