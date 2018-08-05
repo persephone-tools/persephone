@@ -1,4 +1,4 @@
-Persephone v0.3.1 (beta version)
+Persephone v0.3.2 (beta version)
 ================================
 
 Persephone (/pərˈsɛfəni/) is an automatic phoneme transcription tool.
