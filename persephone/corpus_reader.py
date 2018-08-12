@@ -54,6 +54,9 @@ class CorpusReader:
         print("Batch size: {}".format(batch_size))
         print("Batches per epoch: {}".format(int(num_train/batch_size)))
 
+        if self.num_train == 0:
+            raise PersephoneException("Number of training examples was zero")
+
         if batch_size:
             self.batch_size = batch_size
             if num_train % batch_size != 0:
