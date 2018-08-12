@@ -2,8 +2,10 @@
 
 import logging
 import logging.config
+from pathlib import Path
 import pprint
 import random
+from typing import List, Sequence
 
 import numpy as np
 
@@ -117,7 +119,7 @@ class CorpusReader:
         return batch_inputs, batch_inputs_lens, batch_targets
 
 
-    def make_batches(self, utterance_fns):
+    def make_batches(self, utterance_fns: Sequence[Path]) -> List[Sequence[Path]]:
         """ Group utterances into batches for decoding.  """
 
         return utils.make_batches(utterance_fns, self.batch_size)
@@ -195,7 +197,7 @@ class CorpusReader:
                 "\tbatch_size=%s,\n" % repr(self.batch_size) +
                 "\tcorpus=\n%s)" % repr(self.corpus))
 
-    def calc_time(self):
+    def calc_time(self) -> None:
         """
         Prints statistics about the the total duration of recordings in the
         corpus.
