@@ -56,9 +56,6 @@ class CorpusReader:
         print("Batch size: {}".format(batch_size))
         print("Batches per epoch: {}".format(int(num_train/batch_size)))
 
-        if self.num_train == 0:
-            raise PersephoneException("Number of training examples was zero")
-
         if batch_size:
             self.batch_size = batch_size
             if num_train % batch_size != 0:
@@ -137,6 +134,8 @@ class CorpusReader:
             logger.debug("Batch of training filenames: %s",
                           pprint.pformat(fn_batch))
             yield self.load_batch(fn_batch)
+        else:
+            raise StopIteration
 
     def valid_batch(self):
         """ Returns a single batch with all the validation cases."""
