@@ -508,7 +508,7 @@ class Corpus:
                       for prefix in prefixes]
         return feat_fns, label_fns
 
-    def get_train_fns(self):
+    def get_train_fns(self) -> Tuple[List[str], List[str]]:
         """ Fetches the training set of the corpus.
 
         Outputs a Tuple of size 2, where the first element is a list of paths
@@ -517,11 +517,11 @@ class Corpus:
         """
         return self.prefixes_to_fns(self.train_prefixes)
 
-    def get_valid_fns(self):
+    def get_valid_fns(self) -> Tuple[List[str], List[str]]:
         """ Fetches the validation set of the corpus."""
         return self.prefixes_to_fns(self.valid_prefixes)
 
-    def get_test_fns(self):
+    def get_test_fns(self) -> Tuple[List[str], List[str]]:
         """ Fetches the test set of the corpus."""
         return self.prefixes_to_fns(self.test_prefixes)
 

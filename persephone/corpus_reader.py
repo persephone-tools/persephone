@@ -5,7 +5,7 @@ import logging.config
 from pathlib import Path
 import pprint
 import random
-from typing import List, Sequence
+from typing import List, Sequence, Iterator
 
 import numpy as np
 
@@ -121,7 +121,7 @@ class CorpusReader:
 
         return utils.make_batches(utterance_fns, self.batch_size)
 
-    def train_batch_gen(self):
+    def train_batch_gen(self) -> Iterator:
         """ Returns a generator that outputs batches in the training data."""
 
         # Create batches of batch_size and shuffle them.

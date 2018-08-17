@@ -114,7 +114,7 @@ def batch_per(hyps: Sequence[Sequence[T]],
         macro_per += distance.edit_distance(ref, hyp)/len(ref)
     return macro_per/len(hyps)
 
-def get_prefixes(dirname, extension):
+def get_prefixes(dirname: str, extension: str) -> List[str]:
     """ Returns a list of prefixes to files in the directory (which might be a whole
     corpus, or a train/valid/test subset. The prefixes include the path leading
     up to it, but only the filename up until the first observed period '.'
@@ -153,7 +153,7 @@ def filter_by_size(feat_dir: Path, prefixes: List[str], feat_type: str,
                 if length <= max_samples]
     return prefixes
 
-def sort_by_size(feat_dir, prefixes, feat_type) -> List[str]:
+def sort_by_size(feat_dir: Path, prefixes: List[str], feat_type: str) -> List[str]:
     prefix_lens = get_prefix_lens(feat_dir, prefixes, feat_type)
     prefix_lens.sort(key=lambda prefix_len: prefix_len[1])
     prefixes = [prefix for prefix, _ in prefix_lens]
@@ -167,7 +167,7 @@ def is_number(string):
     except ValueError:
         return False
 
-def wav_length(fn):
+def wav_length(fn: str) -> float:
     """ Returns the length of the WAV file in seconds."""
 
     args = [config.SOX_PATH, fn, "-n", "stat"]
