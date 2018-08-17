@@ -276,7 +276,6 @@ class Model:
                     batch_gen = self.corpus_reader.train_batch_gen()
 
                     train_ler_total = 0
-                    batch_i = None
                     print("\tBatch...", end="")
                     for batch_i, batch in enumerate(batch_gen):
                         print("%d..." % batch_i, end="")
@@ -291,6 +290,9 @@ class Model:
                                         feed_dict=feed_dict)
 
                         train_ler_total += ler
+                    else:
+                        raise PersephoneException("No training batches could be successfully generated at"
+                                                  "epoch {}, cannot continue training of model.".format(epoch))
 
                     feed_dict = {self.batch_x: valid_x,
                                 self.batch_x_lens: valid_x_lens,
