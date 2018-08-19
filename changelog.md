@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+- Raise a label mismatch exception if label kwarg to Corpus constructor is inconsistent with automatically determined labels.
+
+## [0.3.2]
+
+### Added
 - Changelog
 
 ### Fixed

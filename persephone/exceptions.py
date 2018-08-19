@@ -20,3 +20,9 @@ class EmptyReferenceException(PersephoneException):
     When calculating word error rates, the reference string must be of
     length >= 1. Otherwise, this exception will be thrown.
     """
+
+class LabelMismatchException(PersephoneException):
+    """
+    When user supplied labels are inconsistent with those automatically
+    determined.
+    """

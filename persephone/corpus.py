@@ -17,6 +17,7 @@ import numpy as np
 from .preprocess import feat_extract
 from . import utils
 from .exceptions import PersephoneException
+from .exceptions import LabelMismatchException
 from .preprocess import elan, wav
 from . import utterance
 from .utterance import Utterance
@@ -176,6 +177,11 @@ class Corpus:
         # Label-related stuff
         if labels is not None:
             self.labels = labels
+            found_labels = determine_labels(self.tgt_dir, label_type)
+            if found_labels != self.labels:
+                raise LabelMismatchException("""User specified labels, {}, do
+                    not match those automatically found, {}.""".format(labels,
+                    found_labels))
         else:
             self.labels = determine_labels(self.tgt_dir, label_type)
         self.vocab_size = len(self.labels)

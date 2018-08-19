@@ -5,7 +5,7 @@ Contributing to Persephone
 The preferred workflow for contributing to Persephone is to fork the
 main repository on GitHub, clone, and develop on a branch. Steps:
 
-1. Fork the [project repository](https://github.com/oadams/persephone)
+1. Fork the [project repository](https://github.com/persephone-tools/persephone)
    by clicking on the 'Fork' button near the top right of the page. This creates
    a copy of the code under your GitHub user account.
 
@@ -90,8 +90,8 @@ It is recommended to check that your issue complies with the
 following rules before submitting:
 
 -  Verify that your issue is not being currently addressed by other
-   [issues](https://github.com/oadams/persephone/issues?q=)
-   or [pull requests](https://github.com/oadams/persephone/pulls?q=).
+   [issues](https://github.com/persephone-tools/persephone/issues?q=)
+   or [pull requests](https://github.com/persephone-tools/persephone/pulls?q=).
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.

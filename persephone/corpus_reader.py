@@ -47,7 +47,7 @@ class CorpusReader:
                 batch_size = 64
             num_train = len(corpus.get_train_fns()[0])
             num_batches = int(num_train / batch_size)
-            num_train = num_batches * batch_size
+            num_train = int(num_batches * batch_size)
         self.num_train = num_train
         logger.info("Number of training utterances: {}".format(num_train))
         logger.info("Batch size: {}".format(batch_size))
