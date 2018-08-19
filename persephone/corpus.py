@@ -478,12 +478,12 @@ class Corpus:
 
         return train_prefixes, valid_prefixes, test_prefixes
 
-    def indices_to_labels(self, indices):
+    def indices_to_labels(self, indices: Sequence[int]) -> List[str]:
         """ Converts a sequence of indices into their corresponding labels."""
 
         return [(self.INDEX_TO_LABEL[index]) for index in indices]
 
-    def labels_to_indices(self, labels):
+    def labels_to_indices(self, labels: Sequence[str]) -> List[int]:
         """ Converts a sequence of labels into their corresponding indices."""
 
         return [self.LABEL_TO_INDEX[label] for label in labels]
@@ -507,6 +507,8 @@ class Corpus:
         return self._num_feats
 
     def prefixes_to_fns(self, prefixes: List[str]) -> Tuple[List[str], List[str]]:
+        """ Fetches the file paths to the features files and labels files
+        corresponding to the provided list of features"""
         # TODO Return pathlib.Paths
         feat_fns = [str(self.feat_dir / ("%s.%s.npy" % (prefix, self.feat_type)))
                     for prefix in prefixes]
