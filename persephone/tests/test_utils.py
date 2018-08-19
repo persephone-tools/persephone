@@ -18,3 +18,7 @@ def test_make_batches():
     batches2 = make_batches(paths, 2)
     assert len(batches2) == 2
     assert batches2 == [[1,2],[3,4]]
+
+    batches10 = make_batches(paths, 10)
+    assert len(batches10) == 1
+    assert batches10 == [[1,2,3,4]]
