@@ -1,3 +1,4 @@
+import pytest
 def test_is_number():
     from persephone.utils import is_number
 
@@ -22,3 +23,11 @@ def test_make_batches():
     batches10 = make_batches(paths, 10)
     assert len(batches10) == 1
     assert batches10 == [[1,2,3,4]]
+
+def test_zero_batch_size():
+    """Test that the batch generator raises exception if invalid parameter is passed"""
+    from persephone.utils import make_batches
+    paths = [1,2,3,4]
+
+    with pytest.raises(ValueError):
+        batches1 = make_batches(paths, 0)
