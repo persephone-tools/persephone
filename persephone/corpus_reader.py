@@ -2,8 +2,10 @@
 
 import logging
 import logging.config
+from pathlib import Path
 import pprint
 import random
+from typing import List, Sequence, Iterator
 
 import numpy as np
 
@@ -114,12 +116,12 @@ class CorpusReader:
         return batch_inputs, batch_inputs_lens, batch_targets
 
 
-    def make_batches(self, utterance_fns):
+    def make_batches(self, utterance_fns: Sequence[Path]) -> List[Sequence[Path]]:
         """ Group utterances into batches for decoding.  """
 
         return utils.make_batches(utterance_fns, self.batch_size)
 
-    def train_batch_gen(self):
+    def train_batch_gen(self) -> Iterator:
         """ Returns a generator that outputs batches in the training data."""
 
         # Create batches of batch_size and shuffle them.
@@ -132,6 +134,8 @@ class CorpusReader:
             logger.debug("Batch of training filenames: %s",
                           pprint.pformat(fn_batch))
             yield self.load_batch(fn_batch)
+        else:
+            raise StopIteration
 
     def valid_batch(self):
         """ Returns a single batch with all the validation cases."""
@@ -192,7 +196,7 @@ class CorpusReader:
                 "\tbatch_size=%s,\n" % repr(self.batch_size) +
                 "\tcorpus=\n%s)" % repr(self.corpus))
 
-    def calc_time(self):
+    def calc_time(self) -> None:
         """
         Prints statistics about the the total duration of recordings in the
         corpus.

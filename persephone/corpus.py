@@ -478,12 +478,12 @@ class Corpus:
 
         return train_prefixes, valid_prefixes, test_prefixes
 
-    def indices_to_labels(self, indices):
+    def indices_to_labels(self, indices: Sequence[int]) -> List[str]:
         """ Converts a sequence of indices into their corresponding labels."""
 
         return [(self.INDEX_TO_LABEL[index]) for index in indices]
 
-    def labels_to_indices(self, labels):
+    def labels_to_indices(self, labels: Sequence[str]) -> List[int]:
         """ Converts a sequence of labels into their corresponding indices."""
 
         return [self.LABEL_TO_INDEX[label] for label in labels]
@@ -507,6 +507,8 @@ class Corpus:
         return self._num_feats
 
     def prefixes_to_fns(self, prefixes: List[str]) -> Tuple[List[str], List[str]]:
+        """ Fetches the file paths to the features files and labels files
+        corresponding to the provided list of features"""
         # TODO Return pathlib.Paths
         feat_fns = [str(self.feat_dir / ("%s.%s.npy" % (prefix, self.feat_type)))
                     for prefix in prefixes]
@@ -514,7 +516,7 @@ class Corpus:
                       for prefix in prefixes]
         return feat_fns, label_fns
 
-    def get_train_fns(self):
+    def get_train_fns(self) -> Tuple[List[str], List[str]]:
         """ Fetches the training set of the corpus.
 
         Outputs a Tuple of size 2, where the first element is a list of paths
@@ -523,11 +525,11 @@ class Corpus:
         """
         return self.prefixes_to_fns(self.train_prefixes)
 
-    def get_valid_fns(self):
+    def get_valid_fns(self) -> Tuple[List[str], List[str]]:
         """ Fetches the validation set of the corpus."""
         return self.prefixes_to_fns(self.valid_prefixes)
 
-    def get_test_fns(self):
+    def get_test_fns(self) -> Tuple[List[str], List[str]]:
         """ Fetches the test set of the corpus."""
         return self.prefixes_to_fns(self.test_prefixes)
 

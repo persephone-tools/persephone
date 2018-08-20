@@ -276,7 +276,6 @@ class Model:
                     batch_gen = self.corpus_reader.train_batch_gen()
 
                     train_ler_total = 0
-                    batch_i = None
                     print("\tBatch...", end="")
                     for batch_i, batch in enumerate(batch_gen):
                         print("%d..." % batch_i, end="")
