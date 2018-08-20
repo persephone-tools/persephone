@@ -125,8 +125,8 @@ class CorpusReader:
         """ Returns a generator that outputs batches in the training data."""
 
         if len(self.train_fns) == 0:
-            raise PersephoneException("No training data available; cannot
-                                       generate training batches.")
+            raise PersephoneException("""No training data available; cannot
+                                       generate training batches.""")
 
         # Create batches of batch_size and shuffle them.
         fn_batches = self.make_batches(self.train_fns)
