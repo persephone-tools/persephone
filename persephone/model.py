@@ -6,7 +6,7 @@ import logging
 import os
 from pathlib import Path
 import sys
-from typing import Optional, Union, Sequence, Set, List
+from typing import Callable, Optional, Union, Sequence, Set, List
 
 import tensorflow as tf
 
@@ -209,7 +209,8 @@ class Model:
 
     def train(self, early_stopping_steps: int = 10, min_epochs: int = 30,
               max_valid_ler: float = 1.0, max_train_ler: float = 0.3,
-              max_epochs: int = 100, restore_model_path: Optional[str]=None) -> None:
+              max_epochs: int = 100, restore_model_path: Optional[str]=None,
+              epoch_callback: Optional[Callable[[int, float, float], None]]=None) -> None:
         """ Train the model.
 
             min_epochs: minimum number of epochs to run training for.
@@ -223,6 +224,10 @@ class Model:
                            Training will continue until this is met or another
                            stopping condition occurs.
             restore_model_path: The path to restore a model from.
+            epoch_callback: A callback that is called at the end of each training epoch.
+                            The parameters passed to the callable will be the epoch number,
+                            the current training LER and the current validation LER.
+                            This can be useful for progress reporting.
         """
         logger.info("Training model")
         best_valid_ler = 2.0
@@ -323,6 +328,14 @@ class Model:
                     print(epoch_str, flush=True, file=out_file)
                     if best_epoch_str is None:
                         best_epoch_str = epoch_str
+
+                    # Call the callback here if it was defined
+                    if epoch_callback:
+                        epoch_callback(
+                            epoch,
+                            (train_ler_total / (batch_i + 1)), # current training LER
+                            valid_ler # Current validation LER
+                        )
 
                     # Implement early stopping.
                     if valid_ler < best_valid_ler:
