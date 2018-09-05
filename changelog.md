@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Raise a label mismatch exception if label kwarg to Corpus constructor is inconsistent with automatically determined labels.
 
+### Changed
+- Update package dependencies versions.
+
 ### Fixed
 - `CorpusReader.train_batch_gen` raises StopIteration instead of returning None if no data can be generated.
 
