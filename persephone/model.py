@@ -9,7 +9,7 @@ import sys
 from typing import Optional, Union, Sequence, Set, List, Dict
 import tensorflow as tf
 
-from .preprocess import labels
+from .preprocess import labels, feat_extract
 from . import utils
 from . import config
 from .exceptions import PersephoneException
