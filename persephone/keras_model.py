@@ -1,7 +1,9 @@
 import keras
 
 class RNN_CTC_model:
-    """Defines a RNN CTC model with Keras"""
+    """ An acoustic model with a LSTM/CTC architecture. 
+    
+    Uses Keras to define the model"""
 
     def __init__(self, exp_dir: str, corpus_reader, num_layers: int = 3,
             hidden_size: int=250, beam_width: int = 100,
