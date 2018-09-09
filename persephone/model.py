@@ -63,6 +63,8 @@ def decode(model_path_prefix: Union[str, Path],
         feature_type: The type of features this model uses.
                       Note that this MUST match the type of features that the
                       model was trained on initially.
+        preprocessed_output_path: Any files that require preprocessing will be
+                                  saved to the path specified by this.
     """
 
     model_path_prefix = str(model_path_prefix)
@@ -83,8 +85,8 @@ def decode(model_path_prefix: Union[str, Path],
             preprocessed_file_paths.append(conventional_npy_location)
         else:
             if preprocessed_output_path:
-                mono16k_wav_path = self.feat_dir / "{}.wav".format(prefix)
-                feat_path = self.feat_dir / "{}.{}.npy".format(prefix, feature_type)
+                mono16k_wav_path = preprocessed_output_path / "{}.wav".format(prefix)
+                feat_path = preprocessed_output_path / "{}.{}.npy".format(prefix, feature_type)
                 feat_extract.convert_wav(preprocessed_output_path, mono16k_wav_path)
             else:
                 raise PersephoneException(
