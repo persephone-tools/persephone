@@ -72,9 +72,19 @@ def decode(model_path_prefix: Union[str, Path],
                 "The WAV file path {} does not exist".format(p)
             )
 
-    # TODO Confirm that the feature files exist. Create them if they don't.
+    preprocessed_file_paths = []
+    for p in input_paths:
+        # Check the "feat" directory as per the filesystem conventions of a Corpus
+        conventional_npy_location =  p.parent / "feat" / (Path(p.stem + ".npy"))
+        if conventional_npy_location.exists():
+            # don't need to preprocess it
+            preprocessed_file_paths.append(conventional_npy_location)
+        else:
+            pass
+            # TODO: preprocess the file since it isn't in the location dictacted
+            # by our filesystem conventions
 
-    fn_batches = utils.make_batches(input_paths, max_batch_size)
+    fn_batches = utils.make_batches(preprocessed_file_paths, max_batch_size)
     # Load the model and perform decoding.
     metagraph = load_metagraph(model_path_prefix)
     with tf.Session() as sess:
