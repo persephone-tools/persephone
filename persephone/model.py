@@ -58,6 +58,8 @@ def decode(model_path_prefix: Union[str, Path],
                      the model provided.
         label_set: The set of all the labels this model uses.
         feature_type: The type of features this model uses.
+                      Note that this MUST match the type of features that the
+                      model was trained on initially.
     """
 
     model_path_prefix = str(model_path_prefix)
