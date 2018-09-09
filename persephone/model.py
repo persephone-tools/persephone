@@ -47,7 +47,9 @@ def dense_to_human_readable(dense_repr: Sequence[Sequence[int]], index_to_label:
 def decode(model_path_prefix: Union[str, Path],
            input_paths: Sequence[Path],
            label_set: Set[str],
-           feature_type: str = "fbank") -> List[List[str]]:
+           *,
+           feature_type: str = "fbank",
+           max_batch_size: int = 100) -> List[List[str]]:
     """Use an existing tensorflow model that exists on disk to decode
     WAV files.
 
@@ -72,9 +74,7 @@ def decode(model_path_prefix: Union[str, Path],
 
     # TODO Confirm that the feature files exist. Create them if they don't.
 
-    # TODO Change the second argument to have some upper bound. If the caller
-    # requests 1000 WAVs be transcribed, they shouldn't all go in one batch.
-    fn_batches = utils.make_batches(input_paths, len(input_paths))
+    fn_batches = utils.make_batches(input_paths, max_batch_size)
     # Load the model and perform decoding.
     metagraph = load_metagraph(model_path_prefix)
     with tf.Session() as sess:
