@@ -6,8 +6,7 @@ import logging
 import os
 from pathlib import Path
 import sys
-from typing import Optional, Union, Sequence, Set, List
-
+from typing import Optional, Union, Sequence, Set, List, Dict
 import tensorflow as tf
 
 from .preprocess import labels
@@ -33,14 +32,14 @@ def load_metagraph(model_path_prefix: Union[str, Path]) -> tf.train.Saver:
     metagraph = tf.train.import_meta_graph(model_path_prefix + ".meta")
     return metagraph
 
-def dense_to_human_readable(dense_repr, index_to_label):
+def dense_to_human_readable(dense_repr: Sequence[Sequence[int]], index_to_label: Dict[int, str]) -> List[List[str]]:
     """ Converts a dense representation of model decoded output into human
     readable, using a mapping from indices to labels. """
 
     transcripts = []
-    for i in range(len(dense_repr)):
-        transcript = [phn_i for phn_i in dense_repr[i] if phn_i != 0]
-        transcript = [index_to_label[index] for index in transcript]
+    for dense_r in dense_repr:
+        non_empty_phonemes = [phn_i for phn_i in dense_r if phn_i != 0]
+        transcript = [index_to_label[index] for index in non_empty_phonemes]
         transcripts.append(transcript)
 
     return transcripts
