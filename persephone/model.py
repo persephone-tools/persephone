@@ -49,7 +49,8 @@ def decode(model_path_prefix: Union[str, Path],
            label_set: Set[str],
            *,
            feature_type: str = "fbank",
-           max_batch_size: int = 100) -> List[List[str]]:
+           max_batch_size: int = 100,
+           preprocessed_output_path: Optional[Path]=None) -> List[List[str]]:
     """Use an existing tensorflow model that exists on disk to decode
     WAV files.
 
@@ -75,12 +76,20 @@ def decode(model_path_prefix: Union[str, Path],
     preprocessed_file_paths = []
     for p in input_paths:
         # Check the "feat" directory as per the filesystem conventions of a Corpus
-        conventional_npy_location =  p.parent / "feat" / (Path(p.stem + ".npy"))
+        prefix = os.path.basename(os.path.splitext(str(p))[0])
+        conventional_npy_location =  p.parent / "feat" / (Path(prefix + ".npy"))
         if conventional_npy_location.exists():
             # don't need to preprocess it
             preprocessed_file_paths.append(conventional_npy_location)
         else:
-            pass
+            if preprocessed_output_path:
+                mono16k_wav_path = self.feat_dir / "{}.wav".format(prefix)
+                feat_path = self.feat_dir / "{}.{}.npy".format(prefix, feature_type)
+                feat_extract.convert_wav(preprocessed_output_path, mono16k_wav_path)
+            else:
+                raise PersephoneException(
+                    "Can't preprocess file as no output path was provided, "
+                    "please specify preprocessed_output_path")
             # TODO: preprocess the file since it isn't in the location dictacted
             # by our filesystem conventions
 
