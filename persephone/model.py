@@ -46,11 +46,27 @@ def dense_to_human_readable(dense_repr: Sequence[Sequence[int]], index_to_label:
 
 def decode(model_path_prefix: Union[str, Path],
            input_paths: Sequence[Path],
-           label_set: Set[str]) -> List[List[str]]:
+           label_set: Set[str],
+           feature_type: str = "fbank") -> List[List[str]]:
+    """Use an existing tensorflow model that exists on disk to decode
+    WAV files.
+
+    Args:
+        model_path_prefix: The path to the tensorflow model save.
+                           This is where the checkpoint ".ckpt" file resides.
+        input_paths: A sequence of `pathlib.Path`s to WAV files to put through
+                     the model provided.
+        label_set: The set of all the labels this model uses.
+        feature_type: The type of features this model uses.
+    """
 
     model_path_prefix = str(model_path_prefix)
 
-    # TODO Confirm that that WAVs exist.
+    for p in input_paths:
+        if not p.exists():
+            raise PersephoneException(
+                "The WAV file path {} does not exist".format(p)
+            )
 
     # TODO Confirm that the feature files exist. Create them if they don't.
 
@@ -170,7 +186,7 @@ class Model:
                 logger.info("restoring model from %s", restore_model_path)
                 saver.restore(sess, restore_model_path)
             else:
-                assert self.saved_model_path
+                assert self.saved_model_path, "{}".format(self.saved_model_path)
                 logger.info("restoring model from %s", self.saved_model_path)
                 saver.restore(sess, self.saved_model_path)
 
