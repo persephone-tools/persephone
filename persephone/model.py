@@ -88,13 +88,16 @@ def decode(model_path_prefix: Union[str, Path],
             if preprocessed_output_path:
                 mono16k_wav_path = preprocessed_output_path / "{}.wav".format(prefix)
                 feat_path = preprocessed_output_path / "{}.{}.npy".format(prefix, feature_type)
-                feat_extract.convert_wav(preprocessed_output_path, mono16k_wav_path)
+                feat_extract.convert_wav(p, mono16k_wav_path)
+                preprocessed_file_paths.append(feat_path)
             else:
                 raise PersephoneException(
                     "Can't preprocess file as no output path was provided, "
                     "please specify preprocessed_output_path")
-            # TODO: preprocess the file since it isn't in the location dictacted
-            # by our filesystem conventions
+    # preprocess the file that weren't found in the features directory
+    # as per the filesystem conventions
+    if preprocessed_output_path:
+        feat_extract.from_dir(preprocessed_output_path, feature_type)
 
     fn_batches = utils.make_batches(preprocessed_file_paths, max_batch_size)
     # Load the model and perform decoding.
