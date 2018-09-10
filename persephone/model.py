@@ -50,7 +50,10 @@ def decode(model_path_prefix: Union[str, Path],
            *,
            feature_type: str = "fbank",
            max_batch_size: int = 100,
-           preprocessed_output_path: Optional[Path]=None) -> List[List[str]]:
+           preprocessed_output_path: Optional[Path]=None,
+           batch_x_name: str="Placeholder:0",
+           batch_x_lens_name: str="Placeholder_1:0",
+           output_name: str="SparseToDense:0") -> List[List[str]]:
     """Use an existing tensorflow model that exists on disk to decode
     WAV files.
 
@@ -65,6 +68,9 @@ def decode(model_path_prefix: Union[str, Path],
                       model was trained on initially.
         preprocessed_output_path: Any files that require preprocessing will be
                                   saved to the path specified by this.
+        batch_x_name: The name of the tensorflow input for batch_x
+        batch_x_lens_name: The name of the tensorflow input for batch_x_lens
+        output_name: The name of the tensorflow output
     """
 
     model_path_prefix = str(model_path_prefix)
@@ -111,10 +117,10 @@ def decode(model_path_prefix: Union[str, Path],
         # TODO These placeholder names should be a backup if names from a newer
         # naming scheme aren't present. Otherwise this won't generalize to
         # different architectures.
-        feed_dict = {"Placeholder:0": batch_x,
-                     "Placeholder_1:0": batch_x_lens}
+        feed_dict = {batch_x_name: batch_x,
+                     batch_x_lens_name: batch_x_lens}
 
-        dense_decoded = sess.run("SparseToDense:0", feed_dict=feed_dict)
+        dense_decoded = sess.run(output_name, feed_dict=feed_dict)
 
     # Create a human-readable representation of the decoded.
     indices_to_labels = labels.make_indices_to_labels(label_set)
