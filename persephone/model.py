@@ -79,7 +79,8 @@ def decode(model_path_prefix: Union[str, Path],
     for p in input_paths:
         # Check the "feat" directory as per the filesystem conventions of a Corpus
         prefix = os.path.basename(os.path.splitext(str(p))[0])
-        conventional_npy_location =  p.parent / "feat" / (Path(prefix + ".npy"))
+        feature_file_ext = ".{}.npy".format(feature_type)
+        conventional_npy_location =  p.parent / "feat" / (Path(prefix + feature_file_ext))
         if conventional_npy_location.exists():
             # don't need to preprocess it
             preprocessed_file_paths.append(conventional_npy_location)
