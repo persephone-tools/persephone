@@ -167,6 +167,8 @@ def convert_wav(org_wav_fn: Path, tgt_wav_fn: Path) -> None:
             org_wav_fn: A `Path` to the original wave file
             tgt_wav_fn: The `Path` to output the processed wave file
     """
+    if not org_wav_fn.exists():
+        raise FileNotFoundError
     args = [config.FFMPEG_PATH,
             "-i", str(org_wav_fn), "-ac", "1", "-ar", "16000", str(tgt_wav_fn)]
     subprocess.run(args)
