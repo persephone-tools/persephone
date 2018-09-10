@@ -60,7 +60,7 @@ def mfcc(wav_path):
     feat_fn = wav_path[:-3] + "mfcc13_d.npy"
     np.save(feat_fn, all_feats)
 
-def combine_fbank_and_pitch(feat_dir, prefix):
+def combine_fbank_and_pitch(feat_dir: str, prefix: str) -> None:
 
     fbank_fn = os.path.join(feat_dir, prefix + ".fbank.npy")
     fbanks = np.load(fbank_fn)
@@ -111,7 +111,7 @@ def from_dir(dirpath: Path, feat_type: str) -> None:
 
     dirname = str(dirpath)
 
-    def all_wavs_processed():
+    def all_wavs_processed() -> bool:
         """
         True if all wavs in the directory have corresponding numpy feature
         file; False otherwise.
@@ -160,7 +160,7 @@ def convert_wav(org_wav_fn: Path, tgt_wav_fn: Path) -> None:
             "-i", str(org_wav_fn), "-ac", "1", "-ar", "16000", str(tgt_wav_fn)]
     subprocess.run(args)
 
-def kaldi_pitch(wav_dir, feat_dir):
+def kaldi_pitch(wav_dir: str, feat_dir: str) -> None:
     """ Extract Kaldi pitch features. Assumes 16k mono wav files."""
 
     logger.debug("Make wav.scp and pitch.scp files")
