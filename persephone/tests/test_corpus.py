@@ -102,8 +102,8 @@ def test_create_corpus_label_mismatch(tmpdir):
     wav_train = wav_dir.join("train.wav").write("")
     wav_valid = wav_dir.join("valid.wav").write("")
 
-    label_test = label_dir.join("valid.phonemes").write("a")
-    label_train = label_dir.join("valid.phonemes").write("b")
+    label_test = label_dir.join("test.phonemes").write("a")
+    label_train = label_dir.join("train.phonemes").write("b")
     label_valid = label_dir.join("valid.phonemes").write("c")
 
     with pytest.raises(LabelMismatchException):
@@ -130,10 +130,6 @@ def test_determine_labels(tmpdir): #fs is the fake filesystem fixture
     base_dir = tmpdir
     label_dir = base_dir.mkdir("label")
 
-    label_test = label_dir.join("test1.phonemes").write("a")
-    label_train = label_dir.join("valid.phonemes").write("b")
-    label_valid = label_dir.join("valid.phonemes").write("c")
-
     test_1_phonemes = 'ɖ ɯ ɕ i k v̩'
     test_1_phonemes_and_tones = 'ɖ ɯ ˧ ɕ i ˧ k v̩ ˧˥'
     test_2_phonemes = 'g v̩ tsʰ i g v̩ k v̩'
@@ -142,7 +138,7 @@ def test_determine_labels(tmpdir): #fs is the fake filesystem fixture
     label_dir.join("test1.phonemes").write(test_1_phonemes)
     label_dir.join("test1.phonemes_and_tones").write(test_1_phonemes_and_tones)
     label_dir.join("test2.phonemes").write(test_2_phonemes)
-    label_dir.join("test1.phonemes_and_tones").write(test_2_phonemes_and_tones)
+    label_dir.join("test2.phonemes_and_tones").write(test_2_phonemes_and_tones)
 
     all_phonemes = set(test_1_phonemes.split(' ')) | set(test_2_phonemes.split(' '))
 
