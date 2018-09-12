@@ -598,7 +598,7 @@ class Corpus:
             return pickle.load(f)
 
 
-def determine_labels(target_dir: Path, label_type: str) -> set:
+def determine_labels(target_dir: Path, label_type: str) -> Set[str]:
     """ Returns a set of all phonemes found in the corpus. Assumes that WAV files and
     label files are split into utterances and segregated in a directory which contains a
     "wav" subdirectory and "label" subdirectory.
