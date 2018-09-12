@@ -102,9 +102,9 @@ def test_create_corpus_label_mismatch(tmpdir):
     wav_train = wav_dir.join("train.wav").write("")
     wav_valid = wav_dir.join("valid.wav").write("")
 
-    label_test = wav_dir.join("valid.phonemes").write("a")
-    label_train = wav_dir.join("valid.phonemes").write("b")
-    label_valid = wav_dir.join("valid.phonemes").write("c")
+    label_test = label_dir.join("valid.phonemes").write("a")
+    label_train = label_dir.join("valid.phonemes").write("b")
+    label_valid = label_dir.join("valid.phonemes").write("c")
 
     with pytest.raises(LabelMismatchException):
         c = Corpus(
