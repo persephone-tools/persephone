@@ -269,3 +269,11 @@ def test_divide_prefixes_too_few():
 
     with pytest.raises(PersephoneException):
         persephone.corpus.Corpus.divide_prefixes(["1", "2"])
+
+def test_divide_prefixes():
+    """Test that prefixes get divided into groups"""
+    import persephone.corpus
+    train, valid, test = persephone.corpus.Corpus.divide_prefixes(['1', '2', '3'])
+    assert len(train) == 1
+    assert len(valid) == 1
+    assert len(test) == 1
