@@ -258,3 +258,14 @@ baz"""
     assert "foo" in untranscribed_prefixes
     assert "bar" in untranscribed_prefixes
     assert "baz" in untranscribed_prefixes
+
+def test_divide_prefixes_too_few():
+    """Test that an impossible set of prefixes to divide into three groups raises an exception"""
+    import persephone.corpus
+    from persephone.exceptions import PersephoneException
+
+    with pytest.raises(PersephoneException):
+        persephone.corpus.Corpus.divide_prefixes([])
+
+    with pytest.raises(PersephoneException):
+        persephone.corpus.Corpus.divide_prefixes(["1", "2"])
