@@ -112,7 +112,8 @@ class Corpus:
 
     """
 
-    def __init__(self, feat_type: str, label_type: str, tgt_dir: Path, labels: Optional[Any] = None,
+    def __init__(self, feat_type: str, label_type: str, tgt_dir: Path,
+                 labels: Optional[Any] = None,
                  max_samples:int=1000, speakers: Optional[Sequence[str]] = None) -> None:
         """ Construct a `Corpus` instance from preprocessed data.
 
@@ -459,6 +460,10 @@ class Corpus:
     @staticmethod
     def divide_prefixes(prefixes: List[str], seed:int=0) -> Tuple[List[str], List[str], List[str]]:
         """Divide data into training, validation and test subsets"""
+        if len(prefixes) < 3:
+            raise PersephoneException(
+                "{} cannot be split into 3 groups as it only has {} items".format(prefixes, len(prefixes))
+            )
         Ratios = namedtuple("Ratios", ["train", "valid", "test"])
         ratios=Ratios(.90, .05, .05)
         train_end = int(ratios.train*len(prefixes))
