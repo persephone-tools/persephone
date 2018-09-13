@@ -3,7 +3,7 @@ python:
   - "3.5"
   - "3.6"
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository -y ppa:mc3man/trusty-media && sudo apt-get install ffmpeg; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository -y ppa:mc3man/trusty-media && sudo apt-get update && sudo apt-get install ffmpeg; fi
 install:
   - pip install .
   - pip install pytest-cov
