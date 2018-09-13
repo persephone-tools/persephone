@@ -79,18 +79,17 @@ def test_create_corpus_basic(tmpdir, create_sine, make_wav):
     label_train = wav_dir.join("train.phonemes").write("b")
     label_valid = wav_dir.join("test.phonemes").write("c")
 
-    # TODO: write prefix files
-
     c = Corpus(
         feat_type='fbank',
         label_type='phonemes',
         tgt_dir=Path(str(tmpdir)),
-        labels=["a", "b", "c"]
+        labels=None
     )
     assert c
 
 def test_create_corpus_label_mismatch(tmpdir):
-    """Test that an attempt to create a Corpus object with a minimal data set"""
+    """Test that creation of a Corpus raises an error when the supplied label set
+    does not exactly match those found in the provided data"""
     from persephone.corpus import Corpus
     from persephone.exceptions import LabelMismatchException
     from pathlib import Path
@@ -106,12 +105,14 @@ def test_create_corpus_label_mismatch(tmpdir):
     label_train = label_dir.join("train.phonemes").write("b")
     label_valid = label_dir.join("valid.phonemes").write("c")
 
+    # TODO: write prefix files
+
     with pytest.raises(LabelMismatchException):
         c = Corpus(
             feat_type='fbank',
             label_type='phonemes',
             tgt_dir=Path(str(tmpdir)),
-            labels=["a", "b", "c"]
+            labels=["1", "2", "3"]
         )
 
 def test_determine_labels_throws():
