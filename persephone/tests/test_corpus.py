@@ -1,8 +1,6 @@
 """Tests for corpus related items"""
 import pytest
 
-#from pyfakefs.pytest_plugin import fs
-
 def test_corpus_import():
     """Test we can import Corpus"""
     from persephone.corpus import Corpus
@@ -75,9 +73,9 @@ def test_create_corpus_basic(tmpdir, create_sine, make_wav):
     wav_valid = wav_dir.join("valid.wav")
     make_wav(data_c, str(wav_valid))
 
-    label_test = wav_dir.join("valid.phonemes").write("a")
-    label_train = wav_dir.join("train.phonemes").write("b")
-    label_valid = wav_dir.join("test.phonemes").write("c")
+    label_test = label_dir.join("test.phonemes").write("a")
+    label_train = label_dir.join("train.phonemes").write("b")
+    label_valid = label_dir.join("valid.phonemes").write("c")
 
     c = Corpus(
         feat_type='fbank',
@@ -116,9 +114,9 @@ def test_corpus_with_predefined_data_sets(tmpdir, create_sine, make_wav):
     wav_valid = wav_dir.join("valid.wav")
     make_wav(data_c, str(wav_valid))
 
-    label_test = wav_dir.join("valid.phonemes").write("a")
-    label_train = wav_dir.join("train.phonemes").write("b")
-    label_valid = wav_dir.join("test.phonemes").write("c")
+    label_test = label_dir.join("test.phonemes").write("a")
+    label_train = label_dir.join("train.phonemes").write("b")
+    label_valid = label_dir.join("valid.phonemes").write("c")
 
     test_prefixes = tmpdir.join("test_prefixes.txt").write("a")
     train_prefixes = tmpdir.join("train_prefixes.txt").write("b")
