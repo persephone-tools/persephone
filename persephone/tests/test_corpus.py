@@ -120,7 +120,7 @@ def test_corpus_with_predefined_data_sets(tmpdir, create_sine, make_wav):
 
     test_prefixes = tmpdir.join("test_prefixes.txt").write("a")
     train_prefixes = tmpdir.join("train_prefixes.txt").write("b")
-    valid_prefixes = tmpdir.join("vaild_prefixes.txt").write("c")
+    valid_prefixes = tmpdir.join("valid_prefixes.txt").write("c")
 
     c = Corpus(
         feat_type='fbank',
