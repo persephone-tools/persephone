@@ -468,6 +468,16 @@ class Corpus:
         ratios=Ratios(.90, .05, .05)
         train_end = int(ratios.train*len(prefixes))
         valid_end = int(train_end + ratios.valid*len(prefixes))
+
+        # We must make sure that at least one element exists in test
+        if valid_end == len(prefixes):
+            valid_end -= 1
+
+        # If train_end and valid_end are the same we end up with no valid_prefixes
+        # so we must ensure at least one prefix is placed in this category
+        if train_end == valid_end:
+            train_end -= 1
+
         random.seed(seed)
         random.shuffle(prefixes)
 
@@ -475,8 +485,6 @@ class Corpus:
         valid_prefixes = prefixes[train_end:valid_end]
         test_prefixes = prefixes[valid_end:]
 
-        # TODO Adjust code to cope properly with toy datasets where these
-        # subsets might actually be empty.
         assert train_prefixes, "Got empty set for training data"
         assert valid_prefixes, "Got empty set for validation data"
         assert test_prefixes, "Got empty set for testing data"
