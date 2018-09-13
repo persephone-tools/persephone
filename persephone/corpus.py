@@ -180,8 +180,8 @@ class Corpus:
             self.labels = labels
             found_labels = determine_labels(self.tgt_dir, label_type)
             if found_labels != self.labels:
-                raise LabelMismatchException("""User specified labels, {}, do
-                    not match those automatically found, {}.""".format(labels,
+                raise LabelMismatchException("User specified labels, {}, do"
+                    " not match those automatically found, {}.".format(labels,
                     found_labels))
         else:
             self.labels = determine_labels(self.tgt_dir, label_type)
@@ -214,7 +214,7 @@ class Corpus:
                 self.get_test_fns()[0]
             )
         except PersephoneException:
-            logger.error("Got overlap between train valid and test data sets")
+            logger.error("Got overlap between train, valid and test data sets")
             raise
 
         untranscribed_from_file = self.get_untranscribed_prefixes()
