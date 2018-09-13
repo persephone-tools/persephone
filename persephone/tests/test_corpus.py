@@ -129,7 +129,10 @@ def test_corpus_with_predefined_data_sets(tmpdir, create_sine, make_wav):
         labels={"a","b","c"}
     )
     assert c
-
+    assert c.feat_type == 'fbank'
+    assert c.label_type == 'phonemes'
+    assert set(c.labels) == {"a", "b", "c"}
+    assert c.vocab_size == 3
 
 def test_create_corpus_label_mismatch(tmpdir):
     """Test that creation of a Corpus raises an error when the supplied label set
