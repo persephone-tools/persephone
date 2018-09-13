@@ -87,6 +87,52 @@ def test_create_corpus_basic(tmpdir, create_sine, make_wav):
     )
     assert c
 
+
+def test_corpus_with_predefined_data_sets(tmpdir, create_sine, make_wav):
+    """Test that corpus construction works with prefix data splits determined
+    as per the file system conventions.
+
+    This will check that what is specified in :
+    * `test_prefixes.txt`
+    * `train_prefixes.txt`
+    * `valid_prefixes.txt`
+    Matches the internal members that store the prefix information
+    """
+    from persephone.corpus import Corpus
+    from pathlib import Path
+
+    wav_dir = tmpdir.mkdir("wav")
+    label_dir = tmpdir.mkdir("label")
+
+    #create sine wave data
+    data_a = create_sine(note="A")
+    data_b = create_sine(note="B")
+    data_c = create_sine(note="C")
+
+    wav_test = wav_dir.join("test.wav")
+    make_wav(data_a, str(wav_test))
+    wav_train = wav_dir.join("train.wav")
+    make_wav(data_b, str(wav_train))
+    wav_valid = wav_dir.join("valid.wav")
+    make_wav(data_c, str(wav_valid))
+
+    label_test = wav_dir.join("valid.phonemes").write("a")
+    label_train = wav_dir.join("train.phonemes").write("b")
+    label_valid = wav_dir.join("test.phonemes").write("c")
+
+    test_prefixes = tmpdir.join("test_prefixes.txt").write("a")
+    train_prefixes = tmpdir.join("train_prefixes.txt").write("b")
+    valid_prefixes = tmpdir.join("vaild_prefixes.txt").write("c")
+
+    c = Corpus(
+        feat_type='fbank',
+        label_type='phonemes',
+        tgt_dir=Path(str(tmpdir)),
+        labels={"a","b","c"}
+    )
+    assert c
+
+
 def test_create_corpus_label_mismatch(tmpdir):
     """Test that creation of a Corpus raises an error when the supplied label set
     does not exactly match those found in the provided data"""
