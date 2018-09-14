@@ -48,8 +48,8 @@ def decode(model_path_prefix: Union[str, Path],
            input_paths: Sequence[Path],
            label_set: Set[str],
            *,
-           feature_type: str = "fbank",
-           max_batch_size: int = 100,
+           feature_type: str = "fbank", #TODO Make this None and infer feature_type from dimension of NN input layer.
+           batch_size: int = 64,
            preprocessed_output_path: Optional[Path]=None,
            batch_x_name: str="Placeholder:0",
            batch_x_lens_name: str="Placeholder_1:0",
@@ -58,8 +58,8 @@ def decode(model_path_prefix: Union[str, Path],
     WAV files.
 
     Args:
-        model_path_prefix: The path to the tensorflow model save.
-                           This is where the checkpoint ".ckpt" file resides.
+        model_path_prefix: The path to the saved tensorflow model.
+                           This is the full prefix to the ".ckpt" file.
         input_paths: A sequence of `pathlib.Path`s to WAV files to put through
                      the model provided.
         label_set: The set of all the labels this model uses.
@@ -84,7 +84,7 @@ def decode(model_path_prefix: Union[str, Path],
     preprocessed_file_paths = []
     for p in input_paths:
         # Check the "feat" directory as per the filesystem conventions of a Corpus
-        prefix = os.path.basename(os.path.splitext(str(p))[0])
+        prefix = p.stem
         feature_file_ext = ".{}.npy".format(feature_type)
         conventional_npy_location =  p.parent / "feat" / (Path(prefix + feature_file_ext))
         if conventional_npy_location.exists():
@@ -105,7 +105,7 @@ def decode(model_path_prefix: Union[str, Path],
     if preprocessed_output_path:
         feat_extract.from_dir(preprocessed_output_path, feature_type)
 
-    fn_batches = utils.make_batches(preprocessed_file_paths, max_batch_size)
+    fn_batches = utils.make_batches(preprocessed_file_paths, batch_size)
     # Load the model and perform decoding.
     metagraph = load_metagraph(model_path_prefix)
     with tf.Session() as sess:
