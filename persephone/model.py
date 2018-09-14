@@ -421,5 +421,10 @@ class Model:
                                 # numper of epochs.
                                 continue
 
+                # Check we actually saved a checkpoint
+                if not self.saved_model_path:
+                    raise PersephoneException(
+                        "No checkpoint was saved so model evaluation cannot be performed. "
+                        "This can happen if the validaion LER never converges.")
                 # Finally, run evaluation on the test set.
                 self.eval(restore_model_path=self.saved_model_path)
