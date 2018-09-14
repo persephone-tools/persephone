@@ -152,8 +152,10 @@ class Corpus:
         if speakers:
             raise NotImplementedError("Speakers not implemented")
 
-        logger.debug("Creating a new Corpus object with feature type %s, label type %s,"
-                     "target directory %s, label set %s, ms, max_samples, speakers")
+        logger.debug("Creating a new Corpus object with feature type {}, label type {},"
+                     "target directory {}, label set {}, max_samples {}, speakers {}".format(
+                    feat_type, label_type, labels, tgt_dir, max_samples, speakers)
+        )
 
         # In case path is supplied as a string, make it a Path
         self.tgt_dir = Path(tgt_dir)
