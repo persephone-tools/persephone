@@ -113,7 +113,7 @@ class Corpus:
     """
 
     def __init__(self, feat_type: str, label_type: str, tgt_dir: Path,
-                 labels: Optional[Any] = None,
+                 labels: Optional[Set[str]] = None,
                  max_samples:int=1000, speakers: Optional[Sequence[str]] = None) -> None:
         """ Construct a `Corpus` instance from preprocessed data.
 
@@ -235,7 +235,7 @@ class Corpus:
     def from_elan(cls: Type[CorpusT], org_dir: Path, tgt_dir: Path,
                   feat_type: str = "fbank", label_type: str = "phonemes",
                   utterance_filter: Callable[[Utterance], bool] = None,
-                  label_segmenter: LabelSegmenter = None,
+                  label_segmenter: Optional[LabelSegmenter] = None,
                   speakers: List[str] = None, lazy: bool = True,
                   tier_prefixes: Tuple[str, ...] = ("xv", "rf")) -> CorpusT:
         """ Construct a `Corpus` from ELAN files.
@@ -309,7 +309,7 @@ class Corpus:
         wav.extract_wavs(utterances, (tgt_dir / "wav"), lazy=lazy)
 
         corpus = cls(feat_type, label_type, tgt_dir,
-                     label_segmenter.labels, speakers=speakers)
+                     labels=label_segmenter.labels, speakers=speakers)
         corpus.utterances = utterances
         return corpus
 
@@ -353,7 +353,7 @@ class Corpus:
             raise PersephoneException(
                 "The supplied path requires a 'label' subdirectory.")
 
-    def initialize_labels(self, labels: Sequence[str]) -> Tuple[dict, dict]:
+    def initialize_labels(self, labels: Set[str]) -> Tuple[dict, dict]:
         """Create mappings from label to index and index to label"""
         logger.debug("Creating mappings for labels")
 
@@ -630,7 +630,7 @@ def determine_labels(target_dir: Path, label_type: str) -> Set[str]:
         raise FileNotFoundError(
             "The directory {} does not exist.".format(target_dir))
 
-    phonemes = set() # type: set
+    phonemes = set() # type: Set[str]
     for fn in os.listdir(str(label_dir)):
         if fn.endswith(str(label_type)):
             with (label_dir / fn).open("r") as f:
