@@ -53,7 +53,8 @@ def test_model_train_and_decode(tmpdir, create_sine, make_wav, create_test_corpu
     from persephone.model import decode
 
     wav_to_decode_path = str(tmpdir.join("to_decode.wav"))
-    sine_to_decode = create_sine(note="C")
+    note_to_decode = "C"
+    sine_to_decode = create_sine(note=note_to_decode)
 
     make_wav(sine_to_decode, wav_to_decode_path)
 
@@ -70,6 +71,12 @@ def test_model_train_and_decode(tmpdir, create_sine, make_wav, create_test_corpu
         batch_x_lens_name = test_model.batch_x_lens.name,
         output_name = test_model.dense_decoded.name
     )
+
+    # Make sure the model hypothesis is correct
+    assert result == [[note_to_decode]]
+
+    with open("decoding.txt", "w") as f:
+        print(result, file=f)
 
     assert result
     assert len(result) == 1
