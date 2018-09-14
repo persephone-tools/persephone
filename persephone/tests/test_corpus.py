@@ -16,7 +16,7 @@ def test_missing_experiment_dir():
             feat_type='fbank',
             label_type='phonemes',
             tgt_dir=Path("thisDoesNotExist"),
-            labels=["a", "b", "c"]
+            labels={"a", "b", "c"}
         )
 
 def test_missing_wav_dir(tmpdir):
@@ -30,7 +30,7 @@ def test_missing_wav_dir(tmpdir):
             feat_type='fbank',
             label_type='phonemes',
             tgt_dir=Path(str(tmpdir)),
-            labels=["a", "b", "c"]
+            labels={"a", "b", "c"}
         )
 
 def test_create_corpus_no_data(tmpdir):
@@ -49,7 +49,7 @@ def test_create_corpus_no_data(tmpdir):
                 feat_type='fbank',
                 label_type='phonemes',
                 tgt_dir=Path(str(tmpdir)),
-                labels=["a", "b", "c"]
+                labels={"a", "b", "c"}
             )
 
 
@@ -159,7 +159,7 @@ def test_create_corpus_label_mismatch(tmpdir):
             feat_type='fbank',
             label_type='phonemes',
             tgt_dir=Path(str(tmpdir)),
-            labels=["1", "2", "3"]
+            labels={"1", "2", "3"}
         )
 
 def test_determine_labels_throws():
