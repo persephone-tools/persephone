@@ -66,9 +66,9 @@ def test_model_train_and_decode(tmpdir, create_sine, make_wav, create_test_corpu
         label_set = {"A", "B", "C"},
         feature_type = "fbank",
         preprocessed_output_path=Path(str(output_path)),
-        batch_x_name = test_model.batch_x,
-        batch_x_lens_name = test_model.batch_x_lens,
-        output_name = test_model.outputs
+        batch_x_name = test_model.batch_x.name,
+        batch_x_lens_name = test_model.batch_x_lens.name,
+        output_name = test_model.dense_decoded.name
     )
 
     assert result
