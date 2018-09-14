@@ -3,6 +3,7 @@
 https://docs.pytest.org/en/latest/fixture.html
 """
 import pytest
+from typing import List
 
 @pytest.fixture
 def make_wav():
@@ -36,7 +37,6 @@ def make_wav():
             for s in audio_data:
                 wav_file.writeframes(struct.pack('h', int(s*amp/2)))
 
-
     return _make_audio
 
 
@@ -68,6 +68,19 @@ def create_sine():
             sine_list.append(math.sin(2*math.pi * freq * ( x/framerate)))
         return sine_list
     return _create_sine
+
+@pytest.fixture
+def create_note_sequence(create_sine):
+    """Create the raw data for creating a sequence of notes that can be stored in a WAV file"""
+    def _create_note_sequence(notes: List[str], seconds: float=1, framerate: float=44100.0):
+        """Create the data for a sequence of pure sine waves that correspond to notes."""
+        note_duration = seconds / len(notes)
+        data = []
+        for note in notes:
+            data.extend(
+                create_sine(note=note, seconds=note_duration, framerate=framerate))
+        return data
+    return _create_note_sequence
 
 @pytest.fixture
 def create_test_corpus(tmpdir, create_sine, make_wav):
