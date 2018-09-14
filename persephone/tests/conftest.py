@@ -68,3 +68,47 @@ def create_sine():
             sine_list.append(math.sin(2*math.pi * freq * ( x/framerate)))
         return sine_list
     return _create_sine
+
+@pytest.fixture
+def create_test_corpus(tmpdir, create_sine, make_wav):
+    """Creates a minimal test corpus that doesn't require any files as dependencies"""
+    from pathlib import Path
+    def _create_corpus():
+        from persephone.corpus import Corpus
+
+        wav_dir = tmpdir.mkdir("wav")
+        label_dir = tmpdir.mkdir("label")
+
+        #create sine wave data
+        data_a = create_sine(note="A")
+        data_b = create_sine(note="B")
+        data_c = create_sine(note="C")
+
+        wav_test = wav_dir.join("test.wav")
+        make_wav(data_a, str(wav_test))
+        wav_train = wav_dir.join("train.wav")
+        make_wav(data_b, str(wav_train))
+        wav_valid = wav_dir.join("valid.wav")
+        make_wav(data_c, str(wav_valid))
+
+        label_test = label_dir.join("test.phonemes").write("a")
+        label_train = label_dir.join("train.phonemes").write("b")
+        label_valid = label_dir.join("valid.phonemes").write("c")
+
+        test_prefixes = tmpdir.join("test_prefixes.txt").write("test")
+        train_prefixes = tmpdir.join("train_prefixes.txt").write("train")
+        valid_prefixes = tmpdir.join("valid_prefixes.txt").write("valid")
+
+        c = Corpus(
+            feat_type='fbank',
+            label_type='phonemes',
+            tgt_dir=Path(str(tmpdir)),
+            labels={"a","b","c"}
+        )
+        assert c
+        assert c.feat_type == 'fbank'
+        assert c.label_type == 'phonemes'
+        assert set(c.labels) == {"a", "b", "c"}
+        assert c.vocab_size == 3
+        return c
+    return _create_corpus
