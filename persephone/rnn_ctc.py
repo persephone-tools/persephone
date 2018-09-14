@@ -1,6 +1,9 @@
 """ An acoustic model with a LSTM/CTC architecture. """
 
 import os
+from typing import Union
+from pathlib import Path
+
 import numpy as np
 import tensorflow as tf
 
@@ -23,11 +26,14 @@ class Model(model.Model):
             for key, val in self.__dict__.items():
                 print("%s=%s" % (key, val), file=desc_f)
 
-    def __init__(self, exp_dir: str, corpus_reader, num_layers: int = 3,
+
+    def __init__(self, exp_dir: Union[str, Path], corpus_reader, num_layers: int = 3,
                  hidden_size: int=250, beam_width: int = 100,
                  decoding_merge_repeated: bool = True) -> None:
         super().__init__(exp_dir, corpus_reader)
 
+        if isinstance(exp_dir, Path):
+            exp_dir = str(exp_dir)
         if not os.path.isdir(exp_dir):
             os.makedirs(exp_dir)
 
