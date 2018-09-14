@@ -55,7 +55,6 @@ def test_model_train_and_decode(tmpdir, create_sine, make_wav, create_test_corpu
     wav_to_decode_path = str(tmpdir.join("to_decode.wav"))
     note_to_decode = "C"
     sine_to_decode = create_sine(note=note_to_decode)
-
     make_wav(sine_to_decode, wav_to_decode_path)
 
     output_path = tmpdir.mkdir("decode_output")
@@ -74,9 +73,6 @@ def test_model_train_and_decode(tmpdir, create_sine, make_wav, create_test_corpu
 
     # Make sure the model hypothesis is correct
     assert result == [[note_to_decode]]
-
-    with open("decoding.txt", "w") as f:
-        print(result, file=f)
 
     assert result
     assert len(result) == 1
