@@ -100,6 +100,7 @@ def create_test_corpus(tmpdir, create_note_sequence, make_wav):
         data_b_c = create_note_sequence(notes=["B","C"])
         data_a_b_c = create_note_sequence(notes=["A","B","C"])
         data_c_b_a = create_note_sequence(notes=["C","B","A"])
+        data_a_c_a = create_note_sequence(notes=["A","C","A"])
 
         #testing
         wav_test1 = wav_dir.join("test1.wav")
@@ -120,16 +121,24 @@ def create_test_corpus(tmpdir, create_note_sequence, make_wav):
         label_train2 = label_dir.join("train2.phonemes").write("A B C")
 
         wav_train3 = wav_dir.join("train3.wav")
-        make_wav(data_a, str(wav_train2))
+        make_wav(data_a, str(wav_train3))
         label_train3 = label_dir.join("train3.phonemes").write("A")
 
         wav_train4 = wav_dir.join("train4.wav")
-        make_wav(data_b, str(wav_train2))
+        make_wav(data_b, str(wav_train4))
         label_train4 = label_dir.join("train4.phonemes").write("B")
 
         wav_train5 = wav_dir.join("train5.wav")
         make_wav(data_c_b_a, str(wav_train5))
         label_train5 = label_dir.join("train5.phonemes").write("C B A")
+
+        wav_train6 = wav_dir.join("train6.wav")
+        make_wav(data_a_c_a, str(wav_train6))
+        label_train6 = label_dir.join("train6.phonemes").write("A C A")
+
+        wav_train7 = wav_dir.join("train7.wav")
+        make_wav(data_c, str(wav_train7))
+        label_train7 = label_dir.join("train7.phonemes").write("C")
 
         #validation
         wav_valid = wav_dir.join("valid.wav")
@@ -139,7 +148,7 @@ def create_test_corpus(tmpdir, create_note_sequence, make_wav):
 
         # Prefixes handling
         test_prefixes = tmpdir.join("test_prefixes.txt").write("test1\ntest2")
-        train_prefixes = tmpdir.join("train_prefixes.txt").write("train1\ntrain2")
+        train_prefixes = tmpdir.join("train_prefixes.txt").write("train1\ntrain2\ntrain3\ntrain4\ntrain5\ntrain6\ntrain7")
         valid_prefixes = tmpdir.join("valid_prefixes.txt").write("valid")
 
         c = Corpus(
