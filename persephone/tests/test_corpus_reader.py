@@ -8,7 +8,7 @@ def test_corpus_reader(create_test_corpus):
     corpus = create_test_corpus()
     corpus_r = CorpusReader(
         corpus,
-        num_train=1,
+        num_train=2,
         batch_size=1
     )
     assert corpus_r

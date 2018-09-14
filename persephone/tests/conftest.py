@@ -83,7 +83,7 @@ def create_note_sequence(create_sine):
     return _create_note_sequence
 
 @pytest.fixture
-def create_test_corpus(tmpdir, create_sine, make_wav):
+def create_test_corpus(tmpdir, create_note_sequence, make_wav):
     """Creates a minimal test corpus that doesn't require any files as dependencies"""
     from pathlib import Path
     def _create_corpus():
@@ -93,35 +93,52 @@ def create_test_corpus(tmpdir, create_sine, make_wav):
         label_dir = tmpdir.mkdir("label")
 
         #create sine wave data
-        data_a = create_sine(note="A")
-        data_b = create_sine(note="B")
-        data_c = create_sine(note="C")
+        data_a = create_note_sequence(notes=["A"])
+        data_b = create_note_sequence(notes=["B"])
+        data_c = create_note_sequence(notes=["C"])
+        data_a_b = create_note_sequence(notes=["A","B"])
+        data_b_c = create_note_sequence(notes=["B","C"])
+        data_a_b_c = create_note_sequence(notes=["A","B","C"])
 
-        wav_test = wav_dir.join("test.wav")
-        make_wav(data_a, str(wav_test))
-        wav_train = wav_dir.join("train.wav")
-        make_wav(data_b, str(wav_train))
+        #testing
+        wav_test1 = wav_dir.join("test1.wav")
+        make_wav(data_a_b, str(wav_test1))
+        label_test1 = label_dir.join("test1.phonemes").write("A B")
+
+        wav_test2 = wav_dir.join("test2.wav")
+        make_wav(data_c, str(wav_test2))
+        label_test2 = label_dir.join("test2.phonemes").write("C")
+
+        #training
+        wav_train1 = wav_dir.join("train1.wav")
+        make_wav(data_b_c, str(wav_train1))
+        label_train1 = label_dir.join("train1.phonemes").write("B C")
+
+        wav_train2 = wav_dir.join("train2.wav")
+        make_wav(data_a_b_c, str(wav_train2))
+        label_train2 = label_dir.join("train2.phonemes").write("A B C")
+
+        #validation
         wav_valid = wav_dir.join("valid.wav")
         make_wav(data_c, str(wav_valid))
 
-        label_test = label_dir.join("test.phonemes").write("a")
-        label_train = label_dir.join("train.phonemes").write("b")
-        label_valid = label_dir.join("valid.phonemes").write("c")
+        label_valid = label_dir.join("valid.phonemes").write("C")
 
-        test_prefixes = tmpdir.join("test_prefixes.txt").write("test")
-        train_prefixes = tmpdir.join("train_prefixes.txt").write("train")
+        # Prefixes handling
+        test_prefixes = tmpdir.join("test_prefixes.txt").write("test1\ntest2")
+        train_prefixes = tmpdir.join("train_prefixes.txt").write("train1\ntrain2")
         valid_prefixes = tmpdir.join("valid_prefixes.txt").write("valid")
 
         c = Corpus(
             feat_type='fbank',
             label_type='phonemes',
             tgt_dir=Path(str(tmpdir)),
-            labels={"a","b","c"}
+            labels={"A","B","C"}
         )
         assert c
         assert c.feat_type == 'fbank'
         assert c.label_type == 'phonemes'
-        assert set(c.labels) == {"a", "b", "c"}
+        assert set(c.labels) == {"A", "B", "C"}
         assert c.vocab_size == 3
         return c
     return _create_corpus
