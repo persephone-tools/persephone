@@ -1,7 +1,7 @@
 """ An acoustic model with a LSTM/CTC architecture. """
 
 import os
-from typing import Union
+from typing import Union, Dict, Any
 from pathlib import Path
 
 import numpy as np
@@ -25,6 +25,30 @@ class Model(model.Model):
         with open(path, "w") as desc_f:
             for key, val in self.__dict__.items():
                 print("%s=%s" % (key, val), file=desc_f)
+
+        import json
+        json_path = os.path.join(self.exp_dir, "model_description.json")
+        desc = { } #type: Dict[str, Any]
+        # For use in decoding from a saved model
+        desc["topology"] = {
+            "batch_x_name" : self.batch_x.name, #type: ignore
+            "batch_x_lens_name" : self.batch_x_lens.name, #type: ignore
+            "dense_decoded_name" : self.dense_decoded.name #type: ignore
+        }
+        for key, val in self.__dict__.items():
+            if isinstance(val, int):
+                desc[str(key)] = val
+            elif isinstance(val, tf.Tensor):
+                desc[key] = {
+                    "type": "tf.Tensor",
+                    "name": val.name, #type: ignore
+                    "shape": str(val.shape),  #type: ignore
+                    "dtype" : str(val.dtype)  #type: ignore
+                }
+            else:
+                desc[str(key)] = str(val)
+        with open(json_path, "w") as json_desc_f:
+            json.dump(desc, json_desc_f, True)
 
 
     def __init__(self, exp_dir: Union[str, Path], corpus_reader, num_layers: int = 3,
