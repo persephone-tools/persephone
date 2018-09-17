@@ -35,6 +35,7 @@ class Model(model.Model):
             "batch_x_lens_name" : self.batch_x_lens.name, #type: ignore
             "dense_decoded_name" : self.dense_decoded.name #type: ignore
         }
+        desc["model_type"] = str(self.__class__)
         for key, val in self.__dict__.items():
             if isinstance(val, int):
                 desc[str(key)] = val
@@ -42,8 +43,14 @@ class Model(model.Model):
                 desc[key] = {
                     "type": "tf.Tensor",
                     "name": val.name, #type: ignore
-                    "shape": str(val.shape),  #type: ignore
-                    "dtype" : str(val.dtype)  #type: ignore
+                    "shape": str(val.shape), #type: ignore
+                    "dtype" : str(val.dtype), #type: ignore
+                    "value" : str(val),
+                }
+            elif isinstance(val, tf.SparseTensor): #type: ignore
+                desc[key] = {
+                    "type": "tf.SparseTensor",
+                    "value": str(val), #type: ignore
                 }
             else:
                 desc[str(key)] = str(val)
