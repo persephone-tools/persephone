@@ -98,6 +98,8 @@ def create_test_corpus(tmpdir, create_note_sequence, make_wav):
         data_c = create_note_sequence(notes=["C"])
         data_a_b = create_note_sequence(notes=["A","B"])
         data_b_c = create_note_sequence(notes=["B","C"])
+        data_a_c = create_note_sequence(notes=["A","C"])
+        data_c_b = create_note_sequence(notes=["C","B"])
         data_a_b_c = create_note_sequence(notes=["A","B","C"])
         data_c_b_a = create_note_sequence(notes=["C","B","A"])
         data_a_c_a = create_note_sequence(notes=["A","C","A"])
@@ -139,6 +141,14 @@ def create_test_corpus(tmpdir, create_note_sequence, make_wav):
         wav_train7 = wav_dir.join("train7.wav")
         make_wav(data_c, str(wav_train7))
         label_train7 = label_dir.join("train7.phonemes").write("C")
+
+        wav_train8 = wav_dir.join("train8.wav")
+        make_wav(data_a_c, str(wav_train8))
+        label_train8 = label_dir.join("train8.phonemes").write("A C")
+
+        wav_train9 = wav_dir.join("train9.wav")
+        make_wav(data_c_b, str(wav_train9))
+        label_train9 = label_dir.join("train9.phonemes").write("C B")
 
         #validation
         wav_valid = wav_dir.join("valid.wav")
