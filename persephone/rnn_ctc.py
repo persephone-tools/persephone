@@ -55,7 +55,7 @@ class Model(model.Model):
             else:
                 desc[str(key)] = str(val)
         with open(json_path, "w") as json_desc_f:
-            json.dump(desc, json_desc_f, True)
+            json.dump(desc, json_desc_f, skipkeys=True)
 
 
     def __init__(self, exp_dir: Union[str, Path], corpus_reader, num_layers: int = 3,
