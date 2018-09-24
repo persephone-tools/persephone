@@ -182,15 +182,15 @@ class CorpusReader:
 
         return hyps, refs
 
-    def human_readable(self, dense_repr):
+    def human_readable(self, dense_repr: Sequence[Sequence[int]]) -> List[List[str]]:
         """ Returns a human readable version of a dense representation of
         either or reference to facilitate simple manual inspection.
         """
 
         transcripts = []
-        for i in range(len(dense_repr)):
-            transcript = [phn_i for phn_i in dense_repr[i] if phn_i != 0]
-            transcript = self.corpus.indices_to_labels(transcript)
+        for dense_r in dense_repr:
+            non_empty_phonemes = [phn_i for phn_i in dense_r if phn_i != 0]
+            transcript = self.corpus.indices_to_labels(non_empty_phonemes)
             transcripts.append(transcript)
 
         return transcripts

@@ -6,11 +6,10 @@ import logging
 import os
 from pathlib import Path
 import sys
-from typing import Optional, Union, Sequence, Set, List
-
+from typing import Optional, Union, Sequence, Set, List, Dict
 import tensorflow as tf
 
-from .preprocess import labels
+from .preprocess import labels, feat_extract
 from . import utils
 from . import config
 from .exceptions import PersephoneException
@@ -33,31 +32,80 @@ def load_metagraph(model_path_prefix: Union[str, Path]) -> tf.train.Saver:
     metagraph = tf.train.import_meta_graph(model_path_prefix + ".meta")
     return metagraph
 
-def dense_to_human_readable(dense_repr, index_to_label):
+def dense_to_human_readable(dense_repr: Sequence[Sequence[int]], index_to_label: Dict[int, str]) -> List[List[str]]:
     """ Converts a dense representation of model decoded output into human
     readable, using a mapping from indices to labels. """
 
     transcripts = []
-    for i in range(len(dense_repr)):
-        transcript = [phn_i for phn_i in dense_repr[i] if phn_i != 0]
-        transcript = [index_to_label[index] for index in transcript]
+    for dense_r in dense_repr:
+        non_empty_phonemes = [phn_i for phn_i in dense_r if phn_i != 0]
+        transcript = [index_to_label[index] for index in non_empty_phonemes]
         transcripts.append(transcript)
 
     return transcripts
 
 def decode(model_path_prefix: Union[str, Path],
            input_paths: Sequence[Path],
-           label_set: Set[str]) -> List[List[str]]:
+           label_set: Set[str],
+           *,
+           feature_type: str = "fbank", #TODO Make this None and infer feature_type from dimension of NN input layer.
+           batch_size: int = 64,
+           preprocessed_output_path: Optional[Path]=None,
+           batch_x_name: str="Placeholder:0",
+           batch_x_lens_name: str="Placeholder_1:0",
+           output_name: str="SparseToDense:0") -> List[List[str]]:
+    """Use an existing tensorflow model that exists on disk to decode
+    WAV files.
+
+    Args:
+        model_path_prefix: The path to the saved tensorflow model.
+                           This is the full prefix to the ".ckpt" file.
+        input_paths: A sequence of `pathlib.Path`s to WAV files to put through
+                     the model provided.
+        label_set: The set of all the labels this model uses.
+        feature_type: The type of features this model uses.
+                      Note that this MUST match the type of features that the
+                      model was trained on initially.
+        preprocessed_output_path: Any files that require preprocessing will be
+                                  saved to the path specified by this.
+        batch_x_name: The name of the tensorflow input for batch_x
+        batch_x_lens_name: The name of the tensorflow input for batch_x_lens
+        output_name: The name of the tensorflow output
+    """
 
     model_path_prefix = str(model_path_prefix)
 
-    # TODO Confirm that that WAVs exist.
+    for p in input_paths:
+        if not p.exists():
+            raise PersephoneException(
+                "The WAV file path {} does not exist".format(p)
+            )
 
-    # TODO Confirm that the feature files exist. Create them if they don't.
+    preprocessed_file_paths = []
+    for p in input_paths:
+        # Check the "feat" directory as per the filesystem conventions of a Corpus
+        prefix = p.stem
+        feature_file_ext = ".{}.npy".format(feature_type)
+        conventional_npy_location =  p.parent / "feat" / (Path(prefix + feature_file_ext))
+        if conventional_npy_location.exists():
+            # don't need to preprocess it
+            preprocessed_file_paths.append(conventional_npy_location)
+        else:
+            if preprocessed_output_path:
+                mono16k_wav_path = preprocessed_output_path / "{}.wav".format(prefix)
+                feat_path = preprocessed_output_path / "{}.{}.npy".format(prefix, feature_type)
+                feat_extract.convert_wav(p, mono16k_wav_path)
+                preprocessed_file_paths.append(feat_path)
+            else:
+                raise PersephoneException(
+                    "Can't preprocess file as no output path was provided, "
+                    "please specify preprocessed_output_path")
+    # preprocess the file that weren't found in the features directory
+    # as per the filesystem conventions
+    if preprocessed_output_path:
+        feat_extract.from_dir(preprocessed_output_path, feature_type)
 
-    # TODO Change the second argument to have some upper bound. If the caller
-    # requests 1000 WAVs be transcribed, they shouldn't all go in one batch.
-    fn_batches = utils.make_batches(input_paths, len(input_paths))
+    fn_batches = utils.make_batches(preprocessed_file_paths, batch_size)
     # Load the model and perform decoding.
     metagraph = load_metagraph(model_path_prefix)
     with tf.Session() as sess:
@@ -69,10 +117,10 @@ def decode(model_path_prefix: Union[str, Path],
         # TODO These placeholder names should be a backup if names from a newer
         # naming scheme aren't present. Otherwise this won't generalize to
         # different architectures.
-        feed_dict = {"Placeholder:0": batch_x,
-                     "Placeholder_1:0": batch_x_lens}
+        feed_dict = {batch_x_name: batch_x,
+                     batch_x_lens_name: batch_x_lens}
 
-        dense_decoded = sess.run("SparseToDense:0", feed_dict=feed_dict)
+        dense_decoded = sess.run(output_name, feed_dict=feed_dict)
 
     # Create a human-readable representation of the decoded.
     indices_to_labels = labels.make_indices_to_labels(label_set)
@@ -171,7 +219,7 @@ class Model:
                 logger.info("restoring model from %s", restore_model_path)
                 saver.restore(sess, restore_model_path)
             else:
-                assert self.saved_model_path
+                assert self.saved_model_path, "{}".format(self.saved_model_path)
                 logger.info("restoring model from %s", self.saved_model_path)
                 saver.restore(sess, self.saved_model_path)
 
@@ -373,5 +421,10 @@ class Model:
                                 # numper of epochs.
                                 continue
 
+                # Check we actually saved a checkpoint
+                if not self.saved_model_path:
+                    raise PersephoneException(
+                        "No checkpoint was saved so model evaluation cannot be performed. "
+                        "This can happen if the validaion LER never converges.")
                 # Finally, run evaluation on the test set.
                 self.eval(restore_model_path=self.saved_model_path)

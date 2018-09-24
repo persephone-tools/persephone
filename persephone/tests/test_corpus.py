@@ -1,8 +1,6 @@
 """Tests for corpus related items"""
 import pytest
 
-#from pyfakefs.pytest_plugin import fs
-
 def test_corpus_import():
     """Test we can import Corpus"""
     from persephone.corpus import Corpus
@@ -18,7 +16,7 @@ def test_missing_experiment_dir():
             feat_type='fbank',
             label_type='phonemes',
             tgt_dir=Path("thisDoesNotExist"),
-            labels=["a", "b", "c"]
+            labels={"a", "b", "c"}
         )
 
 def test_missing_wav_dir(tmpdir):
@@ -32,7 +30,7 @@ def test_missing_wav_dir(tmpdir):
             feat_type='fbank',
             label_type='phonemes',
             tgt_dir=Path(str(tmpdir)),
-            labels=["a", "b", "c"]
+            labels={"a", "b", "c"}
         )
 
 def test_create_corpus_no_data(tmpdir):
@@ -51,13 +49,11 @@ def test_create_corpus_no_data(tmpdir):
                 feat_type='fbank',
                 label_type='phonemes',
                 tgt_dir=Path(str(tmpdir)),
-                labels=["a", "b", "c"]
+                labels={"a", "b", "c"}
             )
 
-@pytest.mark.skip("Need to make some wav data that ffmpeg can actually open "
-                  "then do something like base64 encode the data so we can make "
-                  "fixtures for wav data to supply for the test case")
-def test_create_corpus_basic(tmpdir):
+
+def test_create_corpus_basic(tmpdir, create_sine, make_wav):
     """Test that an attempt to create a Corpus object with a minimal data set"""
     from persephone.corpus import Corpus
     from pathlib import Path
@@ -65,24 +61,82 @@ def test_create_corpus_basic(tmpdir):
     wav_dir = tmpdir.mkdir("wav")
     label_dir = tmpdir.mkdir("label")
 
-    wav_test = wav_dir.join("test.wav").write("")
-    wav_train = wav_dir.join("train.wav").write("")
-    wav_valid = wav_dir.join("valid.wav").write("")
+    #create sine wave data
+    data_a = create_sine(note="A")
+    data_b = create_sine(note="B")
+    data_c = create_sine(note="C")
 
-    label_test = wav_dir.join("valid.phonemes").write("a")
-    label_train = wav_dir.join("valid.phonemes").write("b")
-    label_valid = wav_dir.join("valid.phonemes").write("c")
+    wav_test = wav_dir.join("test.wav")
+    make_wav(data_a, str(wav_test))
+    wav_train = wav_dir.join("train.wav")
+    make_wav(data_b, str(wav_train))
+    wav_valid = wav_dir.join("valid.wav")
+    make_wav(data_c, str(wav_valid))
+
+    label_test = label_dir.join("test.phonemes").write("a")
+    label_train = label_dir.join("train.phonemes").write("b")
+    label_valid = label_dir.join("valid.phonemes").write("c")
 
     c = Corpus(
         feat_type='fbank',
         label_type='phonemes',
         tgt_dir=Path(str(tmpdir)),
-        labels=["a", "b", "c"]
+        labels=None
     )
     assert c
 
+
+def test_corpus_with_predefined_data_sets(tmpdir, create_sine, make_wav):
+    """Test that corpus construction works with prefix data splits determined
+    as per the file system conventions.
+
+    This will check that what is specified in :
+    * `test_prefixes.txt`
+    * `train_prefixes.txt`
+    * `valid_prefixes.txt`
+    Matches the internal members that store the prefix information
+    """
+    from persephone.corpus import Corpus
+    from pathlib import Path
+
+    wav_dir = tmpdir.mkdir("wav")
+    label_dir = tmpdir.mkdir("label")
+
+    #create sine wave data
+    data_a = create_sine(note="A")
+    data_b = create_sine(note="B")
+    data_c = create_sine(note="C")
+
+    wav_test = wav_dir.join("test.wav")
+    make_wav(data_a, str(wav_test))
+    wav_train = wav_dir.join("train.wav")
+    make_wav(data_b, str(wav_train))
+    wav_valid = wav_dir.join("valid.wav")
+    make_wav(data_c, str(wav_valid))
+
+    label_test = label_dir.join("test.phonemes").write("a")
+    label_train = label_dir.join("train.phonemes").write("b")
+    label_valid = label_dir.join("valid.phonemes").write("c")
+
+    test_prefixes = tmpdir.join("test_prefixes.txt").write("test")
+    train_prefixes = tmpdir.join("train_prefixes.txt").write("train")
+    valid_prefixes = tmpdir.join("valid_prefixes.txt").write("valid")
+
+    c = Corpus(
+        feat_type='fbank',
+        label_type='phonemes',
+        tgt_dir=Path(str(tmpdir)),
+        labels={"a","b","c"}
+    )
+    assert c
+    assert c.feat_type == 'fbank'
+    assert c.label_type == 'phonemes'
+    assert set(c.labels) == {"a", "b", "c"}
+    assert c.vocab_size == 3
+
 def test_create_corpus_label_mismatch(tmpdir):
-    """Test that an attempt to create a Corpus object with a minimal data set"""
+    """Test that creation of a Corpus raises an error when the supplied label set
+    does not exactly match those found in the provided data"""
     from persephone.corpus import Corpus
     from persephone.exceptions import LabelMismatchException
     from pathlib import Path
@@ -94,16 +148,18 @@ def test_create_corpus_label_mismatch(tmpdir):
     wav_train = wav_dir.join("train.wav").write("")
     wav_valid = wav_dir.join("valid.wav").write("")
 
-    label_test = wav_dir.join("valid.phonemes").write("a")
-    label_train = wav_dir.join("valid.phonemes").write("b")
-    label_valid = wav_dir.join("valid.phonemes").write("c")
+    label_test = label_dir.join("test.phonemes").write("a")
+    label_train = label_dir.join("train.phonemes").write("b")
+    label_valid = label_dir.join("valid.phonemes").write("c")
+
+    # TODO: write prefix files
 
     with pytest.raises(LabelMismatchException):
         c = Corpus(
             feat_type='fbank',
             label_type='phonemes',
             tgt_dir=Path(str(tmpdir)),
-            labels=["a", "b", "c"]
+            labels={"1", "2", "3"}
         )
 
 def test_determine_labels_throws():
@@ -114,35 +170,36 @@ def test_determine_labels_throws():
     with pytest.raises(FileNotFoundError):
         determine_labels(non_existent_path, "phonemes")
 
-@pytest.mark.skip("This currently fails because of a bug in pyfakefs,"
-                  "see https://github.com/jmcgeheeiv/pyfakefs/issues/409")
-def test_determine_labels(fs): #fs is the fake filesystem fixture
-    """test the function that determines what labels exist in a directory"""
-    from pyfakefs.fake_filesystem_unittest import Patcher
 
-    with Patcher(use_dynamic_patch=True) as patcher:
-        import pathlib
-    base_dir = pathlib.Path('/tmp/corpus_data')
-    label_dir = base_dir / "label"
-    fs.create_dir(str(base_dir))
-    fs.create_dir(str(label_dir))
+def test_determine_labels(tmpdir): #fs is the fake filesystem fixture
+    """test the function that determines what labels exist in a directory"""
+    from pathlib import Path
+
+    base_dir = tmpdir
+    label_dir = base_dir.mkdir("label")
+
     test_1_phonemes = 'ɖ ɯ ɕ i k v̩'
     test_1_phonemes_and_tones = 'ɖ ɯ ˧ ɕ i ˧ k v̩ ˧˥'
     test_2_phonemes = 'g v̩ tsʰ i g v̩ k v̩'
     test_2_phonemes_and_tones = 'g v̩ ˧ tsʰ i ˩ g v̩ ˩ k v̩ ˩'
-    fs.create_file(str(label_dir / "test1.phonemes"), contents=test_1_phonemes)
-    fs.create_file(str(label_dir / "test1.phonemes_and_tones"), contents=test_1_phonemes_and_tones)
-    fs.create_file(str(label_dir / "test2.phonemes"), contents=test_2_phonemes)
-    fs.create_file(str(label_dir / "test2.phonemes_and_tones"), contents=test_1_phonemes_and_tones)
-    assert base_dir.exists()
-    assert label_dir.exists()
+
+    label_dir.join("test1.phonemes").write(test_1_phonemes)
+    label_dir.join("test1.phonemes_and_tones").write(test_1_phonemes_and_tones)
+    label_dir.join("test2.phonemes").write(test_2_phonemes)
+    label_dir.join("test2.phonemes_and_tones").write(test_2_phonemes_and_tones)
+
+    all_phonemes = set(test_1_phonemes.split(' ')) | set(test_2_phonemes.split(' '))
 
     from persephone.corpus import determine_labels
-    phoneme_labels = determine_labels(base_dir, "phonemes")
+    phoneme_labels = determine_labels(Path(str(base_dir)), "phonemes")
     assert phoneme_labels
+    assert phoneme_labels == all_phonemes
 
-    phoneme_and_tones_labels = determine_labels(base_dir, "phonemes_and_tones")
+    all_phonemes_and_tones = set(test_1_phonemes_and_tones.split(' ')) | set(test_2_phonemes_and_tones.split(' '))
+
+    phoneme_and_tones_labels = determine_labels(Path(str(base_dir)), "phonemes_and_tones")
     assert phoneme_and_tones_labels
+    assert phoneme_and_tones_labels == all_phonemes_and_tones
 
 
 def test_data_overlap():
@@ -204,3 +261,22 @@ baz"""
     assert "foo" in untranscribed_prefixes
     assert "bar" in untranscribed_prefixes
     assert "baz" in untranscribed_prefixes
+
+def test_divide_prefixes_too_few():
+    """Test that an impossible set of prefixes to divide into three groups raises an exception"""
+    import persephone.corpus
+    from persephone.exceptions import PersephoneException
+
+    with pytest.raises(PersephoneException):
+        persephone.corpus.Corpus.divide_prefixes([])
+
+    with pytest.raises(PersephoneException):
+        persephone.corpus.Corpus.divide_prefixes(["1", "2"])
+
+def test_divide_prefixes():
+    """Test that prefixes get divided into groups"""
+    import persephone.corpus
+    train, valid, test = persephone.corpus.Corpus.divide_prefixes(['1', '2', '3'])
+    assert len(train) == 1
+    assert len(valid) == 1
+    assert len(test) == 1

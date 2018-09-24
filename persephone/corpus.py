@@ -112,7 +112,8 @@ class Corpus:
 
     """
 
-    def __init__(self, feat_type: str, label_type: str, tgt_dir: Path, labels: Optional[Any] = None,
+    def __init__(self, feat_type: str, label_type: str, tgt_dir: Path,
+                 labels: Optional[Set[str]] = None,
                  max_samples:int=1000, speakers: Optional[Sequence[str]] = None) -> None:
         """ Construct a `Corpus` instance from preprocessed data.
 
@@ -151,8 +152,10 @@ class Corpus:
         if speakers:
             raise NotImplementedError("Speakers not implemented")
 
-        logger.debug("Creating a new Corpus object with feature type %s, label type %s,"
-                     "target directory %s, label set %s, ms, max_samples, speakers")
+        logger.debug("Creating a new Corpus object with feature type {}, label type {},"
+                     "target directory {}, label set {}, max_samples {}, speakers {}".format(
+                    feat_type, label_type, labels, tgt_dir, max_samples, speakers)
+        )
 
         # In case path is supplied as a string, make it a Path
         self.tgt_dir = Path(tgt_dir)
@@ -179,8 +182,8 @@ class Corpus:
             self.labels = labels
             found_labels = determine_labels(self.tgt_dir, label_type)
             if found_labels != self.labels:
-                raise LabelMismatchException("""User specified labels, {}, do
-                    not match those automatically found, {}.""".format(labels,
+                raise LabelMismatchException("User specified labels, {}, do"
+                    " not match those automatically found, {}.".format(labels,
                     found_labels))
         else:
             self.labels = determine_labels(self.tgt_dir, label_type)
@@ -213,7 +216,7 @@ class Corpus:
                 self.get_test_fns()[0]
             )
         except PersephoneException:
-            logger.error("Got overlap between train valid and test data sets")
+            logger.error("Got overlap between train, valid and test data sets")
             raise
 
         untranscribed_from_file = self.get_untranscribed_prefixes()
@@ -232,7 +235,7 @@ class Corpus:
     def from_elan(cls: Type[CorpusT], org_dir: Path, tgt_dir: Path,
                   feat_type: str = "fbank", label_type: str = "phonemes",
                   utterance_filter: Callable[[Utterance], bool] = None,
-                  label_segmenter: LabelSegmenter = None,
+                  label_segmenter: Optional[LabelSegmenter] = None,
                   speakers: List[str] = None, lazy: bool = True,
                   tier_prefixes: Tuple[str, ...] = ("xv", "rf")) -> CorpusT:
         """ Construct a `Corpus` from ELAN files.
@@ -306,7 +309,7 @@ class Corpus:
         wav.extract_wavs(utterances, (tgt_dir / "wav"), lazy=lazy)
 
         corpus = cls(feat_type, label_type, tgt_dir,
-                     label_segmenter.labels, speakers=speakers)
+                     labels=label_segmenter.labels, speakers=speakers)
         corpus.utterances = utterances
         return corpus
 
@@ -350,7 +353,7 @@ class Corpus:
             raise PersephoneException(
                 "The supplied path requires a 'label' subdirectory.")
 
-    def initialize_labels(self, labels: Sequence[str]) -> Tuple[dict, dict]:
+    def initialize_labels(self, labels: Set[str]) -> Tuple[dict, dict]:
         """Create mappings from label to index and index to label"""
         logger.debug("Creating mappings for labels")
 
@@ -459,10 +462,24 @@ class Corpus:
     @staticmethod
     def divide_prefixes(prefixes: List[str], seed:int=0) -> Tuple[List[str], List[str], List[str]]:
         """Divide data into training, validation and test subsets"""
+        if len(prefixes) < 3:
+            raise PersephoneException(
+                "{} cannot be split into 3 groups as it only has {} items".format(prefixes, len(prefixes))
+            )
         Ratios = namedtuple("Ratios", ["train", "valid", "test"])
         ratios=Ratios(.90, .05, .05)
         train_end = int(ratios.train*len(prefixes))
         valid_end = int(train_end + ratios.valid*len(prefixes))
+
+        # We must make sure that at least one element exists in test
+        if valid_end == len(prefixes):
+            valid_end -= 1
+
+        # If train_end and valid_end are the same we end up with no valid_prefixes
+        # so we must ensure at least one prefix is placed in this category
+        if train_end == valid_end:
+            train_end -= 1
+
         random.seed(seed)
         random.shuffle(prefixes)
 
@@ -470,8 +487,6 @@ class Corpus:
         valid_prefixes = prefixes[train_end:valid_end]
         test_prefixes = prefixes[valid_end:]
 
-        # TODO Adjust code to cope properly with toy datasets where these
-        # subsets might actually be empty.
         assert train_prefixes, "Got empty set for training data"
         assert valid_prefixes, "Got empty set for validation data"
         assert test_prefixes, "Got empty set for testing data"
@@ -598,7 +613,7 @@ class Corpus:
             return pickle.load(f)
 
 
-def determine_labels(target_dir: Path, label_type: str) -> set:
+def determine_labels(target_dir: Path, label_type: str) -> Set[str]:
     """ Returns a set of all phonemes found in the corpus. Assumes that WAV files and
     label files are split into utterances and segregated in a directory which contains a
     "wav" subdirectory and "label" subdirectory.
@@ -615,7 +630,7 @@ def determine_labels(target_dir: Path, label_type: str) -> set:
         raise FileNotFoundError(
             "The directory {} does not exist.".format(target_dir))
 
-    phonemes = set() # type: set
+    phonemes = set() # type: Set[str]
     for fn in os.listdir(str(label_dir)):
         if fn.endswith(str(label_type)):
             with (label_dir / fn).open("r") as f:
