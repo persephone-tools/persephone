@@ -563,7 +563,7 @@ class Corpus:
         return get_untranscribed_prefixes_from_file(self.tgt_dir)
 
     def get_untranscribed_fns(self) -> List[str]:
-        feat_fns = [os.path.join(str(self.feat_dir), "untranscribed", "%s.%s.npy" % (prefix, self.feat_type))
+        feat_fns = [os.path.join(str(self.feat_dir), "%s.%s.npy" % (prefix, self.feat_type))
                     for prefix in self.untranscribed_prefixes]
         return feat_fns
 
