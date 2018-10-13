@@ -407,6 +407,9 @@ class Model:
                                         feed_dict=feed_dict)
 
                         train_ler_total += ler
+                    else:
+                        raise PersephoneError("No training data was provided."
+                                              " Check your batch generation.")
 
                     feed_dict = {self.batch_x: valid_x,
                                 self.batch_x_lens: valid_x_lens,
