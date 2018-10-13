@@ -438,7 +438,7 @@ class Model:
                     valid_per = utils.batch_per(hyps, refs)
 
                     epoch_str = "Epoch %d. Training LER: %f, validation LER: %f" % (
-                        epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per)
+                        epoch, (train_ler_total / (batch_i + 1)), valid_ler)
                     print(epoch_str, flush=True, file=out_file)
                     if best_epoch_str is None:
                         best_epoch_str = epoch_str
