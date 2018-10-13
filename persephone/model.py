@@ -6,7 +6,8 @@ import logging
 import os
 from pathlib import Path
 import sys
-from typing import Optional, Union, Sequence, Set, List, Dict
+from typing import Callable, Optional, Union, Sequence, Set, List, Dict
+
 import tensorflow as tf
 
 from .preprocess import labels, feat_extract
@@ -313,7 +314,8 @@ class Model:
 
     def train(self, early_stopping_steps: int = 10, min_epochs: int = 30,
               max_valid_ler: float = 1.0, max_train_ler: float = 0.3,
-              max_epochs: int = 100, restore_model_path: Optional[str]=None) -> None:
+              max_epochs: int = 100, restore_model_path: Optional[str]=None,
+              epoch_callback: Optional[Callable[[Dict], None]]=None) -> None:
         """ Train the model.
 
             min_epochs: minimum number of epochs to run training for.
@@ -327,6 +329,10 @@ class Model:
                            Training will continue until this is met or another
                            stopping condition occurs.
             restore_model_path: The path to restore a model from.
+            epoch_callback: A callback that is called at the end of each training epoch.
+                            The parameters passed to the callable will be the epoch number,
+                            the current training LER and the current validation LER.
+                            This can be useful for progress reporting.
         """
         logger.info("Training model")
         best_valid_ler = 2.0
@@ -377,7 +383,7 @@ class Model:
                 logger.error("Error, overwriting existing log file at path {}".format(training_log_path))
             with open(training_log_path, "w",
                       encoding=ENCODING) as out_file:
-                for epoch in itertools.count():
+                for epoch in itertools.count(start=1):
                     print("\nexp_dir %s, epoch %d" % (self.exp_dir, epoch))
                     batch_gen = self.corpus_reader.train_batch_gen()
 
@@ -431,6 +437,14 @@ class Model:
                     print(epoch_str, flush=True, file=out_file)
                     if best_epoch_str is None:
                         best_epoch_str = epoch_str
+
+                    # Call the callback here if it was defined
+                    if epoch_callback:
+                        epoch_callback({
+                            "epoch": epoch,
+                            "training_ler": (train_ler_total / (batch_i + 1)), # current training LER
+                            "valid_ler": valid_ler, # Current validation LER
+                        })
 
                     # Implement early stopping.
                     if valid_ler < best_valid_ler:
