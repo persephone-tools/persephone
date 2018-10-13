@@ -304,8 +304,8 @@ class Model:
                 for ref in refs:
                     print(" ".join(ref), file=refs_f)
 
-            assert test_per == test_ler
             test_per = utils.batch_per(hyps, refs)
+            assert test_per == test_ler
             with open(os.path.join(hyps_dir, "test_per"), "w",
                       encoding=ENCODING) as per_f:
                 print("LER: %f" % (test_ler), file=per_f)
@@ -408,8 +408,8 @@ class Model:
 
                         train_ler_total += ler
                     else:
-                        raise PersephoneError("No training data was provided."
-                                              " Check your batch generation.")
+                        raise PersephoneException("No training data was provided."
+                                                  " Check your batch generation.")
 
                     feed_dict = {self.batch_x: valid_x,
                                 self.batch_x_lens: valid_x_lens,
