@@ -1,6 +1,9 @@
 """ An acoustic model with a LSTM/CTC architecture. """
 
 import os
+from typing import Union, Dict, Any
+from pathlib import Path
+
 import numpy as np
 import tensorflow as tf
 
@@ -23,11 +26,45 @@ class Model(model.Model):
             for key, val in self.__dict__.items():
                 print("%s=%s" % (key, val), file=desc_f)
 
-    def __init__(self, exp_dir: str, corpus_reader, num_layers: int = 3,
+        import json
+        json_path = os.path.join(self.exp_dir, "model_description.json")
+        desc = { } #type: Dict[str, Any]
+        # For use in decoding from a saved model
+        desc["topology"] = {
+            "batch_x_name" : self.batch_x.name, #type: ignore
+            "batch_x_lens_name" : self.batch_x_lens.name, #type: ignore
+            "dense_decoded_name" : self.dense_decoded.name #type: ignore
+        }
+        desc["model_type"] = str(self.__class__)
+        for key, val in self.__dict__.items():
+            if isinstance(val, int):
+                desc[str(key)] = val
+            elif isinstance(val, tf.Tensor):
+                desc[key] = {
+                    "type": "tf.Tensor",
+                    "name": val.name, #type: ignore
+                    "shape": str(val.shape), #type: ignore
+                    "dtype" : str(val.dtype), #type: ignore
+                    "value" : str(val),
+                }
+            elif isinstance(val, tf.SparseTensor): #type: ignore
+                desc[key] = {
+                    "type": "tf.SparseTensor",
+                    "value": str(val), #type: ignore
+                }
+            else:
+                desc[str(key)] = str(val)
+        with open(json_path, "w") as json_desc_f:
+            json.dump(desc, json_desc_f, skipkeys=True)
+
+
+    def __init__(self, exp_dir: Union[str, Path], corpus_reader, num_layers: int = 3,
                  hidden_size: int=250, beam_width: int = 100,
                  decoding_merge_repeated: bool = True) -> None:
         super().__init__(exp_dir, corpus_reader)
 
+        if isinstance(exp_dir, Path):
+            exp_dir = str(exp_dir)
         if not os.path.isdir(exp_dir):
             os.makedirs(exp_dir)
 

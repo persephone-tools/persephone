@@ -60,7 +60,7 @@ def mfcc(wav_path):
     feat_fn = wav_path[:-3] + "mfcc13_d.npy"
     np.save(feat_fn, all_feats)
 
-def combine_fbank_and_pitch(feat_dir, prefix):
+def combine_fbank_and_pitch(feat_dir: str, prefix: str) -> None:
 
     fbank_fn = os.path.join(feat_dir, prefix + ".fbank.npy")
     fbanks = np.load(fbank_fn)
@@ -105,13 +105,18 @@ def combine_fbank_and_pitch(feat_dir, prefix):
 # specific wav format, so that should be coupled together with pitch extraction
 # here.
 def from_dir(dirpath: Path, feat_type: str) -> None:
-    """ Performs feature extraction from the WAV files in a directory. """
+    """ Performs feature extraction from the WAV files in a directory.
+
+    Args:
+        dirpath: A `Path` to the directory where the WAV files reside.
+        feat_type: The type of features that are being used.
+    """
 
     logger.info("Extracting features from directory {}".format(dirpath))
 
     dirname = str(dirpath)
 
-    def all_wavs_processed():
+    def all_wavs_processed() -> bool:
         """
         True if all wavs in the directory have corresponding numpy feature
         file; False otherwise.
@@ -127,6 +132,7 @@ def from_dir(dirpath: Path, feat_type: str) -> None:
 
     if all_wavs_processed():
         # Then nothing needs to be done here
+        logger.info("All WAV files already preprocessed")
         return
     # Otherwise, go on and process everything...
 
@@ -155,12 +161,19 @@ def from_dir(dirpath: Path, feat_type: str) -> None:
                 raise PersephoneException("Feature type not found: %s" % feat_type)
 
 def convert_wav(org_wav_fn: Path, tgt_wav_fn: Path) -> None:
-    """ Converts the wav into a 16bit mono 16000Hz wav."""
+    """ Converts the wav into a 16bit mono 16000Hz wav.
+
+        Args:
+            org_wav_fn: A `Path` to the original wave file
+            tgt_wav_fn: The `Path` to output the processed wave file
+    """
+    if not org_wav_fn.exists():
+        raise FileNotFoundError
     args = [config.FFMPEG_PATH,
             "-i", str(org_wav_fn), "-ac", "1", "-ar", "16000", str(tgt_wav_fn)]
     subprocess.run(args)
 
-def kaldi_pitch(wav_dir, feat_dir):
+def kaldi_pitch(wav_dir: str, feat_dir: str) -> None:
     """ Extract Kaldi pitch features. Assumes 16k mono wav files."""
 
     logger.debug("Make wav.scp and pitch.scp files")
