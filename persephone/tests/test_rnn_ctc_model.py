@@ -73,3 +73,43 @@ def test_model_train_and_decode(tmpdir, create_sine, make_wav, create_test_corpu
 
     assert result
     assert len(result) == 1
+
+
+def test_model_train_callback(tmpdir, create_sine, make_wav, create_test_corpus):
+    """Test that we can create a model, train it then get our callback called on each epoch of training"""
+    from persephone.corpus_reader import CorpusReader
+    from persephone.rnn_ctc import Model
+    from pathlib import Path
+    corpus = create_test_corpus()
+
+    # If it turns out that `tgt_dir` is not in the public interface of the Corpus
+    # this test should change and get the base directory from the fixture that created it.
+    base_directory = corpus.tgt_dir
+    print("base_directory", base_directory)
+
+    corpus_r = CorpusReader(
+        corpus,
+        batch_size=1
+    )
+    assert corpus_r
+
+    test_model = Model(
+        base_directory,
+        corpus_r,
+        num_layers=2,
+        hidden_size=10
+    )
+    assert test_model
+
+    from unittest.mock import Mock
+
+    mock_callback = Mock(return_value=None)
+
+    test_model.train(
+        early_stopping_steps=1,
+        min_epochs=1,
+        max_epochs=10,
+        epoch_callback=mock_callback
+    )
+
+    assert mock_callback.call_count == 10
