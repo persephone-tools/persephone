@@ -46,16 +46,39 @@ def dense_to_human_readable(dense_repr: Sequence[Sequence[int]], index_to_label:
 
     return transcripts
 
+def decode_corpus(model_path_prefix: Union[str, Path],
+                  corpus: Corpus,
+                  output_path: Union[str, Path],
+                  *,
+                  batch_size: int = 64,
+                  preprocessed_output_path: Optional[Path]=None,
+                  batch_x_name: str="batch_x:0",
+                  batch_x_lens_name: str="batch_x_lens:0",
+                  output_name: str="hyp_dense_decoded:0") -> List[List[str]]:
+    input_paths = [Path(corpus.tgt_dir) / "feat" / Path(prefix + ".wav")
+                   for prefix in corpus.untranscribed_prefixes]
+    decoded = decode(model_path_prefix,
+                     input_paths,
+                     label_set=corpus.labels,
+                     output_path=output_path,
+                     feature_type=corpus.feat_type,
+                     batch_size=batch_size,
+                     preprocessed_output_path=preprocessed_output_path,
+                     batch_x_name=batch_x_name,
+                     batch_x_lens_name=batch_x_lens_name,
+                     output_name=output_name)
+
 def decode(model_path_prefix: Union[str, Path],
            input_paths: Sequence[Path],
            label_set: Set[str],
+           output_path: Path,
            *,
            feature_type: str = "fbank", #TODO Make this None and infer feature_type from dimension of NN input layer.
            batch_size: int = 64,
            preprocessed_output_path: Optional[Path]=None,
-           batch_x_name: str="Placeholder:0",
-           batch_x_lens_name: str="Placeholder_1:0",
-           output_name: str="SparseToDense:0") -> List[List[str]]:
+           batch_x_name: str="batch_x:0",
+           batch_x_lens_name: str="batch_x_lens:0",
+           output_name: str="hyp_dense_decoded:0") -> List[List[str]]:
     """Use an existing tensorflow model that exists on disk to decode
     WAV files.
 
@@ -75,6 +98,9 @@ def decode(model_path_prefix: Union[str, Path],
         output_name: The name of the tensorflow output
     """
 
+    if not input_paths:
+        raise PersephoneException("No untranscribed WAVs to transcribe.")
+
     model_path_prefix = str(model_path_prefix)
 
     for p in input_paths:
@@ -84,24 +110,22 @@ def decode(model_path_prefix: Union[str, Path],
             )
 
     preprocessed_file_paths = []
-    for p in input_paths:
+    prefixes = [p.stem for p in input_paths]
+    for prefix in prefixes:
         # Check the "feat" directory as per the filesystem conventions of a Corpus
-        prefix = p.stem
         feature_file_ext = ".{}.npy".format(feature_type)
-        conventional_npy_location =  p.parent / "feat" / (Path(prefix + feature_file_ext))
+        conventional_npy_location =  p.parent.parent / "feat" / (Path(prefix + feature_file_ext))
         if conventional_npy_location.exists():
             # don't need to preprocess it
             preprocessed_file_paths.append(conventional_npy_location)
         else:
-            if preprocessed_output_path:
-                mono16k_wav_path = preprocessed_output_path / "{}.wav".format(prefix)
-                feat_path = preprocessed_output_path / "{}.{}.npy".format(prefix, feature_type)
-                feat_extract.convert_wav(p, mono16k_wav_path)
-                preprocessed_file_paths.append(feat_path)
-            else:
-                raise PersephoneException(
-                    "Can't preprocess file as no output path was provided, "
-                    "please specify preprocessed_output_path")
+            if not preprocessed_output_path:
+                preprocessed_output_path = conventional_npy_location
+
+            mono16k_wav_path = preprocessed_output_path / "{}.wav".format(prefix)
+            feat_path = preprocessed_output_path / "{}.{}.npy".format(prefix, feature_type)
+            feat_extract.convert_wav(p, mono16k_wav_path)
+            preprocessed_file_paths.append(feat_path)
     # preprocess the file that weren't found in the features directory
     # as per the filesystem conventions
     if preprocessed_output_path:
@@ -128,7 +152,11 @@ def decode(model_path_prefix: Union[str, Path],
     indices_to_labels = labels.make_indices_to_labels(label_set)
     human_readable = dense_to_human_readable(dense_decoded, indices_to_labels)
 
-    return human_readable
+    output_path = Path(output_path)
+    prefixes_hyps = sorted(list(zip(prefixes, human_readable)))
+    with output_path.open("w", encoding=ENCODING) as f:
+        for prefix, hyp in prefixes_hyps:
+            print(prefix, " ".join(hyp), file=f)
 
 class Model:
     """ Generic model for our ASR tasks.
@@ -205,12 +233,34 @@ class Model:
 
                 hyp_batches.append((hyps,feat_fn_batch))
 
-            with open(os.path.join(hyps_dir, "hyps.txt"), "w") as hyps_f:
+            with open(os.path.join(hyps_dir, "hyps.txt"), "w",
+                      encoding=ENCODING) as hyps_f:
                 for hyp_batch, fn_batch in hyp_batches:
                     for hyp, fn in zip(hyp_batch, fn_batch):
                         print(fn, file=hyps_f)
                         print(" ".join(hyp), file=hyps_f)
                         print("", file=hyps_f)
+
+    def decode(self):
+        model_path_prefix = Path(self.exp_dir) / "model" / "model_best.ckpt"
+        prefixes = self.corpus_reader.corpus.untranscribed_prefixes
+        input_paths = [self.corpus_reader.corpus.tgt_dir / "feat" / Path(p + ".wav")
+                       for p in prefixes]
+        label_set = self.corpus_reader.corpus.labels
+        feature_type = self.corpus_reader.corpus.feat_type
+        batch_size = self.corpus_reader.batch_size
+        batch_x_name = self.batch_x.name
+        batch_x_lens_name = self.batch_x_lens.name
+        output_name = self.dense_decoded.name
+        decoded = decode(model_path_prefix,
+                      input_paths,
+                      label_set,
+                      output_path = Path(self.exp_dir) / "decoded" / "untranscribed.txt",
+                      feature_type=feature_type,
+                      batch_size=batch_size,
+                      batch_x_name=batch_x_name,
+                      batch_x_lens_name=batch_x_lens_name,
+                      output_name=output_name)
 
     def eval(self, restore_model_path: Optional[str]=None) -> None:
         """ Evaluates the model on a test set."""
