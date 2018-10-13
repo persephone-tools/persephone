@@ -325,7 +325,7 @@ class Model:
             if os.path.exists(training_log_path):
                 logger.error("Error, overwriting existing log file at path {}".format(training_log_path))
             with open(training_log_path, "w") as out_file:
-                for epoch in itertools.count():
+                for epoch in itertools.count(start=1):
                     print("\nexp_dir %s, epoch %d" % (self.exp_dir, epoch))
                     batch_gen = self.corpus_reader.train_batch_gen()
 
