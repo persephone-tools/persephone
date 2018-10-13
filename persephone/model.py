@@ -259,7 +259,7 @@ class Model:
     def train(self, early_stopping_steps: int = 10, min_epochs: int = 30,
               max_valid_ler: float = 1.0, max_train_ler: float = 0.3,
               max_epochs: int = 100, restore_model_path: Optional[str]=None,
-              epoch_callback: Optional[Callable[[int, float, float], None]]=None) -> None:
+              epoch_callback: Optional[Callable[[Dict], None]]=None) -> None:
         """ Train the model.
 
             min_epochs: minimum number of epochs to run training for.
@@ -380,11 +380,11 @@ class Model:
 
                     # Call the callback here if it was defined
                     if epoch_callback:
-                        epoch_callback(
-                            epoch,
-                            (train_ler_total / (batch_i + 1)), # current training LER
-                            valid_ler # Current validation LER
-                        )
+                        epoch_callback({
+                            "epoch": epoch,
+                            "training_ler": (train_ler_total / (batch_i + 1)), # current training LER
+                            "valid_ler": valid_ler, # Current validation LER
+                        })
 
                     # Implement early stopping.
                     if valid_ler < best_valid_ler:
