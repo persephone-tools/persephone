@@ -304,10 +304,11 @@ class Model:
                 for ref in refs:
                     print(" ".join(ref), file=refs_f)
 
+            assert test_per == test_ler
             test_per = utils.batch_per(hyps, refs)
             with open(os.path.join(hyps_dir, "test_per"), "w",
                       encoding=ENCODING) as per_f:
-                print("Test PER: %f, tf LER: %f" % (test_per, test_ler), file=per_f)
+                print("LER: %f" % (test_ler), file=per_f)
 
     def output_best_scores(self, best_epoch_str: str) -> None:
         """Output best scores to the filesystem"""
@@ -436,7 +437,7 @@ class Model:
 
                     valid_per = utils.batch_per(hyps, refs)
 
-                    epoch_str = "Epoch %d. Training LER: %f, validation LER: %f, validation PER: %f" % (
+                    epoch_str = "Epoch %d. Training LER: %f, validation LER: %f" % (
                         epoch, (train_ler_total / (batch_i + 1)), valid_ler, valid_per)
                     print(epoch_str, flush=True, file=out_file)
                     if best_epoch_str is None:
