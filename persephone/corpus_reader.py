@@ -10,6 +10,7 @@ from typing import List, Sequence, Iterator
 import numpy as np
 
 from . import utils
+from .config import ENCODING
 from .exceptions import PersephoneException
 
 logger = logging.getLogger(__name__) # type: ignore
@@ -108,7 +109,7 @@ class CorpusReader:
                                                              flatten=False)
         batch_targets_list = []
         for targets_path in target_fn_batch:
-            with open(targets_path) as targets_f:
+            with open(targets_path, encoding=ENCODING) as targets_f:
                 target_indices = self.corpus.labels_to_indices(targets_f.readline().split())
                 batch_targets_list.append(target_indices)
         batch_targets = utils.target_list_to_sparse_tensor(batch_targets_list)

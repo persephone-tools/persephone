@@ -12,6 +12,8 @@ import tensorflow as tf
 from .preprocess import labels, feat_extract
 from . import utils
 from . import config
+from .config import ENCODING
+from .corpus import Corpus
 from .exceptions import PersephoneException
 from .corpus_reader import CorpusReader
 
@@ -238,21 +240,25 @@ class Model:
             hyps_dir = os.path.join(self.exp_dir, "test")
             if not os.path.isdir(hyps_dir):
                 os.mkdir(hyps_dir)
-            with open(os.path.join(hyps_dir, "hyps"), "w") as hyps_f:
+            with open(os.path.join(hyps_dir, "hyps"), "w",
+                      encoding=ENCODING) as hyps_f:
                 for hyp in hyps:
                     print(" ".join(hyp), file=hyps_f)
-            with open(os.path.join(hyps_dir, "refs"), "w") as refs_f:
+            with open(os.path.join(hyps_dir, "refs"), "w",
+                      encoding=ENCODING) as refs_f:
                 for ref in refs:
                     print(" ".join(ref), file=refs_f)
 
             test_per = utils.batch_per(hyps, refs)
-            with open(os.path.join(hyps_dir, "test_per"), "w") as per_f:
+            with open(os.path.join(hyps_dir, "test_per"), "w",
+                      encoding=ENCODING) as per_f:
                 print("Test PER: %f, tf LER: %f" % (test_per, test_ler), file=per_f)
 
     def output_best_scores(self, best_epoch_str: str) -> None:
         """Output best scores to the filesystem"""
         BEST_SCORES_FILENAME = "best_scores.txt"
-        with open(os.path.join(self.exp_dir, BEST_SCORES_FILENAME), "w") as best_f:
+        with open(os.path.join(self.exp_dir, BEST_SCORES_FILENAME),
+                  "w", encoding=ENCODING) as best_f:
             print(best_epoch_str, file=best_f, flush=True)
 
     def train(self, early_stopping_steps: int = 10, min_epochs: int = 30,
@@ -282,7 +288,8 @@ class Model:
         # It was a mistake to deprecate this in Python 3.5
         if frame:
             args, _, _, values = inspect.getargvalues(frame)
-            with open(os.path.join(self.exp_dir, "train_description.txt"), "w") as desc_f:
+            with open(os.path.join(self.exp_dir, "train_description.txt"), 
+                      "w", encoding=ENCODING) as desc_f:
                 for arg in args:
                     if type(values[arg]) in [str, int, float] or isinstance(
                             values[arg], type(None)):
@@ -318,7 +325,8 @@ class Model:
             training_log_path = os.path.join(self.exp_dir, "train_log.txt")
             if os.path.exists(training_log_path):
                 logger.error("Error, overwriting existing log file at path {}".format(training_log_path))
-            with open(training_log_path, "w") as out_file:
+            with open(training_log_path, "w",
+                      encoding=ENCODING) as out_file:
                 for epoch in itertools.count():
                     print("\nexp_dir %s, epoch %d" % (self.exp_dir, epoch))
                     batch_gen = self.corpus_reader.train_batch_gen()
@@ -356,11 +364,13 @@ class Model:
                     hyps, refs = self.corpus_reader.human_readable_hyp_ref(
                         dense_decoded, dense_ref)
                     # Log hypotheses
-                    with open(os.path.join(hyps_dir, "epoch%d_hyps" % epoch), "w") as hyps_f:
+                    with open(os.path.join(hyps_dir, "epoch%d_hyps" % epoch),
+                              "w", encoding=ENCODING) as hyps_f:
                         for hyp in hyps:
                             print(" ".join(hyp), file=hyps_f)
                     if epoch == 0:
-                        with open(os.path.join(hyps_dir, "refs"), "w") as refs_f:
+                        with open(os.path.join(hyps_dir, "refs"), "w", 
+                                  encoding=ENCODING) as refs_f:
                             for ref in refs:
                                 print(" ".join(ref), file=refs_f)
 
@@ -387,7 +397,8 @@ class Model:
                         self.saved_model_path = checkpoint_path
 
                         # Output best hyps
-                        with open(os.path.join(hyps_dir, "best_hyps"), "w") as hyps_f:
+                        with open(os.path.join(hyps_dir, "best_hyps"),
+                                  "w", encoding=ENCODING) as hyps_f:
                             for hyp in hyps:
                                 print(" ".join(hyp), file=hyps_f)
 

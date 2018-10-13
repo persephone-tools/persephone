@@ -14,6 +14,7 @@ from typing import Any, List, Callable, Optional, Set, Sequence, Tuple, Type, Ty
 
 import numpy as np
 
+from .config import ENCODING
 from .preprocess import feat_extract
 from . import utils
 from .exceptions import PersephoneException
@@ -633,7 +634,7 @@ def determine_labels(target_dir: Path, label_type: str) -> Set[str]:
     phonemes = set() # type: Set[str]
     for fn in os.listdir(str(label_dir)):
         if fn.endswith(str(label_type)):
-            with (label_dir / fn).open("r") as f:
+            with (label_dir / fn).open("r", encoding=ENCODING) as f:
                 try:
                     line_phonemes = set(f.readline().split())
                 except UnicodeDecodeError:
