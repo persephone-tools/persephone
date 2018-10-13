@@ -96,8 +96,8 @@ def test_model_train_callback(tmpdir, create_sine, make_wav, create_test_corpus)
     test_model = Model(
         base_directory,
         corpus_r,
-        num_layers=2,
-        hidden_size=10
+        num_layers=3,
+        hidden_size=50
     )
     assert test_model
 
