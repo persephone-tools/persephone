@@ -52,12 +52,11 @@ def test_model_train_and_decode(tmpdir, create_sine, make_wav, create_test_corpu
 
     from persephone.model import decode
 
-    wav_to_decode_path = str(tmpdir.join("to_decode.wav"))
+    wav_dir = tmpdir.join("wav")
+    wav_to_decode_path = str(wav_dir.join("to_decode.wav"))
     sine_to_decode = create_sine(note="C")
 
     make_wav(sine_to_decode, wav_to_decode_path)
-
-    #feat_dir = tmpdir.mkdir("feat")
 
     model_checkpoint_path = base_directory / "model" / "model_best.ckpt"
     decode(
@@ -65,7 +64,6 @@ def test_model_train_and_decode(tmpdir, create_sine, make_wav, create_test_corpu
         [Path(wav_to_decode_path)],
         label_set = {"A", "B", "C"},
         feature_type = "fbank",
-        feat_dir=Path(str(feat_dir)),
         batch_x_name = test_model.batch_x.name,
         batch_x_lens_name = test_model.batch_x_lens.name,
         output_name = test_model.dense_decoded.name
