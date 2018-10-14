@@ -26,7 +26,6 @@ def fbank(wav_path, flat=True):
     """ Currently grabs log Mel filterbank, deltas and double deltas."""
 
     (rate, sig) = wav.read(wav_path)
-    import pdb; pdb.set_trace()
     if len(sig) == 0:
         logger.warning("Empty wav: {}".format(wav_path))
     fbank_feat = python_speech_features.logfbank(sig, rate, nfilt=40)

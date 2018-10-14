@@ -49,7 +49,6 @@ def dense_to_human_readable(dense_repr: Sequence[Sequence[int]], index_to_label:
 
 def decode_corpus(model_path_prefix: Union[str, Path],
                   corpus: Corpus,
-                  output_path: Union[str, Path],
                   *,
                   batch_size: int = 64,
                   feat_dir: Optional[Path]=None,
@@ -58,10 +57,9 @@ def decode_corpus(model_path_prefix: Union[str, Path],
                   output_name: str="hyp_dense_decoded:0") -> List[List[str]]:
     input_paths = [Path(corpus.tgt_dir) / "wav" / Path(prefix + ".wav")
                    for prefix in corpus.untranscribed_prefixes]
-    decode(model_path_prefix,
+    return decode(model_path_prefix,
            input_paths,
            label_set=corpus.labels,
-           output_path=output_path,
            feature_type=corpus.feat_type,
            batch_size=batch_size,
            feat_dir=feat_dir,
@@ -72,7 +70,6 @@ def decode_corpus(model_path_prefix: Union[str, Path],
 def decode(model_path_prefix: Union[str, Path],
            input_paths: Sequence[Path],
            label_set: Set[str],
-           output_path: Path,
            *,
            feature_type: str = "fbank", #TODO Make this None and infer feature_type from dimension of NN input layer.
            batch_size: int = 64,
@@ -89,7 +86,6 @@ def decode(model_path_prefix: Union[str, Path],
         input_paths: A sequence of `pathlib.Path`s to WAV files to put through
                      the model provided.
         label_set: The set of all the labels this model uses.
-        output_path: Path to a text file to store the output hypothesis.
         feature_type: The type of features this model uses.
                       Note that this MUST match the type of features that the
                       model was trained on initially.
@@ -156,12 +152,7 @@ def decode(model_path_prefix: Union[str, Path],
     indices_to_labels = labels.make_indices_to_labels(label_set)
     human_readable = dense_to_human_readable(dense_decoded, indices_to_labels)
 
-    output_path = Path(output_path)
-    prefixes = [p.stem for p in input_paths]
-    prefixes_hyps = sorted(list(zip(prefixes, human_readable)))
-    with output_path.open("w", encoding=ENCODING) as f:
-        for prefix, hyp in prefixes_hyps:
-            print(prefix, " ".join(hyp), file=f)
+    return human_readable
 
 class Model:
     """ Generic model for our ASR tasks.
@@ -257,10 +248,9 @@ class Model:
         batch_x_name = self.batch_x.name
         batch_x_lens_name = self.batch_x_lens.name
         output_name = self.dense_decoded.name
-        decode(model_path_prefix,
+        return decode(model_path_prefix,
                input_paths,
                label_set,
-               output_path = Path(self.exp_dir) / "decoded" / "untranscribed.txt",
                feature_type=feature_type,
                batch_size=batch_size,
                batch_x_name=batch_x_name,
