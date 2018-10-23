@@ -1,4 +1,5 @@
 #!/bin/bash
-apt-get install ffmpeg
-apt-get install sox
-apt-get install virtualenv
+apt-get update
+apt-get install -y ffmpeg sox python3-pip git python3-venv
+
+pip3 install pipenv
