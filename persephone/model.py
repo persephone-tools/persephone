@@ -18,8 +18,6 @@ from .corpus import Corpus
 from .exceptions import PersephoneException
 from .corpus_reader import CorpusReader
 
-OPENFST_PATH = config.OPENFST_BIN_PATH
-
 allow_growth_config = tf.ConfigProto(log_device_placement=False)
 allow_growth_config.gpu_options.allow_growth = True #pylint: disable=no-member
 
