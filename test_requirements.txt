@@ -1,5 +1,5 @@
 tox
 pylint>1.8
-pytest
+pytest>=3.9
 pytest-cov
 mypy>=0.6
