@@ -155,6 +155,9 @@ def from_dir(dirpath: Path, feat_type: str) -> None:
         logger.info("Preparing %s features for %s", feat_type, filename)
         path = os.path.join(dirname, filename)
         if path.endswith(".wav"):
+            if empty_wav(path):
+                logger.warning("Skipping features for {} since it is empty".format(path))
+                continue
             if feat_type == "fbank":
                 fbank(path)
             elif feat_type == "fbank_and_pitch":
