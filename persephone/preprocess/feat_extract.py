@@ -4,6 +4,8 @@ import logging
 import os
 from pathlib import Path
 import subprocess
+from typing import Union
+import wave
 
 import numpy as np
 import python_speech_features
@@ -13,6 +15,12 @@ from .. import config
 from ..exceptions import PersephoneException
 
 logger = logging.getLogger(__name__) #type: ignore
+
+def empty_wav(wav_path: Union[Path, str]) -> bool:
+    """Check if a wav contains data"""
+    with wave.open(str(wav_path), 'rb') as wav_f:
+        return wav_f.getnframes() == 0
+
 
 def extract_energy(rate, sig):
     """ Extracts the energy of frames. """
