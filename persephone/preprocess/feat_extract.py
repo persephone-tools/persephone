@@ -156,8 +156,7 @@ def from_dir(dirpath: Path, feat_type: str) -> None:
         path = os.path.join(dirname, filename)
         if path.endswith(".wav"):
             if empty_wav(path):
-                logger.warning("Skipping features for {} since it is empty".format(path))
-                continue
+                raise PersephoneException("Can't extract features for {} since it is an empty Wav file".format(path))
             if feat_type == "fbank":
                 fbank(path)
             elif feat_type == "fbank_and_pitch":
