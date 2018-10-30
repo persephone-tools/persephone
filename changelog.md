@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `CorpusReader.train_batch_gen` raises StopIteration instead of returning None if no data can be generated.
 - Decoding from saved model is now possible for arbitrary Tensorflow model topologies that have the same input and output structure via named arguments that specify where input and output to the model occur.
 - RNN CTC model class now accepts `pathlib.Path` for directory argument
+- Empty wave files no longer crash on attempted feature extraction and are now skipped instead.
 
 ## [0.3.2]
 
