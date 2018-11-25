@@ -34,12 +34,6 @@ Currently just one model is implemented, which uses bidirectional long
 short-term memory (LSTMs) and the connectionist temporal classification
 (CTC) loss function.
 
-We are happy to offer direct help to anyone who wants to use it. If
-you're having trouble, contact Oliver Adams at oliver.adams@gmail.com.
-We are also very welcome to thoughts, constructive criticism, help with
-design, development and documentation, along with any bug reports or
-pull requests you may have.
-
 Contributors
 ------------
 
@@ -72,6 +66,7 @@ Documentation <https://halshs.archives-ouvertes.fr/halshs-01709648/document>`_:
    quickstart
    api
    installation
+   support
 
 Indices and tables
 ------------------
