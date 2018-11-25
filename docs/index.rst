@@ -71,6 +71,7 @@ Documentation <https://halshs.archives-ouvertes.fr/halshs-01709648/document>`_:
 
    quickstart
    api
+   installation
 
 Indices and tables
 ------------------
