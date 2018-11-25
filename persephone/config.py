@@ -44,8 +44,6 @@ SOX_PATH = config_file.get("PATHS", "SOX_PATH", fallback="sox")
 FFMPEG_PATH = config_file.get("PATHS", "FFMPEG_PATH", fallback="ffmpeg")
 # Kaldi is used for pitch extraction
 KALDI_ROOT = config_file.get("PATHS", "KALDI_ROOT_PATH", fallback="/home/oadams/tools/kaldi")
-# Used for lattice output
-OPENFST_BIN_PATH = config_file.get("PATHS", "OPEN_FST_BIN_PATH", fallback="/home/oadams/tools/openfst-1.6.2/src/bin")
 
 # Fetch the path of the logging.ini file installed by setuptools.
 logging_ini_path = resource_filename(Requirement.parse("persephone"), "persephone/logging.ini")
