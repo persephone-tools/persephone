@@ -34,8 +34,8 @@ Please use the `discussion mailing list <https://lists.persephone-asr.org/postor
 to discuss questions regarding this project. If
 you're having trouble, contact Oliver Adams at oliver.adams@gmail.com.
 We are also very welcome to thoughts, constructive criticism, help with
-design, development and documentation, along with any bug reports or
-pull requests you may have.
+design, development and documentation, along with any `bug reports <https://github.com/persephone-tools/persephone/issues>`_ or
+`pull requests <https://github.com/persephone-tools/persephone/pulls>`_you may have.
 
 Documentation
 =============
