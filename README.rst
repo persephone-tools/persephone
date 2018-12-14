@@ -31,8 +31,7 @@ short-term memory (LSTMs) and the connectionist temporal classification
 
 We are happy to offer direct help to anyone who wants to use it.
 Please use the `discussion mailing list <https://lists.persephone-asr.org/postorius/lists/discuss.lists.persephone-asr.org/>`_ 
-to discuss questions regarding this project. If
-you're having trouble, contact Oliver Adams at oliver.adams@gmail.com.
+to discuss questions regarding this project.
 We are also very welcome to thoughts, constructive criticism, help with
 design, development and documentation, along with any `bug reports <https://github.com/persephone-tools/persephone/issues>`_ or
 `pull requests <https://github.com/persephone-tools/persephone/pulls>`_ you may have.
