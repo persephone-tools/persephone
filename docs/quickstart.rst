@@ -63,6 +63,7 @@ We now need to set up a virtual environment and install the library.
     $ source persephone-venv/bin/activate
     $ pip install -U pip
     $ pip install persephone
+    $ pip install ipython
 
 (This library can be installed system-wide but it is recommended to
 install in a virtualenv.)
