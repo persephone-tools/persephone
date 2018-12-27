@@ -69,7 +69,6 @@ Please follow the following rules before you submit a pull request:
 
 -  Documentation and high-coverage tests are very beneficial for enhancements to be accepted, though this is currently hypocritical on my part.
 
-
 You can also check for common programming errors with the following tools:
 
 -  Code lint, check with:
@@ -79,10 +78,11 @@ You can also check for common programming errors with the following tools:
   $ pylint path/to/code
   ```
 
-Pylint errors are indicative of critical issues. This is also currently being worked on.
+Pylint errors are indicative of critical issues, if your changes introduce Pylint errors they are unlikely to be accepted.
 
 Filing bugs
 -----------
+
 We use Github issues to track all bugs and feature requests; feel free to
 open an issue if you have found a bug or wish to see a feature implemented.
 
@@ -99,7 +99,7 @@ following rules before submitting:
 
 -  If the bug is system specific please include your operating system type and version number,
    as well as your Python versions. This information
-   can be found by runnning the following code snippet:
+   can be found by running the following code snippet:
 
   ```python
   import platform; print(platform.platform())
