@@ -11,6 +11,7 @@ RUN apt-get update && apt-get -y install \
 
 RUN pip3 install -U pip
 RUN pip3 install persephone
+RUN pip3 install ipython
 
 WORKDIR /persephone
 

@@ -18,7 +18,6 @@ setup(name='persephone',
       ],
       keywords='speech-recognition machine-learning acoustic-models artificial-intelligence neural-networks',
       install_requires=[
-           'ipython==6.2.1',
            'GitPython==2.1.8',
            'nltk==3.2.5',
            'numpy==1.14.5',
