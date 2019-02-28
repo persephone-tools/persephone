@@ -47,7 +47,7 @@ dependencies have been installed, along with the example Na data.
 Installation option 2: A "native" install
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Ensure Python 3 is installed.
+Ensure Python 3 is installed.T he Persephone library requires you have Python 3.5 or Python 3.6 installed. Currently Python 3.7 is not supported because we depend on Tensorflow which currently does not support Python 3.7.
 
 You will also need to install some system dependencies. For your
 convenience we have an install script for dependencies for Ubuntu. To
