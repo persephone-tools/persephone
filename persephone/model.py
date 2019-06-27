@@ -177,10 +177,7 @@ class Model:
     """
 
     def __init__(self, exp_dir: Union[Path, str], corpus_reader: CorpusReader) -> None:
-        if isinstance(exp_dir, Path):
-            self.exp_dir = str(exp_dir) # type: str
-        else:
-            self.exp_dir = exp_dir # type: str
+        self.exp_dir = str(exp_dir) if isinstance(exp_dir, Path) else exp_dir # type: str
         self.corpus_reader = corpus_reader
         self.log_softmax = None
         self.batch_x = None
