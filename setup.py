@@ -28,7 +28,7 @@ setup(name='persephone',
            'scikit-learn==0.19.1',
            'pympi-ling==1.69',
            'pydub==0.20.0',
-           'pint==0.8.1',
+           'pint==0.9',
       ],
       include_package_data = True,
 )
