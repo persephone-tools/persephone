@@ -1,6 +1,6 @@
 tox
-pluggy>0.7
+pluggy<1.0,>=0.12
 pylint>1.8
 pytest>=3.9
-pytest-cov
-mypy>=0.6
+pytest-cov==2.6.1
+mypy>=0.7

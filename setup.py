@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='persephone',
-      version='0.3.2',
+      version='0.3.3',
       description='A tool for developing automatic phoneme transcription models',
       long_description=open('README.rst', encoding="utf8").read(),
       url='https://github.com/oadams/persephone',
@@ -20,14 +20,14 @@ setup(name='persephone',
       install_requires=[
            'GitPython==2.1.8',
            'nltk==3.2.5',
-           'numpy==1.14.5',
+           'numpy>=1.14.5,<2',
            'python-speech-features==0.6',
-           'scipy==1.1.0',
-           'tensorflow==1.10.0',
-           'scikit-learn==0.19.1',
+           'scipy>=1.1.0,<2',
+           'tensorflow>=1.13.1,<2',
+           'scikit-learn==0.21.2',
            'pympi-ling==1.69',
            'pydub==0.20.0',
-           'pint==0.8.1',
+           'pint==0.9',
       ],
       include_package_data = True,
 )
