@@ -1,4 +1,5 @@
 """ An CorpusReader class that interfaces with preprocessed corpora."""
+from __future__ import generator_stop
 
 import logging
 import logging.config
@@ -141,7 +142,8 @@ class CorpusReader:
                           pprint.pformat(fn_batch))
             yield self.load_batch(fn_batch)
         else:
-            raise StopIteration
+            # Python 3.7 compatible way to mark generator as exhausted
+            return
 
     def valid_batch(self):
         """ Returns a single batch with all the validation cases."""
