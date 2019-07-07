@@ -464,7 +464,7 @@ class Corpus:
                 print(prefix, file=prefix_f)
 
     @staticmethod
-    def divide_prefixes(prefixes: List[str], seed:int=0) -> Tuple[List[str], List[str], List[str]]:
+    def divide_prefixes(prefixes: List[str], *, seed:int=0) -> Tuple[List[str], List[str], List[str]]:
         """Divide data into training, validation and test subsets"""
         if len(prefixes) < 3:
             raise PersephoneException(
