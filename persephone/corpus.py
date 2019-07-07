@@ -114,8 +114,8 @@ class Corpus:
     """
 
     def __init__(self, feat_type: str, label_type: str, tgt_dir: Path,
-                 labels: Optional[Set[str]] = None,
                  *,
+                 labels: Optional[Set[str]] = None,
                  max_samples: int=1000,
                  speakers: Optional[Sequence[str]] = None) -> None:
         """ Construct a `Corpus` instance from preprocessed data.
