@@ -114,8 +114,10 @@ class Corpus:
     """
 
     def __init__(self, feat_type: str, label_type: str, tgt_dir: Path,
+                 *,
                  labels: Optional[Set[str]] = None,
-                 max_samples:int=1000, speakers: Optional[Sequence[str]] = None) -> None:
+                 max_samples: int=1000,
+                 speakers: Optional[Sequence[str]] = None) -> None:
         """ Construct a `Corpus` instance from preprocessed data.
 
         Assumes that the corpus data has been preprocessed and is
@@ -235,6 +237,7 @@ class Corpus:
     @classmethod
     def from_elan(cls: Type[CorpusT], org_dir: Path, tgt_dir: Path,
                   feat_type: str = "fbank", label_type: str = "phonemes",
+                  *,
                   utterance_filter: Callable[[Utterance], bool] = None,
                   label_segmenter: Optional[LabelSegmenter] = None,
                   speakers: List[str] = None, lazy: bool = True,
@@ -461,7 +464,7 @@ class Corpus:
                 print(prefix, file=prefix_f)
 
     @staticmethod
-    def divide_prefixes(prefixes: List[str], seed:int=0) -> Tuple[List[str], List[str], List[str]]:
+    def divide_prefixes(prefixes: List[str], *, seed:int=0) -> Tuple[List[str], List[str], List[str]]:
         """Divide data into training, validation and test subsets"""
         if len(prefixes) < 3:
             raise PersephoneException(

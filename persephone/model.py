@@ -302,7 +302,7 @@ class Model:
                   "w", encoding=ENCODING) as best_f:
             print(best_epoch_str, file=best_f, flush=True)
 
-    def train(self, early_stopping_steps: int = 10, min_epochs: int = 30,
+    def train(self, *, early_stopping_steps: int = 10, min_epochs: int = 30,
               max_valid_ler: float = 1.0, max_train_ler: float = 0.3,
               max_epochs: int = 100, restore_model_path: Optional[str]=None,
               epoch_callback: Optional[Callable[[Dict], None]]=None) -> None:
