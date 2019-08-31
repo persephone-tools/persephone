@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Bug where `untranscribed_prefixes` in corpus was taking an intersection of two sets instead of a union.
 - Splitting of test, train and validation data sets will no longer produce empty sets. If no possible split can be made it will report the error via raising an exception.
 - Empty wave files no longer crash on attempted feature extraction and are now skipped instead.
+- Update nltk dependency to resolve possible security issue
 
 ## [0.3.2]
 
