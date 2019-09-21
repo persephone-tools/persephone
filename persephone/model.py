@@ -292,7 +292,7 @@ class Model:
 
             test_per = utils.batch_per(hyps, refs)
             if not math.isclose(test_per, test_ler, rel_tol=1e-07):
-                logging.warning("The label error rate from Tensorflow doesn't exactly"
+                logger.warning("The label error rate from Tensorflow doesn't exactly"
                                 "match the phoneme error rate calculated in persephone"
                                 "Tensorflow %f, Persephone %f", test_ler, test_per)
             with open(os.path.join(hyps_dir, "test_per"), "w",
