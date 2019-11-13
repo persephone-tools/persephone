@@ -421,7 +421,7 @@ class Model:
                               "w", encoding=ENCODING) as hyps_f:
                         for hyp in hyps:
                             print(" ".join(hyp), file=hyps_f)
-                    if epoch == 0:
+                    if epoch == 1:
                         with open(os.path.join(hyps_dir, "refs"), "w", 
                                   encoding=ENCODING) as refs_f:
                             for ref in refs:
