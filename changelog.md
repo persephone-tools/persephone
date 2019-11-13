@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.4.1] - 2019-11-13
+
+- Bugfix for an assertion that checked for equality of floating points.
+
 ## [0.4.0] - 2019-08-31
 
 ### Added
