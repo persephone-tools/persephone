@@ -140,7 +140,7 @@ class CorpusReader:
                           pprint.pformat(fn_batch))
             yield self.load_batch(fn_batch)
         else:
-            raise StopIteration
+            return
 
     def valid_batch(self):
         """ Returns a single batch with all the validation cases."""

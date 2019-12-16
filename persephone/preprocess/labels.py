@@ -24,6 +24,21 @@ LabelSegmenter.__doc__ = (
         labels: A set of labels (eg. phonemes or tones) relevant for segmenting.
     """)
 
+def segment_utterance_into_chars(utterance: Utterance) -> Utterance:
+
+    text = utterance.text
+    new_text = " ".join(text.strip().replace(" ", ""))
+    new_utterance = Utterance(utterance.org_media_path,
+                              utterance.org_transcription_path,
+                              utterance.prefix,
+                              utterance.start_time,
+                              utterance.end_time,
+                              new_text,
+                              utterance.speaker)
+    return new_utterance
+
+# Segments on chars and doesn't require a prescribed set of phonemes.
+char_label_segmenter = LabelSegmenter(segment_utterance_into_chars, None)
 
 def segment_into_chars(utterance: str) -> str:
     """ Segments an utterance into space delimited characters. """

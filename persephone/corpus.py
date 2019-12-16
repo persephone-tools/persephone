@@ -21,7 +21,7 @@ from .exceptions import LabelMismatchException
 from .preprocess import elan, wav
 from . import utterance
 from .utterance import Utterance
-from .preprocess.labels import LabelSegmenter
+from .preprocess.labels import LabelSegmenter, char_label_segmenter
 
 logger = logging.getLogger(__name__) # type: ignore
 
@@ -229,13 +229,13 @@ class Corpus:
         # for testing.
         self.utterances = []  # type: List[Utterance]
 
-        self.pickle()
+        #self.pickle()
 
     @classmethod
     def from_elan(cls: Type[CorpusT], org_dir: Path, tgt_dir: Path,
                   feat_type: str = "fbank", label_type: str = "phonemes",
                   utterance_filter: Callable[[Utterance], bool] = None,
-                  label_segmenter: Optional[LabelSegmenter] = None,
+                  label_segmenter: Optional[LabelSegmenter] = char_label_segmenter,
                   speakers: List[str] = None, lazy: bool = True,
                   tier_prefixes: Tuple[str, ...] = ("xv", "rf")) -> CorpusT:
         """ Construct a `Corpus` from ELAN files.
