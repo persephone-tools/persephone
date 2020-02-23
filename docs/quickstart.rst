@@ -83,7 +83,7 @@ experiments:
     mkdir data
 
 Get the data
-`here <https://cloudstor.aarnet.edu.au/plus/s/YJXTLHkYvpG85kX/download>`_
+`here <https://cloudstor.aarnet.edu.au/plus/s/hBWwp9pFrHVx21i>`_
 
 Unzip ``na_example_small.zip``. There should now be a directory
 ``na_example/``, with subdirectories ``wav/`` and ``label/``. You can
