@@ -232,45 +232,7 @@ of which utterances are in in each set, modify
 ``<your-corpus>/test_prefixes.txt``. The training set consists of all
 the available utterances in neither of these text files.
 
-4. Miscellaneous Considerations
--------------------------------
-
-On choosing an appropriate label granularity
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Question:
-
-    Suprasegmentals like tone, glottalization, nasalization, and
-    length are all phonemic in the language I am using. Do they belong in
-    one grouping or separately?
-
-Answer:
-
-I'm wary of making sweeping claims about the best approach to
-handle all these sorts of phenomena that will realise themselves
-differently between languages, since I'm neither a linguist nor do I
-have strong understanding for what features the model will learn each
-situation. (Regarding tones, the literature on this is also inconclusive
-in general). The best thing is to empirically test both approaches:
-
-1. Having features as part of the phoneme token. For example, a
-   nasalized /o/ becomes /õ/.
-2. Having a separate token that follows the phoneme. For example, a high
-   tone /o˥/ becomes two tokens: /o ˥/.
-
-Since there are many ways you can mix and match these, one consideration
-to keep in mind is how much larger the label vocabulary becomes by
-merging two tokens into one. You don't want this vocabulary to become
-too big because then its harder to learn features common to different
-tokens, and the model is less likely to pick the right one even if it's
-on the right track. In the case of vowel nasalization, maybe you only
-double the number of vowels, so it might be worth having merged tokens
-for that. If there are 5 different tones though, you might make that
-vowel vocabulary about 5 times bigger by combining them into one token,
-so its less likely to be good (though who knows, it might still yield
-performance improvements).
-
-5. Saving and loading models; transcribing untranscribed data
+4. Saving and loading models; transcribing untranscribed data
 -------------------------------------------------------------
 
 So far, the tutorial described how to load a ``Corpus`` object, and
@@ -352,3 +314,89 @@ hyperparameters and call ``model.transcribe()`` with the
     model.transcribe(restore_model_path="<old-exp-dir>/model/model_best.ckpt")
 
 This will load a previous model and perform transcription with it.
+
+5. FAQs
+-------------------------------
+
+Which installation option should I use for my operating system?
+^^^^^^^^^^^^^^^^^^^
+
+* If using MacOS or Linux, do a local install (Option 2 in the quickstart), though you can also use Docker.
+* If using Windows, use Docker (Option 1 in the quickstart).
+
+No module named virtualenv?
+^^^^^^^^^^
+
+Run this: pip3 install virtualenv
+
+I get **bash: $: command not found**
+^^^^^^^^
+
+Do not copy the $ and > symbols verbatim. The $ sign denotes the start of a
+command, while the > denotes the continuation of a command from a previous
+line.
+
+Python 3 not installed?
+^^^^^^^^
+
+Install Python 3 from python.org
+
+What is exp_dir?
+^^^^^^^
+
+Replace this with the name of the directory you want to store the model and it's results in (in quotes). Eg "exp/na_test"
+
+I've run out of memory
+^^^^^^^
+
+You'll need to run with a smaller batch size. Go to the Section 4:
+CorpusReaders and Models and follow the commands, except set batch_size to 4
+when running `na_reader = corpus_reader.CorpusReader(...`
+
+How do I use the command line?
+^^^^^^^^
+
+To do the basics, you need to know how to move files with "cd", view the current working directory with "pwd", view the contents of files with "less", move directories with "mv". This stuff would be covered by many commandline tutorials online.
+
+How do I look at the output?
+^^^^^^
+
+Inside the exp/ directory there should be a decoded/ subdirectory. Inside here
+you will find "refs", a list of ground truth transcriptions, as well as "hyps"
+files, which are the model hypotheses. Open these files with a text editor.
+
+How do I choose an appropriate label granularity?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Question:
+
+    Suprasegmentals like tone, glottalization, nasalization, and
+    length are all phonemic in the language I am using. Do they belong in
+    one grouping or separately?
+
+Answer:
+
+I'm wary of making sweeping claims about the best approach to
+handle all these sorts of phenomena that will realise themselves
+differently between languages, since I'm neither a linguist nor do I
+have strong understanding for what features the model will learn each
+situation. (Regarding tones, the literature on this is also inconclusive
+in general). The best thing is to empirically test both approaches:
+
+1. Having features as part of the phoneme token. For example, a
+   nasalized /o/ becomes /õ/.
+2. Having a separate token that follows the phoneme. For example, a high
+   tone /o˥/ becomes two tokens: /o ˥/.
+
+Since there are many ways you can mix and match these, one consideration
+to keep in mind is how much larger the label vocabulary becomes by
+merging two tokens into one. You don't want this vocabulary to become
+too big because then its harder to learn features common to different
+tokens, and the model is less likely to pick the right one even if it's
+on the right track. In the case of vowel nasalization, maybe you only
+double the number of vowels, so it might be worth having merged tokens
+for that. If there are 5 different tones though, you might make that
+vowel vocabulary about 5 times bigger by combining them into one token,
+so its less likely to be good (though who knows, it might still yield
+performance improvements).
+
