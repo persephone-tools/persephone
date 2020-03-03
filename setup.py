@@ -29,7 +29,7 @@ setup(name='persephone',
            'pympi-ling==1.69',
            'pydub==0.20.0',
            'pint==0.9',
-           'gitdb',
+           'gitdb>=4,<5',
       ],
       include_package_data = True,
 )
