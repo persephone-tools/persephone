@@ -38,3 +38,26 @@ def test_segment_into_tokens():
     assert segment_into_tokens(input_1, token_inv) == output_1
     assert segment_into_tokens(input_2, token_inv) == output_2
     assert segment_into_tokens(input_3, token_inv) == output_3
+
+def test_unicode_segmentation():
+    """Test that unicode whitespace characters are correctly handled in segmentation"""
+    from persephone.preprocess.labels import segment_into_chars
+    no_break_space = "hello\u00A0world"
+    assert segment_into_chars(no_break_space) == "h e l l o w o r l d"
+
+    unicode_spaces = [
+        "\u2000", #EN QUAD
+        "\u2001", #EM QUAD
+        "\u2002", #EN SPACE
+        "\u2003", #EM SPACE
+        "\u2004", #THREE-PER-EM SPACE
+        "\u2005", #FOUR-PER-EM SPACE
+        "\u2006", #SIX-PER-EM SPACE
+        "\u2007", #FIGURE SPACE
+        "\u2008", #PUNCTUATION SPACE
+        "\u2009", #THIN SPACE
+        "\u200A", #HAIR SPACE
+    ]
+
+    for space_character in unicode_spaces:
+        assert segment_into_chars("hello"+space_character+"world") ==  "h e l l o w o r l d"
