@@ -7,37 +7,14 @@ import subprocess
 from subprocess import PIPE
 from typing import List, Sequence, Tuple, TypeVar
 
-from git import Repo # type: ignore
 import numpy as np # type: ignore
 from nltk.metrics import distance
 
 from . import config
-from .exceptions import DirtyRepoException
 
 logger = logging.getLogger(__name__) # type: ignore
 
 T = TypeVar("T")
-
-def is_git_directory_clean(path_to_repo: Path,
-                           search_parent_dirs: bool = True,
-                           check_untracked: bool = False) -> None:
-    """
-    Check that the git working directory is in a clean state
-    and raise exceptions if not.
-    :path_to_repo: The path of the git repo
-    """
-    repo = Repo(str(path_to_repo), search_parent_directories=search_parent_dirs)
-    logger.debug("is_git_directory_clean check for repo in path={} from "\
-                  "cwd={} with search_parent_directories={}".format(
-                        path_to_repo, os.getcwd(), search_parent_dirs))
-
-    # If there are changes to already tracked files
-    if repo.is_dirty():
-        raise DirtyRepoException("Changes to the index or working tree."
-                                 "Commit them first .")
-    if check_untracked:
-        if repo.untracked_files:
-            raise DirtyRepoException("Untracked files. Commit them first.")
 
 def target_list_to_sparse_tensor(target_list):
     """ Make tensorflow SparseTensor from list of targets, with each element in

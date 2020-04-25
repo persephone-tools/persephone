@@ -2,16 +2,12 @@
 
 import os
 
-import git
-from git import Repo
-
 from typing import Optional
 
 import persephone
 from . import config
 from . import rnn_ctc
 from .corpus_reader import CorpusReader
-from .utils import is_git_directory_clean
 
 EXP_DIR = config.EXP_DIR # type: str
 
@@ -43,8 +39,7 @@ def prep_sub_exp_dir(parent_dir: str) -> str:
 def prep_exp_dir(directory=EXP_DIR):
     """ Prepares an experiment directory by copying the code in this directory
     to it as is, and setting the logger to write to files in that directory.
-    Copies a git hash of the most changes at git HEAD into the directory to
-    keep the experiment results in sync with the version control system.
+    Stores the version of persephone used to run the experiment for diagnostic purposes.
     :directory: The path to directory we are preparing for the experiment,
                 which will be created if it does not currently exist.
     :returns: The name of the newly created experiment directory.
@@ -52,17 +47,10 @@ def prep_exp_dir(directory=EXP_DIR):
     if not os.path.isdir(directory):
         os.makedirs(directory)
     exp_dir = _prepare_directory(directory)
-    try:
-        # Get the directory this file is in, so we can grab the git repo.
-        dirname = os.path.dirname(os.path.realpath(__file__))
-        repo = Repo(dirname, search_parent_directories=True)
-        with open(os.path.join(exp_dir, "git_hash.txt"), "w") as f:
-            print("SHA1 hash: {hexsha}".format(hexsha=repo.head.commit.hexsha), file=f)
-    except git.exc.InvalidGitRepositoryError: # pylint: disable=no-member
-        # Then the package was probably installed via pypi. Get the version
-        # number instead.
-        with open(os.path.join(exp_dir, "version.txt"), "w") as f:
-            print("Persephone version {}".format(persephone.__version__), file=f)
+    # We assume the package was probably installed via pypi. Get the version
+    # number.
+    with open(os.path.join(exp_dir, "version.txt"), "w") as f:
+        print("Persephone version {}".format(persephone.__version__), file=f)
 
     return exp_dir
 
