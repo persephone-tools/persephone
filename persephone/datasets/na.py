@@ -532,7 +532,7 @@ class Corpus(corpus.Corpus):
             prepare_untran(feat_type=feat_type, tgt_dir=tgt_dir,
                            untran_dir=untran_dir)
 
-        super().__init__(feat_type, label_type, tgt_dir, self.labels, max_samples=max_samples)
+        super().__init__(feat_type, label_type, tgt_dir, self.labels, max_samples=max_samples) # pylint: disable=too-many-function-args
 
     def make_data_splits(self, max_samples, valid_story=None, test_story=None):
         """Split data into train, valid and test groups"""
