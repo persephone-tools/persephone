@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.4.2] - 2019-04-26
 
 - Removed GitPython dependency since it caused more issues than it's worth.
+- Removed Python 3.5 support
 
 ## [0.4.1] - 2019-11-13
 
