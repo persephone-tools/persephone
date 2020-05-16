@@ -44,6 +44,9 @@ class CorpusReader:
             logger.critical("max_samples not yet implemented in CorpusReader")
             raise NotImplementedError("Not yet implemented.")
 
+        # TODO This logic should be changed. The number of training instances
+        # doesn't need to be divisible by batch size. The remainder can just go
+        # in its own, smaller batch.
         if not num_train:
             if not batch_size:
                 batch_size = 64
