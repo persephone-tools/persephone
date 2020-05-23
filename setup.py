@@ -7,7 +7,7 @@ setup(name='persephone',
       url='https://github.com/oadams/persephone',
       author='Oliver Adams',
       author_email='oliver.adams@gmail.com',
-      license='GPLv3',
+      license='Apache2.0',
       packages=['persephone', 'persephone.datasets', 'persephone.preprocess'],
       classifiers = [
           'Development Status :: 4 - Beta',
