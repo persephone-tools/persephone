@@ -1,7 +1,7 @@
 Persephone v0.4.2 (beta version)
 ================================
 
-**NOTE: This codebase is not actively maintained and development efforts are being placed elsewhere. If you're interested in training a speech recognition model using ELAN files, consider using [Elpis](https://github.com/CoEDL/elpis). If you're interested in phonetic transcription using an existing multilingual speech recognition model, consider trying https://www.dictate.app/.**
+**NOTE: This codebase is not actively maintained and development efforts are being placed elsewhere. If you're interested in training a language-specific speech recognition model using ELAN files, consider using Elpis (https://github.com/CoEDL/elpis/). If you're interested in general phonetic transcription using a pre-existing multilingual speech recognition model, consider trying (https://www.dictate.app/).**
 
 Persephone (/pərˈsɛfəni/) is an automatic phoneme transcription tool.
 Traditional speech recognition tools require a large pronunciation
