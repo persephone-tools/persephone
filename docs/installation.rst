@@ -53,6 +53,8 @@ Here is an example of how to specify the path to required binaries in the ``sett
 
 Here "sox" and "ffmpeg" must be available on the path and ``KALDI_ROOT`` specifies an absolute path. Note that these paths can also be specified as absolute paths if you wish.
 
+``KALDI_ROOT_PATH`` can also be used to specify the path to your Kaldi installation but this is deprecated, please use ``KALDI_ROOT`` in your settings file.
+
 Paths
 ~~~~~
 
