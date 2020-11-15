@@ -10,6 +10,8 @@ EXPERIMENTS = /path/to/experiment/output
 """
 import configparser
 import os
+import pathlib
+
 from pkg_resources import Requirement, resource_filename
 
 config_file = configparser.ConfigParser()
@@ -43,7 +45,19 @@ SOX_PATH = config_file.get("PATHS", "SOX_PATH", fallback="sox")
 # FFMPEG is used for normalizing WAVs
 FFMPEG_PATH = config_file.get("PATHS", "FFMPEG_PATH", fallback="ffmpeg")
 # Kaldi is used for pitch extraction
-KALDI_ROOT = config_file.get("PATHS", "KALDI_ROOT_PATH", fallback="/home/oadams/tools/kaldi")
+kaldi_fallback = pathlib.Path.home() / "tools" / "kaldi"
+
+if 'KALDI_ROOT' in config_file and 'KALDI_ROOT_PATH' in config_file:
+    raise ValueError("Error both KALDI_ROOT and KALDI_ROOT_PATH were defined in settings.ini "
+                     " aborting due to this ambiguity."
+                     " Resolve this conflict by using only one of these, preferably KALDI_ROOT only")
+
+_kaldi_root = config_file.get("PATHS", "KALDI_ROOT", fallback=str(kaldi_fallback))
+
+if 'KALDI_ROOT' not in config_file:
+    _kaldi_root = config_file.get("PATHS", "KALDI_ROOT_PATH", fallback=str(kaldi_fallback))
+
+KALDI_ROOT = _kaldi_root
 
 # Fetch the path of the logging.ini file installed by setuptools.
 logging_ini_path = resource_filename(Requirement.parse("persephone"), "persephone/logging.ini")
